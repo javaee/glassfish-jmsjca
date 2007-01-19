@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2004 Sun Microsystems, Inc. All rights reserved.
+ SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->
+<ejb-jar version="2.1" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/ejb-jar_2_1.xsd">
+    <display-name>mdbtest</display-name>
+    <enterprise-beans>
+        <message-driven>
+            <display-name>mdbtest</display-name>
+            <ejb-name>mdbtest</ejb-name>
+            <ejb-class>com.stc.jmsjca.test.core.TestMessageBean</ejb-class>
+            <messaging-type>javax.jms.MessageListener</messaging-type>
+            <transaction-type>Container</transaction-type>
+            <activation-config>
+                <activation-config-property>
+                    <activation-config-property-name>concurrencyMode</activation-config-property-name>
+                    <activation-config-property-value>cc</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>endpointPoolMaxSize</activation-config-property-name>
+                    <activation-config-property-value>10</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>destination</activation-config-property-name>
+                    <activation-config-property-value>Queue1</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>destinationType</activation-config-property-name>
+                    <activation-config-property-value>javax.jms.Queue</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>contextName</activation-config-property-name>
+                    <activation-config-property-value>XContextName</activation-config-property-value>
+                </activation-config-property>
+                <activation-config-property>
+                    <activation-config-property-name>mBeanName</activation-config-property-name>
+                    <activation-config-property-value>com.stc.jmsjca:name=ActivationMBean,type=ActivationMBean</activation-config-property-value>
+                </activation-config-property>
+            </activation-config>
+            <env-entry>
+                <env-entry-name>Test</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>testQQXAXA</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>specialurl</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>--special--url--</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>LogLevel</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>INFO</env-entry-value>
+            </env-entry>
+            <resource-env-ref>
+                <resource-env-ref-name>queuefact</resource-env-ref-name>
+                <resource-env-ref-type>javax.jms.QueueConnectionFactory</resource-env-ref-type>
+            </resource-env-ref>
+            <resource-env-ref>
+                <resource-env-ref-name>topicfact</resource-env-ref-name>
+                <resource-env-ref-type>javax.jms.TopicConnectionFactory</resource-env-ref-type>
+            </resource-env-ref>
+            <resource-env-ref>
+                <resource-env-ref-name>unifiedfact</resource-env-ref-name>
+                <resource-env-ref-type>javax.jms.ConnectionFactory</resource-env-ref-type>
+            </resource-env-ref>
+<!--
+            <message-destination-ref>
+                <message-destination-ref-name>jms/targetqueue</message-destination-ref-name>
+                <message-destination-type>javax.jms.Queue</message-destination-type>
+                <message-destination-usage>Consumes</message-destination-usage>
+            </message-destination-ref>
+-->         
+        </message-driven>
+    </enterprise-beans>
+    <assembly-descriptor>
+        <container-transaction>
+            <method>
+                <ejb-name>mdbtest</ejb-name>
+                <method-name>onMessage</method-name>
+                <method-params>
+                    <method-param>javax.jms.Message</method-param>
+                </method-params>
+            </method>
+            <trans-attribute>Required</trans-attribute>
+        </container-transaction>
+    </assembly-descriptor>
+</ejb-jar>
