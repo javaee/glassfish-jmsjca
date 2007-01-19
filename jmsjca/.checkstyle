@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><fileset-config file-format-version="1.1.0" simple-config="false">
-<fileset name="no test" check-config-name="sbyn2" enabled="true"><file-match-pattern match-pattern=".java$" include-pattern="true"/>
-<file-match-pattern match-pattern=".*test.*" include-pattern="false"/>
-<file-match-pattern match-pattern=".*container.*" include-pattern="false"/>
-<file-match-pattern match-pattern=".*sunone.*" include-pattern="false"/>
-</fileset>
-</fileset-config>

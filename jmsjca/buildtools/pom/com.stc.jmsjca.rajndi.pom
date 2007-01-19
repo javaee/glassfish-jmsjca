@@ -1,6 +1,0 @@
-<project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.stc.jmsjca</groupId>
-  <artifactId>com.stc.jmsjca.rajndi</artifactId>
-  <version>@VERSION@</version>
-</project>
