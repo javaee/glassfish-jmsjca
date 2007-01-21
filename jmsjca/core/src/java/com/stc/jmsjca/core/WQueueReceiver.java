@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: WQueueReceiver.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:17 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -38,7 +38,7 @@ import javax.jms.QueueReceiver;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class WQueueReceiver extends WMessageConsumer implements QueueReceiver {
     private QueueReceiver mDelegate;

@@ -39,7 +39,6 @@
         <path id="jmsjca.xxx.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
             <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${jcaid}/lib/imqjmsra.jar" />
         </path>
 
         <!-- To compile and run unit tests -->
@@ -135,10 +134,13 @@
             </fileset>
         </jar>
 
+        <mkdir dir="${jcaid}/lib" />
         <zip destfile="${jmsjca.xxx.rar.rar.path}" >
             <fileset file="${jmsjca.xxx.rar.jar.path}" />
             <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${jcaid}/lib/imqjmsra.jar" />
+            <fileset dir="${jcaid}/lib" >
+                <include name="imqjmsra.jar" />
+            </fileset>
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
         </zip>
 

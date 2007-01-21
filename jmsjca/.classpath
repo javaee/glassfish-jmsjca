@@ -11,7 +11,6 @@
 	<classpathentry kind="src" path="core/test/src/java"/>
 	<classpathentry kind="src" path="jndi/src/java"/>
 	<classpathentry kind="src" path="jndi/test/src/java"/>
-	<classpathentry kind="src" path="nsk/src/java"/>
 	<classpathentry kind="src" path="stcms/src/java"/>
 	<classpathentry kind="src" path="stcms/test/src/java"/>
 	<classpathentry kind="src" path="stcms453/src/java"/>
@@ -33,7 +32,6 @@
 	<classpathentry kind="lib" path="wmq/lib/dhbcore.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="build-lib/com.stc.rts.deployimpl.jar"/>
-	<classpathentry kind="lib" path="nsk/lib/nsjms.jar"/>
 	<classpathentry kind="lib" path="build-api/com.stc.jms.stcjms.jar"/>
 	<classpathentry kind="lib" path="build-api/com.stc.jms.stcqueueviewer.jar"/>
 	<classpathentry kind="lib" path="junit/junit.jar" sourcepath="C:/apps/junit3.8.1/src.jar"/>

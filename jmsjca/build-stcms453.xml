@@ -16,9 +16,7 @@
   stcms453 client does not support authentication, has to disable serversecurity
   to run stcms453 tests
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-    <import file="../RTS/public-test.xml" />
-    <import file="../RTS/public-build.xml" />
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
 
 <!--===========================================================================
     Initializes variables etc
@@ -43,7 +41,6 @@
         <path id="jmsjca.xxx.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
             <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${jcaid}/lib/stcjms_453.jar" />
         </path>
 
         <!-- To compile/run unit tests -->
@@ -84,9 +81,9 @@
 
         <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
         <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-        <copy file="${jcaid}/lib/stcjms_453.jar" todir="${install.inclusions.dir}/all/is/lib" />
-        <copy file="${jmsjca.xxx.rar.jar.path}"  todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/meta/ra.xml"    todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+        <copy file="${jcaid}/lib/stcjms_453.jar" todir="${install.inclusions.dir}/all/is/lib" failonerror="false" />
+        <copy file="${jmsjca.xxx.rar.jar.path}"  todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" failonerror="false" />
+        <copy file="${jcaid}/src/meta/ra.xml"    todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" failonerror="false" />
 
         <!-- Copy to extras -->
         <mkdir dir="${install.inclusions.dir}/all/extras" />
@@ -97,7 +94,7 @@
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
 
         <!-- Copy client jars and mgt jars -->
-        <copy file="${jcaid}/lib/stcjms_453.jar" todir="${jmsjca.artefacts.dir}" />
+        <copy file="${jcaid}/lib/stcjms_453.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
 
         <property name="rar.ed" value="true" />
     </target>
@@ -140,6 +137,7 @@
             </fileset>
         </jar>
 
+        <mkdir dir="${jcaid}/lib" />
         <zip destfile="${jmsjca.xxx.rar.rar.path}" >
             <fileset file="${jmsjca.xxx.rar.jar.path}" />
             <fileset file="${jmsjca.core.jar.path}" />

@@ -15,9 +15,7 @@
   - jcaid
 
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-    <import file="../RTS/public-test.xml" />
-    <import file="../RTS/public-build.xml" />
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
 
 <!--===========================================================================
     Initializes variables etc
@@ -42,7 +40,6 @@
         <path id="jmsjca.xxx.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
             <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${stc.api.dir}/com.stc.wave.wave.jar" />
         </path>
 
         <!-- To compile/run unit tests -->
@@ -97,11 +94,11 @@
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
 
         <!-- Copy client jars and mgt jars for SAR upload -->
-        <copy file="${stc.api.dir}/com.stc.wave.wave.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.api.dir}/com.stc.wave.mgmt.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.api.dir}/com.stc.wave.lwmsClient.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.lib.dir}/com.stc.jmsmx.wave.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.artefacts.dir}" />
+        <copy file="${stc.api.dir}/com.stc.wave.wave.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.wave.mgmt.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.wave.lwmsClient.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.lib.dir}/com.stc.jmsmx.wave.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
 
         <!-- Make available to Wave -->
         <mkdir dir="${stc.modules.dir}/wave-additions/all" />

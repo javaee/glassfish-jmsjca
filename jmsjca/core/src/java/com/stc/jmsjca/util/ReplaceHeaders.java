@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: ReplaceHeaders.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:48:00 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * Updates all SeeBeyond headers to CDDL headers
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class ReplaceHeaders {
     
@@ -148,7 +148,7 @@ public class ReplaceHeaders {
     = Pattern.compile("(.*)(\\/\\*.*Common Development and Distribution License.*\\*\\/)(.*)"
         , Pattern.DOTALL);
     
-    private static String REPLACE = "/*\n"
+    private static String REPLACE1 = "/*\n"
     + " * The contents of this file are subject to the terms\n"
     + " * of the Common Development and Distribution License\n"
     + " * (the \"License\").  You may not use this file except\n"
@@ -166,11 +166,13 @@ public class ReplaceHeaders {
     + " * with the fields enclosed by brackets \"[]\" replaced with\n"
     + " * your own identifying information: Portions Copyright\n"
     + " * [year] [name of copyright owner]\n"
-    + " */\n"
+    + " */\n";
+    
+    private static String REPLACE2 = ""
     + "/*\n"
     + " * $RCSfile: ReplaceHeaders.java,v $\n"
-    + " * $Revision: 1.1.1.1 $\n"
-    + " * $Date: 2007-01-19 22:48:00 $\n"
+    + " * $Revision: 1.1.1.2 $\n"
+    + " * $Date: 2007-01-21 07:52:44 $\n"
     + " *\n"
     + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  \n"
     + " */";
@@ -190,6 +192,9 @@ public class ReplaceHeaders {
                     System.out.println("NO MATCH: " + f.getAbsolutePath());
                 }
             }
+        }
+        if (ok) {
+            ok = !contents.startsWith(REPLACE1);
         }
         if (ok && m.groupCount() != 3) {
             ok = false;
@@ -211,7 +216,7 @@ public class ReplaceHeaders {
             }
         }
         if (ok) {
-            String replace = m1 + REPLACE + m3;
+            String replace = m1 + REPLACE1 + REPLACE2 + m3;
             write(replace, f);
 //            System.out.println("Changed " + f.getAbsolutePath());
             mWritten++;

@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: CommonMBean.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:16 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:43 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -33,7 +33,7 @@ import com.stc.jmsjca.util.MBeanBase;
  * Base class for RAMBean and ActivationMBean
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class CommonMBean extends MBeanBase {
     //private static Logger sLog = Logger.getLogger(ActivationMBean.class);

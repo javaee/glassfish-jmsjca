@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: DestinationCache.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:16 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:43 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -37,7 +37,7 @@ import java.util.Map;
  * is an example.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class DestinationCache  {
     private Map mEntries = new HashMap();

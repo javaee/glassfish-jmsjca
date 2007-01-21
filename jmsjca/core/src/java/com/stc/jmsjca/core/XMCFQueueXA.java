@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: XMCFQueueXA.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:17 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -36,7 +36,7 @@ import javax.resource.spi.ConnectionManager;
  * apart; this is necessary to have multiple connection factories in one rar file.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class XMCFQueueXA extends XManagedConnectionFactory {
     private static Logger sLog = Logger.getLogger(XMCFQueueXA.class);
