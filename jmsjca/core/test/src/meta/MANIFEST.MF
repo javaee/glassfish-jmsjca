@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Created-By: Manual
-Class-Path: com.stc.jmsjca.core.jar
