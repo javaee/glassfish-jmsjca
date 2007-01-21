@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sun-ejb-jar PUBLIC "-//Sun Microsystems, Inc.//DTD Application Server 8.0 EJB 2.1//EN" "http://www.sun.com/software/appserver/dtds/sun-ejb-jar_2_1-0.dtd">
+
+<!--
+ Copyright 2004 Sun Microsystems, Inc. All rights reserved.
+ SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->
+
+<sun-ejb-jar>
+  <enterprise-beans>
+    <unique-id>1</unique-id>
+    <ejb>
+      <ejb-name>mdbtest</ejb-name>
+      <jndi-name>mdbtest</jndi-name>
+
+      <resource-env-ref>
+         <resource-env-ref-name>queuefact</resource-env-ref-name>
+         <jndi-name>__SYSTEM/resource/ratest-test#ratest#javax.jms.QueueConnectionFactory</jndi-name>
+      </resource-env-ref>
+      <resource-env-ref>
+         <resource-env-ref-name>topicfact</resource-env-ref-name>
+         <jndi-name>__SYSTEM/resource/ratest-test#ratest#javax.jms.TopicConnectionFactory</jndi-name>
+      </resource-env-ref>
+      <resource-env-ref>
+         <resource-env-ref-name>unifiedfact</resource-env-ref-name>
+         <jndi-name>__SYSTEM/resource/ratest-test#ratest1#javax.jms.ConnectionFactory</jndi-name>
+      </resource-env-ref>
+
+      <pass-by-reference>false</pass-by-reference>
+      <ior-security-config>
+        <transport-config>
+          <integrity>SUPPORTED</integrity>
+          <confidentiality>SUPPORTED</confidentiality>
+          <establish-trust-in-target>SUPPORTED</establish-trust-in-target>
+          <establish-trust-in-client>SUPPORTED</establish-trust-in-client>
+        </transport-config>
+        <as-context>
+          <auth-method>USERNAME_PASSWORD</auth-method>
+          <realm>default</realm>
+          <required>true</required>
+        </as-context>
+        <sas-context>
+          <caller-propagation>SUPPORTED</caller-propagation>
+        </sas-context>
+      </ior-security-config>
+      <is-read-only-bean>false</is-read-only-bean>
+      <gen-classes/>
+      <mdb-resource-adapter>
+        <resource-adapter-mid>ratest-test#ratest</resource-adapter-mid>
+      </mdb-resource-adapter>
+
+    </ejb>
+  </enterprise-beans>
+</sun-ejb-jar>

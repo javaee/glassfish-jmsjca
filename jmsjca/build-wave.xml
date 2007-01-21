@@ -1,0 +1,330 @@
+<?xml version="1.0"?>
+<project default="compile" basedir="." name="jmsjca">
+    <description>
+    </description>
+
+<!--
+  Conventions:
+  xx.dir = directory
+  xx.filepath = absolute filename
+  xx.filename = filename only
+
+  This is the build file for stcms. It's targets will be called from
+  other build files. It is assumed that the following properties are
+  set:
+  - jcaid
+
+-->
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
+
+<!--===========================================================================
+    Initializes variables etc
+-->
+    <target name="init" unless="init.ed">
+        <property environment="env" />
+        <property file="${stc.root.dir}/stc.properties" />
+        <pathconvert property="stc.root.dir" targetOS="unix">
+            <path>
+                <pathelement path="${env.STC_ROOT}"/>
+            </path>
+        </pathconvert>
+        <property file="${env.STC_ROOT}/stc.properties" />
+        <property file="${stc.root.dir}/stc.properties" />
+
+        <property file="build.properties" />
+        <property file="${env.STC_ROOT}/RTS/build.properties" />
+        <property file="build-${jcaid}.properties" />
+        <property file="build-xxx.properties" />
+
+        <!-- To compile -->
+        <path id="jmsjca.xxx.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${jmsjca.core.jar.path}" />
+        </path>
+
+        <!-- To compile/run unit tests -->
+        <path id="jmsjca.test.classpath">
+            <path refid="container.classpath"/>
+            <fileset file="core/test/lib/jdom.jar" />
+            <fileset file="${jmsjca.core.jar.path}" />
+            <fileset file="${jmsjca.xxx.rar.jar.path}" />
+            <pathelement location="${jmsjca.container.classes.dir}" />
+            <fileset file="${stc.api.dir}/com.stc.wave.wave.jar" />
+            <fileset file="jndi/test/lib/fscontext.jar" />
+            <fileset file="jndi/test/lib/providerutil.jar" />
+        </path>
+
+        <property name="init.ed" value="true" />
+    </target>
+
+<!--===========================================================================
+    Clean
+-->
+    <target name="clean" depends="init">
+        <echo message="deleting ${jmsjca.xxx.module.dir}" />
+        <delete dir="${jmsjca.xxx.module.dir}" />
+        <delete dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
+        <delete file="${install.inclusions.dir}/all/extras/${jmsjca.xxx.rar.rar.path}" />
+        <delete dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+        <delete file="${stc.modules.dir}/wave-additions/all/${jmsjca.xxx.name}.rar" />
+    </target>
+
+<!--===========================================================================
+    Creates the rar file
+-->
+    <target name="rar" depends="compile" unless="rar.ed">
+        <!-- This will modify domain.xml on installation -->
+        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+
+        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
+        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+
+        <!-- Copy wave.jar to is/lib - now done by wave build -->
+        <!--<copy file="${stc.api.dir}/wave.jar"      todir="${install.inclusions.dir}/all/is/lib" />-->
+
+        <!-- Copy to extras -->
+        <mkdir dir="${install.inclusions.dir}/all/extras" />
+        <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />
+        <copy file="${jcaid}/src/userdoc/ra${jcaid}-readme.html" todir="${install.inclusions.dir}/all/extras" />
+        
+        <!-- Copy jars for upload into Repository (third party app servers) -->
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
+
+        <!-- Copy client jars and mgt jars for SAR upload -->
+        <copy file="${stc.api.dir}/com.stc.wave.wave.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.wave.mgmt.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.wave.lwmsClient.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.lib.dir}/com.stc.jmsmx.wave.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+
+        <!-- Make available to Wave -->
+        <mkdir dir="${stc.modules.dir}/wave-additions/all" />
+        <copy file="${jmsjca.xxx.rar.rar.path}" todir="${stc.modules.dir}/wave-additions/all" />
+
+        <property name="rar.ed" value="true" />
+    </target>
+
+<!--===========================================================================
+    Creates the sar file
+-->
+    <target name="sar" depends="rar" unless="sar.ed">
+
+        <property name="sar.ed" value="true" />
+    </target>
+
+<!--===========================================================================
+    Compiles the source code and produces a jar file
+-->
+    <target
+        name="compile"
+        depends="init"
+        description="Compiles the source base"
+        unless="compile.ed"
+    >
+        <!-- compile -->
+        <mkdir dir="${jmsjca.xxx.rar.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.xxx.rar.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="${jcaid}/src/java" />
+            <classpath refid="jmsjca.xxx.classpath"/>
+        </javac>
+
+        <!-- mk rar -->
+        <jar destfile="${jmsjca.xxx.rar.jar.path}">
+            <fileset dir="${jmsjca.xxx.rar.classes.dir}">
+                <include name="com/stc/jmsjca/${jcaid}/**.*" />
+            </fileset>
+        </jar>
+
+        <zip destfile="${jmsjca.xxx.rar.rar.path}" >
+            <fileset file="${jmsjca.xxx.rar.jar.path}" />
+            <fileset file="${jmsjca.core.jar.path}" />
+            <fileset file="${stc.api.dir}/com.stc.wave.wave.jar" />
+            <fileset file="${stc.api.dir}/com.stc.wave.mgmt.jar" />
+            <fileset file="${stc.api.dir}/com.stc.wave.lwmsClient.jar" />
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+        </zip>
+
+        <property name="compile.ed" value="true" />
+    </target>
+
+
+<!--===========================================================================
+    DEV-ONLY: compile-test
+-->
+    <target
+        name="compile-test"
+        depends="init, compile"
+        description=""
+        unless="compile-test.ed"
+    >
+        <!-- compile test code -->
+        <mkdir dir="${jmsjca.xxx.test.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.xxx.test.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="core/test/src/java" />
+            <src path="${jcaid}/test/src/java" />
+            <classpath refid="jmsjca.test.classpath"/>
+        </javac>
+
+        <!-- ejb -->
+        <mkdir dir="${jmsjca.xxx.test.dir}"/>
+        <jar destfile="${jmsjca.xxx.ejb.jar.path}">
+            <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                <include name="com/stc/jmsjca/test/core/**.*" />
+                <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+            </fileset>
+            <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
+            <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
+        </jar>
+
+        <!-- Generate manifests for embedded RARs -->
+        <!-- When outside of RTS -->
+        <manifest file="${jmsjca.xxx.test.mft.path}">
+            <attribute 
+                name="Class-Path" 
+                value="${jmsjca.core.jar.name} ${jmsjca.xxx.jar.name} com.stc.wave.wave.jar"
+            />
+        </manifest>
+        <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />
+
+        <!-- make embedded rar -->
+        <zip destfile="${jmsjca.xxx.test.rar.path}" >
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft.path}"  />
+        </zip>
+        <zip destfile="${jmsjca.xxx.test.rar1.path}" >
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
+        </zip>
+
+        <if>
+            <equals arg1="${testcontainer.id}" arg2="rts" />
+            <then>
+                <!-- mk ear INSIDE of RTS -->
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
+                </zip>
+            </then>
+            <else>
+                <!-- mk ear OUTSIDE of RTS -->
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
+
+                    <!-- When outside of RTS -->
+                    <zipfileset file="${jmsjca.core.jar.path}" />
+                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
+                    <zipfileset file="${stc.api.dir}/com.stc.wave.wave.jar" />
+                </zip>
+            </else>
+        </if>
+        <property name="compile-test.ed" value="true" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: install-jms-jars: jms provider client jars
+-->
+    <target
+        name="install-jms-jars"
+        depends="init"
+        if="lh"
+    >
+        <echo message="${jcaid} installed" />
+    </target>
+
+    <target
+        name="uninstall-jms-jars"
+        depends="init"
+        if="lh"
+    >
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: run-test: executes the tests
+-->
+    <target
+        name="run-test"
+        depends="init, compile-test"
+    >
+        <!-- Test in Tomato -->
+        <junit
+            printsummary="on"
+            haltonerror="off"
+            haltonfailure="off"
+        >
+            <jvmarg value="${junit.jvm.options}"/>
+            <sysproperty key="test.container.id" value="${testcontainer.id}"/>
+            <sysproperty key="test.server.properties" value="${testjmsserver.properties}"/>
+            <sysproperty key="test.container.properties" value="${testcontainer.properties}"/>
+            <sysproperty key="test.ear.path" value="${jmsjca.xxx.ear.path}"/>
+            <sysproperty key="wave.url" value="${jmsjca.wave.url}"/>
+
+            <classpath refid="jmsjca.test.classpath"/>
+            <classpath  path="${jmsjca.xxx.test.classes.dir}" />
+
+            <batchtest
+                haltonfailure="no"
+                haltonerror="no"
+                todir="${jmsjca.reports.junit.dir}"
+            >
+                <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                    <include name="**/*JUStd.class"/>
+                    <include name="**/*Ear1.class"/>
+                </fileset>
+                <formatter type="xml"/>
+            </batchtest>
+        </junit>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Patches the server specified by "lh"
+-->
+    <target
+        name="patch-core"
+        depends="sar"
+        if="lh"
+    >
+       <!-- Provider jar -->
+       <copy
+           file="${jmsjca.xxx.rar.jar.path}"
+           todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
+        />
+        <unzip
+            src="${jmsjca.xxx.rar.jar.path}"
+            dest="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
+        />
+            
+        <!-- ra.xml -->
+        <copy
+            file="${jcaid}/src/meta/ra.xml"
+            todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}/META-INF"
+        />
+
+        <!-- client jar -->
+        <copy
+            file="${stc.api.dir}/com.stc.wave.wave.jar"
+            todir="${lh}/logicalhost/is/lib"
+        />
+    </target>
+</project>
