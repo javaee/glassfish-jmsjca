@@ -17,14 +17,13 @@ Relevant properties to set:
   xx.filepath = absolute filename
   xx.filename = filename only
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./core/test/lib/ant-contrib.jar"/>
-    <taskdef name="foreach" classname="net.sf.antcontrib.logic.ForEach" classpath="./core/test/lib/ant-contrib.jar"/>
-    <taskdef name="propertycopy" classname="net.sf.antcontrib.property.PropertyCopy" classpath="./core/test/lib/ant-contrib.jar"/>
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="foreach" classname="net.sf.antcontrib.logic.ForEach" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="propertycopy" classname="net.sf.antcontrib.property.PropertyCopy" classpath="./buildtools/lib/ant-contrib.jar"/>
     <taskdef name="JUnitUpload" classname="com.stc.unittrack.ant.Upload" classpath="./core/test/lib/unittracktask.jar" />
     <property environment="env" />
     <property name="glassfish.lib" value="${env.GLASSFISH_HOME}/lib" />
-    <property name="rts-test.path" value="../RTS/public-test.xml" />
-    <import file="${rts-test.path}" />
+    <import file="../RTS/public-test.xml" optional="true" />
 
 <!--===========================================================================
     Targets required by CM
@@ -194,6 +193,7 @@ Relevant properties to set:
         <foreach list="${jcaids}" target="call-sar" param="jcaid" />
         
         <!-- Generate sar file -->
+        <mkdir dir="${stc.egatesars.dir}" />
         <zip destfile="${stc.egatesars.dir}/jmsjca.sar" >
             <zipfileset dir="${jmsjca.artefacts.dir}" prefix="jars"></zipfileset>
             <zipfileset file="scripts/install.xml"></zipfileset>
@@ -219,6 +219,10 @@ Relevant properties to set:
         depends="init"
         unless="compile-core.ed"
     >
+        <available file="${stc.api.dir}/j2ee.jar" property="jmsjca.j2ee.present" />
+        <fail unless="jmsjca.j2ee.present" message="${stc.api.dir}/j2ee.jar is missing; set $${stc.api.dir} to directory containing this jar" />
+        <mkdir dir="${stc.lib.dir}" />
+        
         <path id="jmsjca.core.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
         </path>
@@ -719,21 +723,15 @@ Relevant properties to set:
         <!-- Copy the source tree -->
         <copy todir="${jmsjca.maven.work.dir}/src">
             <fileset dir=".">
-                <exclude name="jboss/**"/>
-                <exclude name="stcms/**"/>
-                <exclude name="stcms453/**"/>
-                <exclude name="stcms/**"/>
-                <exclude name="wmq/**"/>
-                <exclude name="wl/**"/>
-                <exclude name="wave/**"/>
+                <exclude name="jboss/lib/**"/>
+                <exclude name="stcms453/lib/**"/>
+                <exclude name="wmq/lib/**"/>
+                <exclude name="wl/lib/**"/>
                 <exclude name="nsk/**"/>
-                <exclude name="sunone/test/lib/**"/>
                 <exclude name="sunone/test/lib/**"/>
                 <exclude name="sunone/lib/**"/>
                 <exclude name="jndi/test/lib/**"/>
-                <exclude name="jndi/test/lib/**"/>
-                <exclude name="core/test/lib/**"/>
-                <exclude name="core/test/lib/**"/>
+                <exclude name="core/test/lib/jdom.jar"/>
                 <exclude name="**/*.bak"/>
             </fileset>
         </copy>
@@ -810,6 +808,16 @@ Relevant properties to set:
                  <argument line="-z9 import -m" />
                  <argument value="syncing cvs to" />
                  <argument value="jmsjca/jmsjca" />
+                 <argument line="sources t${DSTAMP}${TSTAMP}" />
+            </commandline>
+        </cvs>
+        <!-- workaround the name "core" which is ignored by default -->
+        <cvs dest="${jmsjca.maven.work.dir}/src/core">
+            <commandline>
+                 <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
+                 <argument line="-z9 import -I ! -I *.bak -I *.BAK -I CVS -I TAGS -m" />
+                 <argument value="syncing cvs to" />
+                 <argument value="jmsjca/jmsjca/core" />
                  <argument line="sources t${DSTAMP}${TSTAMP}" />
             </commandline>
         </cvs>

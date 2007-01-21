@@ -15,9 +15,7 @@
   - jcaid
 
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-    <import file="../RTS/public-test.xml" />
-    <import file="../RTS/public-build.xml" />
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
 
     <!--===========================================================================
     Initializes variables etc
@@ -95,10 +93,10 @@
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
 
         <!-- Copy client jars and mgt jars for SAR upload -->
-        <copy file="${stc.api.dir}/com.stc.jms.stcjms.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.lib.dir}/com.stc.jmsmx.stcms.jar" todir="${jmsjca.artefacts.dir}" />
-        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.artefacts.dir}" />
+        <copy file="${stc.api.dir}/com.stc.jms.stcjms.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.lib.dir}/com.stc.jmsmx.stcms.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.artefacts.dir}" failonerror="false" />
 
         <property name="rar.ed" value="true" />
     </target>

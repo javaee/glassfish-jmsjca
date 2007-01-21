@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: XAssert.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:48:00 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -31,7 +31,7 @@ package com.stc.jmsjca.util;
  * Tools
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class XAssert {
     private static Logger sLog = Logger.getLogger(XAssert.class);

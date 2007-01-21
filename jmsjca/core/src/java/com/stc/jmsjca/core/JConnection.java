@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: JConnection.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:16 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:43 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -61,7 +61,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);

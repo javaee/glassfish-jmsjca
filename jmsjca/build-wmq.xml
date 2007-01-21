@@ -15,9 +15,7 @@
   - jcaid
 
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-    <import file="../RTS/public-test.xml" />
-    <import file="../RTS/public-build.xml" />
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
 
 <!--===========================================================================
     Initializes variables etc
@@ -42,10 +40,12 @@
         <path id="jmsjca.xxx.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
             <fileset file="${jmsjca.core.jar.path}" />
+            <!--
             <fileset file="${jcaid}/lib/com.ibm.mqjms.jar" />
             <fileset file="${jcaid}/lib/com.ibm.mq.jar" />                                    
             <fileset file="${jcaid}/lib/com.ibm.mqetclient.jar" />
             <fileset file="${jcaid}/lib/dhbcore.jar" />            
+            -->
         </path>
 
         <!-- To compile/run unit tests -->
