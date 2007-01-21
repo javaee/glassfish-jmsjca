@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="JMSJCA" default="install">
+    <property environment="env" />
+    <taskdef name="InstallJava" classname="com.stc.installer.InstallJavaModule"/>
+
+    <target name="install">
+        <InstallJava repurl="${stc.rep.url}"
+                     moduleName="JMSJCA"
+        >
+            <fileset dir="${basedir}/jars">
+                <include name="*.*" />
+            </fileset>
+        </InstallJava>
+    </target>
+</project>

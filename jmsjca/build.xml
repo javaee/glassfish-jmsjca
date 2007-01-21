@@ -1,0 +1,825 @@
+<?xml version="1.0"?>
+<project default="install" basedir="." name="jmsjca">
+<description>
+Relevant properties to set:
+- testjcaids
+- testcontainer.id
+- testcontainer.properties
+- testjmsserver.properties       
+    
+- jcaids
+- jcaid
+</description>
+
+<!--
+  Conventions:
+  xx.dir = directory
+  xx.filepath = absolute filename
+  xx.filename = filename only
+-->
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="foreach" classname="net.sf.antcontrib.logic.ForEach" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="propertycopy" classname="net.sf.antcontrib.property.PropertyCopy" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="JUnitUpload" classname="com.stc.unittrack.ant.Upload" classpath="./core/test/lib/unittracktask.jar" />
+    <property environment="env" />
+    <property name="glassfish.lib" value="${env.GLASSFISH_HOME}/lib" />
+    <import file="../RTS/public-test.xml" optional="true" />
+
+<!--===========================================================================
+    Targets required by CM
+-->
+    <target
+        name="install"
+        depends="sar"
+        description="Main target: compiles, sars"
+    />
+
+    <target
+        name="doc"
+    />
+
+    <target
+        name="api"
+    />
+
+    <target
+        name="impl"
+        depends="install"
+    />
+
+    <target
+        name="external-impl"
+        depends=""
+    >
+    </target>
+
+    <target
+        name="external-api"
+        depends=""
+    >
+    </target>
+
+    <target
+        name="clover"
+    />
+
+    <target
+        name="clover-report"
+    />
+
+
+<!--===========================================================================
+    Initializes variables etc
+-->
+    <target name="init" unless="init.ed">
+        <!-- Properties -->
+        <property file="${stc.root.dir}/stc.properties" />
+        <pathconvert property="stc.root.dir" targetOS="unix">
+            <path>
+                <pathelement path="${env.STC_ROOT}"/>
+            </path>
+        </pathconvert>
+        <property file="${env.STC_ROOT}/stc.properties" />
+        <property file="${stc.root.dir}/stc.properties" />
+        <property file="${stc.root.dir}/RTS/build.properties" />
+        <property file="build.properties" />
+        
+        <!-- container specific classpath goes here (rts, sjsas, wl, glassfish)-->
+        <path id="rts.container.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+        </path>
+
+        <path id="bare-rts.container.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+        </path>
+
+        <path id="jboss.container.classpath">
+            <fileset file="jboss/lib/jboss-jmx.jar" />            
+            <fileset file="jboss/lib/xml-apis.jar" />            
+            <fileset file="jboss/lib/xercesImpl.jar" />                        
+            <fileset file="jboss/lib/jnp-client.jar" />                                    
+            <fileset file="jboss/lib/jboss-system.jar" />                                                
+            <fileset file="jboss/lib/jbossall-client.jar" />                                                
+            <fileset file="jboss/lib/jboss-client.jar" />                                                                                   
+            <fileset file="jboss/lib/jmx-invoker-adaptor-client.jar" /> 
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+        </path>
+
+        <path id="wl.container.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+        </path>
+
+        <path id="was.container.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+        </path>
+        
+        <path id="sjsas.container.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+        </path>
+        
+        <path id="glassfish.container.classpath">
+            <fileset file="${glassfish.lib}/appserv-deployment-client.jar" />
+            <fileset file="${glassfish.lib}/javaee.jar" />
+            <fileset file="${glassfish.lib}/appserv-rt.jar" />
+            <fileset file="${glassfish.lib}/appserv-ext.jar" />
+            <fileset file="${glassfish.lib}/jmxremote_optional.jar" />
+        </path>
+
+        <property name="init.ed" value="true" />
+    </target>
+
+
+<!--===========================================================================
+    Clean
+-->
+    <target name="clean" depends="init">
+        <echo message="deleting ${jmsjca.module.dir}" />
+        <delete dir="${jmsjca.module.dir}" />
+        <delete file="${stc.egatesars.dir}/jmsjca.sar" />
+        <foreach list="${jcaids}" target="call-clean" param="jcaid" />
+    </target>
+
+    <target name="call-clean">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="clean"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    Creates the rar file
+-->
+    <target name="rar" depends="compile">
+        <!-- Delegate rar-call to connectors -->
+        <foreach list="${jcaids}" target="call-rar" param="jcaid" />
+    </target>
+
+    <target name="call-rar">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="rar"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    Creates the sar file
+-->
+    <target name="sar" depends="rar">
+        <!-- Copy core jar into is/lib directory -->
+        <copy file="${jmsjca.core.jar.path}"    todir="${install.inclusions.dir}/all/is/lib" />
+
+        <!-- Copy documentation to extras -->
+        <mkdir dir="${install.inclusions.dir}/all/extras" />
+        <copy file="core/src/userdoc/JMSJCA-readme.html" todir="${install.inclusions.dir}/all/extras" />
+
+        <!-- SAR -->
+        <mkdir dir="${jmsjca.artefacts.dir}" />
+        <copy file="${jmsjca.core.jar.path}"    todir="${jmsjca.artefacts.dir}" />
+        
+        <!-- Delegate sar-call to connectors -->
+        <foreach list="${jcaids}" target="call-sar" param="jcaid" />
+        
+        <!-- Generate sar file -->
+        <mkdir dir="${stc.egatesars.dir}" />
+        <zip destfile="${stc.egatesars.dir}/jmsjca.sar" >
+            <zipfileset dir="${jmsjca.artefacts.dir}" prefix="jars"></zipfileset>
+            <zipfileset file="scripts/install.xml"></zipfileset>
+        </zip>
+    </target>
+
+    <target name="call-sar">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="sar"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    Compiles the source code and produces a jar file
+-->
+    <target
+        name="compile-core"
+        depends="init"
+        unless="compile-core.ed"
+    >
+        <available file="${stc.api.dir}/j2ee.jar" property="jmsjca.j2ee.present" />
+        <fail unless="jmsjca.j2ee.present" message="${stc.api.dir}/j2ee.jar is missing; set $${stc.api.dir} to directory containing this jar" />
+        <mkdir dir="${stc.lib.dir}" />
+        
+        <path id="jmsjca.core.classpath">
+            <fileset file="${stc.api.dir}/j2ee.jar" />
+        </path>
+
+        <mkdir dir="${jmsjca.core.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.core.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="core/src/java" />
+            <classpath refid="jmsjca.core.classpath"/>
+        </javac>
+
+        <jar destfile="${jmsjca.core.jar.path}">
+            <fileset dir="${jmsjca.core.classes.dir}">
+            </fileset>
+        </jar>
+
+        <property name="compilecore.ed" value="true" />
+    </target>
+    
+    <target
+        name="compile-container"
+    >
+        <mkdir dir="${jmsjca.container.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.container.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="container/src/java" />
+            <include name="com/stc/jmsjca/container/*.java" />            
+            <include name="com/stc/jmsjca/container/${testcontainer.id}/*.java" />
+            <classpath>
+              <path refid="${testcontainer.id}.container.classpath" />
+              <fileset file="core/test/lib/jdom.jar" />
+            </classpath>
+        </javac>
+
+    </target>
+
+<!--===========================================================================
+    Compiles the source code and produces a jar file
+-->
+    <target
+        name="compile"
+        depends="compile-core"
+        description="Compiles the source base"
+        unless="compile.ed"
+    >
+        <foreach list="${jcaids}" target="call-compile" param="jcaid" />
+        <property name="compile.ed" value="true" />
+    </target>
+
+    <target name="call-compile">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="compile"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Start server etc.
+-->
+    <target
+        name="run-server"
+        depends="init"
+        description="Starts test server"
+    >
+        <run-test-server />
+    </target>
+
+    <target
+        name="stop-server"
+        depends="init"
+        description="Stops test server"
+    >
+        <stop-test-server />
+    </target>
+
+    <target
+        name="install-server"
+        depends="init"
+        description="Installs test server"
+    >
+        <install-test-server />
+    </target>
+
+    <target
+        name="clean-server"
+        depends="init"
+        description="Removes test server"
+    >
+        <clean-test-server />
+    </target>
+
+    <target
+        name="debug-on"
+        depends="init"
+        description="Turns debuggin on"
+    >
+        <debug-on />
+    </target>
+
+    <target
+        name="list"
+        depends="init"
+        description="Lists components"
+    >
+        <test-list />
+    </target>
+
+    <target
+        name="undeploy"
+        depends="init"
+        description="Undeploys project"
+    >
+        <test-undeploy ear="${jmsjca.xxx.ear.name}" />
+    </target>
+
+    <target
+        name="deploy"
+        depends="init, compile"
+        description="Deploys project"
+    >
+        <test-deploy ear="${jmsjca.xxx.ear.path}" />
+    </target>
+
+    <target
+        name="deploy-rar"
+        depends="init, compile"
+        description="Deploys project"
+    >
+        <test-deploy ear="${jmsjca.xxx.rar.rar.path}" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Patches the jar in the test server of RASTCMS
+-->
+    <target
+        name="patch-remote"
+        depends="sar"
+        if="lh"
+        description="Patches the jar in the test server of RASTCMS"        
+    >
+        <!--  Patch core -->
+        <copy
+            file="${jmsjca.core.jar.path}"
+            todir="${lh}/logicalhost/is/lib"
+        />
+
+        <!-- Delegate to sub modules -->    
+        <foreach list="${jcaids}" target="call-patch" param="jcaid" />
+    </target>
+
+    <target name="call-patch">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <echo message="Now calling patch-core with jcaid=${jcaid}, lh=${lh}" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="patch-core"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <property name="lh" value="${lh}" />
+        </ant>
+    </target>
+
+    <target
+        name="patch"
+        depends="sar"
+        description="Patches the test server with the latest jmsjca; set ${jcaids}"
+    >
+        <echo message="Stopping server..." />
+        <antcall target="stop-server"/>
+        <ant target="patch-core">
+            <property name="lh" value="${test.install.dir}" />
+        </ant>
+        <echo message="starting server..." />
+        <antcall target="run-server" />
+    </target>
+
+    <target
+        name="patch-core"
+        depends="sar"
+    >
+        <ant target="patch-remote">
+            <property name="lh" value="${test.install.dir}" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: compile-test: compiles the tests
+-->
+    <target
+        name="test-compile"
+        depends="compile-test"
+    >
+        <!-- Alias for compile-test -->
+    </target>
+	
+    <target
+        name="compile-test"
+        depends="init, compile"
+        description="compiles the tests"
+    >
+        <mkdir dir="${jmsjca.reports.junit.dir}" />        
+        <propertycopy name="testjcaids" from="testjcaids.${testcontainer.id}" />
+        <foreach list="${testjcaids}" target="call-compile-test" param="jcaid" 
+            inheritall="true" />                        
+        <property name="compile.ed" value="true" />        
+    </target>
+
+    <target name="call-compile-test">
+        <fail unless="jcaid" message="missing parm jcaid" />
+
+        <antcall target="compile-container" />
+        
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="compile-test"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <reference refid="${testcontainer.id}.container.classpath" 
+                torefid="container.classpath" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: install-jms-jars: install jms provider client jars 
+-->
+    <target
+        name="install-jms-jars"
+        depends="init"
+        description="Copy jms provider jars to rts test server"
+    >
+        <property name="testcontainer.id" value="rts" />                      
+        <propertycopy name="testjcaids" from="testjcaids.${testcontainer.id}" />                
+        <foreach list="${testjcaids}" target="call-install-jms-jars" param="jcaid" inheritall="true"/>
+    </target>
+
+    <target name="call-install-jms-jars" depends="init">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <!-- Set property file locations if not specified -->
+        <echo message="Invoking install jms jars for containerid=${testcontainer.id}, jcaid=${jcaid}"/>
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="install-jms-jars"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <property name="lh" value="${test.install.dir}" />            
+        </ant>
+    </target>
+
+    <target
+        name="uninstall-jms-jars"
+        depends="init"
+        description="Remove jms provider jars from rts test server"
+    >
+        <property name="testcontainer.id" value="rts" />                                
+        <propertycopy name="testjcaids" from="testjcaids.${testcontainer.id}" />        
+        <foreach list="${testjcaids}" target="call-uninstall-jms-jars" param="jcaid" inheritall="true"/>
+    </target>
+
+    <target name="call-uninstall-jms-jars" depends="init">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <!-- Set property file locations if not specified -->
+        <echo message="Invoking ininstall jms jars for containerid=${testcontainer.id}, jcaid=${jcaid}"/>
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="uninstall-jms-jars"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <property name="lh" value="${test.install.dir}" />            
+        </ant>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: run-test: executes the tests
+-->
+    <target
+        name="run-test"
+        depends="init, compile-test"
+    >
+        <mkdir dir="${jmsjca.reports.junit.dir}" />
+        <propertycopy name="testjcaids" from="testjcaids.${testcontainer.id}" />  
+        <propertycopy name="testcontainer.properties" from="testcontainer.properties.${testcontainer.id}" />          
+        <foreach list="${testjcaids}" target="call-run-test1" param="jcaid" inheritall="true"/>
+    </target>
+
+    <target name="call-run-test1" depends="init">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <!-- Set property file locations if not specified -->
+        <property name="testjmsserver.properties" value="${settings.path}" />        
+        <!-- property name="testcontainer.properties" value="${settings.path}" / -->
+        <echo message="Invoking test for containerid=${testcontainer.id}, jcaid=${jcaid}"/>
+        <echo message="testjmsserver.properties=${testjmsserver.properties}" />
+        <echo message="testcontainer.properties=${testcontainer.properties}" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="run-test"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <property name="testcontainer.id" value="${testcontainer.id}" />
+            <property name="testjmsserver.properties" value="${testjmsserver.properties}" />
+            <property name="testcontainer.properties" value="${testcontainer.properties}" />
+            <reference refid="${testcontainer.id}.container.classpath" 
+                torefid="container.classpath" />
+        </ant>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: report-test: generates a JUnit report
+-->
+    <target
+        name="report-test"
+        depends="init"
+        description="generate test report"
+    >
+        <junitreport todir="${jmsjca.reports.junit.dir}">
+            <fileset dir="${jmsjca.reports.junit.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${jmsjca.reports.junit.html.dir}" />
+        </junitreport>
+        
+        <!-- Upload the report -->
+        <antcall target="publish-test-results" />
+
+        <path id="jmsjca.junit.dir.display_x" location="${jmsjca.reports.junit.dir}\html\index.html" />
+        <pathconvert targetos="windows" property="jmsjca.junit.dir.display" refid="jmsjca.junit.dir.display_x" />
+        <echo message="type   start ${jmsjca.junit.dir.display}   to view the report" />
+    </target>
+    
+<!--===========================================================================
+    DEV-ONLY: Uploads the test results to the server
+-->
+    <target 
+        name="publish-test-results"
+        unless="nopublish"
+        depends="init"
+    >
+        <JUnitUpload file="${jmsjca.reports.junit.dir}/TESTS-TestSuites.xml" prefix="${testcontainer.id}" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: do-test: assumes that all test servers are running, executes the tests and
+    genreates a report.
+-->	
+    <target
+        name="do-test"
+        depends="init, compile-test"
+        description="executes tests and generates report, the test property can be specified as: -Dtestjcaids=stcms,stcms453,jndi,wmq,nsk,wave"
+    >
+        <delete dir="${jmsjca.reports.junit.dir}" />
+        <antcall target="run-test" />
+        <antcall target="report-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: view-report
+-->
+    <target
+        name="view-report"
+        depends="init"
+        description="views the junit report"
+    >
+        <exec executable="cmd.exe" spawn="true">
+            <arg line="/c start ${jmsjca.reports.junit.html.dir}/index.html" />
+        </exec>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Test
+-->
+    <target
+        name="test"
+        depends="init"
+        description="Starts test server"
+    >
+        <antcall target="compile-test" />
+        <antcall target="run-server" />
+        <antcall target="do-test" />
+        <antcall target="stop-server" />
+    </target>
+
+    <!--===========================================================================
+        DEV-ONLY: invokes a target in a build file for one of the jca adapters
+        Example usage: 
+            ant invoke -Djcaid=stcms -Djcatarget=do-loop -Dloop.duration.minutes=2
+    -->
+    <target
+        name="invoke"
+        depends="init"
+        description="Invokes a target ${jcatarget} for the platform specified with ${jcaid}"
+    >
+        <propertycopy name="testjcaids" from="testjcaids.${testcontainer.id}" />  
+        <propertycopy name="testcontainer.properties" from="testcontainer.properties.${testcontainer.id}" />          
+        <!-- Set property file locations if not specified -->
+        <property name="testjmsserver.properties" value="${settings.path}" />        
+        
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="${jcatarget}"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+            <property name="testcontainer.id" value="${testcontainer.id}" />
+            <property name="testjmsserver.properties" value="${testjmsserver.properties}" />
+            <property name="testcontainer.properties" value="${testcontainer.properties}" />
+            <reference refid="${testcontainer.id}.container.classpath" 
+                torefid="container.classpath" />
+        </ant>
+    </target>
+    
+    <!--===========================================================================
+        DEV-ONLY and STCMS only: turns security on/off
+    -->
+    <target
+        name="security-on"
+        depends="init"
+        description="Turns on STCMS file based security"
+    >
+        <ant
+            antfile="build-stcms.xml"
+            target="security-on"
+            inheritall="false"
+        />
+    </target>
+
+    <target
+        name="security-off"
+        depends="init"
+        description="Turns off STCMS security"
+    >
+        <ant
+            antfile="build-stcms.xml"
+            target="security-off"
+            inheritall="false"
+        />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: replace-headers: changes SeeBeyond headers to CDDL
+-->	
+    <target
+        name="replace-headers"
+        depends="compile"
+        description="DEV: updates copyright headers"
+    >
+        <java classname="com.stc.jmsjca.util.ReplaceHeaders">
+            <arg value="."/>
+            <classpath>
+                <pathelement location="${jmsjca.core.jar.path}" />
+            </classpath>
+        </java>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: replace-headers: changes SeeBeyond headers to CDDL
+-->	
+    <target
+        name="xy"
+        description="DEV: updates copyright headers"
+    >
+        <get 
+            src="https://maven-repository.dev.java.net/nonav/repository/javax.resource/jars/connector-api-1.5.jar" 
+            dest="jca.jar" 
+            verbose="true" 
+            usetimestamp="true" 
+        />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Stages all files for the Maven repository
+-->	
+    <target
+        name="maven-stage"
+        description="Prepares for publishing to a maven repository"
+        depends="init"
+        unless="maven-stage.ed"
+    >
+        <!-- Copy the source tree -->
+        <copy todir="${jmsjca.maven.work.dir}/src">
+            <fileset dir=".">
+                <exclude name="jboss/lib/**"/>
+                <exclude name="stcms453/lib/**"/>
+                <exclude name="wmq/lib/**"/>
+                <exclude name="wl/lib/**"/>
+                <exclude name="nsk/**"/>
+                <exclude name="sunone/test/lib/**"/>
+                <exclude name="sunone/lib/**"/>
+                <exclude name="jndi/test/lib/**"/>
+                <exclude name="core/test/lib/jdom.jar"/>
+                <exclude name="**/*.bak"/>
+            </fileset>
+        </copy>
+        
+        <!-- Replace headers -->
+        <java classname="com.stc.jmsjca.util.ReplaceHeaders">
+            <arg value="${jmsjca.maven.work.dir}/src"/>
+            <classpath>
+                <pathelement location="${jmsjca.core.jar.path}" />
+            </classpath>
+        </java>
+        
+        <!-- Zip up sources -->
+        <mkdir dir="${jmsjca.maven.artefacts.dir}/java-sources" />
+        <zip destfile="${jmsjca.maven.artefacts.dir}/java-sources/jmsjca-${jmsjca.maven.version}.zip" 
+            basedir="${jmsjca.maven.work.dir}/src"
+        />
+
+        <!-- Grab binaries -->
+        <ant
+            antfile="build-unifiedjms.xml"
+            target="maven-stage"
+            inheritall="false"
+        >
+            <property name="jcaid" value="unifiedjms" />
+        </ant>
+        
+        <property name="maven-stage.ed" value="true" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Publishes files to the Maven repository
+-->	
+    <target
+        name="maven-publish"
+        description="Publishes to the maven repository"
+        depends="maven-stage"
+    >
+        <!-- 
+        <copy todir="\\hermes\mavenrepository\com.stc.jmsjca">
+            <fileset dir="${jmsjca.maven.artefacts.dir}">
+            </fileset>
+        </copy>
+        -->
+
+        <!-- import to java.net CVS-->
+        <tstamp />
+        <echo>importing to CVS...</echo>
+        <cvs dest="${jmsjca.maven.staging.dir}">
+            <commandline>
+                 <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
+                 <argument line="-z9 import -ko -W *.jar -kb -m" />
+                 <argument value="deploying new jars to the java.net maven repository" />
+                 <argument value="jmsjca/repo" />
+                 <argument line="deployment-to-maven-repository t${DSTAMP}${TSTAMP}" />
+            </commandline>
+        </cvs>
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Syncs Maven cvs
+-->	
+    <target
+        name="maven-sync"
+        description="Publishes to the maven cvs"
+        depends="maven-stage"
+    >
+        <!-- import to java.net CVS-->
+        <tstamp />
+        <echo>importing to CVS...</echo>
+        <cvs dest="${jmsjca.maven.work.dir}/src">
+            <commandline>
+                 <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
+                 <argument line="-z9 import -m" />
+                 <argument value="syncing cvs to" />
+                 <argument value="code/jmsjca" />
+                 <argument line="sources t${DSTAMP}${TSTAMP}" />
+            </commandline>
+        </cvs>
+        <!-- workaround the name "core" which is ignored by default -->
+        <cvs dest="${jmsjca.maven.work.dir}/src/core">
+            <commandline>
+                 <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
+                 <argument line="-z9 import -I ! -I *.bak -I *.BAK -I CVS -I TAGS -m" />
+                 <argument value="syncing cvs to" />
+                 <argument value="code/jmsjca/core" />
+                 <argument line="sources t${DSTAMP}${TSTAMP}" />
+            </commandline>
+        </cvs>
+    </target>
+</project>

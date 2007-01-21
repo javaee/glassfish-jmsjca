@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Created-By: Manual
+Class-Path: jbossall-client.jar concurrent.jar jboss-client.jar jbossm
+ q-client.jar jnp-client.jar com.stc.jmsjca.rajboss.jar 

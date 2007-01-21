@@ -1,0 +1,398 @@
+<!doctype HTML 
+PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>JMSJCA</title>
+<!--<link rel="stylesheet" href="PrintFriendly_files/jspwiki.css"> -->
+<style>
+/***************************************************************
+ * Top-level style sheet.  Make general CSS changes here and
+ * use the browser/platform-specific CCS files for specific
+ * changes.
+ *
+ * Note: Do NOT specify fonts in points/pixel sizes.  Use
+ *       percentages only as this will ensure the browser gets
+ *       the option of using user-specified font sizes.  This
+ *       is important for those who have better or worse vision
+ *       than yourself.
+ **************************************************************/
+
+/* Set the normal page background color to white, the font color
+   to black, and use a sans serif font by default. */
+BODY
+  { background-color: #FFFFFF;
+    font-family:      geneva,helvetica,arial,"lucida sans",sans-serif;}
+
+/* Set the page background color to a light red/pink for the
+   Edit page to distinguish it from a "regular" page. */
+BODY.edit
+  { background-color: #D9E8FF; }
+
+
+/* Adjust the margins for headings. */
+/* H1, H2, H3, H4, H5, H6
+  { margin-top: 0px;
+    padding-top: 0px;
+    color:#000; }
+*/
+
+/* right arrow for left menu items */
+span.rightarrow{font-family:verdana,sans-serif}
+span.rightarrowblue{font-family:verdana,sans-serif;color:#899ce6}
+
+/* H1.pagename */
+/* H3.leftmenuheading */
+
+body, th, td, p, span, a, div, li, ul, ol
+  { font-size:10pt; }
+
+body, th, td, p
+  { color:#333; }
+
+code, kbd, tt, pre
+  { font-family: monaco,courier,"courier new";
+    font-size:10pt;
+    color:#666; }
+
+DT
+  { font-weight: bold;
+    padding-top: 5px; }
+
+/* List margin settings. */
+OL, UL
+  { margin-top: 0pt; }
+
+/* Make the horizontal rule fairly tight. */
+HR 
+  { color:#000; height:1px; }
+
+
+/* Make BR tags clear floating elements by default, but provide escapes.
+   for the left/right/none versions, specify an id="right", etc. on the
+   BR tag. */
+BR
+  { clear: left; }
+BR#left
+  { clear: left; }
+BR#right
+  { clear: right; }
+BR#none
+  { clear: none; }
+
+
+/* Currently unused? */
+IMG.inline {}
+
+
+/* Allow for a smaller font in some divisions.  Should this
+   just be a .small setting? */
+DIV.small { font-size: 70%; }
+
+/* Normal link colors (inside the main content view). */
+A         { text-decoration: none; }
+A:link    { color: #594fbf; }
+A:visited { color: #594fbf; }
+/* A:visited { color: #96C; } */
+A:hover   { text-decoration:underline;}
+
+/* NOTE: not clear if bordermenu a styles are necessary.
+
+/* The link colors for the LeftMenu (the DIV tag uses
+   "bordermenu" as it's class). */
+.bordermenu a         { text-decoration: none; }
+.bordermenu a:link    { color: #594fbf; }
+.bordermenu a:visited { color: #96C; }
+.bordermenu a:hover   { text-decoration:underline;}
+
+/* Footnotes. */
+A.footnoteref
+  { vertical-align: super; 
+    font-size: 70%; }
+A.footnote
+  { color: #0044AA; }
+
+/* You can alter these if needed -- if you really want more
+   control or different colors for the links, but keep in mind
+   they'll overwrite the above settings.  Plus you might want
+   to define the link/vistied/active/hover settings, too.  */
+A.wikipage  { } /* Normal, internal wiki reference */
+A.external  { } /* External reference */
+A.interwiki { } /* Interwiki reference */
+
+
+/* Our standard table options. */
+TABLE.wikitable
+  {
+   border-collapse: collapse;
+   empty-cells: show;
+   margin: 1em;
+   color: #515D65;
+   background-color: white;
+   border: 1px solid #515D65;
+   font-size: small;
+  }
+    
+TABLE.wikitable * TD
+  { padding:    1ex;
+    text-align: left; }
+
+TABLE.wikitable * TH
+  { padding:    1ex;
+    background-color: #dddddd;
+    text-align: left; }
+                                                                            
+/* This is the "header" table cell where the page's title
+   appears.  We want it bigger and to show up against the
+   background. */
+TD.header
+  { color:         #ffffff;
+    font-size:     180%;
+    margin-bottom: 0; }
+
+TD.controls { text-align: right; font-size: 75%; font-style: italic; }
+
+/* Change colors/fonts when looking at differences between
+   the page versions. */
+TD.diffadd
+  { background:  #99FF99; 
+    font-family: monospace; }
+TD.diffrem
+  { background:  #FF9933; 
+    font-family: monospace; }
+TD.diff
+  { background:  #FFFFFF; 
+    font-family: monospace; }
+
+/* For the CalendarTag */
+TABLE.calendar
+  { font-size: 80%; }
+TABLE.calendar TD
+  { text-align: center; }
+TABLE.calendar TD.othermonth
+  { color: #707070; }
+TABLE.calendar TD.link
+  { background: #E0E0E0; }
+TABLE.calendar TR.month
+  { font-size:   120%;
+    font-family: sans-serif; }
+TABLE.calendar TR.weekdays
+  { font-color: #FF0000; }
+
+/* For the ListLocksPlugin */
+/* TABLE.listlocksplugin { empty-cells: show; }
+TABLE.listlocksplugin * TD { padding: 4; text-align: left; }
+TABLE.listlocksplugin * TH { padding: 4; text-align: left; } */
+
+/* Not used now? */
+TD.leftmenu
+ { vertical-align: top;
+  background-color: #efefef;}
+
+TD.page {
+	border: 1px black;
+	padding: 5pt
+}
+
+/* This is the Edit.jsp editor style. */
+TEXTAREA.editor {}
+
+
+/* These were originally on the <P> tag, but I made it more
+   general.  They are used to highlight and offset important
+   messages displayed in the page. */
+.locknote, .versionnote
+  { color: red;
+    font-size: 130%;
+    text-align: center; 
+    background: #EAEAEA;
+    padding: 12px 12px 12px 12px; }
+
+/* How the "This is a preview" comment should be shown. */
+.previewnote
+  { color:      red;
+    font-size:  150%;
+    text-align: center; }
+
+/* How the preview content and system messages (from
+   DisplayMessage.jsp) should be shown. */
+.previewcontent, .messagecontent
+  { background: #E0E0E0; }
+
+/* How the "This page has been modified..." comment should
+   be shown. */
+.conflictnote { }
+
+/* This setting effects the background color in the table
+   cells for the top and left border. */
+.border { background: #003366; }
+
+/* Make sure the DIV tag surrounding the LeftMenu changes
+   the text color to white (or some other color) to make it
+   visible against the darker border color. */
+.border DIV
+  { color: #ffffff; }
+
+/* For the BreadcrumbsTag */
+.history
+  { font-size: 70%; }
+
+/* For the left-menu footer (or any "footer"). */
+.footer { font-size: 75%; }
+
+/* For the weblog plugin */
+.weblog { margin-left: 20px; }
+.weblogentry { font-family: sans-serif; font-size:   85%; margin-left: 10px; }
+.weblogentryheading { background: #E0E0E0; font-size: 120%; font-family: sans-serif; margin-top: 3ex; }
+.weblogentrybody { font-family: sans-serif; font-size: 85%; margin-left: 10px; margin-top: 1ex; }
+.weblogentryfooter { font-size: 9px; margin-left: 10px; clear: both; margin-top: 1ex;}
+.weblogpermalink { font-size:   8px; margin-left: 10px; }
+
+
+/* For the BreadcrumbsTag */
+/* No longer used?  .breadcrumbs { font-size: 60%; } */
+
+/* For the search_highlight.js.  This style defines the how the words that have
+   been found look like.  If you look for "thingy", you will get these following
+   in the results.
+
+   <span class="searchword">thingy</span>
+ */
+.searchword { background-color: #FFFF00; }
+
+/*  Here's a nice style you can use to put comment boxes on pages.  It's used
+    on some pages. */
+
+div.commentbox {
+   float:right;
+   width: 20%;
+   border-style: inset;
+   background: #f0f0f0;
+   font-size: 80%;
+   padding: 4px;
+   margin-left: 4px;
+}
+
+.commentbox ul, ol {
+   padding-left: 1em;
+   margin-left: 4px;
+}
+
+/*  To make centering easier */
+
+.center { 
+    text-align: center;
+}
+
+.center table { 
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+/* Added by Yogesh Patel: Sun  */
+
+.red {
+  color: red;
+}
+.green {
+  color: green;
+}
+.orange {
+  color: orange;
+}
+
+div.calendar { background-color: #f0f0f0; 
+               font-family: monospace; font-size: 
+               xx-small; 
+               font-weight: normal; }
+div.calendartitle       { background-color: #e0e0e0; }
+div.calendar a          { font-weight: lighter; }
+div.calendar a.today    { color: #000000; }
+div.calendar a.selected { color: #ffffff; background-color: #a04020; }
+div.calendar a.exists   { color: #000000; background-color: #d0b0a0; }
+div.calendarentry       { border: 1px solid #a0a0a0; padding: 4px; }
+div.calendarentryheader { background-color: #e0e0e0; }
+div.calendarentryfooter { background-color: #f0f0f0; }
+
+h1, h1 span, h1 a
+  { font-size:18pt; border-bottom: 1px solid #cccccc; padding-bottom: 5px; }
+
+h2, h2 span, h2 a
+  { font-size:18pt; font-weight: normal; border-bottom: 1px solid #cccccc; padding-bottom: 5px; }
+
+h3, h3 span, h3 a
+  { font-size:14pt; font-weight: lighter; border-bottom: 1px solid #cccccc; padding-bottom: 5px; }
+
+h4, h4 span, h4 a
+  { font-size:12pt; font-weight: lighter; }
+
+h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, big a
+  { font-size: 11pt; font-weight: lighter; }
+
+</style>
+</head>
+
+<body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
+marginheight="12" marginwidth="12">
+
+<hr>
+<h2><a name="section-test-WhatIsRAWL">What is RAWL?</a></h2>
+<p>RAWL is the connector for WebLogic JMS version 9.0 </p>
+<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
+<p>The connector for RAWL is shipped as <tt>rawl.rar</tt>. It does NOT include 
+the client runtime. </p>
+<h2><a name="section-test-UsageNotes">Usage notes</a></h2>
+<ul>
+  <li>The URL is identical to the WebLogic URL plus a query string. The query 
+  string uses the following parameters:
+  <ul>
+    <li><tt>xacf</tt>=<name>. Here
+    <name>is the JNDI name of the XA connection factory. It defaults to <tt>
+    weblogic.jms.XAConnectionFactory</tt>. This connection factory is used both 
+    for XA and non XA (eventhough XA is emulated) </name>
+    </name>
+    </li>
+    <li><tt>prefix</tt>=<name>. This is the prefix used for looking up 
+    destinations. Example: <tt>t3://blue:7001?xacf=myxa&amp;prefix=jms/destinations</tt>. 
+    The query string can also include parameters for JMSJCA. </name>
+    </li>
+  </ul>
+  </li>
+  <li>Before deploying the connector, add the following jars to the classpath 
+  suffix:
+  <ul>
+    <li><tt>wlclient.jar</tt> </li>
+    <li><tt>wljmsclient.jar</tt> </li>
+  </ul>
+  </li>
+  <li><tt>createQueue(name)</tt> will do the following: lookup <tt>prefix/name</tt> 
+  in JNDI using the context pointing to the WebLogic server. The <tt>prefix</tt> 
+  parameter is configurable. The destinations are cached after the lookup so 
+  that subsequent lookups of the same destination are very fast. </li>
+  <li>The activation spec uses the same convention of <tt>lookup(prefix/name)</tt>.
+  </li>
+  <li>WL9 does not support XA on the client side. Hence, XA is emulated (pseudo 
+  XA). Pseudo XA supports <tt>commit()</tt> and <tt>rollback()</tt>, but does 
+  not support <tt>prepare()</tt> (a no-op) and does not support <tt>recover()</tt>. 
+  This limits the reliability. It uses the LastAgentResource facility in the 
+  Java CAPS Integration Server to increase the reliability. </li>
+  <li>WL9 does not support Connection Consumer mode outside of the WebLogic 
+  server; <tt>sync</tt> mode is used instead of Connection Consumer. This 
+  implies that concurrent processing is not supported for topics. </li>
+  <li>JNDI lookup relies on CORBA. This is supported in the Java CAPS 
+  application server, but not in the Sun Java System Application Server 8.1.
+  </li>
+</ul>
+<p></p>
+<hr>
+<div class="footer">
+</div>
+<p><br>
+</p>
+
+</body>
+
+</html>
