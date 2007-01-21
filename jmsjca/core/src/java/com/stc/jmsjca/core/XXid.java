@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: XXid.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:54:17 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -39,7 +39,7 @@ import javax.transaction.xa.Xid;
  * Copied from STCMS
  *
  * @author JMS Team
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public final class XXid implements Xid, Serializable {
     static byte[] ipAddress;
@@ -98,6 +98,20 @@ public final class XXid implements Xid, Serializable {
      */
     public byte[] getGlobalTransactionId() {
         return globalTransactionId;
+    }
+    
+    /**
+     * Converts a byte array to a hex string
+     * 
+     * @param arr byte array
+     * @return String
+     */
+    public static String toHex(byte[] arr) {
+        StringBuffer ret = new StringBuffer(arr.length * 2);
+        for (int i = 0; i < arr.length; i++) {
+            ret.append(hexChar(arr[i]));
+        }
+        return ret.toString();
     }
 
     /**

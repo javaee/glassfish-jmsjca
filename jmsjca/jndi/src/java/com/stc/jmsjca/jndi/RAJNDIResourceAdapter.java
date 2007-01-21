@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: RAJNDIResourceAdapter.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:28:53 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:11 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -37,7 +37,7 @@ import com.stc.jmsjca.util.Str;
  * is required to be a JavaBean</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class RAJNDIResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
 //    private static Logger sLog = Logger.getLogger(RAJNDIResourceAdapter.class);

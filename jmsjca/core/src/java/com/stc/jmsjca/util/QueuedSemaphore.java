@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: QueuedSemaphore.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:48:00 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:44 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -49,7 +49,7 @@ package com.stc.jmsjca.util;
  * href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">
  * Introduction to this package. </a>]
  * 
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  * @author Doug Lea
  */
 public abstract class QueuedSemaphore extends Semaphore {

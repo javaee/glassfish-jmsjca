@@ -19,8 +19,8 @@
  */
 /*
  * $RCSfile: RAUnifiedActivationSpec.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-19 22:28:54 $
+ * $Revision: 1.1.1.2 $
+ * $Date: 2007-01-21 07:52:12 $
  *
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
  */
@@ -32,7 +32,7 @@ import com.stc.jmsjca.core.RAJMSActivationSpec;
 /**
  * Encapsulates the configuration of a MessageEndpoint.
  *
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  * @author misc
  */
 public class RAUnifiedActivationSpec extends RAJMSActivationSpec {

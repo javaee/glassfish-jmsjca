@@ -15,9 +15,6 @@
   - jcaid
 
 -->
-    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-    <import file="../RTS/public-test.xml" />
-    <import file="../RTS/public-build.xml" />
 
 <!--===========================================================================
     Initializes variables etc
