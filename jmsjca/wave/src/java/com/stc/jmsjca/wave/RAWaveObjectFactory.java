@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RAWaveObjectFactory.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:52:22 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.wave;
@@ -55,7 +44,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -101,6 +90,8 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
     public static final String WAVECONTAINERMBEAN 
     = "com.sun.appserv:type=messaging-server-admin-mbean,jmsservertype=wave,name=JMS_Grid_IQ_Manager";
     
+    private static Localizer LOCALE = Localizer.get();
+    
     /**
      * Creates a provider specific UrlParser
      * 
@@ -141,11 +132,11 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 "getClientID", new Class[] {}).invoke(defaultConnection, new Object[] {}); 
             if (clientID != null && clientID.trim().length() > 0) {
                 if (clientID.startsWith("ID:")) {
-                    sLog.info(" not closing cleaned up connection with clientID set to "
+                    sLog.debug(" not closing cleaned up connection with clientID set to "
                         + clientID);
 
                 } else {
-                    sLog.info("closing cleaned up connection with clientID set to "
+                    sLog.debug("closing cleaned up connection with clientID set to "
                         + clientID);
 
                     if (sLog.isDebugEnabled()) {
@@ -157,7 +148,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 }
             }
         } catch (Exception e) {
-            sLog.error("error in clean up: " + e, e);
+            sLog.error(LOCALE.x("E901: Error in clean up: {0}", e), e);
         }
     }
     
@@ -182,7 +173,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 "isClosed", new Class[] {}).invoke(defaultConnection, new Object[] {}); 
             isInvalid = isClosed.booleanValue();
         } catch (Exception e) {
-            sLog.error("Error in isInvalid: " + e, e);
+            sLog.warn(LOCALE.x("E900: Error in isInvalid: {0}", e), e);
         }
         return isInvalid;
     }
@@ -326,7 +317,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 new Class[] {Properties.class}).newInstance(
                     new Object[] {profileprops});
         } catch (Exception e) {
-            throw Exc.jmsExc("Failed to instantiate connection factory: " + e, e);
+            throw Exc.jmsExc(LOCALE.x("E902: Failed to instantiate connection factory: {0}", e), e);
         }
     }
     
@@ -444,9 +435,8 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                     // clientID in resource adaptor matches existing value - fine
                 } else {
                     // resource adaptor defines a different client ID than connection: ignore it and give a warning
-                    sLog.warn("ClientID is already set to [" + currentClientId
-                        + "]; cannot set to [" + resourceAdaptorClientID + suffix
-                        + "] as required in " + "resource adaptor"); 
+                    sLog.warn(LOCALE.x("E903: ClientID is already set to [{0}]; cannot set to [{1}]"
+                        + " as required in resource adaptor", currentClientId, resourceAdaptorClientID + suffix)); 
                 }
             }
         }
@@ -512,7 +502,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
     throws JMSException {
         Object ret = null;
     
-        sLog.info("At start of getServerMgtMBean");
+        sLog.debug("At start of getServerMgtMBean");
         
         /** ------------------------------------------------------------- **/
         // at the time of writing this option is not available as the IS 
@@ -548,7 +538,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
         // option (3) create a new MBean 
         if (ret == null) {
             // Determine URL -> connection properties
-            sLog.info("getServerMgtMBean - using option 3");
+            sLog.debug("getServerMgtMBean - using option 3");
             Properties p = new Properties();
             ConnectionUrl url = getProperties(p, ra, spec, null, null);
             validateAndAdjustURL(url);
@@ -602,8 +592,8 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 method.invoke(waveMBean, args);
                 ret = waveMBean;
             } catch (Exception e) {
-                throw Exc.jmsExc("Error instantiating or configuring MBean for "
-                    + "external JMS Grid daemon management: " + e, e);
+                throw Exc.jmsExc(LOCALE.x("E904: Error instantiating or configuring MBean for "
+                    + "external JMS Grid daemon management: {0}", e), e);
             }
         }
         

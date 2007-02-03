@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: TestMessageBean.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:59 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.test.core;
@@ -77,7 +66,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -93,7 +82,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
      * Default constructor. Creates a bean. Required by EJB spec.
      */
     public TestMessageBean() {
-        sLog.info("MDB constructor");
+        sLog.infoNoloc("MDB constructor");
     }
 
     /**
@@ -101,7 +90,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
      * @param mdc the message-driven-bean context.
      */
     public void setMessageDrivenContext(MessageDrivenContext mdc) {
-        sLog.info("In SimpleMessageBean.setMessageDrivenContext()");
+        sLog.infoNoloc("In SimpleMessageBean.setMessageDrivenContext()");
         this.mMdc = mdc;
     }
 
@@ -109,11 +98,11 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
      * Creates a bean. Required by EJB spec.
      */
     public void ejbCreate() {
-        sLog.info("In SimpleMessageBean.ejbCreate()");
+        sLog.infoNoloc("In SimpleMessageBean.ejbCreate()");
         try {
             mCtx = new InitialContext();
         } catch (NamingException ex) {
-            sLog.fatal(ex, ex);
+            sLog.fatalNoloc(ex.getMessage(), ex);
         }
     }
 
@@ -121,7 +110,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
      * Removes the bean. Required by EJB spec.
      */
     public void ejbRemove() {
-        sLog.info("In SimpleMessageBean.remove()");
+        sLog.infoNoloc("In SimpleMessageBean.remove()");
     }
 
 //    private void logEnv(String path) {
@@ -139,7 +128,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 //
 //            }
 //        } catch (NamingException ex) {
-//            sLog.error("LogEnv failure: " + ex, ex);
+//            sLog.errorNoloc("LogEnv failure: " + ex, ex);
 //        }
 //    }
 
@@ -181,10 +170,10 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
     private void checkInit() {
         if (!mInited) {
-            sLog.info(jndiTree(""));
-            sLog.info(jndiTree("java:"));
-            sLog.info(jndiTree("java:comp"));
-            sLog.info(jndiTree("java:comp/env"));
+            sLog.infoNoloc(jndiTree(""));
+            sLog.infoNoloc(jndiTree("java:"));
+            sLog.infoNoloc(jndiTree("java:comp"));
+            sLog.infoNoloc(jndiTree("java:comp/env"));
             mInited = true;
         }
     }
@@ -208,9 +197,9 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 sLog.debug("Looking up function name " + fname + " (will set context)");
             }
             try {
-                sContextEnter.info(fname);
+                sContextEnter.infoNoloc(fname);
                 if (!mInited) {
-                    sLog.info("First call on method " + fname + " for this MDB");
+                    sLog.infoNoloc("First call on method " + fname + " for this MDB");
                     checkInit();
                     mInited = true;
                 }
@@ -227,14 +216,14 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Function " + fname + " called; no exc. thrown");
                 }
             } finally {
-                sContextExit.info(fname);
+                sContextExit.infoNoloc(fname);
             }
         } catch (IntentionalException e) {
             // don't log
             throw new EJBException(
                 "Intentional exception is being rethrown: " + e, e);
         } catch (Exception e) {
-            sLog.error(".onMessage() encountered an exception: " + e, e);
+            sLog.errorNoloc(".onMessage() encountered an exception: " + e, e);
             throw new EJBException(
                 "SimpleMessageBean.onMessage() encountered an exception: " + e, e);
         }
@@ -257,7 +246,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             QueueSender prod = s.createSender(dest);
             prod.send(message);
         } catch (Exception e) {
-            sLog.error("testPerf1 failure: " + e, e);
+            sLog.errorNoloc("testPerf1 failure: " + e, e);
             throw new EJBException("Failed: " + e, e);
         } finally {
             if (conn != null) {
@@ -297,7 +286,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Msg sent to " + dest.getQueueName());
                 }
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 if (conn != null) {
                     try {
@@ -314,7 +303,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 }
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -337,7 +326,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 QueueSender prod = s.createSender(dest);
                 prod.send(message);
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 if (conn != null) {
                     try {
@@ -347,7 +336,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 }
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -375,12 +364,12 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Msg sent to " + dest.getQueueName());
                 }
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 safeClose(conn);
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -416,12 +405,12 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Msg sent to " + dest.getQueueName());
                 }
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 safeClose(conn);
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -448,7 +437,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Msg sent to " + dest.getTopicName());
                 }
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 if (conn != null) {
                     try {
@@ -458,7 +447,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 }
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -485,7 +474,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Msg sent to " + dest.getQueueName());
                 }
             } catch (Exception ex) {
-                sLog.error("XYZ failure: " + ex, ex);
+                sLog.errorNoloc("XYZ failure: " + ex, ex);
             } finally {
                 if (conn != null) {
                     try {
@@ -495,7 +484,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 }
             }
         } catch (Exception e) {
-            sLog.error("Failed: " + e, e);
+            sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
         }
     }
@@ -853,7 +842,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             Queue dest = s.createQueue("Queue2");
             QueueSender prod = s.createSender(dest);
             
-            sLog.info("Processing msg [" + ((TextMessage) message).getText() + "]");
+            sLog.infoNoloc("Processing msg [" + ((TextMessage) message).getText() + "]");
 
             Thread.sleep(100);
 
@@ -882,7 +871,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             Queue dest = s.createQueue("Queue2");
             QueueSender prod = s.createSender(dest);
             
-            sLog.info("Processing msg [" + ((TextMessage) message).getText() + "]");
+            sLog.infoNoloc("Processing msg [" + ((TextMessage) message).getText() + "]");
 
             if (shouldThrow()) {
                 Thread.sleep(100);
@@ -946,7 +935,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 .lookup("java:comp/env/queuefact");
 
             if (shouldThrow()) {
-                sLog.info("WILL NOW THROW INTENTIONAL EXCEPTION");
+                sLog.infoNoloc("WILL NOW THROW INTENTIONAL EXCEPTION");
                 throw new IntentionalException("Random exception to force rollback");
             }
 
@@ -970,7 +959,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     public void reconnectOutXA(javax.jms.Message message) throws Exception {
         QueueConnection conn = null;
         try {
-            sLog.info("Message received " + ((TextMessage) message).getText());
+            sLog.infoNoloc("Message received " + ((TextMessage) message).getText());
 
             QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
                 .lookup("java:comp/env/queuefact");
@@ -983,7 +972,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             
             prod.send(message);
             
-            sLog.info("Message [" + ((TextMessage) message).getText() + "] sent (but not committed)");
+            sLog.infoNoloc("Message [" + ((TextMessage) message).getText() + "] sent (but not committed)");
         } catch (JMSException e) {
             // Expected
             throw e;
@@ -1028,7 +1017,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     public void reconnectOutNoTx(javax.jms.Message message) throws Exception {
         QueueConnection conn = null;
         try {
-//            sLog.info("Message received " + ((TextMessage) message).getText());
+//            sLog.infoNoloc("Message received " + ((TextMessage) message).getText());
 
             // Sleep to avoid spinning too fast when the connection is failing and 
             // is waiting for the 5 sec timeout check
@@ -1044,7 +1033,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             
             prod.send(message);
 
-//            sLog.info("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
+//            sLog.infoNoloc("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
         } catch (JMSException e) {
             // Expected
             throw e;
@@ -1060,7 +1049,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     public void reconnectOutLocalTxBMTLateEnlistment(javax.jms.Message message) throws Exception {
         QueueConnection conn = null;
         try {
-//            sLog.info("Message received " + ((TextMessage) message).getText());
+//            sLog.infoNoloc("Message received " + ((TextMessage) message).getText());
 
             QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
                 .lookup("java:comp/env/queuefact");
@@ -1077,7 +1066,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
             mMdc.getUserTransaction().commit();
 
-//            sLog.info("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
+//            sLog.infoNoloc("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
         } catch (JMSException e) {
             // Expected
             throw e;
@@ -1093,7 +1082,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     public void reconnectOutLocalTxBMTEarlyEnlistment(javax.jms.Message message) throws Exception {
         QueueConnection conn = null;
         try {
-            sLog.info("Message received " + ((TextMessage) message).getText());
+            sLog.infoNoloc("Message received " + ((TextMessage) message).getText());
 
             // Enlist; this will likely cause an exception on reused connections
             mMdc.getUserTransaction().begin();
@@ -1110,7 +1099,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
             mMdc.getUserTransaction().commit();
 
-            sLog.info("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
+            sLog.infoNoloc("Message [" + ((TextMessage) message).getText() + "] sent (and committed)");
         } catch (JMSException e) {
             // Expected
             throw e;
@@ -1128,7 +1117,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 //            Object ret = m2.invoke(theswitch, new Object[0]);
 //            return (TransactionManager) ret;
 //        } catch (Exception e) {
-//            sLog.fatal("txmgr not found: " + e, e);
+//            sLog.fatalNoloc("txmgr not found: " + e, e);
 //            return null;
 //        }
 //    }
@@ -1341,7 +1330,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 prod.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1398,7 +1387,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             try {
                 tempdest.delete();
             } catch (JMSException unexpected) {
-                sLog.error("Unexpected: " + unexpected, unexpected);
+                sLog.errorNoloc("Unexpected: " + unexpected, unexpected);
                 message = null;
             }
             
@@ -1412,7 +1401,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 prod.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1461,7 +1450,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             try {
                 tempdest.delete();
             } catch (JMSException unexpected) {
-                sLog.error("Unexpected: " + unexpected, unexpected);
+                sLog.errorNoloc("Unexpected: " + unexpected, unexpected);
                 message = null;
             }
             
@@ -1476,7 +1465,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 s.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1538,7 +1527,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 s.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1617,7 +1606,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 s.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1695,7 +1684,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 s.close();
             }
         } catch (Exception e) {
-            sLog.error("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -2017,7 +2006,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                                         sMsgList.remove(0);
                                     }
                                 } catch (Exception e) {
-                                    sLog.fatal("Unexpected: " + e, e);
+                                    sLog.fatalNoloc("Unexpected: " + e, e);
                                 }
                             }
                         }
@@ -2112,7 +2101,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                         try {
                             message.acknowledge();
                         } catch (JMSException e) {
-                            sLog.fatal("ack exception " + e, e);
+                            sLog.fatalNoloc("ack exception " + e, e);
                         }
                     }
                 }.start();
@@ -2165,7 +2154,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                             }
                             message.acknowledge();
                         } catch (JMSException e) {
-                            sLog.fatal("ack exception " + e, e);
+                            sLog.fatalNoloc("ack exception " + e, e);
                         }
                     }
                 }.start();
@@ -2214,7 +2203,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                         try {
                             message.acknowledge();
                         } catch (JMSException e) {
-                            sLog.fatal("ack exception " + e, e);
+                            sLog.fatalNoloc("ack exception " + e, e);
                         }
                     }
                 }.start();
@@ -2272,7 +2261,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                             }
                             message.acknowledge();
                         } catch (JMSException e) {
-                            sLog.fatal("ack exception " + e, e);
+                            sLog.fatalNoloc("ack exception " + e, e);
                         }
                     }
                 }.start();

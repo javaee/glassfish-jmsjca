@@ -1,32 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: JConnection.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:40 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.NoProxyWrapper;
@@ -61,7 +51,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);
@@ -74,6 +64,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     private List mSessions = new ArrayList(); // type: WSession
     private String mClientID;
     private List mTemporaryDestinations = new ArrayList(); // type: temporary destination
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -147,8 +139,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
 
             return w;
         } catch (ResourceException ex) {
-            throw Exc.jmsExc("Could not create session " + sessionClass.getName() + ": "
-                + ex.getMessage(), ex);
+            throw Exc.jmsExc(LOCALE.x("E034: Could not create session {0}: {1}", 
+                sessionClass.getName(), ex), ex);
         }
     }
     
@@ -175,9 +167,10 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     public void removeTemporaryDestination(Destination dest) {
         boolean removed = mTemporaryDestinations.remove(dest);
         if (!removed) {
-            sLog.warn("Unexpected: .delete() was called on a temporary destination that "
+            sLog.warn(LOCALE.x("E035: Unexpected: ''.delete()'' was called on a "
+                + "temporary destination that "
                 + "was not known to the connection. Perhaps the temporary destination was "
-                + "already deleted. The temp destination is: [" + dest + "]");
+                + "already deleted. The temporary destination is: [{0}]", dest));
         }
     }
     
@@ -198,7 +191,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
                 }
             });
         } catch (Exception e) {
-            sLog.warn("Cannot defer deletion of temporary destinations: " + e, e);
+            sLog.warn(LOCALE.x("E036: Could not defer deletion of temporary destinations: {0}", e), e);
         }
     }
 
@@ -229,7 +222,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
                     ((TemporaryTopic) dest).delete();
                 }
             } catch (JMSException e) {
-                sLog.warn("Temporary destination " + dest + " could not be deleted: " + e, e);
+                sLog.warn(LOCALE.x("E037: Temporary destination {0} could not be " 
+                    + "deleted: {1}", dest, e), e);
             }
         }
         mTemporaryDestinations.clear();

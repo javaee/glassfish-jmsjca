@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RAUnifiedResourceAdapter.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:52:20 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.unifiedjms;
@@ -38,12 +27,13 @@ import java.util.Map;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  * @author misc
  */
 public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
     private static Logger sLog = Logger.getLogger(RAUnifiedResourceAdapter.class);
     private Map mObjFactories = Collections.synchronizedMap(new HashMap()); // key: urlstr; value=objfactory
+    private static Localizer LOCALE = Localizer.get();
     
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
@@ -77,7 +67,8 @@ public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceA
                     return o;
                 }
             } catch (Exception e) {
-                sLog.warn("Error while matching URL [" + url + "] with classname [" + classnames[i] + "]: " + e, e);
+                sLog.warn(LOCALE.x("E700: Error while matching URL [{0}] with " 
+                    + "classname [{1}]: {2}", url, classnames[i], e), e);
             }
         }
         throw new RuntimeException("The url [" + url + "] cannot be matched with a JMS provider");

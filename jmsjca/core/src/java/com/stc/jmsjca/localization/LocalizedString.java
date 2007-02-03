@@ -22,7 +22,7 @@ package com.stc.jmsjca.localization;
  * force the caller to make a localized string.
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.2 $
  */
 public class LocalizedString {
     private String mString;

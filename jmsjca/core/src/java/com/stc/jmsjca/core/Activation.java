@@ -1,32 +1,23 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: Activation.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:38 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -81,7 +72,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class Activation {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -98,6 +89,8 @@ public class Activation {
     private ObjectName mServerMgtMBeanName;
     private int mDeliveryMode;
     private String mName;
+
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * All states in string format (for diagnostics)
@@ -200,9 +193,9 @@ public class Activation {
                 Class[] paramTypes = {javax.jms.Message.class };
                 mOnMessageMethod = msgListenerClass.getMethod("onMessage", paramTypes);
             } catch (NoSuchMethodException ex) {
-                sLog.fatal(mName + ": could not locate onMessage() function: " + ex, ex);
-                throw new RuntimeException(
-                    "Could not locate onMessage() function: " + ex, ex);
+                LocalizedString msg = LOCALE.x("F002: {0}: could not locate onMessage() function: {1}", mName, ex);
+                sLog.fatal(msg, ex);
+                throw new RuntimeException(msg.toString(), ex);
             }
 
             // Determine if XA, topic, and cache, support Non-XA
@@ -376,8 +369,8 @@ public class Activation {
                         mLock.wait();
                     }
                 } catch (InterruptedException e) {
-                    sLog.warn(mName + ": stop() operation was interrupted; state is now " 
-                        + STATES[mState]);
+                    sLog.warn(LOCALE.x("E011: {0}: stop() operation was " +
+                            "interrupted; state is now {1}", mName, STATES[mState]));
                     return;
                 }
             }
@@ -407,19 +400,17 @@ public class Activation {
     private void internalDistress(Exception ex) {
         synchronized (mLock) {
             if (mState == DISCONNECTED) {
-                sLog.warn(mName + ": inconsistency error: the following exception was encountered "
-                    + "while the connector is in DISCONNECTED mode: " + ex, ex);
+                sLog.warn(LOCALE.x("E012: {0}: inconsistency error: the following exception was encountered "
+                    + "while the connector is in DISCONNECTED mode: {1}", mName, ex), ex);
                 return;
             } else if (mState == CONNECTING) {
-                sLog.warn(mName + ": the following exception was encountered while initiating or "
-                    + "during message delivery: [" + ex
-                    + "]; adapter is already in reconnect mode.", ex);
+                sLog.warn(LOCALE.x("E013: {0}: the following exception was encountered while initiating or "
+                    + "during message delivery: [{1}]; adapter is already in reconnect mode.", mName, ex), ex);
                 return;
             } else if (mState == CONNECTED) {
-                sLog.warn(mName + ": the following exception was encountered while initiating or "
-                    + "during message delivery: [" + ex
-                    + "]; attempts will be made to (re-)start message delivery "
-                    + "(auto reconnect mode).", ex);
+                sLog.warn(LOCALE.x("E014: {0}: the following exception was encountered while initiating or "
+                    + "during message delivery: [{1}]; attempts will be made to (re-)start message delivery "
+                    + "(auto reconnect mode).", mName, ex), ex);
                 setState(DISCONNECTING);
                 // Asynchronously stop and start
                 new Thread(new Runnable() {
@@ -473,15 +464,16 @@ public class Activation {
                 try {
                     mDelivery = getObjectFactory().createDelivery(mDeliveryMode, this, mStats);
                     mDelivery.start();
-                    sLog.info(mName + ": message delivery initiation was successful.");
+                    sLog.info(LOCALE.x("E015: {0}: message delivery initiation was successful.", mName));
                     setState(CONNECTED);
                     break;
                 } catch (Exception e) {
                     mDelivery = null;
                     int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
-                    sLog.warn(mName + ": message delivery initiation failed (attempt #" + (attempt  + 1) 
-                        + "); will retry in " + dt
-                        + " seconds. The error was: " + e);
+                    sLog.warn(LOCALE.x("E016: {0}: message delivery initiation failed " +
+                            "(attempt #{1}); will retry in {2} seconds. " +
+                            "The error was: {3}", 
+                            mName, Integer.toString(attempt  + 1), Integer.toString(dt), e), e);
                     tryAgainAt = System.currentTimeMillis() + dt * 1000;
                     attempt++;
                 }
@@ -500,7 +492,7 @@ public class Activation {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                sLog.info(mName + ": message delivery initiation attempt was interrupted");
+                sLog.info(LOCALE.x("E017: {0}: message delivery initiation attempt was interrupted", mName));
                 break;
             }
         }
@@ -530,12 +522,13 @@ public class Activation {
         try {
             internalStop();
         } catch (RuntimeException e) {
-            sLog.warn("Unexpected exception in endpoint deactivation: " + e, e);
+            sLog.warn(LOCALE.x("E018: Unexpected exception in endpoint deactivation: {0}", e), e);
         }
         try {
             killMBean();
         } catch (RuntimeException e) {
-            sLog.warn("Unexpected exception in endpoint deactivation: " + e, e);
+            sLog.warn(LOCALE.x("E019: Unexpected exception in undeploying MBean " 
+                + "during endpoint deactivation: {0}", e), e);
         }
     }
     
@@ -613,7 +606,7 @@ public class Activation {
             try {
                 getRA().getMBeanServer().unregisterMBean(mServerMgtMBeanName);
             } catch (Exception e) {
-                sLog.warn(mName + ": exception on unregistering server mbean: " + e, e);
+                sLog.warn(LOCALE.x("E020: {0}: exception on unregistering server MBean: {1}", mName, e), e);
             }
             mServerMgtMBeanName = null;
         }

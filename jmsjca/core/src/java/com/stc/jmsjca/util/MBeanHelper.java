@@ -1,31 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: MBeanHelper.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:52 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.util;
+
+import com.stc.jmsjca.localization.Localizer;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -77,7 +68,7 @@ import java.util.Map;
  * read-only.    
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
     private static Logger sLog = Logger.getLogger(MBeanHelper.class);
@@ -86,6 +77,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
     private ArrayList mServers = new ArrayList();
     private ArrayList mNames = new ArrayList();
 
+    private static final Localizer LOCALE = Localizer.get();
+    
     /**
      * Removes this MBean from the MBeanServers it is registered with
      */
@@ -95,8 +88,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
             try {
                 s.unregisterMBean((ObjectName) mNames.get(i));
             } catch (Exception ex) {
-                sLog.warn("Exception unregistering activation MBean [" + mNames.get(i)
-                    + "] on server [" + mServers.get(i) + "]");
+                sLog.warn(LOCALE.x("E089: Exception unregistering activation MBean [{0}]" 
+                    + " on server [{1}]", mNames.get(i), mServers.get(i)));
             }
         }
         mNames.clear();
@@ -158,7 +151,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
             try {
                 ret.add(new Attribute(attributeNames[i], getAttribute(attributeNames[i])));
             } catch (Exception ex) {
-                sLog.warn("Failed to get attribute list: " + ex, ex);
+                sLog.warn(LOCALE.x("E090: Failed to get attribute list: {0}", ex), ex);
             }
         }
         return ret;
@@ -266,8 +259,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     if (throwFailures) {
                         throw new RuntimeException("getAttributeInfo failed: " + e, e);
                     } else {
-                        sLog.warn("Failure while building attribute descriptions for "
-                            + this.getClass().getName() + ": " + e);
+                        sLog.warn(LOCALE.x("E091: Failure while building attribute descriptions for "
+                            + "{0}: {1}", this.getClass().getName(), e));
                     }
                 }
             }
@@ -356,8 +349,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                             "Failure in getOperationsInfo() for method [" + m + "]: " + e,
                             e);
                     } else {
-                        sLog.warn("Failure while building method descriptions for "
-                            + this.getClass().getName() + ": " + e);
+                        sLog.warn(LOCALE.x("E092: Failure while building method descriptions for "
+                            + "{0}: {1}", this.getClass().getName(), e));
                     }
                 }
             }
