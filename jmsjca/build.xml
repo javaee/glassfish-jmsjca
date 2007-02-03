@@ -807,7 +807,7 @@ Relevant properties to set:
                  <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
                  <argument line="-z9 import -m" />
                  <argument value="syncing cvs to" />
-                 <argument value="code/jmsjca" />
+                 <argument value="jmsjca/jmsjca" />
                  <argument line="sources t${DSTAMP}${TSTAMP}" />
             </commandline>
         </cvs>
@@ -817,7 +817,7 @@ Relevant properties to set:
                  <argument value="-d:pserver:${jmsjca.maven.username}@cvs.dev.java.net:/cvs" />
                  <argument line="-z9 import -I ! -I *.bak -I *.BAK -I CVS -I TAGS -m" />
                  <argument value="syncing cvs to" />
-                 <argument value="code/jmsjca/core" />
+                 <argument value="jmsjca/jmsjca/core" />
                  <argument line="sources t${DSTAMP}${TSTAMP}" />
             </commandline>
         </cvs>

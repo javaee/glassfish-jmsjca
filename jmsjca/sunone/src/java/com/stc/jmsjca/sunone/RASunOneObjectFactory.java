@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RASunOneObjectFactory.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:52:16 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.sunone;
@@ -51,11 +40,12 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RASunOneObjectFactory.class);
+    private static Localizer LOCALE = Localizer.get(); 
         
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
@@ -157,7 +147,7 @@ java.io.Serializable {
                 throw new JMSException("Logic fault: invalid domain " + domain);
             }
         } catch (Exception e) {
-            throw Exc.jmsExc("Could not load or instantiate connection factory class: " + e, e);
+            throw Exc.jmsExc(LOCALE.x("E600: Could not load or instantiate connection factory class: {0}", e), e);
         }
         
         urlParser.getQueryProperties(p);
@@ -177,7 +167,7 @@ java.io.Serializable {
 //        b.setProperty("imqAddressList", urlParser.getSunOneUrlSet());
 //        b.setProperty("imqConnectionFlowLimitEnabled", "true");
         } catch (Exception e) {
-            throw Exc.jmsExc("Failed to configure connection factory: " + e, e);
+            throw Exc.jmsExc(LOCALE.x("E601: Failed to configure connection factory: {0}", e), e);
         } 
         
 
@@ -202,7 +192,7 @@ java.io.Serializable {
                     setProperty.invoke(basicConnectionFactory,
                         new Object[] {name, value});
                 } catch (Exception e) {
-                    throw Exc.jmsExc("Failed to configure connection factory: " + e, e);
+                    throw Exc.jmsExc(LOCALE.x("Failed to configure connection factory: {0}", e), e);
                 } 
 //                b.setProperty(name, value);
             }
@@ -255,9 +245,9 @@ java.io.Serializable {
                 if (newClientId.equals(currentClientId)) {
                     // ok: already set
                 } else {
-                    sLog.warn("ClientID is already set to [" + currentClientId 
-                        + "]; cannot set to [" + newClientId + "] as required in "
-                            + "activationspec [" + spec + "]"); 
+                    sLog.warn(LOCALE.x("E603: ClientID is already set to [{0}]; "   
+                        + "cannot set to [{1}] as required in "
+                        + "activationspec [{3}]", currentClientId, newClientId, spec)); 
                 }
             }
         }
@@ -306,8 +296,8 @@ java.io.Serializable {
             method.invoke(mbean, args);
             ret = mbean;
         } catch (Exception e) {
-            throw Exc.jmsExc("Error instantiating or configuring MBean for "
-                + "external SJS MQ server management: " + e, e);
+            throw Exc.jmsExc(LOCALE.x("E602: Error instantiating or configuring MBean for "
+                + "external SJS MQ server management: {0}", e), e);
         }
         
         return ret;

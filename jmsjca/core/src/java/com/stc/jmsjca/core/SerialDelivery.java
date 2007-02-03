@@ -1,32 +1,23 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: SerialDelivery.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:43 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.JMSException;
@@ -41,7 +32,7 @@ import javax.transaction.xa.XAResource;
  * <P>A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -50,11 +41,13 @@ public class SerialDelivery extends Delivery implements MessageListener,
     private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Connection mConnection;
     private MessageEndpoint mEndpoint;
-    private String mContextName;
+    private LocalizedString mContextName;
     private XAResource mXA;
     private RAJMSObjectFactory mObjFactory;
     private ConnectionForMove mMessageMoveConnection;
     private Delivery.MDB mMDB;
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -123,7 +116,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
         
         mMDB = new Delivery.MDB(mXA);
 
-        mContextName = getActivation().getActivationSpec().getContextName();
+        mContextName = LocalizedString.valueOf(getActivation().getActivationSpec().getContextName());
         
         mConnection.setExceptionListener(this);
         
@@ -149,7 +142,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 mConnection.stop();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception stopping JMS connection: " + ex, ex);
+            sLog.warn(LOCALE.x("E054: Unexpected exception stopping JMS connection: {0}.", ex), ex);
         }
 
         // JMS thread now guaranteed to have exited
@@ -163,7 +156,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 mConnection.close();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception closing JMS connection: " + ex, ex);
+            sLog.warn(LOCALE.x("E055: Unexpected exception closing JMS connection: {0}", ex), ex);
         }
         
         mMessageMoveConnection.destroy();
@@ -212,10 +205,10 @@ public class SerialDelivery extends Delivery implements MessageListener,
                         throw new Exception("No endpoint created; RA shutting down?");
                     }
                 } catch (Exception ex1) {
-                    String msg = "Failure to create an endpoint to deliver message to; "
-                        + "delivery attempt aborted. Exception: " + ex1;
+                    LocalizedString msg = LOCALE.x("E056: Failure to create an endpoint to deliver message to; "
+                        + "delivery attempt aborted. Exception: {0}", ex1);
                     sLog.warn(msg, ex1);
-                    throw new RuntimeException(msg, ex1);
+                    throw new RuntimeException(msg.toString(), ex1);
                 }
             }
 

@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: ReplaceHeaders.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:52 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.util;
@@ -44,7 +33,7 @@ import java.util.regex.Pattern;
  * Updates all SeeBeyond headers to CDDL headers
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class ReplaceHeaders {
     
@@ -148,34 +137,55 @@ public class ReplaceHeaders {
     = Pattern.compile("(.*)(\\/\\*.*Common Development and Distribution License.*\\*\\/)(.*)"
         , Pattern.DOTALL);
     
-    private static String REPLACE1 = "/*\n"
-    + " * The contents of this file are subject to the terms\n"
-    + " * of the Common Development and Distribution License\n"
-    + " * (the \"License\").  You may not use this file except\n"
-    + " * in compliance with the License.\n"
-    + " *\n"
-    + " * You can obtain a copy of the license at\n"
-    + " * https://glassfish.dev.java.net/public/CDDLv1.0.html.\n"
-    + " * See the License for the specific language governing\n"
-    + " * permissions and limitations under the License.\n"
-    + " *\n"
-    + " * When distributing Covered Code, include this CDDL\n"
-    + " * HEADER in each file and include the License file at\n"
-    + " * https://glassfish.dev.java.net/public/CDDLv1.0.html.\n"
-    + " * If applicable add the following below this CDDL HEADER,\n"
-    + " * with the fields enclosed by brackets \"[]\" replaced with\n"
-    + " * your own identifying information: Portions Copyright\n"
-    + " * [year] [name of copyright owner]\n"
-    + " */\n";
+//    private static String REPLACE1 = "/*\n"
+//    + " * The contents of this file are subject to the terms\n"
+//    + " * of the Common Development and Distribution License\n"
+//    + " * (the \"License\").  You may not use this file except\n"
+//    + " * in compliance with the License.\n"
+//    + " *\n"
+//    + " * You can obtain a copy of the license at\n"
+//    + " * https://glassfish.dev.java.net/public/CDDLv1.0.html.\n"
+//    + " * See the License for the specific language governing\n"
+//    + " * permissions and limitations under the License.\n"
+//    + " *\n"
+//    + " * When distributing Covered Code, include this CDDL\n"
+//    + " * HEADER in each file and include the License file at\n"
+//    + " * https://glassfish.dev.java.net/public/CDDLv1.0.html.\n"
+//    + " * If applicable add the following below this CDDL HEADER,\n"
+//    + " * with the fields enclosed by brackets \"[]\" replaced with\n"
+//    + " * your own identifying information: Portions Copyright\n"
+//    + " * [year] [name of copyright owner]\n"
+//    + " */\n";
+//    
+//    private static String REPLACE2 = ""
+//    + "/*\n"
+//    + " * $RCSfile: ReplaceHeaders.java,v $\n"
+//    + " * $Revision: 1.4 $\n"
+//    + " * $Date: 2007-02-03 01:49:20 $\n"
+//    + " *\n"
+//    + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  \n"
+//    + " */";
+
+    private static String CR = System.getProperty("line.separator");    
     
-    private static String REPLACE2 = ""
-    + "/*\n"
-    + " * $RCSfile: ReplaceHeaders.java,v $\n"
-    + " * $Revision: 1.3 $\n"
-    + " * $Date: 2007-01-21 17:51:52 $\n"
-    + " *\n"
-    + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  \n"
-    + " */";
+    private static String REPLACE1 = 
+    "/*" + CR
+    + " * The contents of this file are subject to the terms of the Common Development and Distribution License" + CR
+    + " * (the \"License\"). You may not use this file except in compliance with the License." + CR
+    + " *" + CR
+    + " * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html." + CR
+    + " * See the License for the specific language governing permissions and limitations under the License." + CR
+    + " *" + CR
+    + " * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at" + CR
+    + " * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this" + CR
+    + " * CDDL HEADER, with the fields enclosed by brackets \"[]\" replaced with your own identifying" + CR
+    + " * information: Portions Copyright [year] [name of copyright owner]" + CR
+    + " */" + CR;
+    
+    private static String REPLACE2 = "" 
+        + "/*" + CR
+        + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved." + CR
+        + " */";
     
     private void processFile(File f) throws Exception {
         String contents = read(f);

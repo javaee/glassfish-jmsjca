@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * Tools for obtaining localized messages
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.2 $
  */
 public abstract class LocalizationSupport {
     private PropertyResourceBundle mBundle;

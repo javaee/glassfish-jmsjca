@@ -1,32 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: XManagedConnection.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:50 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
@@ -66,7 +56,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -83,6 +73,8 @@ public class XManagedConnection implements ManagedConnection {
     private String mUserid;
     private String mPassword;
     private long mLastUsedSuccessfullyAt;
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -118,7 +110,7 @@ public class XManagedConnection implements ManagedConnection {
             mJSession = new JSession(xa, descr.getTransacted(), descr.getAcknowledgeMode(),
                 descr.getSessionClass(), this);
         } catch (JMSException ex) {
-            throw Exc.rsrcExc("Failed to create session: " + ex, ex);
+            throw Exc.rsrcExc(LOCALE.x("E084: Failed to create session: {0}", ex));
         }
 
         // Get XAResource
@@ -133,13 +125,13 @@ public class XManagedConnection implements ManagedConnection {
                         // ignore
                     }
                 }
-                throw Exc.rsrcExc("Could not obtain XAResource: " + ex, ex);
+                throw Exc.rsrcExc(LOCALE.x("E085: Could not obtain XAResource: {0}", ex), ex);
             }
         } else if (descr.getTransacted()) {
                 try {
                     mXAResource = new PseudoXAResource((Session) mJSession.getDelegate());
                 } catch (JMSException e) {
-                    throw Exc.rsrcExc("Could not create pseudo XAResource: " + e, e);
+                    throw Exc.rsrcExc(LOCALE.x("E086: Could not create pseudo XAResource: {0}", e), e);
                 }
         } else {
             mXAResource = new PseudoXAResourceNOP(); 
@@ -299,7 +291,7 @@ public class XManagedConnection implements ManagedConnection {
             try {
                 mJSession.destroy();
             } catch (JMSException ex) {
-                throw Exc.rsrcExc("Error while closing session: " + ex, ex);
+                throw Exc.rsrcExc(LOCALE.x("E087: Error while closing session: {0}", ex), ex);
             }
             mJSession = null;
         }

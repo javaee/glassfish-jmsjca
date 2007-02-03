@@ -1,33 +1,24 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: WorkContainer.java,v $
- * $Revision: 1.3 $
- * $Date: 2007-01-21 17:51:48 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.core.Delivery.ConnectionForMove;
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.Connection;
@@ -48,7 +39,7 @@ import java.lang.reflect.Method;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -66,6 +57,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
     private XAResource mXA;
     private Delivery.MDB mMDB;
     private boolean mHasBadEndpoint; 
+    private LocalizedString mContextName;
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -88,6 +82,8 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         mEnlistInRun = enlistInRun;
         mXA = xa;
         mMDB = mDelivery.new MDB(mXA);
+        mContextName = LocalizedString.valueOf(
+            mDelivery.getActivation().getActivationSpec().getContextName());        
     }
 
     /**
@@ -178,9 +174,8 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * @see java.lang.Runnable#run()
      */
     public void run() {
-        String contextName = mDelivery.getActivation().getActivationSpec().getContextName();
-        if (contextName != null) {
-            sContextEnter.info(contextName);
+        if (mContextName != null) {
+            sContextEnter.info(mContextName);
         }
         try {
             synchronized (mStateLock) {
@@ -203,9 +198,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 afterRun();
             }
         } catch (Error e) {
-            sLog.warn("Unexpected error encountered while executing a JMS CC-session: " + e, e);
+            sLog.warn(LOCALE.x("E063: Unexpected error encountered while executing a JMS CC-session: {0}", e), e);
         } catch (RuntimeException e) {
-            sLog.warn("Unexpected exception encountered while executing a JMS CC-session: " + e, e);
+            sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}", e), e);
         } finally {
             mDelivery.workDone(this);
 
@@ -213,8 +208,8 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 mIsRunning = false;
             }
 
-            if (contextName != null) {
-                sContextExit.info(contextName);
+            if (mContextName != null) {
+                sContextExit.info(mContextName);
             }
         }
     }
@@ -280,13 +275,13 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 try {
                     mSession.commit();
                 } catch (JMSException ex) {
-                    sLog.error("The message could not be committed: " + ex, ex);
+                    sLog.error(LOCALE.x("E065: The message could not be committed: {0}", ex), ex);
                 }
             } else {
                 try {
                     mSession.rollback();
                 } catch (JMSException ex) {
-                    sLog.error("The message could not be rolled back: " + ex, ex);
+                    sLog.error(LOCALE.x("E066: The message could not be rolled back: " + ex), ex);
                 }
             }
         }
