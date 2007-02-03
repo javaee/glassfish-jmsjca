@@ -1,32 +1,23 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RAJMSResourceAdapter.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -68,7 +59,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);
@@ -108,6 +99,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private transient MBeanServer mMBeanServer;
     
     private transient Map mStopListeners;
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -170,9 +163,9 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             }
         } catch (Exception e) {
             killMBean();
-            sLog.warn("MBean with name [" + getMBeanObjectName() + "] could not be "
-                + "created. The RA will continue to start. The error" + " was: " + e,
-                e);
+            sLog.warn(LOCALE.x("E043: MBean with name [{0}] could not be "
+                + "created. The RA will continue to start. The error was: {1}.",
+                getMBeanObjectName(), e), e);
         }
     }
 
@@ -182,7 +175,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             try {
                 getMBeanServer().unregisterMBean(mServerMgtMBeanName);
             } catch (Exception e) {
-                sLog.warn("Exception on unregistering server mbean: " + e, e);
+                sLog.warn(LOCALE.x("E044: Exception on unregistering server mbean: {0}", e), e);
             }
             mServerMgtMBeanName = null;
         }
@@ -232,7 +225,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 try {
                     listeners[i].stop();
                 } catch (Exception e) {
-                    sLog.warn("Failed to stop stop-listener " + listeners[i] + ": " + e, e);
+                    sLog.warn(LOCALE.x("E045: Failed to process stop-listener {0}: {1}", 
+                        listeners[i], e), e);
                 }
             }
         }
@@ -264,11 +258,11 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         }
 
         if (!(spec instanceof RAJMSActivationSpec)) {
-            String msg = "EndpointActivation can only be done with a spec of the class "
-                + RAJMSActivationSpec.class.getName() + "; provided class is "
-                + spec.getClass().getName();
+            LocalizedString msg = LOCALE.x("E003: EndpointActivation can only be done " +
+                    "with an ActivationSpec of class {0}; provided class is [{1}].", 
+                    RAJMSActivationSpec.class.getName(), spec.getClass().getName());
             sLog.fatal(msg);
-            throw new NotSupportedException(msg);
+            throw new NotSupportedException(msg.toString());
         }
 
         if (sLog.isDebugEnabled()) {
@@ -304,10 +298,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 mActivations.add(a);
             }
         } catch (Throwable ex) {
-            String msg = "Could not create Activation for " + endpointFactory
-                + " and spec " + spec + ": " + ex;
+            LocalizedString msg = LOCALE.x("E010: Could not create Activation " +
+                    "for {0} and spec {1}: {2}.", endpointFactory, spec, ex);
             sLog.error(msg, ex);
-            throw new NotSupportedException(msg, ex);
+            throw new NotSupportedException(msg.toString(), ex);
         }
 
         if (sLog.isDebugEnabled()) {
@@ -333,11 +327,11 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
 
         // Assert activation is known
         if (a == null) {
-            String msg = "EndpointDeactivation was called on an activation"
-                + " of which no record could be found. Endpointfactory="
-                + endpointFactory + "; spec=" + spec;
+            LocalizedString msg = LOCALE.x("E004: EndpointDeactivation was called on an activation"
+                + " of which no record could be found. Endpointfactory=[{0}]; spec=[{1}].", 
+                endpointFactory, spec);
             sLog.fatal(msg);
-            throw new RuntimeException(msg);
+            throw new RuntimeException(msg.toString());
         }
 
         if (sLog.isDebugEnabled()) {
@@ -368,12 +362,11 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         
         // Assert type is correct
         if (!(spec instanceof RAJMSActivationSpec)) {
-            String msg = "EndpointDeactivation can only be done with a spec of the class "
-                + RAJMSActivationSpec.class.getName()
-                + "; provided class is "
-                + spec.getClass().getName();
+            LocalizedString msg = LOCALE.x("E005: EndpointDeactivation can only be " +
+                    "done with a spec of the class [{0}]; provided class is [{1}].", 
+                RAJMSActivationSpec.class.getName(), spec.getClass().getName());
             sLog.fatal(msg);
-            throw new RuntimeException(msg);
+            throw new RuntimeException(msg.toString());
         }
 
         // Find the activation
@@ -431,9 +424,9 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     uniqueSpecs.add(spec);
                 }
             } catch (JMSException e) {
-                sLog.warn("Could not get determine a signature for activationspec ["
-                    + spec.dumpConfiguration() + "]; "
-                    + "this resource will NOT be recovered. The error was: " + e, e);
+                sLog.warn(LOCALE.x("E046: Could not get determine a signature for " 
+                    + "activationspec [{0}]. This resource will NOT be recovered. "
+                    + "The error was: {1}.", spec.dumpConfiguration(), e), e);
             }
         }
 
@@ -459,9 +452,9 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 XAResource xa = fact.getXAResource(true, sess);
                 ret.add(xa);
             } catch (JMSException e) {
-                sLog.warn("Could not get XAResource for activationspec ["
-                    + s.dumpConfiguration() + "]; "
-                    + "this resource will NOT be recovered. The error was: " + e, e);
+                sLog.warn(LOCALE.x("E047: Could not get XAResource for activationspec [{0}]; "
+                    + "this resource will NOT be recovered. The error was: {1}.", 
+                    s.dumpConfiguration(), e), e);
             }
         }
 
@@ -485,7 +478,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 try {
                     c.close();
                 } catch (Exception e) {
-                    sLog.warn("Failure upon closing recovery connection: " + e, e);
+                    sLog.warn(LOCALE.x("E048: Failure upon closing recovery connection: {0}", e), e);
                 }
             }
             mRecoveryConnections = null;
@@ -864,8 +857,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             
             return (String) result;
         } catch (Exception ex) {           
-            throw Exc.jmsExc("Could not look up string [" + ldapURL
-                + "] in ldap using MBean [" + mTransformerMBeanName + "]:" + ex, ex);
+            throw Exc.jmsExc(LOCALE.x("E049: Could not look up string [{0}]"
+                + " in ldap using MBean [{1}]: {2}.", ldapURL, mTransformerMBeanName, ex), ex);
         }
     }
 

@@ -1,31 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: Exc.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.util;
+
+import com.stc.jmsjca.localization.LocalizedString;
 
 import javax.resource.ResourceException;
 import javax.resource.spi.SecurityException;
@@ -42,7 +33,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class Exc {
 
@@ -52,8 +43,8 @@ public class Exc {
      * @param msg error text
      * @return new exception
      */
-    public static ResourceException rsrcExc(String msg) {
-        return new ResourceException(msg);
+    public static ResourceException rsrcExc(LocalizedString msg) {
+        return new ResourceException(msg.toString());
     }
 
     /**
@@ -63,12 +54,12 @@ public class Exc {
      * @param cause the exception that caused this exception
      * @return new exception
      */
-    public static ResourceException rsrcExc(String msg, Exception cause) {
+    public static ResourceException rsrcExc(LocalizedString msg, Exception cause) {
         ResourceException ret;
         if (cause instanceof JMSSecurityException || cause instanceof SecurityException) { 
-            ret = new SecurityException(msg);
+            ret = new SecurityException(msg.toString());
         } else {
-            ret = new ResourceException(msg);
+            ret = new ResourceException(msg.toString());
         }
         //ret.setLinkedException(cause);
         setCause(ret, cause);
@@ -95,12 +86,12 @@ public class Exc {
      * @param cause the exception that caused this exception
      * @return new exception
      */
-    public static JMSException jmsExc(String msg, Exception cause) {
+    public static JMSException jmsExc(LocalizedString msg, Exception cause) {
         JMSException ret;
         if (cause instanceof JMSSecurityException || cause instanceof SecurityException) {
-            ret = new JMSSecurityException(msg);
+            ret = new JMSSecurityException(msg.toString());
         } else {
-            ret = new JMSException(msg);
+            ret = new JMSException(msg.toString());
         }
         setCause(ret, cause);
         return ret;

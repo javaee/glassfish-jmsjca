@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RASTCMSObjectFactory.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-21 07:52:12 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.stcms;
@@ -50,7 +39,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -87,6 +76,8 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     private static final String PORT = "com.stc.jms.sockets.ServerPort";
     private static final String AUTOCOMMITXA = "com.stc.jms.autocommitxa";
     private static final String STRICTPERSISTENCE = "com.stc.jms.strictPersistence";
+
+    private static final Localizer LOCALIZER = Localizer.get();
 
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
@@ -226,7 +217,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
             Constructor constructor = clazz.getConstructor(new Class[] {Properties.class});
             return (ConnectionFactory) constructor.newInstance(new Object[] {p});
         } catch (Exception e) {
-            throw Exc.jmsExc("Could not instantiate STCMS connection factory: " + e, e);
+            throw Exc.jmsExc(LOCALIZER.x("E301: Could not instantiate STCMS connection factory: {0}", e), e);
         }
     }
 
@@ -316,8 +307,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
                 }
             }
         } catch (Exception e) {
-            sLog.warn(
-                "Non-critical error: could not determine URL for ServerMBean: " + e, e);
+            sLog.warn(LOCALIZER.x("E300: Non-critical error: could not determine URL for ServerMBean: {0}", e), e);
         }
 
         if (ret == null) {
@@ -363,8 +353,8 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
                 method.invoke(stcmsMBean, args);
                 ret = stcmsMBean;
             } catch (Exception e) {
-                throw Exc.jmsExc("Error instantiating or configuring MBean for "
-                    + "external JMS server management: " + e, e);
+                throw Exc.jmsExc(LOCALIZER.x("E302: Error instantiating or configuring MBean for "
+                    + "external JMS server management: {0}", e), e);
             }
         }
 

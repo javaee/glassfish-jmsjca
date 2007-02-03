@@ -1,32 +1,23 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: SyncDelivery.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
@@ -103,7 +94,7 @@ public class SyncDelivery extends Delivery {
     private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
     private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Connection mConnection;
-    private String mContextName;
+    private LocalizedString mContextName;
     private int mNThreads;
     private List mWorkers = new ArrayList();
     private boolean mIsStopped = true;
@@ -112,6 +103,8 @@ public class SyncDelivery extends Delivery {
     private boolean mHoldUntilAck;
     private TxMgr mTxMgr;
     
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * Constructor 
      * 
@@ -155,7 +148,7 @@ public class SyncDelivery extends Delivery {
                 if (mHoldUntilAck) {
                     throw new RuntimeException("Could not obtain TxMgr which is crucial for HUA mode: " + e, e);
                 }
-                sLog.warn("TxMgr could not be obtained: " + e, e);
+                sLog.warn(LOCALE.x("E057: TxMgr could not be obtained: {0}", e), e);
             }
         }
     }
@@ -201,7 +194,7 @@ public class SyncDelivery extends Delivery {
                 mActivation.isTopic(), 
                 mActivation.getActivationSpec(), 
                 mActivation.getRA());
-            mContextName = getActivation().getActivationSpec().getContextName();
+            mContextName = LocalizedString.valueOf(getActivation().getActivationSpec().getContextName()); 
             mConnection.start();
             
             
@@ -252,7 +245,7 @@ public class SyncDelivery extends Delivery {
                 mConnection.stop();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception stopping JMS connection: " + ex, ex);
+            sLog.warn(LOCALE.x("E058: Unexpected exception stopping JMS connection: {0}", ex), ex);
         }
 
         // Wait until all workers that were processing a msg are finished
@@ -278,9 +271,10 @@ public class SyncDelivery extends Delivery {
                 break;
             } else {
                 if (System.currentTimeMillis() > tlog) {
-                    sLog.info("Stopping connector; waiting for work containers to "
-                        + "exit; there are " + mWorkers.size()
-                        + " containers that are still active; activation=" + mActivation);
+                    sLog.info(LOCALE.x("E059: Stopping connector; waiting for work containers to "
+                        + "finish processing messages; there are {0} containers " 
+                        + "that are still active; activation=[{1}].", 
+                        Integer.toString(mWorkers.size()), mActivation));
                     tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
                 }
 
@@ -302,7 +296,7 @@ public class SyncDelivery extends Delivery {
                 mConnection.close();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception closing JMS Connection: " + ex, ex);
+            sLog.warn(LOCALE.x("E060: Unexpected exception closing JMS Connection: {0}", ex), ex);
         }
         mConnection = null;
 
@@ -515,7 +509,7 @@ public class SyncDelivery extends Delivery {
                 try {
                     mCons.close();
                 } catch (JMSException e) {
-                    sLog.warn("Non-critical failure to close a message consumer: " + e, e);
+                    sLog.warn(LOCALE.x("E061: Non-critical failure to close a message consumer: {0}", e), e);
                 }
                 mCons = null;
             }
@@ -598,7 +592,7 @@ public class SyncDelivery extends Delivery {
                     synchronized (mIsStoppedLock) {
                         if (!mTxFailureLoggedOnce) {
                             mTxFailureLoggedOnce = true;
-                            sLog.error("Failed to obtain handle to transaction: " + e, e);
+                            sLog.error(LOCALE.x("E062: Failed to obtain handle to transaction: {0}", e), e);
                         }
                     }
                 }

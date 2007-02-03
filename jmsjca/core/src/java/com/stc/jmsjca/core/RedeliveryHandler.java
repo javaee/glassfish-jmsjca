@@ -1,32 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RedeliveryHandler.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.JMSException;
@@ -158,7 +148,7 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
@@ -168,6 +158,8 @@ public abstract class RedeliveryHandler {
     private HashMap mNewMsgs;
     private boolean mLoggedOnce;
     private Action[] mActions;
+
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * A baseclass of all actions that could happen in response to a a repeated 
@@ -654,7 +646,7 @@ public abstract class RedeliveryHandler {
             actions = parse(spec.getRedeliveryHandling(), 
                 spec.getDestination(), spec.getDestinationType());
         } catch (Exception e) {
-            sLog.warn("Unexpected exception parsing of redelivery actions: " + e, e);
+            sLog.warn(LOCALE.x("E050: Unexpected exception parsing of redelivery actions: {0}", e), e);
         }
         
         // Ensure that there is an action with index = 1: there are ALWAYS actions, and
@@ -693,18 +685,17 @@ public abstract class RedeliveryHandler {
             if (msgid == null) {
                 if (!mLoggedOnce) {
                     mLoggedOnce = true;
-                    sLog.warn("Message could not be checked for redelivery: msg id is "
+                    sLog.warn(LOCALE.x("E051: Message could not be checked for redelivery: msg id is "
                         + "null. For subsequent similar cases, this warning will not "
-                        + "be logged.");
+                        + "be logged."));
                 }
                 return true;
             }
         } catch (JMSException e) {
             if (!mLoggedOnce) {
                 mLoggedOnce = true;
-                sLog.warn("Message could not be checked for redelivery: " + e + "; for "
-                    + "subsequent similar cases, this warning will not " + "be logged.",
-                    e);
+                sLog.warn(LOCALE.x("E052: Message could not be checked for redelivery: " 
+                    + "{0}; for subsequent similar cases, this warning will not be logged.", e), e);
             }
             return true;
         }
@@ -769,9 +760,9 @@ public abstract class RedeliveryHandler {
         try {
             return action.shouldDeliver(this, m, enc, cookie);
         } catch (Exception e) {
-            sLog.warn("Message with msgid " + enc.getMsgid() + " was redelivered "
-                    + enc.getNEncountered() + "; the action [" + action + "] failed: "
-                    + e, e);
+            sLog.warn(LOCALE.x("E053: Message with msgid {0} was redelivered {1} times"
+                    + "; the action [{2}] failed: {3}", enc.getMsgid(), 
+                    Integer.toString(enc.getNEncountered()), action, e), e);
             return true;
         }
     }

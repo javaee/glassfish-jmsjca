@@ -1,30 +1,21 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: Logger.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 package com.stc.jmsjca.util;
+
+import com.stc.jmsjca.localization.LocalizedString;
 
 import java.util.ResourceBundle;
 
@@ -34,7 +25,7 @@ import java.util.ResourceBundle;
  * package to the java.util.logging package easier.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public final class Logger {
     private final java.util.logging.Logger mDelegate;
@@ -89,7 +80,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void error(Object message) {
+    public final void error(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString());
     }
@@ -100,7 +91,18 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void error(Object message, Throwable t) {
+    public final void error(LocalizedString message, Throwable t) {
+        mDelegate.log(java.util.logging.Level.SEVERE,
+            message == null ? null : message.toString(), t);
+    }
+
+    /**
+     * See {@link org.apache.log4j.Category#error}
+     *
+     * @param message msg to be logged
+     * @param t exception to be logged
+     */
+    public final void errorNoloc(String message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -110,7 +112,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void fatal(Object message) {
+    public final void fatal(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString());
     }
@@ -121,7 +123,18 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void fatal(Object message, Throwable t) {
+    public final void fatal(LocalizedString message, Throwable t) {
+        mDelegate.log(java.util.logging.Level.SEVERE,
+            message == null ? null : message.toString(), t);
+    }
+
+    /**
+     * See {@link org.apache.log4j.Category#fatal}
+     *
+     * @param message msg to be logged
+     * @param t exception to be logged
+     */
+    public final void fatalNoloc(String message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -131,7 +144,17 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void info(Object message) {
+    public final void info(LocalizedString message) {
+        mDelegate.log(java.util.logging.Level.INFO,
+            message == null ? null : message.toString());
+    }
+
+    /**
+     * See {@link org.apache.log4j.Category#info}
+     *
+     * @param message msg to be logged
+     */
+    public final void infoNoloc(String message) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString());
     }
@@ -142,7 +165,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void info(Object message, Throwable t) {
+    public final void info(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString(), t);
     }
@@ -161,7 +184,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void warn(Object message) {
+    public final void warn(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.WARNING,
             message == null ? null : message.toString());
     }
@@ -172,9 +195,19 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void warn(Object message, Throwable t) {
+    public final void warn(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.WARNING,
             message == null ? null : message.toString(), t);
+    }
+
+    /**
+     * See {@link org.apache.log4j.Category#warn}
+     *
+     * @param message msg to be logged
+     */
+    public final void warnNoloc(String message) {
+        mDelegate.log(java.util.logging.Level.WARNING,
+            message == null ? null : message.toString());
     }
 
     /**

@@ -1,32 +1,24 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: CCDelivery.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:43 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
@@ -63,7 +55,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -82,6 +74,8 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     private boolean mEnlistInRun;
     private int mNServerSessionsGivenOut;
     private Object mCountLock = new Object();
+    
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -168,12 +162,11 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
         try {
             ret = getEmptyWorkContainer();
         } catch (Exception ex) {
-            String msg = "Unexpected failure to obtain an empty work container to "
-                + "process JMS messages. The exception was: " + ex;
-            JMSException jex = new JMSException(msg);
-            jex.initCause(ex);
+            LocalizedString msg = LOCALE.x("E001:Unexpected failure to obtain an empty work container to "
+                + "process JMS messages. The exception was: {0}", ex);
+            JMSException jex = Exc.jmsExc(msg, ex);
             onException(jex);
-            throw new RuntimeException(msg, ex);
+            throw new RuntimeException(msg.toString(), ex);
         }
 
         // For JMQ-like shutdown, we should not return a serversession if the 
@@ -380,9 +373,9 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 break;
             } else {
                 if (System.currentTimeMillis() > tlog) {
-                    sLog.info("Deactivating connector; waiting for work containers to "
-                        + "exit; there are " + nNotDestroyed
-                        + " containers that are still active; activation=" + mActivation);
+                    sLog.info(LOCALE.x("E021: Deactivating connector; waiting for " +
+                            "work containers finish processing messages; there are {0} containers that " +
+                            "are still active; activation={1}", Integer.toString(nNotDestroyed), mActivation));
                     tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
                 }
 
@@ -416,9 +409,10 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 break;
             } else {
                 if (System.currentTimeMillis() > tlog) {
-                    sLog.info("Deactivating connector; waiting for server sessions to "
-                        + "be returned; there are " + nOutstandingServerSessions
-                        + " server sessions that are still in use; activation=" + mActivation);
+                    sLog.info(LOCALE.x("E022: Deactivating connector; waiting for " +
+                            "server sessions to be returned; there are {0} server " +
+                            "sessions that are still in use; activation={1}", 
+                            Integer.toString(nOutstandingServerSessions), mActivation));
                     tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
                 }
                 
@@ -442,7 +436,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 mConnection.close();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception closing JMS connection: " + ex, ex);
+            sLog.warn(LOCALE.x("E023: Unexpected exception closing JMS connection: {0}", ex), ex);
         }
         mConnection = null;
     }
@@ -453,7 +447,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 mCC.close();
             }
         } catch (Exception ex) {
-            sLog.warn("Unexpected exception closing JMS connection consumer: " + ex, ex);
+            sLog.warn(LOCALE.x("E024: Unexpected exception closing JMS connection consumer: {0}", ex), ex);
         }
         synchronized (mCountLock) {
             mCC = null;

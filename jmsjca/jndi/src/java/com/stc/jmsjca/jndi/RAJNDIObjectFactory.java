@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RAJNDIObjectFactory.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:11 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.jndi;
@@ -35,7 +24,6 @@ import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
-import com.stc.jmsjca.util.Str;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -51,7 +39,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -59,6 +47,8 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
     private static final String[] URL_PREFIXES = new String[] {
             "jndi://"
     };
+
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Tool function: closes a context w/o exception
@@ -102,7 +92,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
             }
             return ctx.lookup(name);
         } catch (Exception e) {
-            throw Exc.jmsExc(Str.msg("Could not find JNDI object by name [{0}]: {1}", name, e), e);
+            throw Exc.jmsExc(LOCALE.x("E400: Could not find JNDI object by name [{0}]: {1}", name, e), e);
         } finally {
             safeClose(ctx);
         }

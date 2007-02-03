@@ -1,32 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: XDefaultConnectionManager.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:44 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.FIFOSemaphore;
 import com.stc.jmsjca.util.Logger;
@@ -170,7 +160,7 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
@@ -197,6 +187,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
     private boolean mStopped;
     private boolean mXATxFailureLogged;
     
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * Constructor
      *
@@ -212,7 +204,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
      * Connection pool properties may be set late in the construction process, so 
      * do lazy initialization
      */
-    private void init() {
+    private synchronized void init() {
         if (mIsInitialized) {
             return;
         }
@@ -263,7 +255,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             return getXATx();
         } catch (Exception e) {
             if (!mXATxFailureLogged) {
-                sLog.warn("Could not get hold of transaction or transaction manager: " + e, e);
+                sLog.warn(LOCALE.x("E067: Could not get hold of transaction or transaction manager: {0}", e), e);
                 mXATxFailureLogged = true;
             }
             return null;
@@ -351,7 +343,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 Set invalid = vmcf.getInvalidConnections(validtest);
                 ret = invalid.size() > 0;
             } catch (ResourceException e) {
-                sLog.warn("Unexpected error while checking a connection for validity: " + e, e);
+                sLog.warn(LOCALE.x("E068: Unexpected error while checking a connection for validity: {0}", e), e);
                 ret = true;
             }
         }
@@ -494,8 +486,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 try {
                     toDestroy.destroy();
                 } catch (Exception ex) {
-                    sLog.error("Unexpected exception when destroying a connection "
-                    + "(" + toDestroy + "): " + ex, ex);
+                    sLog.error(LOCALE.x("E069: Unexpected exception when destroying a connection "
+                    + "(connection={0}): {1}", toDestroy, ex), ex);
                 }
             }
 
@@ -543,11 +535,11 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                     try {
                         mc.destroy();
                     } catch (Exception e2) {
-                        sLog.warn("Connection could not be setup or enlisted: [" + e
-                            + "]... and could not be destroyed properly either: [" + e2
-                            + "] stacktrace of destruction problem follows in next " 
-                            + "log entry.", e);
-                        sLog.warn("Destruction exception: " + e2, e2);
+                        sLog.warn(LOCALE.x("E070: Connection could not be setup or enlisted: [{0}]"
+                            + "... and could not be destroyed properly either: [{1}]"
+                            + " stacktrace of destruction problem follows in next " 
+                            + "log entry.", e, e2), e);
+                        sLog.warn(LOCALE.x("E071: Destruction exception: {0}", e2), e2);
                     }
                     throw e;
                 }
@@ -555,7 +547,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             
             return ret;
         } catch (Exception ex) {
-            throw Exc.rsrcExc("Could not allocate connection: " + ex.getMessage(), ex);
+            throw Exc.rsrcExc(LOCALE.x("E072: Could not allocate connection: {0}", ex), ex);
         }
     }
     
@@ -589,7 +581,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             
             return ret;
         } catch (Exception ex) {
-            throw Exc.rsrcExc("Could not allocate connection: " + ex.getMessage(), ex);
+            throw Exc.rsrcExc(LOCALE.x("E073: Could not allocate connection: {0}", ex), ex);
         }
     }
     
@@ -601,7 +593,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         try {
             mc.destroy();
         } catch (Exception ex) {
-            sLog.error("Unexpected exception destroying a connection: " + ex, ex);
+            sLog.error(LOCALE.x("E074: Unexpected exception destroying a connection: {0}", ex), ex);
         }
         
         // Unregister
@@ -635,7 +627,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             try {
                 mTX.delistResource(mMC.getXAResource(), XAResource.TMSUCCESS);
             } catch (Exception e) {
-                sLog.warn("XAResource could not be delisted (" + mMC + "): " + e, e);
+                sLog.warn(LOCALE.x("E075: XAResource could not be delisted ({0}): {1}", mMC, e), e);
             }
         }
     }
@@ -752,7 +744,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 try {
                     tx.registerSynchronization(new TxDeferredRelease(mc, tx));
                 } catch (Exception e) {
-                    sLog.error("Synchronization registration failed: " + e, e);
+                    sLog.error(LOCALE.x("E076: Synchronization registration failed: {0}", e), e);
                 }
             }
         }

@@ -1,28 +1,17 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: RAWMQObjectFactory.java,v $
- * $Revision: 1.1.1.1 $
- * $Date: 2007-01-21 07:52:12 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.wmq;
@@ -50,7 +39,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -126,6 +115,8 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             "JMSC.MQJMS_TP_BINDINGS_MQ",
             "JMSC_MQJMS_TP_CLIENT_MQ_TCPIP",
         };
+
+    private static Localizer LOCALE = Localizer.get();    
     
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
@@ -189,10 +180,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         if (xa) {
             if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
                 newMode = RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC;
-                sLog.warn("Specified delivery mode "
-                        + RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mode]
-                        + " not supported; switching to "
-                        + RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[newMode]);
+                sLog.warn(LOCALE.x("E820: Current delivery mode {0} not supported; "
+                    + " not supported; switching to {1}", 
+                    RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mode],
+                    RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[newMode]));
             }
         }
         return newMode;
@@ -345,7 +336,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                 throw new JMSException("Logic fault: invalid domain " + domain);
             }
         } catch (Exception ex) {
-            throw Exc.jmsExc("MQ connection factory instantiation failure: " + ex, ex);
+            throw Exc.jmsExc(LOCALE.x("E840: MQ connection factory instantiation failure: {0}", ex), ex);
         }
         
         //Set MQ properties
@@ -366,7 +357,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             clazz.getMethod("setClientID", new Class[] {String.class}).invoke(
                 cf, new Object[] {cfp.getProperty(CLIENTID)});
         } catch (Exception e) {
-            throw Exc.jmsExc("Failure to set connection factory properties: " + e, e);
+            throw Exc.jmsExc(LOCALE.x("E841: Failure to set connection factory properties: {0}", e), e);
         }
 //        ((MQConnectionFactory) cf).setHostName(cfp.getProperty(HOSTNAME));
 //        ((MQConnectionFactory) cf).setPort(Integer.valueOf(cfp.getProperty(PORT)).intValue());

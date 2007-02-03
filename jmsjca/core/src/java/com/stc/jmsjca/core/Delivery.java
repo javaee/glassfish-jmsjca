@@ -1,32 +1,22 @@
 /*
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
+ * The contents of this file are subject to the terms of the Common Development and Distribution License
+ * (the "License"). You may not use this file except in compliance with the License.
  *
- * You can obtain a copy of the license at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * See the License for the specific language governing
- * permissions and limitations under the License.
+ * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.
+ * See the License for the specific language governing permissions and limitations under the License.
  *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * https://glassfish.dev.java.net/public/CDDLv1.0.html.
- * If applicable add the following below this CDDL HEADER,
- * with the fields enclosed by brackets "[]" replaced with
- * your own identifying information: Portions Copyright
- * [year] [name of copyright owner]
+ * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at
+ * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this
+ * CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [year] [name of copyright owner]
  */
 /*
- * $RCSfile: Delivery.java,v $
- * $Revision: 1.1.1.2 $
- * $Date: 2007-01-21 07:52:43 $
- *
- * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Utility;
 
@@ -54,7 +44,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -120,6 +110,8 @@ public abstract class Delivery {
     private TxMgr mTxMgr;
     private Object mTxMgrCacheLock = new Object();
     
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * Holds and caches a JMS connection, session etc for the dead letter queue. Since
      * the derived delivery classes may have multiple threads, multiple of these
@@ -165,7 +157,8 @@ public abstract class Delivery {
         private Connection getConnection(boolean isTopic) throws JMSException {
             if (mConn != null) {
                 if (isTopic != mIsTopic) {
-                    throw new JMSException("Cannot change domain mid processing");
+                    throw new JMSException(LOCALE.x("F002: Internal fault: cannot change messaging " +
+                            "domain after connection has been created.").toString());
                 }
             } else {
                 mIsTopic = isTopic;
@@ -308,17 +301,17 @@ public abstract class Delivery {
                 return;
             }
             if (delay % 1000 == 0) {
-                sLog.info("Message with msgid=[" + e.getMsgid() + "] was seen "
-                    + e.getNEncountered()
-                    + " times. Message delivery will be delayed for " + delay + " ms.");
+                sLog.info(LOCALE.x("E025: Message with msgid=[{0}] was seen {1}"
+                    + " times. Message delivery will be delayed for {2} ms.", 
+                    e.getMsgid(), Integer.toString(e.getNEncountered()), new Long(delay)));
             }
             mActivation.sleepAndMonitorStatus(delay);
         }
 
         protected void deleteMessage(Message m, Encounter e) {
-            sLog.info("Message with msgid=[" + e.getMsgid() + "] was seen "
-                + e.getNEncountered()
-                + " times. It will be acknowledged without being delivered");
+            sLog.info(LOCALE.x("E026: Message with msgid=[{0}] was seen {1} times. It "
+                + " will be acknowledged without being delivered.", 
+                e.getMsgid(), Integer.toString(e.getNEncountered())));
         }
 
         protected void move(Message m, Encounter e, boolean isTopic, 
@@ -367,11 +360,12 @@ public abstract class Delivery {
                     MessageProducer prod = x.getProducer(isTopic, destinationName);
                     mActivation.getObjectFactory().send(isTopic, prod, newMsg, 
                         m.getJMSPriority(), m.getJMSDeliveryMode());
-                    sLog.info("Message with msgid=[" + e.getMsgid() + "] was seen "
-                        + e.getNEncountered()
-                        + " times. It will be forwarded (moved) to " + (isTopic ? "topic " : "queue ") 
-                        + destinationName + " with msgid[" + newMsg.getJMSMessageID() 
-                        + "]");
+                    sLog.info(LOCALE.x("E027: Message with msgid=[{0}] was seen {1}"
+                        + " times. It will be forwarded (moved) to {2} {3}"  
+                        + " with msgid [{4}]", 
+                        e.getMsgid(), Integer.toString(e.getNEncountered()), 
+                        (isTopic ? "topic" : "queue"), destinationName, 
+                        newMsg.getJMSMessageID()));
                 } catch (Exception ex) {
                     copyException = ex;
                 }
@@ -385,17 +379,18 @@ public abstract class Delivery {
                     mActivation.getObjectFactory().send(isTopic, prod, m, 
                         m.getJMSPriority(), m.getJMSDeliveryMode());
                     if (mActivation.shouldRedirectRatherThanForward()) {
-                        sLog.info("Message with msgid=[" + e.getMsgid() + "] was seen "
-                            + e.getNEncountered()
-                            + " times. It will be redirected to " + (isTopic ? "topic " : "queue ") 
-                            + destinationName); 
+                        sLog.info(LOCALE.x("E028: Message with msgid=[{0}] was seen {1}"
+                            + " times. It will be redirected to {2} {3}." , 
+                            e.getMsgid(), Integer.toString(e.getNEncountered()), 
+                            (isTopic ? "topic" : "queue"), destinationName)); 
                     } else {
-                        sLog.info("Message with msgid=[" + e.getMsgid() + "] was seen "
-                            + e.getNEncountered()
-                            + " times. It will be redirected to " + (isTopic ? "topic " : "queue ") 
-                            + destinationName + ". Note that the message was redirected rather than "
-                            + "forwarded with additional information due to this error: " 
-                            + copyException);
+                        sLog.info(LOCALE.x("E029: Message with msgid=[{0}] was seen {1} "
+                            + "times. It will be redirected to {2} {3}. An attempt was "
+                            + "made to forward the message with additional information "
+                            + "in the message''s properties, but this attempt was "
+                            + "unsuccessful due to the following error: [{4}].", 
+                            e.getMsgid(), Integer.toString(e.getNEncountered()), 
+                            (isTopic ? "topic" : "queue"), destinationName), copyException); 
                     }
                     copyException = null;
                 } catch (Exception ex) {
@@ -927,20 +922,16 @@ public abstract class Delivery {
                     ((javax.jms.MessageListener) target).onMessage(m);
                     result.setOnMessageSucceeded(true);
                 } catch (RuntimeException ex) {
-                    String msg =
-                        "An unexpected exception was encountered delivering a message to an "
-                        + "endpoint. The message will be rolled back. Exception: [" + ex
-                        + "]";
-                    sLog.warn(msg, ex);
+                    sLog.warn(LOCALE.x("E031: The entity the message was sent to for "
+                        + "processing, threw an exception. The message will be "
+                        + "rolled back. Exception: [{0}]", ex), ex);
                     result.setOnMessageFailed(true);
                     result.setException(ex);
                 }
             }
         } catch (Exception ex) {
-            String msg =
-                "An unexpected exception was encountered processing a message. Exception: "
-                + ex;
-            sLog.warn(msg, ex);
+            sLog.warn(LOCALE.x("E030: An unexpected exception was encountered " 
+                + "processing a message. Exception: {0}", ex), ex);
         } finally {
             // Stats
             mStats.messageDelivered();
@@ -988,11 +979,9 @@ public abstract class Delivery {
                 try {
                     ((javax.jms.MessageListener) target).onMessage(m);
                 } catch (RuntimeException ex) {
-                    String msg =
-                        "An unexpected exception was encountered delivering a message to an "
-                        + "endpoint. The message will be rolled back. Exception: [" + ex
-                        + "]";
-                    sLog.warn(msg, ex);
+                    sLog.warn(LOCALE.x("E031: The entity the message was sent to for "
+                        + "processing, threw an exception. The message will be "
+                        + "rolled back. Exception: [{0}]", ex), ex);
                     mdbEx = ex;
                 }
             }
@@ -1028,10 +1017,8 @@ public abstract class Delivery {
                 mdbEx = new RuntimeException("MDB should be discarded");
             }
         } catch (Exception ex) {
-            String msg =
-                "An unexpected exception was encountered processing a message. Exception: "
-                + ex;
-            sLog.warn(msg, ex);
+            sLog.warn(LOCALE.x("E032: An unexpected exception occurred while processing "
+                + "a message. Exception: {0}", ex), ex);
         }
 
         return mdbEx;
@@ -1104,7 +1091,7 @@ public abstract class Delivery {
                     txmgr.init(p);
                     mTxMgr = txmgr;
                 } catch (Exception e) {
-                    sLog.warn("Transaction manager locator cannot be initialized: " + e, e);
+                    sLog.warn(LOCALE.x("E033: Transaction manager locator cannot be initialized: {0}", e), e);
                 }
             }
             return mTxMgr;
