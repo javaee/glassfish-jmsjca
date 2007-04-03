@@ -16,7 +16,10 @@
 
 package com.stc.jmsjca.localization;
 
+import com.stc.jmsjca.util.Str;
+
 import java.text.MessageFormat;
+import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
@@ -26,11 +29,12 @@ import java.util.regex.Pattern;
  * Tools for obtaining localized messages
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public abstract class LocalizationSupport {
     private PropertyResourceBundle mBundle;
     private Pattern mIdPattern;
+    private String mPrefix;
     
     private static final String NAME = "msgs";
 
@@ -41,18 +45,21 @@ public abstract class LocalizationSupport {
     
     /**
      * @param idpattern pattern to parse message
+     * @param prefix module name
      */
-    protected LocalizationSupport(Pattern idpattern) {
+    protected LocalizationSupport(Pattern idpattern, String prefix) {
         mIdPattern = idpattern;
+        mPrefix = prefix;
         // Strip off the class to obtain the package name
-//        String packagename = this.getClass().getName();
-//        int lastdot = packagename.lastIndexOf(".");
-//        packagename = packagename.substring(lastdot);
-//        try {
-//            mBundle = (PropertyResourceBundle) ResourceBundle.getBundle(packagename + NAME);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Resource bundle could not be loaded: " + e, e);
-//        }
+        String packagename = this.getClass().getName();
+        int lastdot = packagename.lastIndexOf(".");
+        packagename = packagename.substring(0, lastdot);
+        try {
+            mBundle = (PropertyResourceBundle) ResourceBundle.getBundle(packagename + "." + NAME, 
+                Locale.getDefault(), getClass().getClassLoader());
+        } catch (Exception e) {
+            throw new RuntimeException("Resource bundle could not be loaded: " + e, e);
+        }
     }
     
     /**
@@ -66,13 +73,25 @@ public abstract class LocalizationSupport {
      * @return localized message
      */
     public LocalizedString x(String msg, Object[] args) {
-//        Matcher matcher = mIdPattern.matcher(msg);
-//        String msgid = matcher.group(1);
-//        String localizedmsg = mBundle.getString(msgid);
-//        return new LocalizedString(MessageFormat.format(localizedmsg, args));
-        return new LocalizedString(MessageFormat.format(msg, args));
+        try {
+            Matcher matcher = mIdPattern.matcher(msg);
+            if (matcher.matches() && matcher.groupCount() > 1) {
+                String msgid = matcher.group(1);
+                try {
+                    String localizedmsg = mBundle.getString(msgid);
+                    return new LocalizedString(mPrefix + "-" + msgid + ": " 
+                        + MessageFormat.format(localizedmsg, args));
+                } catch (Exception e) {
+                    return new LocalizedString(mPrefix + "-" + MessageFormat.format(msg, args));
+                }
+            } else {
+                return new LocalizedString(mPrefix + ": " + MessageFormat.format(msg, args));
+            }
+        } catch (Exception e) {
+            String suffix = args == null || args.length == 0 ? "" : " {" + Str.concat(args, ", ") + "}";
+            return new LocalizedString(mPrefix + "<msg ID unknown due to " + e + "> " + msg + suffix);
+        }
     }
-
     
     /**
      * Convenience method for x(String, Object[])

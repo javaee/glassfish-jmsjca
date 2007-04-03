@@ -338,61 +338,62 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 <body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
 marginheight="12" marginwidth="12">
 
-<hr>
-<h2><a name="section-test-WhatIsRAWL">What is RAWL?</a></h2>
-<p>RAWL is the connector for WebLogic JMS version 9.0 </p>
-<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
-<p>The connector for RAWL is shipped as <tt>rawl.rar</tt>. It does NOT include 
-the client runtime. </p>
-<h2><a name="section-test-UsageNotes">Usage notes</a></h2>
+<hr />
+<h2><a name="section-Test-WhatIsRAWL">What is RAWL?</a></h2>
+RAWL is the connector for WebLogic JMS
+<h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
+The connector for RAWL is shipped as <tt>rawl.rar</tt>. It does NOT include the client runtime.
+<h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
 <ul>
-  <li>The URL is identical to the WebLogic URL plus a query string. The query 
-  string uses the following parameters:
-  <ul>
-    <li><tt>xacf</tt>=<name>. Here
-    <name>is the JNDI name of the XA connection factory. It defaults to <tt>
-    weblogic.jms.XAConnectionFactory</tt>. This connection factory is used both 
-    for XA and non XA (eventhough XA is emulated) </name>
-    </name>
-    </li>
-    <li><tt>prefix</tt>=<name>. This is the prefix used for looking up 
-    destinations. Example: <tt>t3://blue:7001?xacf=myxa&amp;prefix=jms/destinations</tt>. 
-    The query string can also include parameters for JMSJCA. </name>
-    </li>
-  </ul>
-  </li>
-  <li>Before deploying the connector, add the following jars to the classpath 
-  suffix:
-  <ul>
-    <li><tt>wlclient.jar</tt> </li>
-    <li><tt>wljmsclient.jar</tt> </li>
-  </ul>
-  </li>
-  <li><tt>createQueue(name)</tt> will do the following: lookup <tt>prefix/name</tt> 
-  in JNDI using the context pointing to the WebLogic server. The <tt>prefix</tt> 
-  parameter is configurable. The destinations are cached after the lookup so 
-  that subsequent lookups of the same destination are very fast. </li>
-  <li>The activation spec uses the same convention of <tt>lookup(prefix/name)</tt>.
-  </li>
-  <li>WL9 does not support XA on the client side. Hence, XA is emulated (pseudo 
-  XA). Pseudo XA supports <tt>commit()</tt> and <tt>rollback()</tt>, but does 
-  not support <tt>prepare()</tt> (a no-op) and does not support <tt>recover()</tt>. 
-  This limits the reliability. It uses the LastAgentResource facility in the 
-  Java CAPS Integration Server to increase the reliability. </li>
-  <li>WL9 does not support Connection Consumer mode outside of the WebLogic 
-  server; <tt>sync</tt> mode is used instead of Connection Consumer. This 
-  implies that concurrent processing is not supported for topics. </li>
-  <li>JNDI lookup relies on CORBA. This is supported in the Java CAPS 
-  application server, but not in the Sun Java System Application Server 8.1.
-  </li>
+<li> The URL is identical to the WebLogic URL plus a query string. The query string uses the following parameters:
+<ul>
+<li> <tt>JMSJCA.WLFACTORY</tt>=<name>. Here <name> is the JNDI name of the XA connection factory. It defaults to <tt>weblogic.jms.XAConnectionFactory</tt>. This connection factory is used both for XA and non XA (eventhough XA is emulated)
+</li>
+<li> <tt>prefix</tt>=<name>. This is the prefix used for looking up destinations. Example: <tt>t3://blue:7001?xacf=myxa&prefix=jms/destinations</tt>. The query string can also include parameters for JMSJCA.
+</li>
 </ul>
-<p></p>
-<hr>
-<div class="footer">
-</div>
-<p><br>
+</li>
+<li> Before deploying the connector, add the following jars to the classpath suffix (see below for version info):
+<ul>
+<li> <tt>wlclient.jar</tt>
+</li>
+<li> <tt>wljmsclient.jar</tt>
+</li>
+</ul>
+</li>
+<li> <tt>createQueue(name)</tt> will do the following: lookup <tt>prefix/name</tt> in JNDI using the context pointing to the WebLogic server. The <tt>prefix</tt> parameter is configurable. The destinations are cached after the lookup so that subsequent lookups of the same destination are very fast.
+</li>
+<li> The activation spec uses the same convention of <tt>lookup(prefix/name)</tt>.
+</li>
+<li> WebLogic JMS 8 and 9 do not support XA on the client side. Hence, XA is emulated (pseudo XA). Pseudo XA supports <tt>commit()</tt> and <tt>rollback()</tt>, but does not support <tt>prepare()</tt> (a no-op) and does not support <tt>recover()</tt>. This limits the reliability. It uses the <tt>LastAgentResource</tt> facility in the Java CAPS Integration Server to increase the reliability. The <tt>LastAgentResource</tt> facility will order the resources in a transaction such the last resource is a WebLogic resource on which a single-phase commit is performed in case of last agent commit optimization.
+</li>
+<li> WebLogic JMS 8 and 9 do not support Connection Consumer mode outside of the WebLogic server; <tt>sync</tt> mode is used instead of Connection Consumer. This implies that concurrent processing is not supported for topics.
+</li>
+</ul>
+<h2><a name="section-Test-SupportedApplicationServers">Supported application servers</a></h2>
+WebLogic JMS and obtaining connection factories and destinations (JNDI lookup) rely on CORBA. WebLogic CORBA on the client side makes particular assumptions about the environment that it is running on. These assumptions are correct in a standalone Java program running on Sun JVMs, but are wrong in Java server programs that use the Sun CORBA EE ORB.
+<p><b>Java CAPS Integration Server 5.1.x</b>:  to work around WebLogic's CORBA problem, this server has a special patch made for the WebLogic JMS 9.0 client jars. Only these client jars have been verified to work. WebLogic 9.2 client jars do <b>not</b> work.
+</p>
+<p><b>Sun Java System Application Server 8.2 EE and Glassfish v2 / Sun Java System Application Server 9.1</b>: the CORBA EE has been customized especially to work with WebLogic 9.0.
+</p>
+<p>Note that WebLogic client jars 9.0 have proven to work with WebLogic JMS 9.2, and WebLogic JMS 8.1.6.
 </p>
 
-</body>
 
+
+
+
+
+<hr />
+
+<div class="footer">
+
+</div>
+
+
+<br />
+
+</body>
 </html>
+
+

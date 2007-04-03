@@ -27,12 +27,12 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class CCStopEar1 extends StcmsEndToEnd {
     
     private int getQueueStatsNMsgs(JmsMgt jmsmgt, String queuename) throws Exception {
-        List queueprops = jmsmgt.getQueuesWithHeaders();
+        List queueprops = jmsmgt.getQueuesWithHeaders(0);
         Properties stats = SpecialFeaturesEar1.find(queueprops, JmsMgt.Q_QUEUE_NAME, queuename);
         int nmsg = Integer.parseInt(stats.getProperty(JmsMgt.Q_MESSAGE_COUNT));
         return nmsg;

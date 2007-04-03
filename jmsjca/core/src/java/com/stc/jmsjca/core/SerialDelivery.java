@@ -32,7 +32,7 @@ import javax.transaction.xa.XAResource;
  * <P>A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.3 $
+ * @version $Revision: 1.1.1.4 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -98,6 +98,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mActivation.isXA(),
             mActivation.isTopic(),
             mActivation.getActivationSpec(),
+            null,
             mActivation.getRA(),
             mActivation.getActivationSpec().getDestination());
         javax.jms.MessageConsumer cons = mObjFactory.createMessageConsumer(

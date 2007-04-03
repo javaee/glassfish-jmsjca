@@ -38,7 +38,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     
@@ -325,7 +325,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public interface JmsMgt {
         List getQueues() throws Exception;
         List getQueueMsgPropertiesList(String queueName, long minseq, int nMsgs) throws Exception;
-        List getQueuesWithHeaders() throws Exception;
+        List getQueuesWithHeaders(int type) throws Exception;
         boolean isServerReady() throws Exception;
         void setUserId(String userName);
         void setPassword(String password);
@@ -452,7 +452,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
                 assertTrue(queues.contains("Queue1"));
                 assertTrue(queues.contains("Queue2"));
                 
-                List queueprops = jmsmgt.getQueuesWithHeaders();
+                List queueprops = jmsmgt.getQueuesWithHeaders(0);
                 Properties stats = find(queueprops, JmsMgt.Q_QUEUE_NAME, "Queue1");
                 int nmsg = Integer.parseInt(stats.getProperty(JmsMgt.Q_MESSAGE_COUNT));
                 assertTrue(nmsg == N || nmsg == (N - 1));

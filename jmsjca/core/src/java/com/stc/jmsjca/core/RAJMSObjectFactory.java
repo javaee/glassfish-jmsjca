@@ -69,7 +69,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.3 $
+ * @version $Revision: 1.1.1.4 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -313,13 +313,14 @@ public abstract class RAJMSObjectFactory {
      * @param isXA boolean
      * @param isTopic boolean
      * @param activationSpec RAJMSActivationSpec
+     * @param fact MCF
      * @param ra RAJMSResourceAdapter
      * @param destName String
      * @return Destination
      * @throws JMSException failure
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
-        RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
         String destName) throws JMSException {
         if (isXA) {
             if (isTopic) {

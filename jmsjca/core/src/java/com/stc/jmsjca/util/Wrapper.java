@@ -44,7 +44,7 @@ import java.util.Set;
  * exception if that is the desired behavior.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.3 $
+ * @version $Revision: 1.1.1.4 $
  */
 public abstract class Wrapper implements InvocationHandler {
     private static Logger sLog = Logger.getLogger(Wrapper.class);
@@ -196,7 +196,7 @@ public abstract class Wrapper implements InvocationHandler {
             Method m = getDelegate().getClass().getMethod("close", new Class[0]);
             m.invoke(getDelegate(), new Object[0]);
         } catch (InvocationTargetException ex1) {
-            sLog.warn(LOCALE.x("E093: This {0} could not be closed properly: {1}", getItfClass(),
+            sLog.warn(LOCALE.x("E094: This {0} could not be closed properly: {1}", getItfClass(),
                 ex1.getTargetException()), ex1.getTargetException());
         } catch (Throwable ex) {
             sLog.warn(LOCALE.x("E094: This {0} could not be closed properly: {1}", getItfClass(),

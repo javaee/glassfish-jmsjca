@@ -39,7 +39,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -75,6 +75,11 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      */            
     private static final String TRANSPORTTYPE = "TransportType";
     
+    /**
+     * WebSphere MQ Channel
+     */            
+    private static final String CHANNEL = "Channel";
+ 
     /**
      * WebSphere MQ Client Id
      */            
@@ -299,7 +304,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             cfp.setProperty(HOSTNAME, url.getUrlParser().getHost());
             cfp.setProperty(PORT, Integer.toString(url.getUrlParser().getPort()));
             cfp.setProperty(CLIENTID, clientId);
-            
+            String channelName = p.getProperty(CHANNEL);
+            if (channelName != null) {
+                cfp.setProperty(CHANNEL, channelName);
+            }
         } catch (Exception ex) {
             JMSException e = new JMSException("Invalid url " + realUrl);
             e.initCause(ex);
@@ -356,6 +364,12 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
 
             clazz.getMethod("setClientID", new Class[] {String.class}).invoke(
                 cf, new Object[] {cfp.getProperty(CLIENTID)});
+
+            String channelName = cfp.getProperty(CHANNEL);
+            if (channelName != null) {
+                clazz.getMethod("setChannel", new Class[] {String.class}).invoke(cf,
+                    new Object[] {channelName});
+            }
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALE.x("E841: Failure to set connection factory properties: {0}", e), e);
         }
@@ -364,6 +378,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
 //        ((MQConnectionFactory) cf).setQueueManager(cfp.getProperty(QUEUEMANAGER));      
 //        ((MQConnectionFactory) cf).setTransportType(Integer.valueOf(cfp.getProperty(TRANSPORTTYPE)).intValue());
 //        ((MQConnectionFactory) cf).setClientID(cfp.getProperty(CLIENTID));                      
+//        }
         return cf;
     } 
     

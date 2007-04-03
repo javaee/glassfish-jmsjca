@@ -32,7 +32,7 @@ import javax.jms.TopicPublisher;
 * to the JMS Producer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.3 $
+ * @version $Revision: 1.1.1.4 $
  */
 public class JProducer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JProducer.class);
@@ -137,7 +137,7 @@ public class JProducer extends NoProxyWrapper {
         try {
             mDelegate.close();
         } catch (JMSException ex) {
-            sLog.warn(LOCALE.x("E041: This {0} could not be closed properly: {1}", getItfClass(),
+            sLog.warn(LOCALE.x("E094: This {0} could not be closed properly: {1}", getItfClass(),
                 ex), ex);
         }
     }

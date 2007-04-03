@@ -34,7 +34,7 @@ import javax.jms.Topic;
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class WLSessionConnection extends GenericSessionConnection {
 //    private static Logger sLog = Logger.getLogger(WLSessionConnection.class);
@@ -71,7 +71,7 @@ public class WLSessionConnection extends GenericSessionConnection {
         synchronized (d) {
             if (d.get() == null) {
                 Destination dest = getObjFact().createDestination(getJmsSession(), false,
-                    false, null, getRA(), name);
+                    false, null, mMC.getManagedConnectionFactory(), getRA(), name);
                 d.set(dest);
             }
         }
@@ -86,7 +86,7 @@ public class WLSessionConnection extends GenericSessionConnection {
         synchronized (d) {
             if (d.get() == null) {
                 Destination dest = getObjFact().createDestination(getJmsSession(), false,
-                    false, null, getRA(), name);
+                    false, null, mMC.getManagedConnectionFactory(), getRA(), name);
                 d.set(dest);
             }
         }

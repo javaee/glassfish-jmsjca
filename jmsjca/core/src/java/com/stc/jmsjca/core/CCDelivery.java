@@ -55,7 +55,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.1.1.3 $
+ * @version $Revision: 1.1.1.4 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -130,6 +130,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             mActivation.isXA(),
             mActivation.isTopic(),
             mActivation.getActivationSpec(),
+            null,
             mActivation.getRA(),
             mActivation.getActivationSpec().getDestination());
         sess.close();
@@ -436,7 +437,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 mConnection.close();
             }
         } catch (Exception ex) {
-            sLog.warn(LOCALE.x("E023: Unexpected exception closing JMS connection: {0}", ex), ex);
+            sLog.warn(LOCALE.x("E055: Unexpected exception closing JMS connection: {0}", ex), ex);
         }
         mConnection = null;
     }

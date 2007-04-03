@@ -26,6 +26,7 @@ import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.Connection;
@@ -33,17 +34,24 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSession;
 import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import javax.jms.XAQueueConnection;
+import javax.jms.XAQueueConnectionFactory;
 import javax.jms.XATopicConnection;
+import javax.jms.XATopicConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Hashtable;
 import java.util.Properties;
 
 /**
@@ -57,7 +65,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.1.1.2 $
+ * @version $Revision: 1.1.1.3 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -77,21 +85,61 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     public static final String DEFAULT_XACF = "weblogic.jms.XAConnectionFactory";
     
     /**
+     * The IS has a special patch for Weblogic CORBA communication; this is the class
+     * on which a special method needs to be called
+     */
+    public static final String IS_ORBCLASS = "com.sun.enterprise.util.ORBManager";
+
+    /**
+     * The IS has a special patch for Weblogic CORBA communication; this is the class
+     * on which a special method needs to be called
+     */
+    public static final String IS_ORBCLASS2 = "com.stc.corba.any.UtilDelegate";
+
+    /**
+     * The IS has a special patch for Weblogic CORBA communication; this is the method
+     * that needs to be called for creating an InitialContext
+     */
+    public static final String IS_ORBMETHOD = "getSeOrbInitProperties";
+    
+    /**
+     * The IS has a special patch for Weblogic CORBA communication; this is the method
+     * that needs to be called before and after a CORBA call may result from calling 
+     * a method on a JMS object 
+     */
+    public static final String IS_ORBMETHOD_MARKTHREAD = "requireSe";
+    
+    /**
      * com.sun.jndi.url cannot serve invocations of non-standard CORBA object in weblogic
      * and ensures that proper protocol is used.
      */
     private static final String JNDI_WEBLOGIC_PROTOCOL_PACKAGES = "weblogic.corba.j2ee.naming.url:com.sun.jndi.url";
-    private static final String FACTORY_NAME = "weblogic.jms.XAConnectionFactory";
+    private static final String DEFAULT_FACTORY_NAME = "weblogic.jms.XAConnectionFactory";
+    private static final String FACTORY_PROPERTYNAME = "JMSJCA.WLFACTORY";
 
     private static final String[] URL_PREFIXES = new String[] {
         PROT_T3 + "://",
     };
+
     private static Localizer LOCALE = Localizer.get();
-      
-    //    private static final String[] PROTOCOLS = new String[] {
-//        PROT_T3,
-//    };
     
+    private transient Method mSpecialISORBMethod;
+    private transient Method mSpecialISORBMethodMarkThread;
+    
+    /**
+     * Constructor 
+     */
+    public RAWLObjectFactory() {
+        try {
+            Class c = Class.forName(IS_ORBCLASS);
+            mSpecialISORBMethod = c.getMethod(IS_ORBMETHOD, new Class[] {});
+            c = Class.forName(IS_ORBCLASS2);
+            mSpecialISORBMethodMarkThread = c.getMethod(IS_ORBMETHOD_MARKTHREAD, new Class[] {boolean.class});
+        } catch (Exception e) {
+            // ignore
+        } 
+    }
+      
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
@@ -173,29 +221,6 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     }
     
     /**
-     * Tool function to invoke a method on a class without introducing compile time
-     * dependencies
-     * 
-     * @param classname
-     * @param methodName
-     * @param types
-     * @param args
-     * @return
-     * @throws Exception
-     */
-    private Object invoke(String classname, String methodName, Class[] types,
-        Object[] args) throws Exception {
-        try {
-            Class c = Class.forName(classname);
-            Method m = c.getMethod(methodName, types);
-            return m.invoke(null, args);
-        } catch (Exception e) {
-            throw new Exception("Cannot invoke method " + methodName + " on " + classname
-                + ": " + e, e);
-        }
-    }
-
-    /**
      * Looks up an object in WebLogic's JNDI
      * 
      * @param url host and port
@@ -203,21 +228,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * @return object name
      * @throws JMSException on failure
      */
-    private Object getJndiObject(UrlParser url, String objectName) throws JMSException {
-        return getJndiObject("corbaname:iiop:1.2@" + url.getHost() + ":" + url.getPort()
-            + '#' + objectName);        
-    }
-    
-    /**
-     * Looks up an object in JNDI if the prefetch is not specified; if it is specified
-     * it simply returns the prefetch.
-     *
-     * @param name jndi name
-     * @param prefetch to return immediately if not null
-     * @return non-null object
-     * @throws JMSException on error
-     */
-    private Object getJndiObject(String name) throws JMSException {
+    private Object getJndiObject(UrlParser url, String name) throws JMSException {
         if (sLog.isDebugEnabled()) {
             sLog.debug("Looking up JNDI object " + name);
         }
@@ -228,18 +239,32 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
 
         InitialContext ctx = null;
         try {
-            final Properties prop = (Properties) invoke(
-                "com.sun.enterprise.util.ORBManager", "getSeOrbInitProperties",
-                new Class[] {}, new Object[] {});
-            prop.put(Context.URL_PKG_PREFIXES, JNDI_WEBLOGIC_PROTOCOL_PACKAGES);
-            ctx = new InitialContext(prop);
-            return ctx.lookup(name);
+            if (mSpecialISORBMethod != null) {
+                try {
+                    // Works on IS only
+                    armCORBA(true);
+                    final Properties prop = (Properties) mSpecialISORBMethod.invoke(null, new Object[0]);
+                    prop.put(Context.URL_PKG_PREFIXES, JNDI_WEBLOGIC_PROTOCOL_PACKAGES);
+                    ctx = new InitialContext(prop);
+                    return ctx.lookup("corbaname:iiop:1.2@" + url.getHost() + ":" + url.getPort()
+                        + '#' + name); 
+                } finally {
+                    armCORBA(false);
+                }
+            } else {
+                Hashtable env = new Hashtable();
+                env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
+                env.put(Context.PROVIDER_URL, "t3://" + url.getHost() + ":" + url.getPort());
+                ctx = new InitialContext(env);
+                return ctx.lookup(name);
+            }
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALE.x("E821: Could not find JNDI object by name [{0}]: {1}", name, e), e);
         } finally {
             safeClose(ctx);
         }
     }
+    
     
     /**
      * createConnectionFactory
@@ -259,6 +284,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         // Get the connection properties
         Properties p = new Properties();
         UrlParser url = (UrlParser) getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        String factoryname = p.getProperty(FACTORY_PROPERTYNAME, DEFAULT_FACTORY_NAME);
 
         switch (domain) {
         case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
@@ -267,7 +293,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
         case XConnectionRequestInfo.DOMAIN_UNIFIED_NONXA:
         case XConnectionRequestInfo.DOMAIN_UNIFIED_XA:
-            Object o = getJndiObject(url, FACTORY_NAME);
+            Object o = getJndiObject(url, factoryname);
             return (ConnectionFactory) o; 
         default:
             throw new JMSException("Logic fault: invalid domain " + domain);
@@ -283,12 +309,12 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      *      com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String)
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
-        RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact, RAJMSResourceAdapter ra,
         String destName) throws JMSException {
         
         // Get the connection properties
         Properties p = new Properties();
-        UrlParser url = (UrlParser) getProperties(p, ra, activationSpec, null, null);
+        UrlParser url = (UrlParser) getProperties(p, ra, activationSpec, fact, null);
         
         // JNDI object name
         String prefix = p.getProperty(RAWLResourceAdapter.PROP_PREFIX, "");
@@ -366,5 +392,42 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      */
     public String getJMSServerType() {
         return "WL";
+    }
+    
+    private static final Object[] PUSH = new Object[] {Boolean.TRUE};
+    private static final Object[] POP = new Object[] {Boolean.FALSE};
+    
+    /**
+     * Marks the thread as CORBA SE
+     * 
+     * @param ispush true to mark, false to unmark
+     * @throws JMSException on failure
+     */
+    private void armCORBA(boolean ispush) throws JMSException {
+        if (mSpecialISORBMethodMarkThread != null) {
+            try {
+                mSpecialISORBMethodMarkThread.invoke(null, ispush ? PUSH : POP);
+            } catch (Exception e) {
+                throw Exc.jmsExc(LOCALE.x("E823: CORBA push/pop failure: {0}", e), e);
+            }
+        }
+    }
+    
+    /**
+     * Need to mark the thread as a CORBA SE call
+     * 
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createConnection(java.lang.Object, 
+     *  int, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter, 
+     *  java.lang.String, java.lang.String)
+     */
+    public Connection createConnection(Object fact, int domain,
+        RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra, String username,
+        String password) throws JMSException {
+        armCORBA(true);
+        try {
+            return super.createConnection(fact, domain, activationSpec, ra, username, password);
+        } finally {
+            armCORBA(false);
+        }
     }
 }

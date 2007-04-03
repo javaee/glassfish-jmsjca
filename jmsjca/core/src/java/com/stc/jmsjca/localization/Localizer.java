@@ -22,13 +22,13 @@ import java.util.regex.Pattern;
  * 
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.1.1.1 $
+ * @version $Revision: 1.1.1.2 $
  */
 public class Localizer extends LocalizationSupport {
     private static Localizer sLocalizer = new Localizer(LocalizationSupport.DEFAULTPATTERN);
 
     private Localizer(Pattern idpattern) {
-        super(idpattern);
+        super(idpattern, "JMSJCA");
     }
 
     /**
