@@ -19,7 +19,6 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
-import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
@@ -59,10 +58,12 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
-    private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);
+    private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
+    private static final long RETRY_INTERVAL_MS = 500;
+    private static final int RETRY_COUNT = 10 * 4;
     private String mConnectionURL;
     private String mUserName;
     private String mPassword;
@@ -801,65 +802,55 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     }
     
     /**
-     * look up in LDAP data specified as being bound therein, if 
-     * required
+     * look up in LDAP data specified as being bound therein, if required
      * 
      * @param ldapURL possibly LDAP URL where we can find the value of
      * some parameter set in the environment 
      * @return if ldapURL is not an LDAP URL returns ldapURL unchanged, 
      * otherwise the value bound at the given ldap URL. 
-     * @throws JMSException on lookup failure
      */
-    public String lookUpLDAP(String ldapURL) throws JMSException {
-        // don't waste time if it's not an LDAP URL
-        if (ldapURL == null || !ldapURL.startsWith("ldap://") || !ldapURL.startsWith("ldaps://")) {
+    public String lookUpLDAP(String ldapURL) {
+        if (ldapURL == null || (!ldapURL.startsWith("ldap://") && !ldapURL.startsWith("ldaps://"))) {
             return ldapURL;
-        }
-        
+        }        
+
         try {
-            String[] signature = {"url"};
-            String[] parameterValues = {ldapURL};
-            
-            MBeanServer mbeanServer = getMBeanServer(); 
-            
-            /**
-             * until the definitive object name is supplied in the
-             * resource adapter we use a pattern ObjectName. Once this is 
-             * completed the first code line can be uncommented and the
-             * following one deleted.
-             */       
-            // check MBean is available - due to the indefinite ordering of 
-            // startup it may be we ask for the mbeans services before it becomes
-            // available. However, retry mechanisms mean that this is not 
-            // irrecoverable.
-            
-            ObjectName objName = new ObjectName(mTransformerMBeanName);
-            
-            // test code - not removed quite yet...
-            /*ObjectName objName = new ObjectName("*:" + mTransformerMBeanName + ",*");
-             java.util.Set transformer = mbeanServer.queryNames(objName, null);
-             if (transformer.size() == 0) {
-             throw new Exception("No MBean [" + objName + "] yet available to " +
-             "carry out transformations.");
-             }
-             sLog.debug("Found " + transformer.size() + " matches to bean name");
-             
-             Iterator i = transformer.iterator();
-             objName = (ObjectName) i.next();*/
-            
-            if (sLog.isDebugEnabled()) {
-                sLog.debug("Transforming " + ldapURL);
+            if (getTransformerMBeanName() != null && getTransformerMBeanName().length() != 0) {
+                ObjectName mbeanName = new ObjectName(getTransformerMBeanName());
+                MBeanServer mbeanServer = getMBeanServer(); 
+                
+                // check if MBean is available due to the indefinite ordering of 
+                // components deployment, need a better solution 
+                Set objectNames = mbeanServer.queryNames(mbeanName, null);
+                int reTryCount = 0;
+                while (objectNames.isEmpty()) {
+                    if (reTryCount++ >= RETRY_COUNT) {
+                        //throw new Exception("MBean " + mbeanName.toString() + " is not created for transforming");
+                        break;
+                    }
+                    try {
+                        Thread.sleep(RETRY_INTERVAL_MS);
+                    } catch (Exception ex) {
+                        // ignore
+                    }
+                    objectNames = mbeanServer.queryNames(mbeanName, null);
+                }
+                
+                String[] signatures = {"java.lang.String"};
+                String[] parameters = {ldapURL};    
+                
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Transforming " + ldapURL + " using MBean [" + getTransformerMBeanName() + "]");
+                }
+                Object result = mbeanServer.invoke(mbeanName, "attemptTransform", parameters, signatures);
+                return (String) result;
+                
             }
-            Object result = mbeanServer.invoke(objName, "attemptTransform", parameterValues, signature);
-            if (sLog.isDebugEnabled()) {
-                sLog.debug("Transform result is " + result);
-            }
-            
-            return (String) result;
-        } catch (Exception ex) {           
-            throw Exc.jmsExc(LOCALE.x("E049: Could not look up string [{0}]"
-                + " in ldap using MBean [{1}]: {2}.", ldapURL, mTransformerMBeanName, ex), ex);
+        } catch (Exception ex) {
+            sLog.warn(LOCALE.x("E049: Could not look up string [{0}]"
+             + " in ldap using MBean [{1}]: {2}.", ldapURL, mTransformerMBeanName, ex), ex);
         }
+        return ldapURL;
     }
 
     /**

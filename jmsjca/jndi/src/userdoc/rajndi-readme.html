@@ -344,18 +344,27 @@ RAJNDI is a generic connector for JMS servers of which the connection factories 
 <h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
 This connector is shipped as <tt>rajndi.rar</tt>
 <h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
-
 The jndi names of the connection factories need to be specified. This can be done either as separate values in the deployment descriptor or by properties in the URL or the <tt>options</tt> field in the deployment descriptor.
 <table class="wikitable" border="1">
 <tr><th>Name</th><th>Meaning</th></tr>
 <tr><td>JMSJCA.QueueCF</td><td>JNDI name of queue connection factory (javax.jms.QueueConnectionFactory)</td></tr>
 <tr><td>JMSJCA.TopicCF</td><td>JNDI name of topic connection factory (javax.jms.TopicConnectionFactory)</td></tr>
-<tr><td>JMSJCA.QueueCF</td><td>JNDI name of connection factory (javax.jms.ConnectionFactory)</td></tr>
-
+<tr><td>JMSJCA.UnifiedCF</td><td>JNDI name of connection factory (javax.jms.ConnectionFactory)</td></tr>
 </table>
-<p>The properties used to create the InitialContext can be specified either in the URL or in the <tt>options</tt> field in the deployment descriptor.
+<p>If the property <tt>java.naming.factory.initial</tt> is specified, the <tt>InitialContext</tt> is created using the complete set of properties specified in the URL and or the <tt>options</tt> field.  If the property <tt>java.naming.factory.initial</tt> is not specified, the <tt>InitialContext</tt> is created using its default constructor.
 </p>
-<p></p>
+<h4><a name="section-Test-Example">Example:</a></h4>
+If the following properties are specified, the RAJNDI adapter will try to use STCMS connectionfactories bound in the STCMS JNDI provider.
+<pre>
+java.naming.factory.initial=com.stc.jms.jndispi.InitialContextFactory
+java.naming.provider.url=stcms://localhost:18007
+java.naming.security.principal=Administrator
+java.naming.security.credentials=STC
+JMSJCA.TopicCF=connectionfactories/xatopicconnectionfactory
+JMSJCA.QueueCF=connectionfactories/xaqueueconnectionfactory
+JMSJCA.UnifiedCF=connectionfactories/xaconnectionfactory
+</pre>
+
 
 
 
@@ -369,6 +378,9 @@ The jndi names of the connection factories need to be specified. This can be don
 </div>
 
 
-<br /></body>
+<br />
 
+</body>
 </html>
+
+

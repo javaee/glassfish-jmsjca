@@ -338,38 +338,58 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 <body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
 marginheight="12" marginwidth="12">
 
-<h2><a name="section-test-WhatIsRAWMQ">What is RAWMQ?</a></h2>
-<p>RAWMQ is the connector IBM WebSphere Message Queue 6.0. </p>
-<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
-<p>The connector for RAWMQ is shipped as <tt>rawmq.rar</tt>. It does NOT include 
-the client runtime. </p>
-<h2><a name="section-test-UsageNotes">Usage notes</a></h2>
+<hr />
+<h2><a name="section-Test-WhatIsRAWMQ">What is RAWMQ?</a></h2>
+RAWMQ is the connector IBM WebSphere Message Queue 6.0.
+<h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
+The connector for RAWMQ is shipped as <tt>rawmq.rar</tt>. It does NOT include the client runtime.
+<h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
 <ul>
-  <li>When using XA, only the <tt>sync</tt> concurrency mode is supported. This 
-  implies that when XA is used, there is no concurrent processing using topics.
-  </li>
-  <li>Supports JMSC_MQJMS_TP_CLIENT_MQ_TCPIP transport type </li>
-  <li>The URL must be of the fom <tt>wmq://[hostname]:[port]?QueueManager=[queue 
-  manager name]&amp;option1=value1&amp;option2=value2</tt>. Options can include options 
-  for JMSJCA. </li>
-  <li>Before deploying the connector, add the following jars to the classpath 
-  suffix:
-  <ul>
-    <li>com.ibm.mqjms.jar </li>
-    <li>com.ibm.mq.jar </li>
-    <li>com.ibm.mqetclient.jar </li>
-    <li>dhbcore.jar </li>
-  </ul>
-  </li>
-  <li>WebSphere MQ is not the same as Embedded WMQ. The latter is NOT supported.
-  </li>
+<li> When using XA, only the <tt>sync</tt> concurrency mode is supported. This implies that when XA is used, there is no concurrent processing using topics.
+</li>
+<li> Supports JMSC_MQJMS_TP_CLIENT_MQ_TCPIP transport type
+</li>
+<li> The URL must be of the form <tt>wmq://[hostname]:[port]?QueueManager=[queue manager name]&option1=value1&option2=value2</tt>. Options can include options for JMSJCA and:
+<ul>
+<li> QueueManager
+</li>
+<li> TransportType
+</li>
+<li> Channel
+</li>
 </ul>
-<hr>
+</li>
+<li> Before deploying the connector, add the following jars to the classpath suffix:
+<ul>
+<li> com.ibm.mqjms.jar
+</li>
+<li> com.ibm.mq.jar
+</li>
+<li> com.ibm.mqetclient.jar
+</li>
+<li> dhbcore.jar
+</li>
+</ul>
+</li>
+<li> WebSphere MQ is not the same as Embedded WMQ. The latter is NOT supported.
+</li>
+</ul>
+
+
+
+
+
+
+<hr />
+
 <div class="footer">
+
 </div>
-<p><br>
-</p>
+
+
+<br />
 
 </body>
-
 </html>
+
+

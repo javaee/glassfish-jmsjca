@@ -51,7 +51,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -473,7 +473,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mObjFactory =  ((RAJMSResourceAdapter) mRA).createObjectFactory(urlstr);
 
         Properties p = new Properties();
-        mRAUrl = mRA.getConnectionURL();
+        mRAUrl = mRA.lookUpLDAP(mRA.getConnectionURL());
         mRAOptionsStr = mRA.getOptions();
 
         // Lowest precedence: RA-options

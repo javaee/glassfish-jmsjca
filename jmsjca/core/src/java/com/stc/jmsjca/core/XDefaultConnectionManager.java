@@ -160,7 +160,7 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
@@ -547,7 +547,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             
             return ret;
         } catch (Exception ex) {
-            throw Exc.rsrcExc(LOCALE.x("E072: Could not allocate connection: {0}", ex), ex);
+            throw Exc.rsrcExc(LOCALE.x("E073: Could not allocate connection: {0}", ex), ex);
         }
     }
     
