@@ -39,7 +39,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -67,8 +67,13 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      */
     public static final String PROT_SSL = "stcmss";
 
+    /**
+     * Protocol with LDAP
+     */
+    public static final String PROT_LDAP = "ldap";
+
     private static final String[] URL_PREFIXES = new String[] {PROT_NON_SSL + "://",
-        PROT_SSL + "://" };
+        PROT_SSL + "://", PROT_LDAP + "://" };
 
     private static final String SSL_AUTHENTICATION_MODE = "com.stc.jms.ssl.authenticationmode";
     private static final String SSL_AUTHENTICATION_MODE_TRUSTALL = "TrustAll";
@@ -98,6 +103,9 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
         } else if (PROT_SSL.equals(url.getProtocol())) {
             isSSL = true;
             // ...
+        } else if (PROT_LDAP.equals(url.getProtocol())) {
+            // ...
+            return false;
         } else {
             throw new JMSException("Invalid protocol [" + url.getProtocol()
                 + "]: should be stcms or stcmss");

@@ -44,7 +44,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -157,7 +157,7 @@ public abstract class Delivery {
         private Connection getConnection(boolean isTopic) throws JMSException {
             if (mConn != null) {
                 if (isTopic != mIsTopic) {
-                    throw new JMSException(LOCALE.x("F002: Internal fault: cannot change messaging " +
+                    throw new JMSException(LOCALE.x("E007: Internal fault: cannot change messaging " +
                             "domain after connection has been created.").toString());
                 }
             } else {
@@ -203,7 +203,8 @@ public abstract class Delivery {
             } else {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
                 mDest = o.createDestination(getSession(isTopic),
-                    mActivation.isXA(), isTopic, null, mActivation.getRA(), destname);
+                    mActivation.isXA(), isTopic, mActivation.getActivationSpec(), null,
+                    mActivation.getRA(), destname);
                 mDestName = destname;
             }
             return mDest;
@@ -1091,7 +1092,7 @@ public abstract class Delivery {
                     txmgr.init(p);
                     mTxMgr = txmgr;
                 } catch (Exception e) {
-                    sLog.warn(LOCALE.x("E033: Transaction manager locator cannot be initialized: {0}", e), e);
+                    sLog.warn(LOCALE.x("E088: Transaction manager locator cannot be initialized: {0}", e), e);
                 }
             }
             return mTxMgr;

@@ -227,6 +227,20 @@ Relevant properties to set:
             <fileset file="${stc.api.dir}/j2ee.jar" />
         </path>
 
+        <!-- Build tools -->
+        <mkdir dir="${jmsjca.build-tools.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.build-tools.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="buildtools/src/java" />
+            <classpath refid="jmsjca.core.classpath"/>
+        </javac>
+
         <mkdir dir="${jmsjca.core.classes.dir}"/>
         <javac
             fork="stc.jdk13.fork"
@@ -239,6 +253,13 @@ Relevant properties to set:
             <src path="core/src/java" />
             <classpath refid="jmsjca.core.classpath"/>
         </javac>
+        
+        <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
+        <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
+        <i18n dir="${jmsjca.core.classes.dir}" file="core/src/java/com/stc/jmsjca/localization/msgs.properties" />
+        <copy todir="${jmsjca.core.classes.dir}">
+            <fileset dir="core/src/java" excludes="**/*.java"/>
+        </copy>
 
         <jar destfile="${jmsjca.core.jar.path}">
             <fileset dir="${jmsjca.core.classes.dir}">
@@ -268,6 +289,9 @@ Relevant properties to set:
               <fileset file="core/test/lib/jdom.jar" />
             </classpath>
         </javac>
+        <copy todir="${jmsjca.container.classes.dir}">
+            <fileset dir="container/src/java" excludes="**/*.java"/>
+        </copy>
 
     </target>
 

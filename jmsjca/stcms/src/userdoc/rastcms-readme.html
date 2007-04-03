@@ -338,67 +338,69 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 <body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
 marginheight="12" marginwidth="12">
 
-<h2><a name="section-test-WhatIsRASTCMS">What is RASTCMS?</a></h2>
-<p>RASTCMS is the JCA 1.5 connector through which application servers can 
-connect to STCMS, both for inbound and outbound. RASTCMS is part of the JMSJCA 
-&quot;family&quot; of JMS connectors, i.e. a JMS connector for 4.5.3, a JMS connector for 
-NSJMS, and a generic JMS connector based on JNDI. </p>
-<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
-<p>RASTCMS is shipped as <tt>rastcms.rar</tt>. It contains the connector code 
-and the complete runtime client for STCMS. </p>
-<h2><a name="section-test-ConfigurationNotes">Configuration notes</a></h2>
-<h4><a name="section-test-ConnectionURL">ConnectionURL</a></h4>
-<p>RASTCMS uses a generic connectionURL string to specify options, including 
-connectivity information to the STCMS server. This single URL is used instead of 
-specifying three or more different parameters in <tt>ra.xml</tt> and in the 
-activation spec. The format is for non-SSL use: </p>
-<pre>     stcms://server:port
+<hr />
+<h2><a name="section-Test-WhatIsRASTCMS">What is RASTCMS?</a></h2>
+RASTCMS is the JCA 1.5 connector through which application servers can connect to STCMS, both for inbound and outbound. RASTCMS is part of the JMSJCA "family" of JMS connectors, i.e. a JMS connector for 4.5.3, a JMS connector for NSJMS, and 
+a generic JMS connector based on JNDI.
+<h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
+RASTCMS is shipped as <tt>rastcms.rar</tt>. It contains the connector code and the complete runtime client for STCMS.
+<h2><a name="section-Test-ConfigurationNotes">Configuration notes</a></h2>
+<h4><a name="section-Test-ConnectionURL">ConnectionURL</a></h4>
+RASTCMS uses a generic connectionURL string to specify options, including connectivity information to the STCMS server. This single URL is used instead of specifying three or more different parameters in <tt>ra.xml</tt> and in the activation spec. 
+The format is for non-SSL use: 
+<pre>
+     stcms://server:port
 </pre>
-<p>when using SSL, specify </p>
-<pre>    stcmss://server:port
+
+when using SSL, specify 
+<pre>
+    stcmss://server:port
 </pre>
-<p>When no port is specified, the port number will be looked up in the system 
-properties. This will work in the Java CAPS application server and will return 
-the port number of the embedded STCMS JMS server. When no server is specified, 
-the server <tt>localhost</tt> will be used. The default value for the <tt>
-ConnectionURL</tt> is <tt>stcms://</tt>. </p>
-<p>The <tt>ConnectionURL</tt> can optionally contain a query string. This can be 
-used to specify parameters for the STCMS connection factory or the JMSJCA 
-adapter. For example, to turn make the client validate the SSL certificate that 
-it receives from the server, one can specify server authentication as follows:
-<tt>stcmss://?com.stc.jms.ssl.authenticationmode=Authenticate</tt>. </p>
-<h4><a name="section-test-ProducerPooling">ProducerPooling</a></h4>
-<p>The STCMS client provides producer pooling at a low level. The JMSJCA 
-connector also provides producer pooling; this functionality was added for JMS 
-providers that don't provide this functionality in the JMS client runtime. The
-<tt>ProducerPooling</tt> parameter controls the producer pooling setting in the 
-connector; by default the producer pooling setting in STCMS client is turned 
-off. </p>
-<h4><a name="section-test-TheOptionJMSJCA.Strict">The option <tt>JMSJCA.Strict</tt></a></h4>
-<p><tt>JMSJCA.Strict</tt>: if set to <tt>true</tt>, the adapter will behave as 
-close to the J2EE spec as possible. With STCMS the only effect will be that it 
-will set the connection factory property <tt>com.stc.jms.strictPersistence</tt> 
-so that the persistence attribute on received messages is identical to how it 
-was sent to when the message was sent. </p>
-<h2>
-<a name="section-test-UsageNotesForTheProtectedConcurrentFIFOModeWithJMSJCA">
-Usage notes for the Protected Concurrent FIFO mode with JMSJCA</a></h2>
-<p>To prevent deadlocks in the case of all MDBs rolling back, FIFO mode should 
-ONLY be run in <tt>sync</tt>-mode. This concurrency mode can be specified in the 
-activation spec, as an option in the <tt>ra.xml</tt> or <tt>ejb-jar.xml</tt> or 
-the connection URL using the key <tt>JMSJCA.concurrencymode</tt>. Example for 
-the connection URL: </p>
-<pre>    stcms://?JMSJCA.concurrencymode=sync
+
+<p>When no port is specified, the port number will be looked up in the system properties. This will work in the Java CAPS application server and will return the port number of the embedded STCMS JMS server. When no server is specified, the server <tt>localhost</tt> will be used. The default value for the <tt>ConnectionURL</tt> is <tt>stcms://</tt>.
+</p>
+<p>The <tt>ConnectionURL</tt> can optionally contain a query string. This can be used to specify parameters for the STCMS connection factory or the JMSJCA adapter.
+For example, to turn make the client validate the SSL certificate that it receives from the server, one can specify server authentication as follows: <tt>stcmss://?com.stc.jms.ssl.authenticationmode=Authenticate</tt>.
+</p>
+<h4><a name="section-Test-ProducerPooling">ProducerPooling</a></h4>
+The STCMS client provides producer pooling at a low level. The JMSJCA connector also provides producer pooling; this functionality
+was added for JMS providers that don't provide this functionality in the JMS client runtime. The <tt>ProducerPooling</tt> parameter controls 
+the producer pooling setting in the connector; by default the producer pooling setting in STCMS client is turned off.
+<h4><a name="section-Test-TheOptionJMSJCA.Strict">The option <tt>JMSJCA.Strict</tt></a></h4>
+<tt>JMSJCA.Strict</tt>: if set to <tt>true</tt>, the adapter will behave as close to the J2EE spec as possible. With STCMS the only effect will be that it will set the connection factory property <tt>com.stc.jms.strictPersistence</tt> so that the persistence attribute on received messages is identical to how it was sent to when the message was sent.
+<h2><a name="section-Test-UsageNotesForTheProtectedConcurrentFIFOModeWithJMSJCA">Usage notes for the Protected Concurrent FIFO mode with JMSJCA</a></h2>
+To prevent deadlocks in the case of all MDBs rolling back, FIFO mode should ONLY be run in <tt>sync</tt>-mode. This concurrency mode can be specified in the activation spec, as an option in the <tt>ra.xml</tt> or <tt>ejb-jar.xml</tt> or the connection URL using the key <tt>JMSJCA.concurrencymode</tt>. Example for the connection URL:
+<pre>
+    stcms://?JMSJCA.concurrencymode=sync
 </pre>
-<p>Another example: </p>
-<pre>     stcms://server:18007?JMSJCA.concurrencymode=sync
+
+<p>Another example:
+</p>
+<pre>
+     stcms://server:18007?JMSJCA.concurrencymode=sync
 </pre>
-<hr>
-<div class="footer">
-</div>
-<p><br>
+
+<p>Run in  <tt>cc</tt>-mode will cause deadlock in the case of any MDB rolling back. This can be fixed either in the client side or the server side. A better solution will be addessed 
+later.
+</p>
+<p> 
 </p>
 
-</body>
 
+
+
+
+
+<hr />
+
+<div class="footer">
+
+</div>
+
+
+<br />
+
+</body>
 </html>
+
+

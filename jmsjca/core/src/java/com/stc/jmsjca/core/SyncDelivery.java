@@ -485,6 +485,7 @@ public class SyncDelivery extends Delivery {
                 mActivation.isXA(),
                 mActivation.isTopic(),
                 mActivation.getActivationSpec(),
+                null,
                 mActivation.getRA(),
                 mActivation.getActivationSpec().getDestination());
             mCons = o.createMessageConsumer(

@@ -32,7 +32,7 @@ import javax.jms.TopicSubscriber;
  * to the JMS Consumer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JConsumer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JConsumer.class);
@@ -95,7 +95,7 @@ public class JConsumer extends NoProxyWrapper {
         try {
             mDelegate.close();
         } catch (JMSException ex) {
-            sLog.warn(LOCALE.x("E039: This {0} could not be closed properly: {1}", 
+            sLog.warn(LOCALE.x("E094: This {0} could not be closed properly: {1}", 
                 getItfClass(), ex), ex);
         }
     }

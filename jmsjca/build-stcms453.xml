@@ -130,6 +130,13 @@
             <classpath refid="jmsjca.xxx.classpath"/>
         </javac>
 
+        <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
+        <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
+        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" />
+        <copy todir="${jmsjca.xxx.rar.classes.dir}">
+            <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
+        </copy>
+
         <!-- mk rar -->
         <jar destfile="${jmsjca.xxx.rar.jar.path}">
             <fileset dir="${jmsjca.xxx.rar.classes.dir}">
@@ -172,6 +179,10 @@
             <src path="${jcaid}/test/src/java" />
             <classpath refid="jmsjca.test.classpath"/>
         </javac>
+        <copy todir="${jmsjca.xxx.test.classes.dir}">
+            <fileset dir="core/test/src/java" excludes="**/*.java"/>
+            <fileset dir="${jcaid}/test/src/java" excludes="**/*.java"/>
+        </copy>
 
         <!-- ejb -->
         <mkdir dir="${jmsjca.xxx.test.dir}"/>

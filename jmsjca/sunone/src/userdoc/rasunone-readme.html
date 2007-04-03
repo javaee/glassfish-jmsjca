@@ -338,12 +338,12 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 <body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
 marginheight="12" marginwidth="12">
 
+<hr />
 <h2><a name="section-Test-WhatIsRASunOne">What is RASunOne?</a></h2>
 RASunOne is the connector for Sun Java System Message Queue.
 <h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
 The connector for SJSMQ is shipped as <tt>rasunone.rar</tt>. It includes the client runtime (imqjmsra.jar).
 <h2><a name="section-Test-ReleaseInformation">Release information</a></h2>
-
 <h4><a name="section-Test-5.1.2">5.1.2</a></h4>
 <ul>
 <li> Enabled <tt>CC</tt> mode
@@ -354,7 +354,6 @@ The connector for SJSMQ is shipped as <tt>rasunone.rar</tt>. It includes the cli
 </li>
 </ul>
 <h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
-
 <ul>
 <li> This version supports 3.6 UR4 and up.
 </li>
@@ -363,7 +362,6 @@ The connector for SJSMQ is shipped as <tt>rasunone.rar</tt>. It includes the cli
 <li> SJSMQ jms and ssljms services are supported.
 </li>
 <li> If <tt>serviceName</tt> is omitted, jms service will be used as default.
-
 </li>
 <li> To support one or more SJSMQ message server addresses, add a comma and another URL, e.g. mq://host:port/serviceName?option1=value1&option2=value2, mq://host:port/serviceName?option1=value1&option2=value2
 </li>
@@ -372,7 +370,6 @@ The connector for SJSMQ is shipped as <tt>rasunone.rar</tt>. It includes the cli
 </ul>
 </li>
 <li> the connector has been certified with client runtime version <tt>3.6 SP4 (Build 1)</tt> and <tt>3.7 UR1</tt>. When deploying into Sun Java System Application Server 8.1, make sure that the version of the <tt>imqjmsra.jar</tt> that is in the classpath of the server is of this version or higher.
-
 <ul>
 <li> To make management messages persistent, add this option in the configuration file of the SJSMQ broker: <tt>imq.metrics.topic.persist=true</tt>. Refer to the documentation of SJSMQ for a description of this option, as well as other options such as <tt>imq.metrics.interval</tt>, <tt>imq.metrics.topic.interval</tt> and <tt>imq.metrics.topic.timetolive</tt>.
 </li>
@@ -380,7 +377,6 @@ The connector for SJSMQ is shipped as <tt>rasunone.rar</tt>. It includes the cli
 </li>
 </ul>
 <h2><a name="section-Test-KnownIssues">Known issues</a></h2>
-
 <h4><a name="section-Test-ApparentMessageLossInSJSMQ3.6SP4">Apparent message loss in SJSMQ 3.6 SP4</a></h4>
 Under the following conditions:
 <ul>
@@ -392,7 +388,6 @@ Under the following conditions:
 </li>
 </ul>
 ... one or more messages may appear to get lost. These messages re-appear when the SJSMQ broker is restarted.
-
 <p>Workaround #1:use <tt>sync</tt> mode instead of <tt>CC</tt> mode. This implies that there is no concurrent processing for topics. This mode can be specified in the deployment descriptor or in the URL. See the JMSJCA release notes. 
 </p>
 <p>Workaround #2: restart the SJSMQ broker if this situation occurs
@@ -402,7 +397,6 @@ The management MBean for management of messages in queues and topics is limited 
 <p>Workaround: upgrade to 3.7UR1 or higher.
 </p>
 <h4><a name="section-Test-ReceiversCannotBeCreatedWhenUsingSyncMode">Receivers cannot be created when using <tt>sync</tt> mode</a></h4>
-
 To enable concurrent processing on queues when using <tt>sync</tt> mode, make sure to provide this option in the configuration of the SJSMQ broker: <tt>imq.autocreate.queue.maxNumActiveConsumers=-1</tt>. The default number of messages sent to one queue-receiver; this is likely too many to have a reasonable concurrency. Therefore it is recommended to set this additional parameter in the broker configuration: <tt>imq.autocreate.queue.consumerFlowLimit=10</tt>
 <p></p>
 
@@ -420,7 +414,7 @@ To enable concurrent processing on queues when using <tt>sync</tt> mode, make su
 
 <br />
 
-
 </body>
-
 </html>
+
+

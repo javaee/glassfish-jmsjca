@@ -72,7 +72,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Activation {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -193,7 +193,7 @@ public class Activation {
                 Class[] paramTypes = {javax.jms.Message.class };
                 mOnMessageMethod = msgListenerClass.getMethod("onMessage", paramTypes);
             } catch (NoSuchMethodException ex) {
-                LocalizedString msg = LOCALE.x("F002: {0}: could not locate onMessage() function: {1}", mName, ex);
+                LocalizedString msg = LOCALE.x("E008: {0}: could not locate onMessage() function: {1}", mName, ex);
                 sLog.fatal(msg, ex);
                 throw new RuntimeException(msg.toString(), ex);
             }

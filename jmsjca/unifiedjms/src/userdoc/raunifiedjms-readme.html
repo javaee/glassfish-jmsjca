@@ -338,31 +338,31 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 <body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
 marginheight="12" marginwidth="12">
 
-<h2><a name="section-Test-WhatIsRAJMSJCAMulti">What is RAJMSJCAMulti?</a></h2>
-RAJMSJCAMulti is a combination of various other JMSJCA resource adapters.
+<hr />
+<h2><a name="section-Test-WhatIsRAUnifiedJMS">What is RAUnifiedJMS?</a></h2>
+RAUnifiedJMS is a combination of various other JMSJCA resource adapters.
 <h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
-The connector for RAUnifiedJMS is shipped as <tt>raunifiedjms.rar</tt>. It includes the client runtimes for various servers.
+The connector for RAUnifiedJMS is shipped as <tt>raunifiedjms.rar</tt>. It includes the jars of all JMSJCA connectors. Depending on the distribution, it includes also the client runtimes for various JMS servers.
 <h2><a name="section-Test-UsingTheRAUnifiedJMSAdapter">Using the RAUnifiedJMS adapter</a></h2>
-
 The RAUnifiedJMS adapter can be used to connect to any JMS server: the RAUnfiedJMS connector packages all specialized connectors into one connector. Which type of specialized connector is used, is indicated through the server URL:
 <table class="wikitable" border="1">
 <tr><th>URL starts with</th><th>connector used</th><th>Ships with client runtime</th></tr>
 <tr><td>stcms://, stcmss://</td><td>RASTCMS</td><td>yes</td></tr>
 <tr><td>stms453</td><td>RASTCMS453</td><td>yes</td></tr>
 <tr><td>jndi://</td><td>RAJNDI</td><td>n/a</td></tr>
-
 <tr><td>mq://, mqtcp://, mqssl://, httpjms://, httpsjms://</td><td>RASunOne</td><td>yes</td></tr>
 <tr><td>wmq://, wmqs://</td><td>RAWMQ</td><td>no</td></tr>
 <tr><td>t3://</td><td>RAWL</td><td>no</td></tr>
 <tr><td>stream://, tcp://, ssl://, http://</td><td>RAWave</td><td>yes</td></tr>
 <tr><td>jboss://</td><td>RAJBoss</td><td>no</td></tr>
-
 </table>
 <h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
 <ul>
 <li> See the documentation that accompanies individual adapters for more information
 </li>
-<li> Furture versions will have extended support for administrative objects
+<li> Future versions will have extended support for administrative objects
+</li>
+<li> It is not recommended to deploy both RAUnifiedJMS with any other JMSJCA resource adapter to avoid the problem of having duplicate classes in the classpath.
 </li>
 </ul>
 
@@ -381,5 +381,6 @@ The RAUnifiedJMS adapter can be used to connect to any JMS server: the RAUnfiedJ
 <br />
 
 </body>
-
 </html>
+
+

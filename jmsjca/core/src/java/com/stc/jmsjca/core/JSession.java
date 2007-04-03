@@ -53,7 +53,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -171,7 +171,7 @@ public class JSession {
             try {
                 m.physicalClose();
             } catch (Exception ex) {
-                sLog.warn(LOCALE.x("E042: The consumer of type {0} could not be closed " 
+                sLog.warn(LOCALE.x("E038: The consumer of type {0} could not be closed " 
                     + "properly: {1}", m.getClass().getName(), ex), ex);
             }
             it.remove();

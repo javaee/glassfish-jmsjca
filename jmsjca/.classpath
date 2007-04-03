@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="container/src/java"/>
+	<classpathentry kind="src" path="buildtools/src/java"/>
 	<classpathentry kind="src" path="unifiedjms/src/java"/>
 	<classpathentry kind="src" path="unifiedjms/test/src/java"/>
 	<classpathentry kind="src" path="jboss/src/java"/>
@@ -49,5 +50,6 @@
 	<classpathentry kind="lib" path="stcms453/lib/stcqueueviewer_453.jar"/>
 	<classpathentry kind="lib" path="sunone/lib/imqjmsra.jar"/>
 	<classpathentry kind="lib" path="build-api/com.stc.wave.wave.jar"/>
+	<classpathentry kind="lib" path="build-ant/lib/ant.jar"/>
 	<classpathentry kind="output" path="out"/>
 </classpath>
