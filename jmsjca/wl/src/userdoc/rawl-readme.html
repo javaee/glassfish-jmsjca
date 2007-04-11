@@ -339,11 +339,11 @@ h5, h6, big, .big, h5 span, h6 span, big span, .big span, h5 a, h6 a, .big a, bi
 marginheight="12" marginwidth="12">
 
 <hr />
-<h2><a name="section-Test-WhatIsRAWL">What is RAWL?</a></h2>
+<h2><a name="section-test-WhatIsRAWL">What is RAWL?</a></h2>
 RAWL is the connector for WebLogic JMS
-<h2><a name="section-Test-PackagingAndShipping">Packaging and shipping</a></h2>
+<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
 The connector for RAWL is shipped as <tt>rawl.rar</tt>. It does NOT include the client runtime.
-<h2><a name="section-Test-UsageNotes">Usage notes</a></h2>
+<h2><a name="section-test-UsageNotes">Usage notes</a></h2>
 <ul>
 <li> The URL is identical to the WebLogic URL plus a query string. The query string uses the following parameters:
 <ul>
@@ -370,12 +370,26 @@ The connector for RAWL is shipped as <tt>rawl.rar</tt>. It does NOT include the 
 <li> WebLogic JMS 8 and 9 do not support Connection Consumer mode outside of the WebLogic server; <tt>sync</tt> mode is used instead of Connection Consumer. This implies that concurrent processing is not supported for topics.
 </li>
 </ul>
-<h2><a name="section-Test-SupportedApplicationServers">Supported application servers</a></h2>
+<h2><a name="section-test-SupportedApplicationServers">Supported application servers</a></h2>
 WebLogic JMS and obtaining connection factories and destinations (JNDI lookup) rely on CORBA. WebLogic CORBA on the client side makes particular assumptions about the environment that it is running on. These assumptions are correct in a standalone Java program running on Sun JVMs, but are wrong in Java server programs that use the Sun CORBA EE ORB.
-<p><b>Java CAPS Integration Server 5.1.x</b>:  to work around WebLogic's CORBA problem, this server has a special patch made for the WebLogic JMS 9.0 client jars. Only these client jars have been verified to work. WebLogic 9.2 client jars do <b>not</b> work.
+<h4><a name="section-test-JavaCAPSIntegrationServer5.1.x">Java CAPS Integration Server 5.1.x</a></h4>
+To work around WebLogic's CORBA problem, this server has a special patch made for the WebLogic JMS 9.0 client jars. Only these client jars have been verified to work; there is some evidence that the client jars of WebLogic 9.2 can also be used. WebLogic 8.1.6 client jars do <b>not</b> work. This solution has been tested with WebLogic 8.1.6, 9.0, and 9.2.
+<p>When adding the two client jars to the IS/lib directory, make sure to remove the file <tt>jndi.properties</tt> from the <tt>wlclient.jar</tt> file.
 </p>
-<p><b>Sun Java System Application Server 8.2 EE and Glassfish v2 / Sun Java System Application Server 9.1</b>: the CORBA EE has been customized especially to work with WebLogic 9.0.
+<p>In CAPS 5.1.3 the patch for WebLogic's CORBA problem has been disabled by default. To turn on this functionality, change <tt>domain.xml</tt> so that <tt><se-orb enabled="false"/></tt> is changed to <tt><se-orb enabled="true"/></tt>. Refer to the following snippet from <tt>domain.xml</tt>
 </p>
+<pre>
+&lt;iiop-service client-authentication-required="false"&gt;
+
+     &lt;orb use-thread-pool-ids="thread-pool-1" message-fragment-size="1024" max-connections="1024"/&gt;
+
+     &lt;se-orb enabled="true"/&gt;
+</pre>
+
+The file <tt>domain.xml</tt> can be found in <tt>logicalhost/is/lib/domains/<domainname>/config</tt>. Shut down the IS before modifying <tt>domain.xml</tt>.
+<p></p>
+<h4><a name="section-test-SunJavaSystemApplicationServer8.2EEAndGlassfishV2SunJavaSystemApplicationServer9.1">Sun Java System Application Server 8.2 EE and Glassfish v2 / Sun Java System Application Server 9.1</a></h4>
+The CORBA EE has been customized especially to work with WebLogic 9.0.
 <p>Note that WebLogic client jars 9.0 have proven to work with WebLogic JMS 9.2, and WebLogic JMS 8.1.6.
 </p>
 
