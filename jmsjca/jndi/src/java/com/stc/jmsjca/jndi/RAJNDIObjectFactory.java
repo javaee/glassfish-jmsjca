@@ -16,19 +16,30 @@
 
 package com.stc.jmsjca.jndi;
 
+import com.stc.jmsjca.core.AdminDestination;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.SessionConnection;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
+import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.JMSException;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSession;
+import javax.jms.Session;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicSession;
 import javax.jms.XAQueueConnectionFactory;
+import javax.jms.XAQueueSession;
 import javax.jms.XATopicConnectionFactory;
+import javax.jms.XATopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
@@ -39,10 +50,15 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
+
+    /**
+     * Used to mark destinations as lookup in JNDI
+     */
+    public static final String JNDI_PREFIX = "jndi://";
 
     private static final String[] URL_PREFIXES = new String[] {
             "jndi://"
@@ -74,7 +90,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * @return non-null object
      * @throws ResourceException on error
      */
-    private Object getJndiObject(Properties p, String name) throws JMSException {
+    Object getJndiObject(Properties p, String name) throws JMSException {
         if (sLog.isDebugEnabled()) {
             sLog.debug("Looking up JNDI object " + name);
         }
@@ -99,6 +115,28 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
     }
 
     /**
+     * Gets a jndi object
+     *
+     * @param resourceAdapter boolean
+     * @param activationSpec RAJMSActivationSpec
+     * @param fact RAJMSResourceAdapter
+     * @param overrideUrl override URL: don't use URL from RA, CF, or activation spec (may be null)
+     * @param name jndi name
+     * @return ConnectionFactory
+     * @throws JMSException failure
+     */
+    public Object getJndiObject(RAJMSResourceAdapter resourceAdapter,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,
+        String overrideUrl, String name) throws JMSException {
+
+        // Get the connection properties
+        Properties p = new Properties();
+        getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        
+        return getJndiObject(p, name);
+    }
+    
+    /**
      * createConnectionFactory
      *
      * @param domain boolean
@@ -120,10 +158,14 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
 
         switch (domain) {
         case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
+            return (QueueConnectionFactory) getJndiObject(p,
+                p.getProperty(RAJNDIResourceAdapter.QUEUECF));
         case XConnectionRequestInfo.DOMAIN_QUEUE_XA:
             return (XAQueueConnectionFactory) getJndiObject(p,
                     p.getProperty(RAJNDIResourceAdapter.QUEUECF));
         case XConnectionRequestInfo.DOMAIN_TOPIC_NONXA:
+            return (TopicConnectionFactory) getJndiObject(p,
+                p.getProperty(RAJNDIResourceAdapter.TOPICCF));
         case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
             return (XATopicConnectionFactory) getJndiObject(p,
                     p.getProperty(RAJNDIResourceAdapter.TOPICCF));
@@ -172,6 +214,81 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
         }
 
         return url;
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createSessionConnection(
+     * java.lang.Object, com.stc.jmsjca.core.RAJMSObjectFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, 
+     * com.stc.jmsjca.core.XManagedConnection, 
+     * com.stc.jmsjca.core.XConnectionRequestInfo, boolean, boolean, int, java.lang.Class)
+     */
+    public SessionConnection createSessionConnection(Object connectionFactory,
+        RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
+        XManagedConnection mc, XConnectionRequestInfo descr,
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        throws JMSException {
+
+        return new JNDISessionConnection(connectionFactory, objfact, ra,
+            mc, descr, isXa, isTransacted, acknowledgmentMode,
+            sessionClass);
+    }
+    
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session, 
+     * boolean, boolean, com.stc.jmsjca.core.RAJMSActivationSpec, 
+     * com.stc.jmsjca.core.XManagedConnectionFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String)
+     */
+    public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
+        String destName) throws JMSException {
+        
+        // Check for local JNDI
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("createDestination(" + destName + ")");
+        }
+        Destination ret = adminDestinationLookup(destName);
+        
+        // Unwrap admin destination
+        if (ret != null && ret instanceof AdminDestination) {
+            destName = ((AdminDestination) ret).getName();
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(ret + " is an admin object: embedded name: " + destName);
+            }
+            ret = null;
+        }
+        
+        // Check for jndi://
+        if (ret == null && destName.startsWith(JNDI_PREFIX)) {
+            String name = destName.substring(JNDI_PREFIX.length());
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(destName + " is a jndi object: looking up [" + name + "]");
+            }
+            ret = (Destination) getJndiObject(ra, activationSpec, fact, null, name);
+        }
+        
+        // Create if necessary
+        if (ret == null) {
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
+            }
+            if (isXA) {
+                if (isTopic) {
+                    ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
+                } else {
+                    ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
+                }
+            } else {
+                if (isTopic) {
+                    ret = ((TopicSession) sess).createTopic(destName);
+                } else {
+                    ret = ((QueueSession) sess).createQueue(destName);
+                }
+            }
+        }
+        
+        return ret;
     }
 
     /**

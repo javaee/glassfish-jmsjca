@@ -19,6 +19,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
@@ -58,6 +59,8 @@ import javax.jms.XASession;
 import javax.jms.XATopicConnection;
 import javax.jms.XATopicConnectionFactory;
 import javax.jms.XATopicSession;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.transaction.xa.XAResource;
 
@@ -69,7 +72,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -243,11 +246,13 @@ public abstract class RAJMSObjectFactory {
 
         // Connection properties: from (1) options-field in RA, (2) options-field
         // in activation spec or fact, (3) from connection URL
-        Str.deserializeProperties(ra.getOptions(), p);
+        Str.deserializeProperties(Str.parseProperties(Options.SEP, ra.getOptions()), p);
         if (spec != null) {
-            Str.deserializeProperties(spec.getOptions(), p);
+            Str.deserializeProperties(Str.parseProperties(Options.SEP, spec.getOptions()), p);
         }
-
+        if (fact != null) {
+            Str.deserializeProperties(Str.parseProperties(Options.SEP, fact.getOptions()), p);
+        }
         if (!Str.empty(realUrl)) {
             url.getQueryProperties(p);
         }
@@ -306,6 +311,47 @@ public abstract class RAJMSObjectFactory {
     }
 
     /**
+     * Looks up a destination in local JNDI if the destination name starts with
+     * lookup://
+     * 
+     * @param destName destination name
+     * @return null if no such prefix
+     * @throws JMSException on lookup failure or null
+     */
+    public Destination adminDestinationLookup(String destName) throws JMSException {
+        Destination ret = null;
+        if (Str.empty(destName)) {
+            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
+        }
+        
+        if (destName.startsWith(Options.LOCAL_JNDI_LOOKUP)) {
+            Context ctx = null;
+            String name = destName.substring(Options.LOCAL_JNDI_LOOKUP.length()); 
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Lookup in JNDI: " + name);
+            }
+            try {
+                ctx = new InitialContext();
+                ret = (Destination) ctx.lookup(name);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Found in JNDI using [" + name + "]: " + ret);
+                }
+            } catch (Exception e) {
+                throw Exc.jmsExc(LOCALE.x("E096: Failed to lookup [{0}] in [{1}]: {2}", name, destName, e), e);
+            } finally {
+                if (ctx != null) {
+                    try {
+                        ctx.close();
+                    } catch (Exception ignore) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+    
+    /**
      * createDestination()
      * This is called by the Delivery classes for inbound message delivery
      *
@@ -322,19 +368,43 @@ public abstract class RAJMSObjectFactory {
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
         String destName) throws JMSException {
-        if (isXA) {
-            if (isTopic) {
-                return ((XATopicSession) sess).getTopicSession().createTopic(destName);
-            } else {
-                return ((XAQueueSession) sess).getQueueSession().createQueue(destName);
+        
+        // Check for local JNDI
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("createDestination(" + destName + ")");
+        }
+        Destination ret = adminDestinationLookup(destName);
+        
+        // Unwrap admin destination
+        if (ret != null && ret instanceof AdminDestination) {
+            destName = ((AdminDestination) ret).getName();
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(ret + " is an admin object: embedded name: " + destName);
             }
-        } else {
-            if (isTopic) {
-                return ((TopicSession) sess).createTopic(destName);
+            ret = null;
+        }
+        
+        // Create if necessary
+        if (ret == null) {
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
+            }
+            if (isXA) {
+                if (isTopic) {
+                    ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
+                } else {
+                    ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
+                }
             } else {
-                return ((QueueSession) sess).createQueue(destName);
+                if (isTopic) {
+                    ret = ((TopicSession) sess).createTopic(destName);
+                } else {
+                    ret = ((QueueSession) sess).createQueue(destName);
+                }
             }
         }
+        
+        return ret;
     }
 
     /**

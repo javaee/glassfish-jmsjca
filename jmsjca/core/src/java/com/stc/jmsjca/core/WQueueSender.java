@@ -28,7 +28,7 @@ import javax.jms.QueueSender;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WQueueSender extends WMessageProducer implements QueueSender {
     private QueueSender mDelegate;
@@ -85,6 +85,9 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
         if (mMgr == null) {
             invokeOnClosed();
         }
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }
@@ -113,6 +116,9 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
     public void send(Queue queue, Message message, int int2, int int3, long long4) throws JMSException {
         if (mMgr == null) {
             invokeOnClosed();
+        }
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
         }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();

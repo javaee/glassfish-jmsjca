@@ -17,6 +17,7 @@
 package com.stc.jmsjca.test.jndi;
 
 import com.stc.jms.client.STCJMS;
+import com.stc.jms.client.STCQueue;
 import com.stc.jms.client.STCXAConnectionFactory;
 import com.stc.jms.client.STCXAQueueConnectionFactory;
 import com.stc.jms.client.STCXATopicConnectionFactory;
@@ -28,7 +29,10 @@ import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
 import com.stc.jmsjca.test.core.XTestBase;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSession;
+import javax.jms.Session;
 import javax.jms.TopicConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -37,9 +41,8 @@ import java.io.File;
 import java.util.Properties;
 
 /**
- * <code>
  * Unit tests
-* See Base
+ * See Base
  *
  *
  * @author Frank Kieviet
@@ -148,6 +151,7 @@ public class TestJUStd extends XTestBase {
             ctx.rebind(jndinameQueueDelegateXA, new STCXAQueueConnectionFactory(p));
             ctx.rebind(jndinameTopicDelegateXA, new STCXATopicConnectionFactory(p));
             ctx.rebind(jndinameUnifiedDelegateXA, new STCXAConnectionFactory(p));
+            ctx.rebind("Queue1", new STCQueue("Queue1"));
         }
 
         // Create MCFs, get the CF that will be used by the application and bind that
@@ -215,5 +219,77 @@ public class TestJUStd extends XTestBase {
 
     public void testDummy() {
 
+    }
+    
+    /**
+     * When NoXA is specified, XA should not be used
+     *
+     * @throws Throwable on failure of the test
+     */
+    public void testNoXA() throws Throwable {
+        init(true, true);
+        
+        RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
+        ra.setConnectionURL("jndi://");
+        String host = mServerProperties.getProperty("host");
+        String port = mServerProperties.getProperty("stcms.instance.port");
+        
+        
+        ra.setOptions(
+                "java.naming.factory.initial=com.stc.jms.jndispi.InitialContextFactory\r\n" + 
+                "java.naming.provider.url=stcms://" + host + ":" + port + "\r\n" + 
+                "java.naming.security.principal=Administrator\r\n" + 
+                "java.naming.security.credentials=STC\r\n" + 
+                "JMSJCA.TopicCF=connectionfactories/topicconnectionfactory\r\n" + 
+                "JMSJCA.QueueCF=connectionfactories/queueconnectionfactory\r\n" + 
+                "JMSJCA.UnifiedCF=connectionfactories/connectionfactory\r\n" + 
+                "JMSJCA.NoXA=true");
+        
+        XMCFQueueXA mcf = new XMCFQueueXA();
+        mcf.setResourceAdapter(ra);
+        QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
+        assertTrue(fact != null);
+        
+        QueueConnection c = fact.createQueueConnection();
+        QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+        s.close();
+        c.close();
+    }
+    
+    /**
+     * Properties should be able to be put on a single line
+     *
+     * @throws Throwable on failure of the test
+     */
+    public void testSingleLine() throws Throwable {
+        init(true, true);
+        
+        RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
+        ra.setConnectionURL("jndi://");
+        String host = mServerProperties.getProperty("host");
+        String port = mServerProperties.getProperty("stcms.instance.port");
+        
+        String sep = "!";
+        
+        ra.setOptions(
+                "JMSJCA.sep=!" + 
+                "java.naming.factory.initial=com.stc.jms.jndispi.InitialContextFactory" + sep + 
+                "java.naming.provider.url=stcms://" + host + ":" + port + "/" +  sep +
+                "java.naming.security.principal=Administrator" +  sep +
+                "java.naming.security.credentials=STC" +  sep +
+                "JMSJCA.TopicCF=connectionfactories/topicconnectionfactory" + sep + 
+                "JMSJCA.QueueCF=connectionfactories/queueconnectionfactory" + sep +
+                "JMSJCA.UnifiedCF=connectionfactories/connectionfactory" + sep +
+                "JMSJCA.NoXA=true");
+        
+        XMCFQueueXA mcf = new XMCFQueueXA();
+        mcf.setResourceAdapter(ra);
+        QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
+        assertTrue(fact != null);
+        
+        QueueConnection c = fact.createQueueConnection();
+        QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+        s.close();
+        c.close();
     }
 }

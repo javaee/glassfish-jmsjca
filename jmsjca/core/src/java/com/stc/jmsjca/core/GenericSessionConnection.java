@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionMetaData;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Session;
@@ -29,10 +30,9 @@ import javax.transaction.xa.XAResource;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class GenericSessionConnection extends SessionConnection {
-//    private static Logger sLog = Logger.getLogger(GenericSessionConnection.class);
 
     /**
      * mConnection
@@ -226,6 +226,17 @@ public class GenericSessionConnection extends SessionConnection {
      */
     public RAJMSResourceAdapter getRA() {
         return mRA;
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.SessionConnection#createDestination(com.stc.jmsjca.core.AdminDestination)
+     */
+    public Destination createDestination(AdminDestination dest) throws JMSException {
+        if (dest instanceof AdminQueue) {
+            return createQueue(dest.getName());
+        } else {
+            return createTopic(dest.getName());
+        }
     }
 }
 

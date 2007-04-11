@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public interface Options {
     /**
@@ -32,7 +32,18 @@ public interface Options {
      * Property name to specify that XA should not be supported
      */
     String NOXA = "JMSJCA.NoXA";
+    
+    /**
+     * Separator to be able to have a properties set in one line 
+     */
+    String SEP = "JMSJCA.sep=";
 
+    /**
+     * Prefix for destination names to indicate that the destination is an object that
+     * needs to be looked up in JNDI. This bound object may be an administrative object
+     * or may be a real destination. 
+     */
+    String LOCAL_JNDI_LOOKUP = "lookup://";
     
     /**
      * Options specific to the inbound part of the RA

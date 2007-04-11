@@ -25,7 +25,7 @@ import javax.jms.TopicPublisher;
  * See WProducer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WTopicPublisher extends WMessageProducer implements TopicPublisher {
     private TopicPublisher mDelegate;
@@ -130,6 +130,9 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             invokeOnClosed();
         }
         try {
+            if (topic instanceof AdminTopic) {
+                topic = (Topic) mMgr.getSession().createDestination((AdminTopic) topic);
+            }
             if (topic instanceof Unwrappable) {
                 topic = (Topic) ((Unwrappable) topic).getWrappedObject();
             }
@@ -157,6 +160,9 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
     public void publish(Topic topic, Message message, int int2, int int3, long long4) throws JMSException {
         if (mMgr == null) {
             invokeOnClosed();
+        }
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.getSession().createDestination((AdminTopic) topic);
         }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();

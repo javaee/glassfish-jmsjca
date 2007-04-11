@@ -71,6 +71,15 @@
     Creates the rar file
 -->
     <target name="rar" depends="compile" unless="rar.ed">
+        <!-- This will modify domain.xml on installation -->
+        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+
+        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
+        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+
         <mkdir dir="${jmsjca.artefacts.dir}" />
         
         <!-- mk rar -->
@@ -78,6 +87,7 @@
             <!-- Include all jars -->
             <fileset dir="${jmsjca.artefacts.dir}">
                 <include name="*.jar" />
+                <exclude name="com.stc.jmsjca.ra*.jar" />
             </fileset>
             <fileset file="${jmsjca.xxx.rar.jar.path}"/>
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
@@ -94,6 +104,9 @@
         <mkdir dir="${install.inclusions.dir}/all/extras" />
         <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />
         <copy file="${jcaid}/src/userdoc/ra${jcaid}-readme.html" todir="${install.inclusions.dir}/all/extras" />
+
+        <!-- Copy jars for upload into Repository (third party app servers) -->
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
 
         <property name="sar.ed" value="true" />
     </target>
@@ -126,24 +139,13 @@
         <manifest file="${jmsjca.maven.work.dir}/unifiedjms-mft/MANIFEST.MF">
             <attribute 
                 name="Class-Path" 
-                value="com.stc.jmsjca.core.jar com.stc.jmsjca.rajboss.jar com.stc.jmsjca.rajndi.jar com.stc.jmsjca.rastcms.jar com.stc.jmsjca.rastcms453.jar com.stc.jmsjca.rasunone.jar com.stc.jmsjca.rawave.jar com.stc.jmsjca.rawl.jar com.stc.jmsjca.rawmq.jar"
+                value="com.stc.jmsjca.core.jar"
             />
         </manifest>
 
         <!-- Create rar -->
         <mkdir dir="${jmsjca.maven.artefacts.dir}/rars" />
         <zip destfile="${jmsjca.maven.artefacts.dir}/rars/raunifiedjms.rar" >
-            <fileset dir="${jmsjca.artefacts.dir}">
-                <include name="com.stc.jmsjca.core.jar" />
-                <include name="com.stc.jmsjca.rajboss.jar" />
-                <include name="com.stc.jmsjca.rajndi.jar" />
-                <include name="com.stc.jmsjca.rastcms.jar" />
-                <include name="com.stc.jmsjca.rastcms453.jar" />
-                <include name="com.stc.jmsjca.rasunone.jar" />
-                <include name="com.stc.jmsjca.rawave.jar" />
-                <include name="com.stc.jmsjca.rawl.jar" />
-                <include name="com.stc.jmsjca.rawmq.jar" />
-            </fileset>
             <fileset file="${jmsjca.xxx.rar.jar.path}"/>
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
             <zipfileset prefix="META-INF" file="${jmsjca.maven.work.dir}/unifiedjms-mft/MANIFEST.MF" />
@@ -245,6 +247,32 @@
             <fileset dir="${jmsjca.xxx.rar.classes.dir}">
                 <include name="com/stc/jmsjca/${jcaid}/**.*" />
             </fileset>
+
+            <!-- OTHER JARS -->
+            <fileset dir="${jmsjca.module.dir}/rajboss/classes">
+                <include name="com/stc/jmsjca/jboss/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rajndi/classes">
+                <include name="com/stc/jmsjca/jndi/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rastcms/classes">
+                <include name="com/stc/jmsjca/stcms/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rastcms453/classes">
+                <include name="com/stc/jmsjca/stcms453/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rasunone/classes">
+                <include name="com/stc/jmsjca/sunone/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawave/classes">
+                <include name="com/stc/jmsjca/wave/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawl/classes">
+                <include name="com/stc/jmsjca/wl/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawmq/classes">
+                <include name="com/stc/jmsjca/wmq/**.*" />
+            </fileset>
         </jar>
         
         <!-- Defer making RAR until SAR task -->
@@ -297,7 +325,7 @@
         <manifest file="${jmsjca.xxx.test.mft.path}">
             <attribute 
                 name="Class-Path" 
-                value="com.stc.jms.stcjms.jar com.stc.jms.stcqueueviewer.jar com.stc.jmsjca.rajmsjcamulti.jar com.stc.jmsjca.core.jar com.stc.jmsjca.rajboss.jar com.stc.jmsjca.rastcms.jar com.stc.jmsjca.rastcms453.jar com.stc.jmsjca.rasunone.jar com.stc.jmsjca.rawave.jar com.stc.jmsjca.rawl.jar com.stc.jmsjca.rawmq.jar com.stc.jmsmx.core.jar com.stc.jmsmx.sjsmq.jar com.stc.jmsmx.stcms.jar com.stc.jmsmx.wave.jar com.stc.wave.lwmsClient.jar com.stc.wave.mgmt.jar com.stc.wave.wave.jar imqjmsra.jar stcjms_453.jar"
+                value="com.stc.jms.stcjms.jar com.stc.jms.stcqueueviewer.jar com.stc.jmsjca.raunifiedjms.jar com.stc.jmsjca.core.jar com.stc.jmsjca.rajboss.jar com.stc.jmsjca.rastcms.jar com.stc.jmsjca.rastcms453.jar com.stc.jmsjca.rasunone.jar com.stc.jmsjca.rawave.jar com.stc.jmsjca.rawl.jar com.stc.jmsjca.rawmq.jar com.stc.jmsmx.core.jar com.stc.jmsmx.sjsmq.jar com.stc.jmsmx.stcms.jar com.stc.jmsmx.wave.jar com.stc.wave.lwmsClient.jar com.stc.wave.mgmt.jar com.stc.wave.wave.jar imqjmsra.jar stcjms_453.jar"
             />
         </manifest>
         <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />

@@ -17,6 +17,7 @@
 package com.stc.jmsjca.core;
 
 import javax.jms.ConnectionMetaData;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Session;
@@ -33,7 +34,7 @@ import javax.transaction.xa.XAResource;
  * container and hence does not use XA.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class SessionConnection {
 //    private static Logger sLog = Logger.getLogger(SessionConnection.class);
@@ -130,4 +131,13 @@ public abstract class SessionConnection {
      * @throws JMSException on failure
      */
     public abstract Topic createTopic(String name) throws JMSException;
+
+    /**
+     * Creates a JMS client specific destination based on an administrative object
+     * 
+     * @param dest administrative object
+     * @return JMS client specific destination
+     * @throws JMSException propagated
+     */
+    public abstract Destination createDestination(AdminDestination dest) throws JMSException;
 }

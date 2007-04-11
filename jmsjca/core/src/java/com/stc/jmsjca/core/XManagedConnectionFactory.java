@@ -51,7 +51,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -477,7 +477,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mRAOptionsStr = mRA.getOptions();
 
         // Lowest precedence: RA-options
-        Str.deserializeProperties(mRAOptionsStr, p);  
+        Str.deserializeProperties(Str.parseProperties(Options.SEP, mRAOptionsStr), p);  
 
         // Higher precedence: RA-url
         if (mRAUrl != null) {
@@ -485,7 +485,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         }
 
         // Override 1: locally defined options
-        Str.deserializeProperties(mOptionsStr, p);
+        Str.deserializeProperties(Str.parseProperties(Options.SEP, mOptionsStr), p);
         mOptions = p;
 
         // Higher precedence: locally defined url
