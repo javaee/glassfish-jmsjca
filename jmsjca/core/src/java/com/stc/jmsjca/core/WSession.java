@@ -42,7 +42,7 @@ import javax.jms.TopicSubscriber;
  * calls to the JSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WSession implements Session {
     /**
@@ -403,7 +403,7 @@ public class WSession implements Session {
             throw new RuntimeException("Illegal call: run is not supported");
         }
     }
-
+    
     /**
      * createProducer
      *
@@ -413,6 +413,9 @@ public class WSession implements Session {
      */
     public MessageProducer createProducer(Destination destination) throws JMSException {
         checkClosed();
+        if (destination instanceof AdminDestination) {
+            destination = mMgr.createDestination((AdminDestination) destination); 
+        }
         if (destination instanceof Unwrappable) {
             destination = (Destination) ((Unwrappable) destination).getWrappedObject();
         }
@@ -434,6 +437,9 @@ public class WSession implements Session {
     public MessageConsumer createConsumer(Destination destination) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        if (destination instanceof AdminDestination) {
+            destination = mMgr.createDestination((AdminDestination) destination); 
+        }
         if (destination instanceof Unwrappable) {
             destination = (Destination) ((Unwrappable) destination).getWrappedObject();
         }
@@ -457,6 +463,9 @@ public class WSession implements Session {
         String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        if (destination instanceof AdminDestination) {
+            destination = mMgr.createDestination((AdminDestination) destination); 
+        }
         if (destination instanceof Unwrappable) {
             destination = (Destination) ((Unwrappable) destination).getWrappedObject();
         }
@@ -481,6 +490,9 @@ public class WSession implements Session {
         boolean boolean2) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        if (destination instanceof AdminDestination) {
+            destination = mMgr.createDestination((AdminDestination) destination); 
+        }
         if (destination instanceof Unwrappable) {
             destination = (Destination) ((Unwrappable) destination).getWrappedObject();
         }
@@ -538,6 +550,9 @@ public class WSession implements Session {
         String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.createDestination((AdminTopic) topic); 
+        }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
         }
@@ -563,6 +578,9 @@ public class WSession implements Session {
         String string2, boolean boolean3) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.createDestination((AdminTopic) topic); 
+        }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
         }
@@ -583,6 +601,9 @@ public class WSession implements Session {
      */
     public QueueBrowser createBrowser(Queue queue) throws JMSException {
         checkClosed();
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.createDestination((AdminQueue) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }
@@ -604,6 +625,9 @@ public class WSession implements Session {
      */
     public QueueBrowser createBrowser(Queue queue, String string) throws JMSException {
         checkClosed();
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.createDestination((AdminQueue) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }

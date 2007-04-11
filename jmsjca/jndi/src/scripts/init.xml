@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<project name="rawl" default="server-init" basedir=".">
+
+    <taskdef name="domainXml"
+        classname="com.stc.rts.initant.DomainXml"
+        classpath="init.jar"
+    />
+
+    <!--
+        Called as the last step of the server installation
+    -->
+    <target name="server-init">
+        <!-- Unzip rar; rar is already present; other jars are already in classpath -->
+        <unzip
+            src="${install.home}/lib/install/applications/rajndi/com.stc.jmsjca.rajndi.jar"
+            dest="${install.home}/lib/install/applications/rajndi"
+        />
+
+        <domainXml file="${install.home}/domains/${domain.name}/config/domain.xml" installRoot="${install.home}">
+            <Connector
+                system="true"
+                objectType="user"
+                name="rajndi"
+            />
+        </domainXml>
+    </target>
+</project>

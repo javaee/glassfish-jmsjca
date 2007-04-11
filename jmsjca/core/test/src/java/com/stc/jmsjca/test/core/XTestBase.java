@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.test.core;
 
+import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.XXid;
 import com.stc.jmsjca.util.XAssert;
@@ -2005,7 +2006,7 @@ abstract public class XTestBase extends BaseTestCase {
             sess.close();
             getConnectionManager(f).clear();
             
-            if (ct != expected) {
+            if (ct != expected && expected != -1) {
                 throw new Exception("Found " + ct + " messages where " + expected + " expected");
             }
             
@@ -4899,6 +4900,85 @@ abstract public class XTestBase extends BaseTestCase {
         }
 
         // Cleanup
+        getConnectionManager(f).clear();
+        w.check(0, 0, 0);
+    }
+
+    /**
+     *
+     *
+     * @throws Throwable on failure of the test
+     */
+    public void testAdminQueue() throws Throwable {
+        init(true, true);
+
+        WireCount w = getConnectionCount();
+
+        // This is how the client would normally create connections
+        InitialContext ctx = getContext();
+        QueueConnectionFactory f = (QueueConnectionFactory) ctx.lookup(appjndiQueue);
+        AdminQueue dest = new AdminQueue();
+        dest.setName("Queue1");
+        clearQueue("Queue1", -1);
+
+        // SEND
+        {
+            QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
+            QueueSession sess1 = conn1.createQueueSession(true, 0);
+            w.check(1, 0, 0);
+            XAResource xa1 = getManagedConnection(sess1).getXAResource();
+            QueueSender prod1 = sess1.createSender(dest);
+            w.check(1, 1, 0);
+
+            // Start tran
+            Xid xid1 = new XXid();
+
+            xa1.start(xid1, XAResource.TMNOFLAGS);
+
+            // Send
+            prod1.send(sess1.createTextMessage("1"));
+            conn1.close();
+            w.check(1, 1, 0);
+
+            // Commit
+            xa1.end(xid1, XAResource.TMSUCCESS);
+            xa1.prepare(xid1);
+            xa1.commit(xid1, false);
+        }
+
+        // RECEIVE
+        {
+            QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
+            QueueSession sess1 = conn1.createQueueSession(true, 0);
+            w.check(1, 1, 0);
+            XAResource xa1 = getManagedConnection(sess1).getXAResource();
+            QueueReceiver prod1 = sess1.createReceiver(dest);
+            w.check(1, 1, 1);
+            conn1.start();
+
+            // Start tran
+            Xid xid1 = new XXid();
+
+            xa1.start(xid1, XAResource.TMNOFLAGS);
+
+            // Send
+            Message m = prod1.receive(EXPECTWITHIN);
+            assertTrue(m != null);
+            conn1.close();
+            w.check(1, 1, 1);
+
+            // Commit
+            xa1.end(xid1, XAResource.TMSUCCESS);
+            xa1.prepare(xid1);
+            xa1.commit(xid1, false);
+            w.check(1, 1, 0);
+        }
+
+        getConnectionManager(f).clear();
+
+        // Check
+        clearQueue(dest.getQueueName(), 0);
+
         getConnectionManager(f).clear();
         w.check(0, 0, 0);
     }

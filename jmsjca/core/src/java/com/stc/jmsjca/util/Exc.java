@@ -33,7 +33,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Exc {
 
@@ -95,6 +95,16 @@ public class Exc {
         }
         setCause(ret, cause);
         return ret;
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static JMSException jmsExc(LocalizedString msg) {
+        return new JMSException(msg.toString());
     }
     
     /**

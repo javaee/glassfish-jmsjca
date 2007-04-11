@@ -64,14 +64,24 @@
     <target name="clean" depends="init">
         <echo message="deleting ${jmsjca.xxx.module.dir}" />
         <delete dir="${jmsjca.xxx.module.dir}" />
-
+        <delete dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
         <delete file="${install.inclusions.dir}/all/extras/${jmsjca.xxx.rar.rar.path}" />        
+        <delete dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
     </target>
 
 <!--===========================================================================
     Creates the rar file
 -->
     <target name="rar" depends="compile" unless="rar.ed">
+        <!-- This will modify domain.xml on installation -->
+        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+
+        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
+        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
+        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
+
         <!-- Copy to extras -->
         <mkdir dir="${install.inclusions.dir}/all/extras" />
         <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />

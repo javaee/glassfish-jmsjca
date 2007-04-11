@@ -27,7 +27,7 @@ import java.util.Properties;
  * Provides for easy string formatting
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Str {
     /**
@@ -190,6 +190,60 @@ public class Str {
      */
     public static int hash(int seed, boolean o) {
         return seed * 37 + (o ? 3 : 7);
+    }
+
+    /**
+     * Splits up a single line into mulitple lines using a delimiter indicated with mark.
+     * The separator can be escaped with a back slash
+     * 
+     * Example: mark="x=|" toparse="a=b|x=|c=d|e=\|\|f" yields
+     *   a=b
+     *   x=
+     *   c=d
+     *   e=||f
+     * 
+     * @param mark prefix for the separator
+     * @param toParse String to parse
+     * @return parsed string
+     */
+    public static String parseProperties(String mark, String toParse) {
+        if (empty(toParse)) {
+            return toParse;
+        }
+
+        int at = toParse.indexOf(mark); 
+        if (at < 0) {
+            return toParse;
+        } else {
+            if (at + mark.length() == toParse.length()) {
+                throw new RuntimeException("Missing separator character in [" + toParse + "]");
+            }
+            
+            char sep = toParse.charAt(at + mark.length());
+            return parseProperties(sep, toParse);
+        }
+    }
+    
+    private static String parseProperties(char delimiter, String input) {
+        StringBuffer ret = new StringBuffer();
+        int n = input.length();
+        for (int i = 0; i < n; i++) {
+            char c = input.charAt(i);
+            if (c == delimiter) {
+                ret.append("\r\n");
+            } else if (c == '\\') {
+                // Is next char a delimiter?
+                if (i < n - 1 && input.charAt(i + 1) == delimiter) {
+                    ret.append(delimiter);
+                    i++;
+                } else {
+                    ret.append(c);
+                }
+            } else {
+                ret.append(c);
+            }
+        }
+        return ret.toString();
     }
 
     /**

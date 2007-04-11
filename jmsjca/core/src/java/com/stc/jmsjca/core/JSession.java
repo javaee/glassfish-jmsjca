@@ -53,7 +53,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -779,5 +779,16 @@ public class JSession {
      */
     public Queue createQueue(String name) throws JMSException  {
         return mSessionConnection.createQueue(name);
+    }
+    
+    /**
+     * Creates a JMS client specific destination based on an administrative object
+     * 
+     * @param dest administrative object
+     * @return JMS client specific destination
+     * @throws JMSException propagated
+     */
+    public Destination createDestination(AdminDestination dest) throws JMSException {
+        return mSessionConnection.createDestination(dest);
     }
 }

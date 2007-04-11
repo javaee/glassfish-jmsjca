@@ -224,10 +224,61 @@
                         endpointPoolMaxSize    : default: 15 message driven beans
                         contextName            : default: none
                         mBeanName              : default: none
+                        redeliveryHandling     : see below; default: 3:25; 5:50; 10:100; 20:1000; 50:5000
                         -->                        
                     </activationspec>
                 </messagelistener>
             </messageadapter>
         </inbound-resourceadapter>
+        <!-- Redelivery handling:
+            Is used to deal with "poisonous messages". A poison message is a message that 
+            fails to be processed time and time again, thereby stopping other messages 
+            from being processed.
+            
+            The string specified in redeliveryHandling is of the following format:
+                   format := entry[; entry]*
+                   entry := idx ":" action
+                   idx := number (denotes the n-th time a msg was seen)
+                   action := number (denotes delay in ms) | "delete" | "move"(args)
+                   move := "queue"|"topic" | "same" ":" destname
+                   destname :=  any string, may include "$" which will be replaced with 
+                        the original destination name.
+
+            Examples:
+                5:1000; 10:5000; 50:move(queue:mydlq)
+            This causes no delay up to the 5th delivery; a 1000 ms delay is invoked when the
+            message is seen the 5th, 6th, 7th, 8th, and 9th time. A 5 second delay is invoked
+            when the msg is invoked the 10th, 11th, ..., 49th time. When the msg is seen the 50th
+            time the msg is moved to a queue with the name "mydlq".
+        
+            If the messages were received from "Queue1" and if the string was specified as
+                5:1000; 10:5000; 50:move(queue:dlq$oops)
+            the messages would be moved to the destination "dlqQueue1oops".
+        
+             Another example:
+                5:1000; 10:5000
+             This causes no delay up to the 5th delivery; a 1000 ms delay is invoked when the
+             message is seen the 5th, 6th, 7th, 8th, and 9th time. A 5 second delay is invoked
+             for each time the message is seen thereafter.
+        -->
+
+        <adminobject>
+            <adminobject-interface>javax.jms.Queue</adminobject-interface>
+            <adminobject-class>com.stc.jmsjca.core.AdminQueue</adminobject-class>
+            <config-property>
+                <config-property-name>Name</config-property-name>
+                <config-property-type>java.lang.String</config-property-type>
+            </config-property>
+        </adminobject>
+
+        <adminobject>
+            <adminobject-interface>javax.jms.Topic</adminobject-interface>
+            <adminobject-class>com.stc.jmsjca.core.AdminTopic</adminobject-class>
+            <config-property>
+                <config-property-name>Name</config-property-name>
+                <config-property-type>java.lang.String</config-property-type>
+            </config-property>
+        </adminobject>
+
     </resourceadapter>
 </connector>

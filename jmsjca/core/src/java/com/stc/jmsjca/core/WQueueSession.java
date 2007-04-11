@@ -28,7 +28,7 @@ import javax.jms.QueueSession;
  * calls to the JSession.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WQueueSession extends WSession implements QueueSession {
     /**
@@ -50,6 +50,9 @@ public class WQueueSession extends WSession implements QueueSession {
     public QueueReceiver createReceiver(Queue queue) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(queue);
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }
@@ -72,6 +75,9 @@ public class WQueueSession extends WSession implements QueueSession {
     public QueueReceiver createReceiver(Queue queue, String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(queue);
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }
@@ -92,6 +98,9 @@ public class WQueueSession extends WSession implements QueueSession {
      */
     public QueueSender createSender(Queue queue) throws JMSException {
         checkClosed();
+        if (queue instanceof AdminQueue) {
+            queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
+        }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
         }

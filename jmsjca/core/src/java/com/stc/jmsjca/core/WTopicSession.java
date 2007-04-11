@@ -26,7 +26,7 @@ import javax.jms.TopicSubscriber;
  * See WSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WTopicSession extends WSession implements TopicSession {
     /**
@@ -48,6 +48,9 @@ public class WTopicSession extends WSession implements TopicSession {
     public TopicSubscriber createSubscriber(Topic topic) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.createDestination((AdminTopic) topic);
+        }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
         }
@@ -71,6 +74,9 @@ public class WTopicSession extends WSession implements TopicSession {
     public TopicSubscriber createSubscriber(Topic topic, String string, boolean boolean2) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.createDestination((AdminTopic) topic);
+        }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
         }
@@ -91,6 +97,9 @@ public class WTopicSession extends WSession implements TopicSession {
      */
     public TopicPublisher createPublisher(Topic topic) throws JMSException {
         checkClosed();
+        if (topic instanceof AdminTopic) {
+            topic = (Topic) mMgr.createDestination((AdminTopic) topic);
+        }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
         }

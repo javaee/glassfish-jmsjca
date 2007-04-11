@@ -225,7 +225,7 @@
 
         <adminobject>
             <adminobject-interface>javax.jms.Queue</adminobject-interface>
-            <adminobject-class>com.stc.jms.client.STCQueue</adminobject-class>
+            <adminobject-class>com.stc.jmsjca.core.AdminQueue</adminobject-class>
             <config-property>
                 <config-property-name>Name</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>
@@ -234,7 +234,7 @@
 
         <adminobject>
             <adminobject-interface>javax.jms.Topic</adminobject-interface>
-            <adminobject-class>com.stc.jms.client.STCTopic</adminobject-class>
+            <adminobject-class>com.stc.jmsjca.core.AdminTopic</adminobject-class>
             <config-property>
                 <config-property-name>Name</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>
