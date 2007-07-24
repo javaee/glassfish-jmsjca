@@ -20,6 +20,7 @@ import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.QueueEndToEnd;
 import com.stc.jmsjca.test.core.TcpProxy;
 
 import java.net.InetAddress;
@@ -38,7 +39,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author misc
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SpecialFeaturesEar1 extends EndToEndBase {
     
@@ -202,6 +203,45 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
             Container.safeClose(c);
             Passthrough.safeClose(p);
             proxy.done();
+        }
+    }
+
+    /**
+     * Queue to queue, using override URL
+     * XA on in, XA on out
+     * CC-mode
+     *
+     * @throws Throwable
+     */
+    public void testContainerManagedSpecialUrl2_RTS_ONLY() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+
+        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        cc.setUserName(mServerProperties.getProperty("admin.user"));
+        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+
+        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        spec.setContextName("j-sendTo2SpecialUrl");
+        spec.setConcurrencyMode("cc");
+        spec.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+
+        dd.findElementByText(EJBDD, "--special--url--").setText("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("sendTo2SpecialUrlMix");
+
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
         }
     }
 

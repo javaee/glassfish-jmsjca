@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1541,65 +1541,126 @@ public abstract class QueueEndToEnd extends EndToEndBase {
      * Batch, XA, sync, no-rollback
      */
     public void testBatchXA() throws Throwable {
-        dotestBatch("batch", 50, false, "false");
+        dotestBatch("batch", 50, false, "false", "sync");
+    }
+
+    /**
+     * Batch, XA, cc, no-rollback
+     */
+    public void testBatchXACC() throws Throwable {
+        dotestBatch("batch", 50, false, "false", "cc");
     }
 
     /**
      * Batch, XA, sync, rollback
      */
     public void testBatchXARB() throws Throwable {
-        dotestBatch("batchRollback", 3, false, "false");
+        dotestBatch("batchRollback", 3, false, "false", "sync");
+    }
+    
+    /**
+     * Batch, XA, cc, rollback
+     */
+    public void testBatchXARBCC() throws Throwable {
+        dotestBatch("batchRollback", 3, false, "false", "cc");
     }
     
     /**
      * Batch, NonXA, sync, no-rollback
      */
     public void testBatchUT() throws Throwable {
-        dotestBatch("batchUT", 50, true, "false");
+        dotestBatch("batchUT", 50, true, "false", "sync");
+    }
+
+    /**
+     * Batch, NonXA, cc, no-rollback
+     */
+    public void testBatchUTCC() throws Throwable {
+        dotestBatch("batchUT", 50, true, "false", "cc");
     }
 
     /**
      * Batch, XA, sync, no-rollback, HUA
      */
     public void testBatchXAHUA() throws Throwable {
-        dotestBatch("batchHoldUntilAck", 50, false, "true");
+        dotestBatch("batchHoldUntilAck", 50, false, "true", "sync");
+    }
+    
+    /**
+     * Batch, XA, cc, no-rollback, HUA
+     */
+    public void testBatchXAHUACC() throws Throwable {
+        dotestBatch("batchHoldUntilAck", 50, false, "true", "cc");
     }
     
     /**
      * Batch, XA, sync, rollback, HUA
      */
     public void testBatchXAHUARB() throws Throwable {
-//        for (int i = 0; i < 1000; i++) {
-        dotestBatch("batchHoldUntilAckRollback", 3, false, "true");
-//        }
+        dotestBatch("batchHoldUntilAckRollback", 3, false, "true", "sync");
+    }
+    
+    /**
+     * Batch, XA, cc, rollback, HUA
+     */
+    public void testBatchXAHUARBCC() throws Throwable {
+        dotestBatch("batchHoldUntilAckRollback", 3, false, "true", "cc");
     }
     
     /**
      * No Batch, XA, sync, no-rollback, HUA
      */
     public void testHUAXA() throws Throwable {
-        dotestBatch("batchHoldUntilAck", 0, false, "true");
+        dotestBatch("batchHoldUntilAck", 0, false, "true", "sync");
+    }
+    
+    /**
+     * No Batch, XA, cc, no-rollback, HUA
+     */
+    public void testHUAXACC() throws Throwable {
+        dotestBatch("batchHoldUntilAck", 0, false, "true", "cc");
     }
     
     /**
      * No Batch, XA, sync, rollback, HUA
      */
     public void testHUAXARB() throws Throwable {
-        dotestBatch("batchHoldUntilAckRollback", 0, false, "true");
+        dotestBatch("batchHoldUntilAckRollback", 0, false, "true", "sync");
+    }
+    
+    /**
+     * No Batch, XA, cc, rollback, HUA
+     */
+    public void testHUAXARBCC() throws Throwable {
+        dotestBatch("batchHoldUntilAckRollback", 0, false, "true", "cc");
     }
     
     /**
      * No Batch, UT, sync, no-rollback, HUA
      */
     public void testHUAUT() throws Throwable {
-        dotestBatch("batchHUAUT", 0, true, "true");
+        dotestBatch("batchHUAUT", 0, true, "true", "sync");
+    }
+    
+    /**
+     * No Batch, UT, cc, no-rollback, HUA
+     */
+    public void testHUAUTCC() throws Throwable {
+        dotestBatch("batchHUAUT", 0, true, "true", "cc");
     }
     
     /**
      * No Batch, UT, sync, no-rollback, HUA
      */
     public void testHUAUTRB() throws Throwable {
-        dotestBatch("batchHUAUTRB", 0, true, "true");
+        dotestBatch("batchHUAUTRB", 0, true, "true", "sync");
+    }
+    
+    /**
+     * No Batch, UT, sync, no-rollback, HUA
+     */
+    public void testHUAUTRBCC() throws Throwable {
+        dotestBatch("batchHUAUTRB", 0, true, "true", "cc");
     }
     
     // More HUA tests:
@@ -1609,9 +1670,12 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
 
     /**
-     * Batch, XA, sync, no-rollback
+     * Tests various aspects of Batch and HUA by:
+     * - passing msgs from Q1 to Q2
+     * - each batch (i.e. end of batch msg) will result in a msg in Q3
+     * - rollbacks cause messages to be sent to Q4, which are rolled back so Q4 should remain empty
      */
-    public void dotestBatch(String mname, int batchsize, boolean ut, String holdUntilAck) throws Throwable {
+    public void dotestBatch(String mname, int batchsize, boolean ut, String holdUntilAck, String concMode) throws Throwable {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "testQQXAXA").setText(mname);
         dd.findElementByText(EJBDD, "XContextName").setText(mname);
@@ -1623,7 +1687,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         
         QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
             EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
-        spec.setConcurrencyMode("sync");        
+        spec.setConcurrencyMode(concMode);        
         spec.setBatchSize(Integer.toString(batchsize));
         spec.setHoldUntilAck(holdUntilAck);
         
@@ -1635,7 +1699,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
-            p.clearQ1Q2Q3();
+            p.clearQ1Q2Q3Q4();
 
             int N = 1000;
             p.setNMessagesToSend(N);
@@ -1654,19 +1718,31 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             Passthrough.QueueDest q3 = p.new QueueDest(p.getQueue3Name()); 
             q3.connect();
             int nbatches = q3.drain(); 
+
+            Passthrough.QueueDest q4 = p.new QueueDest(p.getQueue4Name()); 
+            q4.connect();
+            int ninvalidRollbacks = q4.drain(); 
+            
             System.out.println("Batches: " + nbatches);
             int n2 = p.get(p.getQueue2Name()).drain();
-            System.out.println("n2 = " + n2);            
+            System.out.println("n in queue2 = " + n2);            
             p.get(p.getQueue1Name()).assertEmpty();            
-            if (nbatches > 0) {
-                assertTrue(nbatches > 0);
+            if (batchsize > 0) {
+                assertTrue("No EofBatch were found", nbatches > 0);
             }
-            assertTrue(nbatches < N);
+            assertTrue("Msgs are delivered one msg per batch", nbatches < N);
             assertTrue(n2 == 0);
+            assertTrue("Invalid rollbacks", ninvalidRollbacks == 0);
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
         }
     }
     
+    public void checkErrorQueue(Passthrough p) throws Exception {
+        Passthrough.QueueDest q4 = p.new QueueDest(p.getQueue4Name()); 
+        q4.connect();
+        int nErrors = q4.drain();
+        assertTrue("There were " + nErrors + " errors in the error queue", nErrors == 0);
+    }
 }

@@ -72,9 +72,9 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
-public class Activation {
+public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
     private RAJMSResourceAdapter mRA;
     private MessageEndpointFactory mEndpointFactory;
@@ -132,6 +132,7 @@ public class Activation {
      */
     public Activation(RAJMSResourceAdapter ra, MessageEndpointFactory epf,
         RAJMSActivationSpec spec) {
+        super(ra, epf, spec);
         mRA = ra;
         mEndpointFactory = epf;
         mSpec = spec;
@@ -427,6 +428,16 @@ public class Activation {
     }
     
     /**
+     * Creates a delivery
+     * 
+     * @return new delivery
+     * @throws Exception propagated
+     */
+    protected Delivery createDelivery() throws Exception { 
+        return getObjectFactory().createDelivery(mDeliveryMode, this, mStats);
+    }
+    
+    /**
      * Internal async start method. Called from a dedicated starting thread.
      * This method may take a (very) long time. It will first stop delivery if 
      * necessary, and then start until starting has succeeded.
@@ -462,7 +473,7 @@ public class Activation {
             // Attempt initiation
             if (System.currentTimeMillis() > tryAgainAt) {
                 try {
-                    mDelivery = getObjectFactory().createDelivery(mDeliveryMode, this, mStats);
+                    mDelivery = createDelivery();
                     mDelivery.start();
                     sLog.info(LOCALE.x("E015: {0}: message delivery initiation was successful.", mName));
                     setState(CONNECTED);

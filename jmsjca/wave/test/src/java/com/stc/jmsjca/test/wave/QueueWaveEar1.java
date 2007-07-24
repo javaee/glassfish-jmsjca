@@ -33,9 +33,39 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class QueueWaveEar1 extends QueueEndToEnd {
+
+    public void testBatchUTCC() throws Throwable {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Batch processing not supported for ConnectionConsumer");
+        
+    }
+
+    public void testBatchXACC() throws Throwable {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Batch processing not supported for ConnectionConsumer");
+        
+    }
+
+    public void testBatchXAHUACC() throws Throwable {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Batch processing not supported for ConnectionConsumer");
+        
+    }
+
+    public void testBatchXAHUARBCC() throws Throwable {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Batch processing not supported for ConnectionConsumer");
+        
+    }
+
+    public void testBatchXARBCC() throws Throwable {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Batch processing not supported for ConnectionConsumer");
+        
+    }
 
     /**
      * When running in Eclipse, allows to interrupt the test before any other tests are run.

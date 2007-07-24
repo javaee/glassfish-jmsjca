@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
  * package to the java.util.logging package easier.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public final class Logger {
     private final java.util.logging.Logger mDelegate;
@@ -157,6 +157,17 @@ public final class Logger {
     public final void infoNoloc(String message) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString());
+    }
+
+    /**
+     * See {@link org.apache.log4j.Category#info}
+     *
+     * @param message msg to be logged
+     * @param t exception to be logged
+     */
+    public final void infoNoloc(String message, Throwable t) {
+        mDelegate.log(java.util.logging.Level.INFO,
+            message == null ? null : message.toString(), t);
     }
 
     /**

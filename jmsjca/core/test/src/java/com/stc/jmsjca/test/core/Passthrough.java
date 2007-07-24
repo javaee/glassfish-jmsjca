@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -68,6 +68,7 @@ public abstract class Passthrough {
     private String mQueue1Name = "Queue1";
     private String mQueue2Name = "Queue2";
     private String mQueue3Name = "Queue3";
+    private String mQueue4Name = "Queue4";
     private String mTopic1Name = "Topic1";
     private String mTopic2Name = "Topic2";
     private String mTopic1DurableName = "T1SUB";
@@ -233,6 +234,20 @@ public abstract class Passthrough {
      */
     public String getQueue3Name() {
         return mQueue3Name;
+    }
+    
+    /**
+     * @param name destination name
+     */
+    public void setQueue4Name(String name) {
+        mQueue4Name = name;
+    }
+    
+    /**
+     * @return destination name
+     */
+    public String getQueue4Name() {
+        return mQueue4Name;
     }
     
     /**
@@ -1070,7 +1085,23 @@ public abstract class Passthrough {
     public void clearQ1Q2Q3() throws Exception {
         close();
         String[] queuenames = new String[] {mQueue1Name, mQueue2Name, mQueue3Name};
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < queuenames.length; i++) {
+            QueueDest d1 = new QueueDest(queuenames[i]);
+            d1.connect();
+            d1.drain();
+            close();
+        }
+    }
+
+    /**
+     * Wipes all messages from the three test queues
+     * 
+     * @throws Exception fault
+     */
+    public void clearQ1Q2Q3Q4() throws Exception {
+        close();
+        String[] queuenames = new String[] {mQueue1Name, mQueue2Name, mQueue3Name, mQueue4Name};
+        for (int i = 0; i < queuenames.length; i++) {
             QueueDest d1 = new QueueDest(queuenames[i]);
             d1.connect();
             d1.drain();
@@ -1312,11 +1343,13 @@ public abstract class Passthrough {
      * 
      * @throws Exception fault
      */
-    public void drainQ2() throws Exception {
+    public int drainQ2() throws Exception {
+        int ret;
         QueueDest dest = new QueueDest(mQueue2Name);
         dest.connect();
-        dest.drain();
+        ret = dest.drain();
         dest.close();
+        return ret;
     }
 
     /**

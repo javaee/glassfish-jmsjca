@@ -27,7 +27,7 @@ import java.util.Properties;
  * Provides for easy string formatting
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Str {
     /**
@@ -331,5 +331,85 @@ public class Str {
      */
     public boolean isEmpty(String s) {
         return s == null || s.length() == 0;
+    }
+    
+    /**
+     * Utility to provide key/value pairs in lieu of a full-blown map
+     */
+    public interface Translator {
+        /**
+         * Looks up a key/value
+         *
+         * @param key key
+         * @return value
+         */
+        String get(String key);
+    }
+
+    /**
+     * Changes all ${names} to their values using the specified Translator;
+     * returns the number of substitutions and unresolved values. This
+     * code is baesd on the PropetyHelper code in Apache Ant
+     *
+     * @param value String to process
+     * @param substitutions Translator
+     * @param nResolved must be int[1]
+     * @param nUnresolved must be int[1]
+     * @throws java.lang.Exception on failure
+     * @return sustituted string
+     */
+    public static String substituteAntProperty(String value, Translator substitutions, int[] nResolved, 
+            int[] nUnresolved) throws Exception {
+
+        StringBuffer ret = new StringBuffer();
+
+        int prev = 0;
+        int pos;
+        nResolved[0] = 0;
+        nUnresolved[0] = 0;
+
+        // search for the next instance of $ from the 'prev' position
+        while ((pos = value.indexOf("$", prev)) >= 0) {
+
+            // if there was any text before this, add it as a fragment
+            if (pos > 0) {
+                ret.append(value.substring(prev, pos));
+            }
+            
+            // if we are at the end of the string, we tack on a $ then move past it
+            if (pos == (value.length() - 1)) {
+                ret.append("$");
+                prev = pos + 1;
+            } else if (value.charAt(pos + 1) != '{') {
+                // peek ahead to see if the next char is a property or not
+                // not a property: insert the char as a literal
+                ret.append(value.substring(pos, pos + 2));
+                prev = pos + 2;
+            } else {
+                // property found, extract its name or bail on a typo
+                int endName = value.indexOf('}', pos);
+                if (endName < 0) {
+                    throw new Exception("Syntax error in property in " + value + " at index " + pos);
+                }
+                String propertyName = value.substring(pos + 2, endName);
+                String replacement = substitutions.get(propertyName);
+                if (replacement != null) {
+                    ret.append(replacement);
+                    nResolved[0]++;
+                } else {
+                    ret.append("${").append(propertyName).append("}");
+                    nUnresolved[0]++;
+                }
+                prev = endName + 1;
+            }
+        }
+
+        // no more $ signs found
+        // if there is any tail to the file, append it
+        if (prev < value.length()) {
+            ret.append(value.substring(prev));
+        }
+        
+        return ret.toString();
     }
 }

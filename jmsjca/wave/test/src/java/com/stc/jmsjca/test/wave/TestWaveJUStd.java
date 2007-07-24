@@ -21,12 +21,16 @@ import com.spirit.wave.jms.WaveXAConnectionFactory;
 import com.spirit.wave.jms.WaveXAQueueConnectionFactory;
 import com.spirit.wave.jms.WaveXATopicConnectionFactory;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.test.core.XTestBase;
+import com.stc.jmsjca.util.UrlParser;
+import com.stc.jmsjca.wave.RAWaveObjectFactory;
 import com.stc.jmsjca.wave.RAWaveResourceAdapter;
+import com.stc.jmsjca.wave.WaveUrlParser;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -38,6 +42,7 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
+import javax.jms.XAQueueConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
@@ -171,6 +176,11 @@ public class TestWaveJUStd extends XTestBase {
             ConnectionFactory f = (ConnectionFactory) x.createConnectionFactory();
             ctx.rebind(appjndiUnified, f);
         }
+    }
+
+    public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
+        WaveProfile p = createWaveProfile(getConnectionUrl());
+        return new WaveXAQueueConnectionFactory(p);
     }
 
     private static long sTime = System.currentTimeMillis();
@@ -348,6 +358,29 @@ public class TestWaveJUStd extends XTestBase {
         }
     }
     
+    public void testURLOverride() throws Throwable {
+        String url = "tcp://server1:1888/?imqaaa=33&imqaaa=bbb&username=a&password=b,tcp://server2:9999/?mqp1=1&mqp2=2&username=c&password=d";
+        WaveUrlParser u = new WaveUrlParser(url);
+        UrlParser[] urls = u.getUrlParsers();
+        assertTrue(urls.length == 2);
+        assertTrue(urls[0].getHost().equals("server1"));
+        assertTrue(urls[1].getHost().equals("server2"));
+        assertTrue(urls[0].getPort() == 1888);
+        assertTrue(urls[1].getPort() == 9999);
+        System.out.println(u.toString());
+        assertTrue(url.equals(u.toString()));
+    }
+
+    public void testUrlProperties() throws Throwable {
+        RAWaveObjectFactory fact = new RAWaveObjectFactory();
+        Properties p = new Properties();
+        RAJMSResourceAdapter ra = new RAWaveResourceAdapter();
+        fact.getProperties(p, ra, null, null, "tcp://server1:1888/?imqaaa=33&imqaaa=bbb&username=a&password=b,tcp://server2:9999/?mqp1=1&mqp2=2&username=c&password=d");        
+        p.getProperty("username").equals("c");
+        p.getProperty("password").equals("d");
+        p.getProperty("mqp1").equals("1");
+        p.getProperty("imqaaa").equals("33");
+    }
     
   public void disabled_test160tMixInsideACC() {}
 //  public void disabled_test160tMixTxMgr() {}

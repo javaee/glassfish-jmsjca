@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * @author misc
  */
 public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
@@ -52,6 +52,7 @@ public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceA
             "com.stc.jmsjca.stcms.RASTCMSObjectFactory",
             "com.stc.jmsjca.jndi.RAJNDIObjectFactory",
             "com.stc.jmsjca.sunone.RASunOneObjectFactory",
+            "com.stc.jmsjca.wave.RAWaveObjectFactory",
             "com.stc.jmsjca.jboss.RAJBossObjectFactory",
             "com.stc.jmsjca.stcms453.RASTCMS453ObjectFactory",
             "com.stc.jmsjca.wl.RAWLObjectFactory",

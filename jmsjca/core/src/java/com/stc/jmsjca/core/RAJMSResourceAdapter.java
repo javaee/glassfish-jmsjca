@@ -58,7 +58,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -204,7 +204,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             if (mActivations != null) {
                 synchronized (mActivations) {
                     for (Iterator i = mActivations.iterator(); i.hasNext();/*-*/) {
-                        Activation a = (Activation) i.next();
+                        ActivationBase a = (ActivationBase) i.next();
                         if (sLog.isDebugEnabled()) {
                             sLog.debug("Stopping " + a);
                         }
@@ -284,7 +284,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         }
 
         // Create new activation and register
-        Activation a;
+        ActivationBase a;
         try {
             String url = ((RAJMSActivationSpec) spec).getConnectionURL();
             if (url == null || url.length() == 0) {
@@ -324,7 +324,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 + spec);
         }
 
-        Activation a = findActivation(endpointFactory, spec, true);
+        ActivationBase a = findActivation(endpointFactory, spec, true);
 
         // Assert activation is known
         if (a == null) {
@@ -355,7 +355,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * @param remove boolean
      * @return Activation
      */
-    public Activation findActivation(MessageEndpointFactory endpointFactory,
+    public ActivationBase findActivation(MessageEndpointFactory endpointFactory,
         ActivationSpec spec, boolean remove) {
         if (mActivations == null) {
             mActivations = new ArrayList();
@@ -371,10 +371,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         }
 
         // Find the activation
-        Activation a = null;
+        ActivationBase a = null;
         synchronized (mActivations) {
             for (Iterator iter = mActivations.iterator(); iter.hasNext();/*-*/) {
-                Activation candidate = (Activation) iter.next();
+                ActivationBase candidate = (ActivationBase) iter.next();
                 if (candidate.is(endpointFactory, (RAJMSActivationSpec) spec)) {
                     a = candidate;
                     if (remove) {

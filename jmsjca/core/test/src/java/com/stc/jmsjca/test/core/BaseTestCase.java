@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.test.core;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
@@ -23,9 +26,10 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class BaseTestCase extends TestCase {
+    private List mAsyncErrors = new ArrayList();
     
     public BaseTestCase() {
         
@@ -33,6 +37,28 @@ public abstract class BaseTestCase extends TestCase {
     
     public BaseTestCase(String name) {
         super(name);
+    }
+    
+    /**
+     * @param t error
+     */
+    public void setAsyncError(Throwable t) {
+        synchronized (mAsyncErrors) {
+            mAsyncErrors.add(t);
+        }
+    }
+    
+    /**
+     * @throws Exception if there were any async exceptions
+     */
+    public void assertNoAsyncErrors() throws Exception {
+        synchronized (mAsyncErrors) {
+            if (!mAsyncErrors.isEmpty()) {
+                throw new Exception("There were " + mAsyncErrors.size()
+                    + " async exceptions. The first is: " + mAsyncErrors.get(0),
+                    (Throwable) mAsyncErrors.get(0));
+            }
+        }
     }
     
     /**

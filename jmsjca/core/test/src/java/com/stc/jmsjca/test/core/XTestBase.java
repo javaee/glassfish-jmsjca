@@ -19,6 +19,7 @@ package com.stc.jmsjca.test.core;
 import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.XXid;
+import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.XAssert;
 
 import javax.jms.Connection;
@@ -29,6 +30,7 @@ import javax.jms.JMSException;
 import javax.jms.JMSSecurityException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
@@ -36,6 +38,8 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueReceiver;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
+import javax.jms.ServerSession;
+import javax.jms.ServerSessionPool;
 import javax.jms.Session;
 import javax.jms.TemporaryTopic;
 import javax.jms.TextMessage;
@@ -64,7 +68,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <code>
@@ -119,7 +128,7 @@ import java.util.Properties;
  * @version 1.0
  */
 abstract public class XTestBase extends BaseTestCase {
-//    private static Logger sLog = Logger.getLogger(XTestBase.class);
+    private static Logger sLog = Logger.getLogger(XTestBase.class.getName());
 
     protected Properties mServerProperties;
 
@@ -198,6 +207,8 @@ abstract public class XTestBase extends BaseTestCase {
     protected static String appjndiUnified = "test-fact-application-unified";
 
     abstract public void init(boolean producerPooling) throws Throwable;
+    
+    abstract public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException;
     
     public void init(boolean voidSessionPooling, boolean producerPooling) throws Throwable {
         init(producerPooling);
@@ -4982,4 +4993,492 @@ abstract public class XTestBase extends BaseTestCase {
         getConnectionManager(f).clear();
         w.check(0, 0, 0);
     }
+    
+    
+    /**
+     * Behaves as a counting semaphore: allows one thread to wait for the counter
+     * to reach a particular value
+     * 
+     * @author fkieviet
+     */
+    private static class ConditionVar {
+        private int mCount;
+        private int mMaxSeen;
+        private int mTriggerAt;
+       
+        /**
+         * Increments the counter
+         */
+        public synchronized void inc() {
+            mCount++;
+            if (mCount > mMaxSeen) {
+                mMaxSeen = mCount;
+            }
+            if (mTriggerAt == mCount) {
+                this.notifyAll();
+            }
+        }
+        
+        /**
+         * Increments the counter
+         */
+        public synchronized void dec() {
+            mCount--;
+            if (mTriggerAt == mCount) {
+                this.notifyAll();
+            }
+        }
+        
+        /**
+         * @return current value of counter
+         */
+        public synchronized int current() {
+            return mCount;
+        }
+        
+        /**
+         * @return maximum value seen
+         */
+        public synchronized int getMax() {
+            return mMaxSeen;
+        }
+        
+        /**
+         * Blocks until the specified counter value has been reached
+         * 
+         * @param value block until value reached
+         * @param timeout max wait time
+         * @throws Exception on failure
+         */
+        public synchronized void waitForDown(int value, long timeout) throws Exception {
+            mTriggerAt = value;
+            for (;;) {
+                this.wait(timeout);
+                if (mTriggerAt <= mCount) {
+                    break;
+                } else {
+                    throw new Exception("Timeout");
+                }
+            }
+        }
+
+        /**
+         * Blocks until the specified counter value has been reached
+         * 
+         * @param value block until value reached
+         * @param timeout max wait time
+         * @throws Exception on failure
+         */
+        public synchronized void waitForUp(int value, long timeout) throws Exception {
+            mTriggerAt = value;
+            for (;;) {
+                if (mCount >= mTriggerAt) {
+                    break;
+                }
+                this.wait(timeout);
+                if (mCount >= mTriggerAt) {
+                    break;
+                } else {
+                    throw new Exception("Timeout");
+                }
+            }
+        }
+    }
+
+    /**
+     * Verify that batch size in createConnectionConsumer() works
+     * 
+     * @throws Throwable
+     */
+    public void testXACCBatch() throws Throwable {
+        // Connection factory
+        XAQueueConnectionFactory fact = getXAQueueConnectionFactory();
+        
+        final int N = 1000;
+        final int K = 21;
+        final int[] max = new int[1];
+        
+        // Send msgs to Queue1
+        Queue dest;
+        {
+            final QueueConnection conn = fact.createQueueConnection(USERID, PASSWORD);
+            QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            dest = session.createQueue("Queue1");
+            QueueSender producer = session.createSender(dest);
+            for (int i = 0; i < N; i++) {
+                TextMessage msg1 = session.createTextMessage("Msg " + i + " for Q1");
+                producer.send(msg1);
+            }
+            conn.close();
+        }
+        
+        // Define msg listener; notifies a semaphore to notify the main thread
+        final Semaphore sync = new Semaphore(0);
+
+        // Define server session pool; each invokation will create a new session
+        final XAQueueConnection mdbconn = fact.createXAQueueConnection(USERID, PASSWORD);
+        ServerSessionPool pool = new ServerSessionPool() {
+            public ServerSession getServerSession() throws JMSException {
+                return new ServerSession() {
+                    XAQueueSession xs;
+                    XXid xid;
+                    int nMsgs;
+                    public Session getSession() throws JMSException {
+                        try {
+                            xs = mdbconn.createXAQueueSession();
+                            xs.getQueueSession().setMessageListener(new MessageListener() {
+                                public void onMessage(Message msg) {
+                                    nMsgs++;
+                                }
+                            });
+                            return xs;
+                        } catch (Exception e) {
+                            setAsyncError(e);
+                            throw new JMSException("Error: " + e);
+                        } 
+                    }
+                    public void start() throws JMSException {
+                        new Thread() {
+                            public void run() {
+                                try {
+                                    xid = new XXid();
+                                    xs.getXAResource().start(xid, XAResource.TMNOFLAGS);
+                                    xs.run();
+                                    synchronized (max) {
+                                        if (max[0] < nMsgs) {
+                                            max[0] = nMsgs;
+                                        }
+                                    }
+                                    xs.getXAResource().end(xid, XAResource.TMSUCCESS);
+                                    xs.getXAResource().commit(xid, true);
+                                    for (int i = 0; i < nMsgs; i++) {
+                                        sync.release();
+                                    }
+                                    xs.close();
+                                } catch (Exception e) {
+                                    sLog.log(Level.SEVERE, "Unexpected " + e, e);
+                                    setAsyncError(e);
+                                }
+                            }
+                        }.start();
+                    }
+                };
+            }
+        };
+
+        // Create connection consumer and start
+        mdbconn.createConnectionConsumer(dest, null, pool, K);
+        mdbconn.start();
+        for (int i = 0; i < N; i++) {
+            assertTrue(sync.attempt(2000));
+        }
+        mdbconn.close();
+        
+        if (max[0] != K) {
+            System.out.println(max[0] + " != " + K);
+        }
+        assertTrue(max[0] == K);
+        
+        assertNoAsyncErrors();
+    }
+
+
+    /**
+     * Implements the stop procedure for XA and connection consumers as proposed by
+     * George: close the connection consumer, wait until all server sessions have been
+     * returned, and close the connection. Calls to getServerSession() during the 
+     * shutdown procedure should throw an execption. 
+     * 
+     * This test tests message loss when going through the shut down procedure while
+     * processing messages. Messages are all rolled back five times, and then a wait
+     * is invoked. In the end there should be as many messages in the queue as was
+     * sent to this queue.
+     */
+    public int doTestXACCStopCloseRolback() throws Throwable {
+        final int POOLSIZE = 32;
+
+        // Connection factory
+        XAQueueConnectionFactory fact = getXAQueueConnectionFactory();
+        
+        // Msgs to process
+        final int NMESSAGES = 100;
+        
+        // Assure that Queue1 is empty
+        {
+            final QueueConnection conn = fact.createQueueConnection(USERID, PASSWORD);
+            conn.start();
+            QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            QueueReceiver r = session.createReceiver(session.createQueue("Queue1"));
+            int nDrained = 0;
+            for (;;) {
+                Message m = r.receive(250);
+                if (m == null) {
+                    break;
+                }
+                nDrained++;
+            }
+            System.out.println(nDrained + " msgs drained");
+            conn.close();
+        }
+        
+        // Populate Queue1
+        Queue dest;
+        {
+            final QueueConnection conn = fact.createQueueConnection(USERID, PASSWORD);
+            QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            dest = session.createQueue("Queue1");
+            QueueSender producer = session.createSender(dest);
+            for (int i = 0; i < NMESSAGES; i++) {
+                TextMessage msg1 = session.createTextMessage("Msg 1 for Q1");
+                producer.send(msg1);
+            }
+            conn.close();
+        }
+        
+        // Keeps track of how many msgs were received
+        final ConditionVar inUse = new ConditionVar();
+        final ConditionVar isDead = new ConditionVar();
+        final ConditionVar waiting = new ConditionVar();
+        final ConditionVar endWaiter = new ConditionVar();
+        final ConditionVar rolledback = new ConditionVar();
+
+        // Define server session pool: this is a fixed sized pool with precreated 
+        // sessions and blocking behavior
+        final XAQueueConnection mdbconn = fact.createXAQueueConnection(USERID, PASSWORD);
+        ServerSessionPool pool = new ServerSessionPool() {
+            Semaphore mInPool = new Semaphore(POOLSIZE);
+            ArrayList mPool = new ArrayList(POOLSIZE);
+            boolean mInitialized;
+            
+            /**
+             * Populates the pool
+             */
+            synchronized void init() {
+                if (!mInitialized) {
+                    for (int i = 0; i < POOLSIZE; i++) {
+                        mPool.add(newServerSession());
+                    }
+                    mInitialized = true;
+                }
+            }
+            
+            /**
+             * @return a new server session
+             */
+            ServerSession newServerSession() {
+                return new ServerSession() {
+                    XAQueueSession xs;
+                    XXid xid;
+                    ServerSession xthis = this;
+                    Map msgids = new HashMap();
+                    
+                    /**
+                     * Creates a new JMS session
+                     * 
+                     * @see javax.jms.ServerSession#getSession()
+                     */
+                    public Session getSession() throws JMSException {
+                        try {
+                            if (xs == null) {
+                                xs = mdbconn.createXAQueueSession();
+                                xs.getQueueSession().setMessageListener(new MessageListener() {
+                                    public void onMessage(Message msg) {
+                                        // Delist (simulates going from MDB to SLSB)
+                                        try {
+                                            xs.getXAResource().end(xid, XAResource.TMSUCCESS);
+                                        } catch (XAException e1) {
+                                            e1.printStackTrace();
+                                        }
+                                        
+                                        String msgid = null;
+                                        try {
+                                            msgid = msg.getJMSMessageID();
+                                        } catch (JMSException e1) {
+                                            e1.printStackTrace();
+                                        }
+                                        
+                                        // Find out if a msg needs to be delayed: a msg
+                                        // needs to be delayed if it has been rolled
+                                        // back 5 times
+                                        int[] cnt;
+                                        synchronized (msgids) {
+                                            cnt = (int[]) msgids.get(msgid); 
+                                        }
+                                        if (cnt == null) {
+                                            cnt = new int[1];
+                                            synchronized (msgids) {
+                                                msgids.put(msgid, cnt);
+                                            }
+                                        }
+                                        cnt[0]++;
+                                        if (cnt[0] == 5) {
+                                            waiting.inc();
+                                            try {
+                                                endWaiter.waitForUp(1, 30000);
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+
+                                        // Re-enlist (simulates returning from SLSB to MDB)
+                                        try {
+                                            xs.getXAResource().start(xid, XAResource.TMJOIN);
+                                        } catch (XAException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                });
+                            }
+                            return xs;
+                        } catch (Exception e) {
+                            sLog.log(Level.SEVERE, "Unexpected in getSession(): " + e, e);;
+                            throw new JMSException("Error: " + e);
+                        } 
+                    }
+
+                    /**
+                     * Called by the JMS client runtime to indicate the container should
+                     * process the messages. By lack of a container, this creates a new
+                     * thread that does the processing.
+                     * 
+                     * @see javax.jms.ServerSession#start()
+                     */
+                    public void start() throws JMSException {
+                        new Thread() {
+                            /**
+                             * Processes the msgs; handles XA
+                             * 
+                             * @see java.lang.Runnable#run()
+                             */
+                            public void run() {
+                                try {
+                                    xid = new XXid();
+                                    xs.getXAResource().start(xid, XAResource.TMNOFLAGS);
+                                    xs.run();
+                                    xs.getXAResource().end(xid, XAResource.TMSUCCESS);
+                                    xs.getXAResource().rollback(xid);
+                                    rolledback.inc();
+                                    returnToPool(xthis);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }.start();
+                    }
+                };
+            }
+            
+            /**
+             * @see javax.jms.ServerSessionPool#getServerSession()
+             */
+            public ServerSession getServerSession() throws JMSException {
+                synchronized (this) {
+                    if (isDead.current() == 1) {
+                        try {
+                            isDead.waitForUp(2, 100000);
+                        } catch (Exception e) {
+                            throw new JMSException("Timeout1");
+                        }
+                    }
+
+                    if (isDead.current() == 2) {
+                        throw new JMSException("EXPECTED: Cannot return ServerSession: isDead=2");
+                    }
+
+                    inUse.inc();
+                }
+
+                init();
+                try {
+                    if (!mInPool.attempt(60000)) {
+                        inUse.dec();
+                        throw new Exception("Timeout");
+                    }
+                } catch (Exception e) {
+                    throw new JMSException("getServerSession failure: " + e);
+                }
+                synchronized (this) {
+                    return (ServerSession) mPool.remove(mPool.size() - 1);
+                }
+            }
+            
+            /**
+             * Returns a server session to the pool
+             * 
+             * @param s ServerSession
+             */
+            void returnToPool(ServerSession s) {
+                synchronized(this) {
+                    mPool.add(s);
+                }
+                mInPool.release();
+                inUse.dec();
+            }
+        };
+
+        // ---- TEST STARTS HERE ----
+        mdbconn.createConnectionConsumer(dest, null, pool, 1);
+        mdbconn.start();
+        
+        // Wait until message processing is fully going
+        rolledback.waitForUp(5, 30000);
+        System.out.println("All threads are waiting: " + waiting.current());
+        
+        // Shutdown procedure:
+        // 1: getServerSession() blocks
+        isDead.inc();
+        
+        // 2: wait until all sessions have returned
+        System.out.println("Triggering end");
+        endWaiter.inc();
+        System.out.println("Waiting for inuse=0");
+        inUse.waitForDown(0, 3000);
+        
+        // 3: getServerSession() unblocks and returns an exception
+        isDead.inc();
+        
+        // 4: close the connection
+        System.out.println("Closing connection");
+        mdbconn.close();
+        System.out.println("Connection closed");
+        
+        // Check indoubt
+        {
+            final XAQueueConnection conn = fact.createXAQueueConnection(USERID, PASSWORD);
+            conn.start();
+            XAQueueSession session = conn.createXAQueueSession();
+            Xid[] xids = session.getXAResource().recover(XAResource.TMSTARTRSCAN);
+            System.out.println("Recover: " + xids.length);
+            conn.close();
+        }
+
+        // Drain remaining messages
+        int nDrained = 0;
+        {
+            final QueueConnection conn = fact.createQueueConnection(USERID, PASSWORD);
+            conn.start();
+            QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            QueueReceiver r = session.createReceiver(session.createQueue("Queue1"));
+            for (;;) {
+                Message m = r.receive(1000);
+                if (m == null) {
+                    break;
+                }
+                nDrained++;
+            }
+            System.out.println(nDrained + " msgs drained");
+            conn.close();
+        }
+        
+        System.out.println("Rolledback: " + rolledback.current());
+        
+        assertTrue("Msg found: " + nDrained, nDrained == NMESSAGES);
+        
+        return inUse.getMax();
+    }
+    
+    public void testXACCStopCloseRolback() throws Throwable {
+        doTestXACCStopCloseRolback();
+    }
+    
 }

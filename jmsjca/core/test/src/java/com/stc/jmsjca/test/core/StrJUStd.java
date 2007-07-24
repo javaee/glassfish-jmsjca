@@ -18,6 +18,8 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.util.Str;
 
+import java.util.Properties;
+
 import junit.framework.TestCase;
 
 public class StrJUStd extends TestCase {
@@ -78,5 +80,131 @@ public class StrJUStd extends TestCase {
         String out = Str.parseProperties("JMSJCA.sep=", inp);
         System.out.println("[" + out + "]");
         assertTrue("a=b\r\nJMSJCA.sep=\r\nc=\\~d\\".equals(out));
+    }
+    
+    private static class T implements Str.Translator {
+        private Properties mP = new Properties();
+        
+        public T add(String key, String value) {
+            mP.setProperty(key, value);
+            return this;
+        }
+
+        public String get(String key) {
+            return mP.getProperty(key);
+        }
+    }
+    
+    private static T sT1 = new T().add("a", "A").add("b", "B"); 
+    
+    public void testP1() throws Throwable {
+        String x = "a${a}b";
+        String z = "aAb";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 1);
+    }
+
+    public void testP2() throws Throwable {
+        String x = "a${x}b";
+        String z = "a${x}b";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 1);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP3() throws Throwable {
+        String x = "$a${a}${b}${}";
+        String z = "$aAB${}";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 1);
+        assertTrue(nResolved[0] == 2);
+    }
+
+    public void testP4() throws Throwable {
+        String x = "a$x";
+        String z = "a$x";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP5() throws Throwable {
+        String x = "a$$x";
+        String z = "a$$x";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP6() throws Throwable {
+        String x = "a$${x}";
+        String z = "a$${x}";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP7() throws Throwable {
+        String x = "a$${a}";
+        String z = "a$${a}";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP8() throws Throwable {
+        String x = "a${x}";
+        String z = "a${x}";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 1);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP9() throws Throwable {
+        String x = "a$${a";
+        String z = "a$${a";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        String y = Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+        assertTrue(x + "," + y + "," + z, y.equals(z));
+        assertTrue(nUnresolved[0] == 0);
+        assertTrue(nResolved[0] == 0);
+    }
+
+    public void testP10() throws Throwable {
+        String x = "a${a";
+        int[] nUnresolved = new int[1];
+        int[] nResolved = new int[1];
+        try {
+            Str.substituteAntProperty(x, sT1, nResolved, nUnresolved);
+            throw new Throwable("not thrown");
+        } catch (Exception e) {
+            // ok
+        }
     }
 }

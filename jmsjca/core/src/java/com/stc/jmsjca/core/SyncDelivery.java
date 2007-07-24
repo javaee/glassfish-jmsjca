@@ -21,14 +21,9 @@ import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
-import javax.jms.BytesMessage;
 import javax.jms.JMSException;
-import javax.jms.MapMessage;
 import javax.jms.Message;
-import javax.jms.ObjectMessage;
 import javax.jms.QueueSession;
-import javax.jms.StreamMessage;
-import javax.jms.TextMessage;
 import javax.jms.TopicSession;
 import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.Status;
@@ -99,9 +94,6 @@ public class SyncDelivery extends Delivery {
     private List mWorkers = new ArrayList();
     private boolean mIsStopped = true;
     private Object mIsStoppedLock = new Object();
-    private int mBatchSize;
-    private boolean mHoldUntilAck;
-    private TxMgr mTxMgr;
     
     private static final Localizer LOCALE = Localizer.get();
 
@@ -127,29 +119,6 @@ public class SyncDelivery extends Delivery {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("number of endpoints specified to be " + mNThreads);
-        }
-    
-        // Batch
-        mBatchSize = a.getActivationSpec().getBatchSize();
-        
-        // HUA mode
-        String huaMode = a.getActivationSpec().getHoldUntilAck();
-        if (huaMode != null && huaMode.length() > 0) {
-            if ("TRUE".equalsIgnoreCase(huaMode) || "1".equals(huaMode)) {
-                mHoldUntilAck = true;
-            }
-        }
-
-        // Get TxMgr
-        if ((mBatchSize > 1 || mHoldUntilAck) && isXA()) {
-            try {
-                mTxMgr = getTxMgr();
-            } catch (Exception e) {
-                if (mHoldUntilAck) {
-                    throw new RuntimeException("Could not obtain TxMgr which is crucial for HUA mode: " + e, e);
-                }
-                sLog.warn(LOCALE.x("E057: TxMgr could not be obtained: {0}", e), e);
-            }
         }
     }
 
@@ -178,14 +147,14 @@ public class SyncDelivery extends Delivery {
         try {
             RAJMSObjectFactory o = mActivation.getObjectFactory();
             javax.jms.ConnectionFactory fact = o.createConnectionFactory(
-                XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+                getDomain(),
                 mActivation.getRA(),
                 mActivation.getActivationSpec(),
                 null,
                 null);
             mConnection = o.createConnection(
                 fact,
-                XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+                getDomain(),
                 mActivation.getActivationSpec(),
                 mActivation.getRA(),
                 mActivation.getUserName() == null ? mActivation.getRA().getUserName() : mActivation.getUserName(),
@@ -271,7 +240,7 @@ public class SyncDelivery extends Delivery {
                 break;
             } else {
                 if (System.currentTimeMillis() > tlog) {
-                    sLog.info(LOCALE.x("E059: Stopping connector; waiting for work containers to "
+                    sLog.info(LOCALE.x("E059: Stopping message delivery; waiting for work containers to "
                         + "finish processing messages; there are {0} containers " 
                         + "that are still active; activation=[{1}].", 
                         Integer.toString(mWorkers.size()), mActivation));
@@ -446,6 +415,22 @@ public class SyncDelivery extends Delivery {
         }
     }
     
+    /**
+     * @return TopicSession or QueueSession class, can be overriden for TopicToQueue
+     *  delivery wich requires a unified session
+     */
+    protected Class getSessionClass() {
+        return mActivation.isTopic() ? TopicSession.class : QueueSession.class;        
+    }
+    
+    /**
+     * @return one of XConnectionRequestInfo.DOMAIN_XXX; can be overridden for TopicToQueue
+     *  delivery which requires a unified connection 
+     */
+    protected int getDomain() {
+        return XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic());        
+    }
+    
     private class SyncWorker extends Thread {
         private javax.jms.MessageConsumer mCons;
         private javax.jms.Session mSess;
@@ -475,7 +460,7 @@ public class SyncDelivery extends Delivery {
             mSess = o.createSession(
                 mConnection,
                 mActivation.isXA(),
-                mActivation.isTopic() ? TopicSession.class : QueueSession.class,
+                getSessionClass(),
                 mActivation.getRA(),
                 mActivation.getActivationSpec(),
                 true,
@@ -551,7 +536,7 @@ public class SyncDelivery extends Delivery {
             
             Message m = mCons.receive(TIMEOUT);
             if (m != null) {
-                m = mHoldUntilAck ? wrapMsg(m, coord, -1) : m;
+                m = wrapMsg(m, coord, -1);
                 deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(result.getOnMessageSucceeded());
                 coord.setRollbackOnly(result.getException());
@@ -580,63 +565,6 @@ public class SyncDelivery extends Delivery {
             }
         }
         
-        private boolean mTxFailureLoggedOnce;
-        
-        private Transaction getTransaction(boolean mustSucceed) {
-            if (mTxMgr != null) {
-                try {
-                    return mTxMgr.getTransactionManager().getTransaction();
-                } catch (Exception e) {
-                    if (mustSucceed) {
-                        throw new RuntimeException("Failed to obtain handle to transaction: " + e, e);
-                    }
-                    synchronized (mIsStoppedLock) {
-                        if (!mTxFailureLoggedOnce) {
-                            mTxFailureLoggedOnce = true;
-                            sLog.error(LOCALE.x("E062: Failed to obtain handle to transaction: {0}", e), e);
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-        
-        private Message wrapMsg(Message toCopy, AckHandler ack, int iBatch) throws JMSException {
-            WMessageIn ret;
-            
-            // Check for multiple interfaces
-            int nItf = 0;
-
-            if (toCopy instanceof TextMessage) {
-                nItf++;
-                ret = new WTextMessageIn((TextMessage) toCopy, ack, iBatch);
-            } else if (toCopy instanceof BytesMessage) {
-                nItf++;
-                ret = new WBytesMessageIn((BytesMessage) toCopy, ack, iBatch);
-            } else if (toCopy instanceof MapMessage) {
-                nItf++;
-                ret = new WMapMessageIn((MapMessage) toCopy, ack, iBatch);
-            } else if (toCopy instanceof ObjectMessage) {
-                nItf++;
-                ret = new WObjectMessageIn((ObjectMessage) toCopy, ack, iBatch);
-            } else if (toCopy instanceof StreamMessage) {
-                nItf++;
-                ret = new WStreamMessageIn((StreamMessage) toCopy, ack, iBatch);
-            } else {
-                nItf++;
-                ret = new WMessageIn(toCopy, ack, iBatch);
-            }
-            
-            if (nItf > 1) {
-                throw new JMSException("Cannot determine message type: the message " 
-                    + "implements multiple interfaces.");
-            }
-            
-            ret.setBatchSize(mBatchSize);
-
-            return ret;
-        }
-        
         private void runOnceBatchXA(Coordinator coord) throws Exception {
             // XA Mode
             DeliveryResults lastResult = new DeliveryResults();
@@ -653,7 +581,7 @@ public class SyncDelivery extends Delivery {
                 if (m == null) {
                     break;
                 } else {
-                    m = mHoldUntilAck ? wrapMsg(m, coord, coord.getNMsgsDelivered()) : m;
+                    m = wrapMsg(m, coord, coord.getNMsgsDelivered());
                     lastResult.resetDeliveryState();
                     deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                     msgsWereReceived = true;
@@ -670,7 +598,7 @@ public class SyncDelivery extends Delivery {
             if (coord.getNMsgsDelivered() > 0) {
                 // Msgs were delivered; signal end of batch
                 Message m = new EndOfBatchMessage();
-                m = mHoldUntilAck ? wrapMsg(m, coord, coord.getNMsgsDelivered()) : m;
+                m = wrapMsg(m, coord, coord.getNMsgsDelivered());
                 lastResult.resetDeliveryState();
                 deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -718,7 +646,7 @@ public class SyncDelivery extends Delivery {
                     break;
                 } else {
                     msgsWereDelivered = true;
-                    m = mHoldUntilAck ? wrapMsg(m, coord, coord.getNMsgsDelivered()) : m;
+                    m = wrapMsg(m, coord, coord.getNMsgsDelivered());
                     lastResult.reset();
                     deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                     coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -735,7 +663,7 @@ public class SyncDelivery extends Delivery {
             if (msgsWereDelivered) {
                 // Msgs were delivered; signal end of batch
                 Message m = new EndOfBatchMessage();
-                m = mHoldUntilAck ? wrapMsg(m, coord, coord.getNMsgsDelivered()) : m;
+                m = wrapMsg(m, coord, coord.getNMsgsDelivered());
                 lastResult.reset();
                 deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -765,7 +693,7 @@ public class SyncDelivery extends Delivery {
             
             if (m != null) {
                 // Optionally wrap for ack() call
-                m = mHoldUntilAck ? wrapMsg(m, coord, -1) : m;
+                m = wrapMsg(m, coord, -1);
                 
                 // Deliver
                 DeliveryResults result = new DeliveryResults(); 
@@ -808,7 +736,7 @@ public class SyncDelivery extends Delivery {
                 try {
                     // Get EndPoint
                     if (mEndpoint == null) {
-                        mEndpoint = createMessageEndpoint(mXA);
+                        mEndpoint = createMessageEndpoint(mXA, mSess);
                     }
                     if (mEndpoint == null) {
                         throw new Exception("No endpoint created; RA shutting down?");

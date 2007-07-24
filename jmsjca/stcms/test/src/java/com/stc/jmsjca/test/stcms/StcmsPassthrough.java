@@ -33,7 +33,7 @@ import java.util.Vector;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class StcmsPassthrough extends Passthrough {
     private Properties mServerProperties;
@@ -82,7 +82,8 @@ public class StcmsPassthrough extends Passthrough {
     public void removeDurableSubscriber(String clientID, String dest, String subname) throws Exception {
         SubscriberInfo sub = findDurableSubscriber(dest, subname);
         if (sub != null) {
-            getServer().deleteSubscriber(dest, subname, sub.getClientId());
+            drainTopic(dest, subname);
+//            getServer().deleteSubscriber(dest, subname, sub.getClientId());
         }
     }
 

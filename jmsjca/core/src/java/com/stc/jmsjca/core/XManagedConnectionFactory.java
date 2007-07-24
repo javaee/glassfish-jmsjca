@@ -51,7 +51,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -633,7 +633,11 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @param url String
      */
     public void setConnectionURL(String url) {
-        mConnectionURL = url;
+        if (url != null && url.trim().length() > 0) {
+            mConnectionURL = url;
+        } else {
+            mConnectionURL = null;
+        }
     }
 
     /**

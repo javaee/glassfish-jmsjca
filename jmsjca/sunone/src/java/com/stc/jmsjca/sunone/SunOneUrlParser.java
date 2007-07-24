@@ -34,7 +34,7 @@ import javax.jms.JMSException;
  *   options  := key=value[&key=value]*       
  *
  * @author misc
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SunOneUrlParser extends ConnectionUrl {
     private SunOneConnectionUrl[] mConnectionUrls;
@@ -183,5 +183,24 @@ public class SunOneUrlParser extends ConnectionUrl {
         }
         return buf.toString();
     }
+    
+    /**
+     * Added for HF 108687- to return url instead of Object hash..
+     * Returns the URL in full string form
+     * 
+     * @return String close match to original string passed in constructor
+     */
+    public String toString() {
+        SunOneConnectionUrl[] urls = getConnectionUrls();
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < urls.length; i++) {
+            if (i != 0) {
+                buf.append(",");
+            }
+            buf.append(urls[i].toString());
+        }
+        return buf.toString();
+    }
+    
     
 }

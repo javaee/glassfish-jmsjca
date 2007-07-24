@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public interface Options {
     /**
@@ -122,4 +122,38 @@ public interface Options {
         String POOL_TIMEOUT = "JMSJCA.pooltimeout";
     }
 
+    /**
+     * Options for subscriber name
+     */
+    public interface Subname {
+        /**
+         * names the subscriber name
+         */
+        String SUBSCRIBERNAME = "subscribername";
+
+        /**
+         * names the queue
+         */
+        String QUEUENAME = "queue";
+        
+        /**
+         * indicates what kind of clustering is required
+         */
+        String DISTRIBUTION_TYPE = "distribution";
+        
+        /**
+         * To recognize a specially formatted subscriber name
+         */
+        String PREFIX = "jmsjca://";
+        
+        /**
+         * MBean name
+         */
+        String MBEANNAME = "mbeanname";
+        
+        /**
+         * Batch size
+         */
+        String BATCHSIZE = "batchsize";
+    }
 }

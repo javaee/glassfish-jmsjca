@@ -17,19 +17,23 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.core.Delivery.ConnectionForMove;
+import com.stc.jmsjca.core.Delivery.DeliveryResults;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
-import javax.resource.ResourceException;
 import javax.resource.spi.endpoint.MessageEndpoint;
+import javax.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A Work item that can be executed by the WorkManager; it contains enough information to
@@ -39,7 +43,7 @@ import java.lang.reflect.Method;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -51,13 +55,16 @@ public class WorkContainer implements javax.resource.spi.work.Work,
     private MessageEndpoint mEndpoint;
     private CCDelivery mDelivery;
     private Object mStateLock = new Object();
-    private boolean mIsRunning;
+    private static final int STATE_IDLE = 0;
+    private static final int STATE_RUNNING = 1;
+    private static final int STATE_DESTROYED = 2;
+    private static final int STATE_DESTROYED_SUB_ALREADY_DESTROYED = 3;
+    private int mState;
     private ConnectionForMove mMessageMoveConnection;
-    private boolean mEnlistInRun;
-    private XAResource mXA;
     private Delivery.MDB mMDB;
-    private boolean mHasBadEndpoint; 
     private LocalizedString mContextName;
+    private List mMsgs;
+    private DeliveryResults mResult = new DeliveryResults();
 
     private static final Localizer LOCALE = Localizer.get();
 
@@ -69,19 +76,15 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * @param method Method
      * @param session Session
      * @param conn connection used to create
-     * @param enlistInRun set to true to enlist the resource in the run() method rather 
-     *   than the onMessage method (required for JMQ)
-     * @param xa XAResource
+     * @param mdb mdb
      */
     public WorkContainer(CCDelivery delivery, MessageEndpoint endpoint, Method method,
-        javax.jms.Session session, Connection conn, boolean enlistInRun, XAResource xa) {
+        javax.jms.Session session, Connection conn, Delivery.MDB mdb) {
         mDelivery = delivery;
         mEndpoint = endpoint;
         mSession = session;
         mMessageMoveConnection = this.mDelivery.createConnectionForMove();        
-        mEnlistInRun = enlistInRun;
-        mXA = xa;
-        mMDB = mDelivery.new MDB(mXA);
+        mMDB = mdb;
         mContextName = LocalizedString.valueOf(
             mDelivery.getActivation().getActivationSpec().getContextName());        
     }
@@ -90,34 +93,20 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * Tries to destroy the work container; this will not succeed if the work container is
      * currently running.
      *
-     * @return boolean
+     * @return true if destroyed or already destroyed
      */
     public boolean destroy() {
-        boolean isRunning;
-        synchronized (mStateLock) {
-            isRunning = mIsRunning;
-        }
-
-        if (isRunning) {
+        int state = setState(STATE_DESTROYED);
+        if (state == STATE_DESTROYED_SUB_ALREADY_DESTROYED) {
+            return true;
+        } else if (state != STATE_DESTROYED) {
             return false;
         } else {
-            doDestroy();
+            mMessageMoveConnection.destroy();
+            mDelivery.release(mEndpoint);
+            mEndpoint = null;
             return true;
         }
-    }
-    
-    /**
-     * Destroys unconditionally
-     */
-    public void doDestroy() {
-        if (sLog.isDebugEnabled()) {
-            sLog.debug("Releasing endpoint");
-        }
-        
-        mMessageMoveConnection.destroy();
-
-        mDelivery.release(mEndpoint);
-        mEndpoint = null;
     }
     
     /**
@@ -132,41 +121,54 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      */
     void setEndpoint(MessageEndpoint mep) {
         mEndpoint = mep;
-        mHasBadEndpoint = false;
+        mResult.setShouldDiscardEndpoint(false);
     }
     
     boolean hasBadEndpoint() {
-        return mHasBadEndpoint;
+        return mResult.getShouldDiscardEndpoint();
     }
     
     /**
      * @return XAResource (may be null)
      */
     XAResource getXAResource() {
-        return mXA;
-    }
-    
-    private void beforeRun() {
-        if (mEnlistInRun) {
-            try {
-                if (mDelivery.isXA()) {
-                    mEndpoint.beforeDelivery(mDelivery.mMethod);
-                }
-            } catch (Exception e) {
-                throw new Delivery.BeforeDeliveryException(e);
-            }
-        }
+        return mMDB.getXAResource();
     }
 
-    private void afterRun() {
-        if (mEnlistInRun) {
-            try {
-                if (mDelivery.isXA()) {
-                    mEndpoint.afterDelivery();
+    private int setState(int newState) {
+        synchronized (mStateLock) {
+            switch (mState) {
+            case STATE_DESTROYED:
+                if (newState == STATE_RUNNING) {
+                    // Don't do anything
+                    return mState;
+                } else if (newState == STATE_DESTROYED) {
+                    return STATE_DESTROYED_SUB_ALREADY_DESTROYED;
+                } else {
+                    break;
                 }
-            } catch (ResourceException e) {
-                throw new Delivery.AfterDeliveryException(e);
+            case STATE_RUNNING:
+                if (newState == STATE_DESTROYED) {
+                    return mState;
+                } else if (newState == STATE_IDLE) {
+                    mState = STATE_IDLE;
+                    return mState;
+                } else {
+                    break;
+                }
+            case STATE_IDLE:
+                if (newState == STATE_DESTROYED) {
+                    mState = STATE_DESTROYED;
+                    return mState;
+                } else if (newState == STATE_RUNNING) {
+                    mState = STATE_RUNNING;
+                    return mState;
+                } else {
+                    break;
+                }
             }
+
+            throw new RuntimeException("Invalid state transition: " + mState + " to " + newState + " on " + this);
         }
     }
     
@@ -177,37 +179,40 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         if (mContextName != null) {
             sContextEnter.info(mContextName);
         }
-        try {
-            synchronized (mStateLock) {
-                mIsRunning = true;
-            }
 
+        int state = STATE_IDLE;
+        boolean deliveryComplete = true;
+
+        try {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Running WorkContainer");
             }
-
-
-            if (mEndpoint == null) {
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug(
-                        "Endpoint is null; RA probably shutting down. Message is skipped");
-                }
+            
+            state = setState(STATE_RUNNING);
+            if (state == STATE_DESTROYED) {
+                sLog.debug("Shutting down... skipped");
             } else {
-                beforeRun();
+                mDelivery.beforeDelivery(mResult, mEndpoint);
+                mResult.reset();
+                mMsgs = new ArrayList();
                 mSession.run();
-                afterRun();
+                deliveryComplete = deliver();
+                mMsgs = null;
+                if (deliveryComplete) {
+                    mDelivery.afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB);
+                    mDelivery.afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint, mMDB);
+                }
             }
         } catch (Error e) {
             sLog.warn(LOCALE.x("E063: Unexpected error encountered while executing a JMS CC-session: {0}", e), e);
         } catch (RuntimeException e) {
             sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}", e), e);
         } finally {
-            mDelivery.workDone(this);
-
-            synchronized (mStateLock) {
-                mIsRunning = false;
+sLog.infoNoloc("run(): deliverycomplete=" + deliveryComplete);            
+            if (deliveryComplete) {
+                setState(STATE_IDLE);
+                mDelivery.workDone(this);
             }
-
             if (mContextName != null) {
                 sContextExit.info(mContextName);
             }
@@ -218,12 +223,6 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * @see javax.resource.spi.work.Work#release()
      */
     public void release() {
-        if (sLog.isDebugEnabled()) {
-            sLog.debug("WorkContainer.release(): attempting to destroy WorkContainer, "
-                + "scalled by Application Server");
-        }
-
-        destroy();
     }
 
     /**
@@ -252,37 +251,122 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
      */
     public void onMessage(Message message) {
+        mMsgs.add(message);
+    }
+    
+    private boolean deliver() {
         if (sLog.isDebugEnabled()) {
-            sLog.debug("WorkContainer.onMessage() -- start");
+            sLog.debug("WorkContainer.deliver() -- start");
         }
-
-        RuntimeException e = mDelivery.deliver(mMessageMoveConnection, mEndpoint, message, mEnlistInRun, mMDB);
-
-        if (sLog.isDebugEnabled()) {
-            sLog.debug("WorkContainer.onMessage() -- end");
+        boolean deliveryComplete = true;
+        SC sc = new SC();
+        
+        // Deliver messages
+        for (int i = 0, n = mMsgs.size(); i < n; i++) {
+            Message message = (Message) mMsgs.get(i);
+            message = wrapMsg(message, sc, mResult.getNOnMessageWasCalled(), mResult);
+            mResult.resetDeliveryState();
+            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, message);
+            if (mResult.getOnMessageFailed()) {
+                break;
+            }
         }
         
-        if (e != null) {
-            mHasBadEndpoint = true;
+        // Deliver end of batch message
+        if (mDelivery.mBatchSize > 1 &&  mResult.getNOnMessageWasCalled() > 0) {
+            // Msgs were delivered; signal end of batch
+            Message m = new EndOfBatchMessage();
+            m = wrapMsg(m, sc, mResult.getNOnMessageWasCalled(), mResult);
+            mResult.resetDeliveryState();
+            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m);
+        }
+        
+        // HUA
+        if (mDelivery.mHoldUntilAck && mResult.getNOnMessageWasCalled() > 0) {
+            sc.arm(mResult.getNOnMessageWasCalled());
+//            deliveryComplete = false;
+        }
+        
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("WorkContainer.deliver() -- end");
         }
 
-        if (mDelivery.isXA()) {
-            if (e != null && e instanceof Delivery.BeforeDeliveryException) {
-                throw e;
+        return deliveryComplete;
+    }
+    
+    /**
+     * @param msgToWrap msg to wrap
+     * @param ack ack handler
+     * @param iBatch identifies the msg with an index into the batch
+     * @param result  
+     * @return original or wrapped msg
+     */
+    private Message wrapMsg(Message msgToWrap, AckHandler ack, int iBatch, DeliveryResults result) {
+        try {
+            return mDelivery.wrapMsg(msgToWrap, ack, iBatch);
+        } catch (Exception e) {
+            result.setRollbackOnly(true);
+            result.setException(e);
+            mDelivery.mActivation.distress(e);
+            return msgToWrap;
+        }
+    }
+    
+    private class SC extends AckHandler {
+        private int mAcksExpected;
+        private int mAcksReceived;
+        private boolean mIsRollbackOnly;
+        private Transaction mTx;
+        private Semaphore mSemaphore = new Semaphore(0);
+
+        public synchronized void ack(boolean isRollbackOnly, Message m) throws JMSException {
+            if (isRollbackOnly) {
+                mIsRollbackOnly = true;
             }
-        } else {
-            if (e == null) {
-                try {
-                    mSession.commit();
-                } catch (JMSException ex) {
-                    sLog.error(LOCALE.x("E065: The message could not be committed: {0}", ex), ex);
+
+            mAcksReceived++;
+
+            if (mAcksReceived == mAcksExpected) {
+                mSemaphore.release();
+            }
+        }
+        
+        public void arm(int acksExpected) {
+            if (mDelivery.isXA()) {
+                mTx = mDelivery.getTransaction(true);
+            }
+
+            synchronized (this) {
+                mAcksExpected = acksExpected;
+                if (mAcksReceived == mAcksExpected) {
+                    mSemaphore.release();
                 }
-            } else {
-                try {
-                    mSession.rollback();
-                } catch (JMSException ex) {
-                    sLog.error(LOCALE.x("E066: The message could not be rolled back: " + ex), ex);
+            }
+            
+            try {
+                mSemaphore.acquire();
+            } catch (InterruptedException e) {
+                sLog.error(LOCALE.x("E099: HUA was interrupted"));
+                Thread.interrupted();
+            }
+            
+            if (mIsRollbackOnly) {
+                mResult.setRollbackOnly(true);
+            }
+
+            // If the transaction was moved to a different thread, take it back
+            try {
+                if (!mResult.getShouldNotCallAfterDelivery() && mDelivery.isXA()) {
+                    if (mDelivery.mHoldUntilAck && mDelivery.getTransaction(true) == null) {
+                        mDelivery.getTxMgr().getTransactionManager().resume(mTx);
+                    }
+
+                    if (mDelivery.mHoldUntilAck && mIsRollbackOnly) {
+                        mDelivery.getTransaction(true).setRollbackOnly();
+                    }
                 }
+            } catch (Exception e) {
+                sLog.error(LOCALE.x("E100: Could not restore transaction: {0}", e), e);
             }
         }
     }

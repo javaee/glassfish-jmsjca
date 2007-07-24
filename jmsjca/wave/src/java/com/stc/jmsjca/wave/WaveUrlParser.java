@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
  *   options := key=value[&key=value]*       
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WaveUrlParser extends ConnectionUrl {
     private UrlParser[] mParsers;
@@ -82,6 +82,21 @@ public class WaveUrlParser extends ConnectionUrl {
                 buf.append(",");
             }
             buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort());
+        }
+        return buf.toString();
+    }
+    
+    /**
+     * @see com.stc.jmsjca.util.ConnectionUrl#toString()
+     */
+    public String toString() {
+        UrlParser[] urls = getUrlParsers();
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < urls.length; i++) {
+            if (i != 0) {
+                buf.append(",");
+            }
+            buf.append(urls[i].toString());
         }
         return buf.toString();
     }

@@ -72,7 +72,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -129,10 +129,30 @@ public abstract class RAJMSObjectFactory {
      * @param endpointFactory MessageEndpointFactory
      * @param spec RAJMSActivationSpec
      * @return Activation
+     * @throws Exception on invalid config
      */
-    public Activation createActivation(RAJMSResourceAdapter ra,
-        MessageEndpointFactory endpointFactory, RAJMSActivationSpec spec) {
-        return new Activation(ra, endpointFactory, spec);
+    public ActivationBase createActivation(RAJMSResourceAdapter ra,
+        MessageEndpointFactory endpointFactory, RAJMSActivationSpec spec) throws Exception {
+        
+        ActivationBase ret = null;
+        
+        // Check for special distributed durable subscribers
+        if (RAJMSActivationSpec.TOPIC.equals(spec.getDestinationType())) {
+            String subname = spec.getSubscriptionName();
+            if (subname != null && subname.startsWith(Options.Subname.PREFIX)) {
+                UrlParser u = new UrlParser(subname);
+                Properties p = u.getQueryProperties();
+                if ("1".equals(p.getProperty(Options.Subname.DISTRIBUTION_TYPE, "0"))) {
+                    ret = new TopicToQueueActivation(ra, endpointFactory, spec);
+                }
+            }
+        }
+        
+        if (ret == null) {
+            ret = new Activation(ra, endpointFactory, spec);            
+        }
+        
+        return ret;
     }
 
     /**
@@ -397,9 +417,9 @@ public abstract class RAJMSObjectFactory {
                 }
             } else {
                 if (isTopic) {
-                    ret = ((TopicSession) sess).createTopic(destName);
+                    ret = sess.createTopic(destName);
                 } else {
-                    ret = ((QueueSession) sess).createQueue(destName);
+                    ret = sess.createQueue(destName);
                 }
             }
         }
@@ -441,8 +461,7 @@ public abstract class RAJMSObjectFactory {
         } else {
             if (isTopic) {
                 if (RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
-                    return ((TopicSession) sess).
-                        createDurableSubscriber((Topic) dest,
+                    return sess.createDurableSubscriber((Topic) dest,
                         spec.getSubscriptionName(),
                         spec.getMessageSelector(), false);
                 } else {
@@ -481,7 +500,13 @@ public abstract class RAJMSObjectFactory {
             if (isTopic) {
                 return ((TopicSession) sess).createPublisher((Topic) dest);
             } else {
-                return ((QueueSession) sess).createSender((Queue) dest);
+                // Patch: domain of session is not properly propagated for TopicToQueue
+                // Delivery hence the instanceof check
+                if (sess instanceof QueueSession) {
+                    return ((QueueSession) sess).createSender((Queue) dest);
+                } else {
+                    return sess.createProducer(dest);
+                }
             }
         }
     }
@@ -499,36 +524,37 @@ public abstract class RAJMSObjectFactory {
      * @param subscriptionName String
      * @param selector String
      * @param pool ServerSessionPool
+     * @param batchsize batchsize propagated to connection consumer
      * @return ConnectionConsumer
      * @throws JMSException failure
      */
     public ConnectionConsumer createConnectionConsumer(Connection conn, boolean isXA,
         boolean isTopic, boolean isDurable, RAJMSActivationSpec activationSpec,
         RAJMSResourceAdapter ra, Destination dest, String subscriptionName,
-        String selector, ServerSessionPool pool) throws JMSException {
+        String selector, ServerSessionPool pool, int batchsize) throws JMSException {
         if (isXA) {
             if (isTopic) {
                 if (isDurable) {
                     return ((XATopicConnection) conn).createDurableConnectionConsumer((Topic)
-                            dest, subscriptionName, selector, pool, 1);
+                            dest, subscriptionName, selector, pool, batchsize);
                 } else {
                     return ((XATopicConnection) conn).createConnectionConsumer((Topic)
-                            dest, selector, pool, 1);
+                            dest, selector, pool, batchsize);
                 }
             } else {
-                return ((XAQueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, 1);
+                return ((XAQueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
             }
         } else {
             if (isTopic) {
                 if (isDurable) {
                     return ((TopicConnection) conn).createDurableConnectionConsumer((Topic)
-                            dest, subscriptionName, selector, pool, 1);                    
+                            dest, subscriptionName, selector, pool, batchsize);                    
                 } else {
                     return ((TopicConnection) conn).createConnectionConsumer((Topic)
-                            dest, selector, pool, 1);                    
+                            dest, selector, pool, batchsize);                    
                 }
             } else {
-                return ((QueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, 1);
+                return ((QueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
             }
         }
     }
@@ -888,14 +914,4 @@ public abstract class RAJMSObjectFactory {
             sender.send(m, deliveryMode, priority, 0);
         }
     }
-
-    /**
-     * @return true if the enlistment of a tranaction in CC can be done in the onMessage
-     *   method; if false, the enlistment will happen in the run() method of the 
-     *   serversession
-     */
-    public boolean canCCEnlistInOnMessage() {
-        return true;
-    }
-
 }

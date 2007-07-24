@@ -19,16 +19,17 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.Latch;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
-import javax.jms.ConnectionConsumer;
 import javax.jms.JMSException;
 import javax.jms.QueueSession;
 import javax.jms.ServerSession;
 import javax.jms.Session;
 import javax.jms.TopicSession;
 import javax.resource.spi.endpoint.MessageEndpoint;
+import javax.resource.spi.work.Work;
 import javax.resource.spi.work.WorkException;
 import javax.resource.spi.work.WorkManager;
 import javax.transaction.xa.XAResource;
@@ -55,7 +56,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -67,14 +68,10 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     private Object mStateLock = new Object();
     private int mNMaxWorkContainers;
     private Semaphore mEmptyWorkContainerSemaphore = new Semaphore(0);
+    private Latch mServerSessionBlock = new Latch();
 
     private javax.jms.Connection mConnection;
-    private ConnectionConsumer mCC;
 
-    private boolean mEnlistInRun;
-    private int mNServerSessionsGivenOut;
-    private Object mCountLock = new Object();
-    
     private static final Localizer LOCALE = Localizer.get();
 
     /**
@@ -88,7 +85,6 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
         mNMaxWorkContainers = 
             a.getActivationSpec().getEndpointPoolMaxSize().intValue();
         mWorkManager = a.getRA().getBootstrapCtx().getWorkManager();
-        mEnlistInRun = !a.getObjectFactory().canCCEnlistInOnMessage();
     }
 
     /**
@@ -134,7 +130,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             mActivation.getRA(),
             mActivation.getActivationSpec().getDestination());
         sess.close();
-        mCC = o.createConnectionConsumer(
+        o.createConnectionConsumer(
             mConnection,
             mActivation.isXA(),
             mActivation.isTopic(),
@@ -144,7 +140,8 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             dest,
             mActivation.getActivationSpec().getSubscriptionName(),
             mActivation.getActivationSpec().getMessageSelector(),
-            this);
+            this,
+            mBatchSize < 1 ? 1 : mBatchSize);
 
         mConnection.setExceptionListener(this);
         mConnection.start();
@@ -159,34 +156,29 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      * @throws JMSException propagated, closed
      */
     public ServerSession getServerSession() throws JMSException {
+        if (mActivation.isStopping()) {
+            try {
+                mServerSessionBlock.acquire();
+            } catch (InterruptedException e) {
+                throw Exc.jmsExc(LOCALE.x("E039: Shutdown procedure interruped: {0}", e), e);
+            }
+            
+            throw Exc.jmsExc(LOCALE.x("E041: Shutting down. This exception may appear as " 
+                + "part of a normal shutdown operation and may not imply any error condition."));
+        }
+        
+        
         WorkContainer ret = null;
         try {
             ret = getEmptyWorkContainer();
         } catch (Exception ex) {
-            LocalizedString msg = LOCALE.x("E001:Unexpected failure to obtain an empty work container to "
+            LocalizedString msg = LOCALE.x("E001: Unexpected failure to obtain an empty work container to "
                 + "process JMS messages. The exception was: {0}", ex);
             JMSException jex = Exc.jmsExc(msg, ex);
             onException(jex);
             throw new RuntimeException(msg.toString(), ex);
         }
 
-        // For JMQ-like shutdown, we should not return a serversession if the 
-        // connection consumer was closed; also need to keep track of the number
-        // of server sessions given out
-        if (mEnlistInRun) {
-            boolean isclosed;
-            synchronized (mCountLock) {
-                isclosed = mCC == null;
-                if (!isclosed) {
-                    mNServerSessionsGivenOut++;
-                }
-            }
-            if (isclosed) {
-                addEmptyWorkContainer(ret);
-                throw new JMSException("The connection consumer was closed");
-            }
-        }
-        
         return ret;
     }
 
@@ -195,16 +187,17 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      * container when the JMS provider calls start() on the ServerSession.
      *
      * @param work WorkContainer
+     * @return true if the work was scheduled
      */
-    public void scheduleWork(WorkContainer work) {
+    public boolean scheduleWork(Work work) {
         try {
             mWorkManager.scheduleWork(work);
+            return true;
         } catch (WorkException ex) {
-            String msg = "Unexpected failure scheduling work to "
-                + "process JMS messages. The exception was: " + ex;
-            JMSException jex = new JMSException(msg);
-            jex.initCause(ex);
+            JMSException jex = Exc.jmsExc(LOCALE.x("E072: Unexpected failure scheduling work to "
+                + "process JMS messages. The exception was: {0}", ex), ex);
             onException(jex);
+            return false;
         }
     }
 
@@ -266,14 +259,14 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 XAResource xa = mActivation.getObjectFactory().getXAResource(
                     mActivation.isXA(), s);
 
-                MessageEndpoint m = createMessageEndpoint(xa);
+                MessageEndpoint m = createMessageEndpoint(xa, s);
 
                 if (m == null) {
                     // Stopping
                     safeClose(s);
                 } else {
                     WorkContainer w = new WorkContainer(this, m,
-                        mActivation.getOnMessageMethod(), s, mConnection, mEnlistInRun, xa);
+                        mActivation.getOnMessageMethod(), s, mConnection, new MDB(xa));
                     s.setMessageListener(mActivation.getObjectFactory().
                         getMessagePreprocessor(w, mActivation.isXA()));
                     addEmptyWorkContainer(w);
@@ -324,7 +317,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 // Check if endpoint needs to be refreshed
                 if (ret.hasBadEndpoint()) {
                     release(ret.getEndpoint());
-                    ret.setEndpoint(createMessageEndpoint(ret.getXAResource()));
+                    ret.setEndpoint(createMessageEndpoint(ret.getXAResource(), ret.getSession()));
                 }
 
                 if (sLog.isDebugEnabled()) {
@@ -344,9 +337,6 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      * @param w WorkContainer
      */
     public void workDone(WorkContainer w) {
-        synchronized (mCountLock) {
-            mNServerSessionsGivenOut--;
-        }
         addEmptyWorkContainer(w);
     }
     
@@ -394,43 +384,6 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
         }
     }
 
-    private void waitUntilAllServerSessionsAreReturned() {
-        long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
-        for (;;) {
-            int nOutstandingServerSessions;
-            synchronized (mCountLock) {
-                nOutstandingServerSessions = mNServerSessionsGivenOut;
-            }
-            
-            // Wait if not all were destroyed
-            if (nOutstandingServerSessions == 0) {
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug("All server sessions were returned");
-                }
-                break;
-            } else {
-                if (System.currentTimeMillis() > tlog) {
-                    sLog.info(LOCALE.x("E022: Deactivating connector; waiting for " +
-                            "server sessions to be returned; there are {0} server " +
-                            "sessions that are still in use; activation={1}", 
-                            Integer.toString(nOutstandingServerSessions), mActivation));
-                    tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
-                }
-                
-                // Wait a bit
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug(nOutstandingServerSessions
-                        + " serversession(s) were (was) not destroyed... waiting");
-                }
-                try {
-                    Thread.sleep(DESTROY_RETRY_INTERVAL_MS);
-                } catch (Exception ex) {
-                    // ignore
-                }
-            }
-        }
-    }
-    
     private void closeConnection() {
         try {
             if (mConnection != null) {
@@ -442,60 +395,18 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
         mConnection = null;
     }
     
-    private void closeCC() {
-        try {
-            if (mCC != null) {
-                mCC.close();
-            }
-        } catch (Exception ex) {
-            sLog.warn(LOCALE.x("E024: Unexpected exception closing JMS connection consumer: {0}", ex), ex);
-        }
-        synchronized (mCountLock) {
-            mCC = null;
-        }
-    }
-    
-//    private void deactivateJMQ() {
-//        
-//    }
-//    
-//    private void deactivateSTCMS() {
-//        // Stop connection
-//        try {
-//            if (mConnection != null) {
-//                mConnection.stop();
-//            }
-//        } catch (Exception ex) {
-//            sLog.warn("Unexpected exception stopping JMS connection consumer: " + ex, ex);
-//        }
-//        
-//        // getServerSession() will no longer be called
-//        // serverSession.start() will no longer be called
-//        // run() may still be called
-//        
-//        // Wait until all containers have been returned
-//        waitUntilAllWorkContainersAreDestroyed();
-//        
-//        closeCC();
-//
-//        // Close connection; this will call stop(); all containers will be "disabled"
-//        closeConnection();
-//    }
-    
     private void deactivateGeneral() {
-        // Close CC (used to be necessary for STCMS; still required for JMQ)
-        closeCC();
+        // Block the geServerSession() method
+        // This should already have been done by the caller
         
-        // For JMQ we need to ensure that there are no outstanding server sessions anymore
-        if (mEnlistInRun) {
-            waitUntilAllServerSessionsAreReturned();
-        }
-
-        // Close connection; this will call stop(); all containers will be "disabled"
-        closeConnection();
-
-        // Wait until all containers have been returned
+        // Wait until all work has finished
         waitUntilAllWorkContainersAreDestroyed();
+        
+        // Unblock the getServerSession() method and have it throw exceptions
+        mServerSessionBlock.release();
+
+        // ... and immediately close connection; this will call stop(); all containers will be "disabled"
+        closeConnection();
     }
 
     /**

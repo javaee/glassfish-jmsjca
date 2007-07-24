@@ -66,7 +66,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -2129,12 +2129,10 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 Session.AUTO_ACKNOWLEDGE);
             
             if (message.getObjectProperty(EndOfBatchMessage.KEY_ENDOFBATCH) != null) {
-
                 Queue dest = s.createQueue("Queue3");
                 QueueSender prod = s.createSender(dest);
                 prod.send(s.createTextMessage("endofbatch"));
             } else {
-
                 Queue dest = s.createQueue("Queue2");
                 QueueSender prod = s.createSender(dest);
                 prod.send(message);
@@ -2143,6 +2141,9 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             if (!shouldThrow()) {
                 if (shouldThrow()) {
                     message.setBooleanProperty(WMessageIn.SETROLLBACKONLY, true);
+                    Queue dest = s.createQueue("Queue4");
+                    QueueSender prod = s.createSender(dest);
+                    prod.send(s.createTextMessage("should have been rolled back"));
                 }
                 message.acknowledge();
             } else {

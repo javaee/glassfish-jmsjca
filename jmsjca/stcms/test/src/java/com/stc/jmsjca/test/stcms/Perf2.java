@@ -54,7 +54,7 @@ import junit.framework.TestCase;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Perf2 extends TestCase {
     final int N = 100000;
@@ -292,7 +292,7 @@ public class Perf2 extends TestCase {
 
         ra.endpointActivation(mepf, spec);
 
-        Activation a = ra.findActivation(mepf, spec, false);
+        Activation a = (Activation) ra.findActivation(mepf, spec, false);
         DeliveryStats stats = a.getStats();
         for (;;) {
             Thread.sleep(1000);

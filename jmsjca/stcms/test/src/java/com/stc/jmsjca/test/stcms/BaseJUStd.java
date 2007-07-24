@@ -41,6 +41,7 @@ import com.stc.jmsjca.stcms.RASTCMSResourceAdapter;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Str;
+import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -73,6 +74,7 @@ import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSubscriber;
+import javax.jms.XAQueueConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.resource.ResourceException;
@@ -114,6 +116,13 @@ import java.util.Map.Entry;
  * Unit tests not using the J2EE container, specific for STCMS.
  * This inherits from XTestBase so that it will include all generic tests.
  * See Base
+ * 
+ * Eclipse usage: set working directory to ${workspace_loc:jmsjca/build} and arguments:
+ * 
+-Dtest.server.properties=../../R1/logicalhost/testsettings.properties
+-Dtest.ear.path=rastcms/test/ratest-test.ear 
+-Dtest.container.id=rts 
+-DXXXXtest.container.properties=s:\sjsas.properties
  *
  * @author Frank Kieviet
  * @version 1.0
@@ -187,7 +196,8 @@ public class BaseJUStd extends XTestBase {
     }
 
     /**
-     * Gets connection URL to the default test server.
+     * Gets connection URL to the default test server; contains host, but not port.
+     * Port should be obtained from a system property.
      *
      * @return URL
      */
@@ -199,12 +209,20 @@ public class BaseJUStd extends XTestBase {
         return "stcms://" + mServerProperties.getProperty("host");
     }
 
-    protected String xxgetConnectionUrl() {
-        return xxcreateConnectionUrl(mServerProperties.getProperty("host"), Integer
+    /**
+     * @return host and port in URL form
+     */
+    protected String getFullConnectionUrl() {
+        return assembleConnectionUrl(mServerProperties.getProperty("host"), Integer
             .parseInt(mServerProperties.getProperty("stcms.instance.port")));
     }
 
-    public String xxcreateConnectionUrl(String server, int port) {
+    /**
+     * @param server server
+     * @param port port
+     * @return url with server and port
+     */
+    public String assembleConnectionUrl(String server, int port) {
         return "stcms://" + server + ":" + port;
     }
     
@@ -248,6 +266,16 @@ public class BaseJUStd extends XTestBase {
             ctx.rebind(appjndiTopic, f);
         }
     }
+
+    /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
+     * @throws JMSException propagatd 
+     */
+    public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
+        UrlParser p = new UrlParser(getFullConnectionUrl());
+        return new com.stc.jms.client.STCXAQueueConnectionFactory(p.getHost(), p.getPort());
+    }
+    
 
     private static long sTime = System.currentTimeMillis();
     private static long sUniquifier;
@@ -2048,6 +2076,7 @@ public class BaseJUStd extends XTestBase {
                     msg.acknowledge();
                 } catch (Exception e) {
                     e.printStackTrace();
+                    setAsyncError(e);
                 }
             }
         };
@@ -2062,6 +2091,7 @@ public class BaseJUStd extends XTestBase {
             p.passFromQ1ToQ2();
             ra.endpointDeactivation(c.getMessageEndpointFactory(), spec);
             p.get(p.getQueue1Name()).assertEmpty();
+            assertNoAsyncErrors();
         } finally {
             Passthrough.safeClose(p);
         }
@@ -2474,7 +2504,7 @@ public class BaseJUStd extends XTestBase {
             return tx;
         }
     }
-    
+
 //    public void testUnified1() throws Throwable {
 //        // Configure
 //        Properties options = new Properties();

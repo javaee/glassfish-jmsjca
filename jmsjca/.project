@@ -22,14 +22,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>junit</name>
+			<name>out</name>
 			<type>2</type>
-			<locationURI>STC_ROOT/build-tools/junit</locationURI>
-		</link>
-		<link>
-			<name>build-lib</name>
-			<type>2</type>
-			<locationURI>STC_ROOT/BUILD/Lib</locationURI>
+			<locationURI>STC_ROOT/BUILD/Modules/eclipse-out/jmsjca</locationURI>
 		</link>
 		<link>
 			<name>build</name>
@@ -37,19 +32,24 @@
 			<locationURI>STC_ROOT/BUILD/Modules/jmsjca</locationURI>
 		</link>
 		<link>
+			<name>build-api</name>
+			<type>2</type>
+			<locationURI>STC_ROOT/BUILD/API</locationURI>
+		</link>
+		<link>
 			<name>build-ant</name>
 			<type>2</type>
 			<locationURI>STC_ROOT/build-tools/apache-ant-1.6.2</locationURI>
 		</link>
 		<link>
-			<name>out</name>
+			<name>build-lib</name>
 			<type>2</type>
-			<locationURI>STC_ROOT/BUILD/Modules/eclipse-out/jmsjca</locationURI>
+			<locationURI>STC_ROOT/BUILD/Lib</locationURI>
 		</link>
 		<link>
-			<name>build-api</name>
+			<name>junit</name>
 			<type>2</type>
-			<locationURI>STC_ROOT/BUILD/API</locationURI>
+			<locationURI>STC_ROOT/build-tools/junit</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

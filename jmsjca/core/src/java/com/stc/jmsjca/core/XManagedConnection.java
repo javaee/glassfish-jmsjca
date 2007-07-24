@@ -56,7 +56,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -110,7 +110,7 @@ public class XManagedConnection implements ManagedConnection {
             mJSession = new JSession(xa, descr.getTransacted(), descr.getAcknowledgeMode(),
                 descr.getSessionClass(), this);
         } catch (JMSException ex) {
-            throw Exc.rsrcExc(LOCALE.x("E084: Failed to create session: {0}", ex));
+            throw Exc.rsrcExc(LOCALE.x("E084: Failed to create session: {0}", ex), ex);
         }
 
         // Get XAResource

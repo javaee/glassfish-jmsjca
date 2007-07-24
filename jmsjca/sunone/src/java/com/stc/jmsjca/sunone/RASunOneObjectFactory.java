@@ -40,7 +40,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -66,13 +66,6 @@ java.io.Serializable {
 //        }
         return newMode;
         }
-
-    /**
-     * @see com.stc.jmsjca.core.RAJMSObjectFactory#canCCEnlistInOnMessage()
-     */
-    public boolean canCCEnlistInOnMessage() {
-        return false;
-    }
 
     /**
      * Creates a provider specific UrlParser

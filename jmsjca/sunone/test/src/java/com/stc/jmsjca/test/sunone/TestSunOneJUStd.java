@@ -16,11 +16,14 @@
 
 package com.stc.jmsjca.test.sunone;
 
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.sunone.RASunOneObjectFactory;
 import com.stc.jmsjca.sunone.RASunOneResourceAdapter;
+import com.stc.jmsjca.sunone.SunOneConnectionUrl;
 import com.stc.jmsjca.sunone.SunOneUrlParser;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Semaphore;
@@ -56,6 +59,7 @@ import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSubscriber;
 import javax.jms.XAQueueConnection;
+import javax.jms.XAQueueConnectionFactory;
 import javax.jms.XAQueueSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -79,6 +83,12 @@ import java.util.logging.Logger;
  *
  * For Eclipese, if the above properties are used, the current directory needs to set 
  * to ${workspace_loc:e-jmsjca/build}
+-Dtest.server.properties=s:/jmq.properties
+-Dtest.container.properties=../../R1/logicalhost/testsettings.properties
+-Dtest.ear.path=rasunone/test/ratest-test.ear 
+-Dtest.container.id=rts 
+-Dsunone.url=TCP://localhost:7676
+ * 
  *
  * @author 
  * @version 1.0
@@ -189,6 +199,13 @@ public class TestSunOneJUStd extends XTestBase {
             ConnectionFactory f = (ConnectionFactory) x.createConnectionFactory();
             ctx.rebind(appjndiUnified, f);
         }
+    }
+
+    public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
+        SunOneUrlParser urlParser = new SunOneUrlParser(getConnectionUrl());
+        com.sun.messaging.XAQueueConnectionFactory fact = new com.sun.messaging.XAQueueConnectionFactory();
+        fact.setProperty("imqAddressList", urlParser.getSunOneUrlSet());
+        return fact;
     }
 
     private static long sTime = System.currentTimeMillis();
@@ -1159,14 +1176,13 @@ public class TestSunOneJUStd extends XTestBase {
     /**
      * Implements the stop procedure for XA and connection consumers as proposed by
      * George: close the connection consumer, wait until all server sessions have been
-     * returned, and close the connection.
+     * returned, and close the connection. Calls to getServerSession() during the 
+     * shutdown procedure should throw an execption. 
      * 
      * This test tests message loss when going through the shut down procedure while
      * processing messages. Messages are all rolled back five times, and then a wait
-     * is invoked.
-     * 
-     * @param testStop
-     * @throws Throwable
+     * is invoked. In the end there should be as many messages in the queue as was
+     * sent to this queue.
      */
     public int doTestXACCStopCloseRolback() throws Throwable {
         final int POOLSIZE = 32;
@@ -1259,6 +1275,7 @@ public class TestSunOneJUStd extends XTestBase {
                                 xs = mdbconn.createXAQueueSession();
                                 xs.getQueueSession().setMessageListener(new MessageListener() {
                                     public void onMessage(Message msg) {
+                                        // Delist (simulates going from MDB to SLSB)
                                         try {
                                             xs.getXAResource().end(xid, XAResource.TMSUCCESS);
                                         } catch (XAException e1) {
@@ -1295,6 +1312,7 @@ public class TestSunOneJUStd extends XTestBase {
                                             }
                                         }
 
+                                        // Re-enlist (simulates returning from SLSB to MDB)
                                         try {
                                             xs.getXAResource().start(xid, XAResource.TMJOIN);
                                         } catch (XAException e) {
@@ -1423,7 +1441,7 @@ public class TestSunOneJUStd extends XTestBase {
             QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
             QueueReceiver r = session.createReceiver(session.createQueue("Queue1"));
             for (;;) {
-                Message m = r.receive(250);
+                Message m = r.receive(1000);
                 if (m == null) {
                     break;
                 }
@@ -1442,5 +1460,29 @@ public class TestSunOneJUStd extends XTestBase {
     
     public void testXACCStopCloseRolback() throws Throwable {
         doTestXACCStopCloseRolback();
+    }
+    
+    public void testURLOverride() throws Throwable {
+        String url = "mq://server1:1888/?imqaaa=33&imqaaa=bbb&username=a&password=b,mq://server2:9999/?mqp1=1&mqp2=2&username=c&password=d";
+        SunOneUrlParser u = new SunOneUrlParser(url);
+        SunOneConnectionUrl[] urls = u.getConnectionUrls();
+        assertTrue(urls.length == 2);
+        assertTrue(urls[0].getHost().equals("server1"));
+        assertTrue(urls[1].getHost().equals("server2"));
+        assertTrue(urls[0].getPort() == 1888);
+        assertTrue(urls[1].getPort() == 9999);
+        System.out.println(u.toString());
+        assertTrue(url.equals(u.toString()));
+    }
+
+    public void testUrlProperties() throws Throwable {
+        RASunOneObjectFactory fact = new RASunOneObjectFactory();
+        Properties p = new Properties();
+        RAJMSResourceAdapter ra = new RASunOneResourceAdapter();
+        fact.getProperties(p, ra, null, null, "mq://server1:1888/?imqaaa=33&imqaaa=bbb&username=a&password=b,mq://server2:9999/?mqp1=1&mqp2=2&username=c&password=d");        
+        p.getProperty("username").equals("c");
+        p.getProperty("password").equals("d");
+        p.getProperty("mqp1").equals("1");
+        p.getProperty("imqaaa").equals("33");
     }
 }

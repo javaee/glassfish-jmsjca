@@ -29,10 +29,10 @@ import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.xa.XAResource;
 
 /**
- * <P>A strategy for serial delivery
+ * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -40,12 +40,14 @@ public class SerialDelivery extends Delivery implements MessageListener,
     private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
     private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Connection mConnection;
+    private javax.jms.Session mSession;
     private MessageEndpoint mEndpoint;
     private LocalizedString mContextName;
     private XAResource mXA;
     private RAJMSObjectFactory mObjFactory;
     private ConnectionForMove mMessageMoveConnection;
     private Delivery.MDB mMDB;
+    private Delivery.DeliveryResults mResult = new DeliveryResults();
 
     private static final Localizer LOCALE = Localizer.get();
 
@@ -85,16 +87,16 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mActivation.isTopic(), 
             mActivation.getActivationSpec(), 
             mActivation.getRA());
-        javax.jms.Session sess = mObjFactory.createSession(
+        mSession = mObjFactory.createSession(
             mConnection,
             mActivation.isXA(),
             mActivation.isTopic() ? TopicSession.class : QueueSession.class,
             mActivation.getRA(),
             mActivation.getActivationSpec(),
-            false,
-            javax.jms.Session.AUTO_ACKNOWLEDGE);
+            true,
+            javax.jms.Session.SESSION_TRANSACTED);
         javax.jms.Destination dest = mObjFactory.createDestination(
-            sess,
+            mSession,
             mActivation.isXA(),
             mActivation.isTopic(),
             mActivation.getActivationSpec(),
@@ -102,7 +104,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mActivation.getRA(),
             mActivation.getActivationSpec().getDestination());
         javax.jms.MessageConsumer cons = mObjFactory.createMessageConsumer(
-            sess,
+            mSession,
             mActivation.isXA(),
             mActivation.isTopic(),
             dest,
@@ -113,7 +115,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 this, mActivation.isXA()));
 
         mXA = mActivation.getObjectFactory().getXAResource(
-            mActivation.isXA(), sess);
+            mActivation.isXA(), mSession);
         
         mMDB = new Delivery.MDB(mXA);
 
@@ -201,7 +203,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
             // Lazy constuction of endpoint
             if (mEndpoint == null) {
                 try {
-                    mEndpoint = createMessageEndpoint(mXA);
+                    mEndpoint = createMessageEndpoint(mXA, mSession);
                     if (mEndpoint == null) {
                         throw new Exception("No endpoint created; RA shutting down?");
                     }
@@ -213,19 +215,16 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 }
             }
 
-            // Deliver to endpoint
-            RuntimeException e = deliver(mMessageMoveConnection, mEndpoint, m, false, mMDB);
+            mResult.reset();
+            beforeDelivery(mResult, mEndpoint);
+            deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m);
+            afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB);
+            afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint, mMDB);
             
             // Disard of endpoint if exception was thrown
-            if (e != null) {
+            if (mResult.getShouldDiscardEndpoint()) {
                 release(mEndpoint);
                 mEndpoint = null;
-            }
-
-            // For non-transacted, the exception should be propagated to the JMS client
-            // as to force a rollback of the message.
-            if (e != null && (!isXA() || e instanceof Delivery.BeforeDeliveryException)) {
-                throw e;
             }
         } finally {
             if (mContextName != null) {

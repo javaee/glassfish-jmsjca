@@ -29,11 +29,13 @@ import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
 import com.stc.jmsjca.test.core.XTestBase;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TopicConnectionFactory;
+import javax.jms.XAQueueConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
@@ -184,6 +186,14 @@ public class TestJUStd extends XTestBase {
             ConnectionFactory f = (ConnectionFactory) x.createConnectionFactory();
             ctx.rebind(appjndiUnified, f);
         }
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
+     * @throws JMSException propagatd 
+     */
+    public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
+        return new com.stc.jms.client.STCXAQueueConnectionFactory(getConnectionProperties());
     }
 
     public static String USERID = "stc";

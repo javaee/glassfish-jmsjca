@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough.TopicDest;
 
 /**
@@ -31,7 +32,7 @@ import com.stc.jmsjca.test.core.Passthrough.TopicDest;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     /**
@@ -218,7 +219,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
             EJBDD, "mdbtest").createActivation(StcmsActivation.class);
         spec.setContextName("j-testTTXAXA");
-        spec.setDestination("Topic1");
+        spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
         
         spec.setSubscriptionDurability("Durable");
@@ -244,6 +245,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 c.deployModule(mTestEar.getAbsolutePath());
                 waitUntilRunning(c);
                 c.undeploy(mTestEarName);
+                assertTrue(p.drainQ2() == 0);
                 
                 // send messages to T1 - these should be stored in the durable subscription
                 p.sendToT1();
@@ -472,4 +474,70 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }    
+
+    /**
+     * Topic to queue
+     * XA on in, XA on out
+     * serial-mode
+     * Durable
+     *
+     * @throws Throwable
+     */
+    public void testDistributedSubscriberToQueueSerial() throws Throwable {
+        Passthrough p = createPassthrough(mServerProperties);
+               
+        EmbeddedDescriptor dd = getDD();
+        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        spec.setContextName("j-testTTXAXA");
+        spec.setDestination(p.getTopic1Name());
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode("serial");
+        spec.setSubscriptionDurability("Durable");
+        String subscriptionName = p.getDurableTopic1Name();
+        spec.setSubscriptionName(Options.Subname.PREFIX + "?"
+            + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
+            + Options.Subname.DISTRIBUTION_TYPE + "=1");
+        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        spec.setClientId(clientID);
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+     
+            p.removeDurableSubscriber(clientID, p.getTopic1Name(), subscriptionName);
+            p.drainQ2();
+            
+            int iters = isFastTest() ? 1 : 2;
+            for (int i = 0; i < iters; i++) {
+                p.setBatchId(100 + i);
+                
+                // deploy bean to create a durable subscription then undeploy it
+                c.deployModule(mTestEar.getAbsolutePath());
+                waitUntilRunning(c);
+                c.undeploy(mTestEarName);
+                
+                // send messages to T1 - these should be stored in the durable subscription
+                p.sendToT1();
+                
+                // now redeploy the bean 
+                // this should then receive the messages from the durable subscription
+                // and sends them on to Q2
+                c.deployModule(mTestEar.getAbsolutePath());
+                waitUntilRunning(c);
+                p.readFromQ2(); 
+                
+                c.undeploy(mTestEarName);
+                //p.removeDurableSubscriber(clientID, Passthrough.T1,subscriptionName);
+            }
+            
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
 }

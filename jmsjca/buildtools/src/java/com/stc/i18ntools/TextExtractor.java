@@ -49,15 +49,21 @@ import java.util.zip.ZipInputStream;
  * @author fkieviet
  */
 public class TextExtractor extends Task {
-    private String dir;
-    private String file;
+    private File dir;
+    private File file;
     private boolean strict = true;
     
     /**
      * @see org.apache.tools.ant.Task#execute()
      */
     public void execute() {
-        extract(dir, file);
+        if (dir == null) {
+            throw new BuildException("Directory must be specified");
+        }
+        if (file == null) {
+            throw new BuildException("File must be specified");
+        }
+        extract(dir.getAbsolutePath(), file.getAbsolutePath());
     }
     
     /**
@@ -128,11 +134,11 @@ public class TextExtractor extends Task {
             out.println("# THIS FILE IS GENERATED AUTOMATICALLY FROM JAVA SOURCES/CLASSES");
             out.println();
             
-            TextEntries[] entries = (TextEntries[]) list.toArray(new TextEntries[list.size()]);
+            TextEntry[] entries = (TextEntry[]) list.toArray(new TextEntry[list.size()]);
             Set sortedByText = new TreeSet(new Comparator() {
                 public int compare(Object arg0, Object arg1) {
-                    TextEntries lhs = (TextEntries) arg0;
-                    TextEntries rhs = (TextEntries) arg1;
+                    TextEntry lhs = (TextEntry) arg0;
+                    TextEntry rhs = (TextEntry) arg1;
                     return lhs.getText().compareTo(rhs.getText());
                 }
             });
@@ -142,7 +148,7 @@ public class TextExtractor extends Task {
             Map byId = new HashMap();
             Map byContent = new HashMap();
             for (int i = 0; i < entries.length; i++) {
-                TextEntries c = entries[i];
+                TextEntry c = entries[i];
                 if (byId.get(c.getID()) == null) {
                     byId.put(c.getID(), new ArrayList());
                 }
@@ -156,10 +162,10 @@ public class TextExtractor extends Task {
             
             // Print
             for (Iterator iter = sortedByText.iterator(); iter.hasNext();) {
-                TextEntries e = (TextEntries) iter.next();
+                TextEntry e = (TextEntry) iter.next();
                 List sources = (List) byId.get(e.getID());
                 for (Iterator iterator = sources.iterator(); iterator.hasNext();) {
-                    TextEntries e2 = (TextEntries) iterator.next();
+                    TextEntry e2 = (TextEntry) iterator.next();
                     out.println("# " + e2.getClassname());
                     if (!e2.getContent().equals(e.getContent())) {
                         error = true;
@@ -181,8 +187,8 @@ public class TextExtractor extends Task {
                 List dups = (List) e.getValue();
                 Set ids = new TreeSet(new Comparator() {
                     public int compare(Object arg0, Object arg1) {
-                        TextEntries lhs = (TextEntries) arg0;
-                        TextEntries rhs = (TextEntries) arg1;
+                        TextEntry lhs = (TextEntry) arg0;
+                        TextEntry rhs = (TextEntry) arg1;
                         return lhs.getID().compareTo(rhs.getID());
                     }
                 });
@@ -191,12 +197,38 @@ public class TextExtractor extends Task {
                     System.err.println("SAME TEXTS, DIFFERENT IDS");
                     for (Iterator iterator = dups.iterator(); iterator.hasNext();) {
                         couldBeImproved = true;
-                        TextEntries dup = (TextEntries) iterator.next();
+                        TextEntry dup = (TextEntry) iterator.next();
                         System.err.println(dup.getClassname());
                         System.err.println(dup.getText());
                     }
                 }
             }
+            
+//            // Find all numeric ids
+//            {
+//                TreeSet numericIds = new TreeSet();
+//                for (int i = 0; i < entries.length; i++) {
+//                    String digits = getDigits(entries[i].getID());
+//                    int val = Integer.parseInt(digits);
+//                    numericIds.add(new Integer(val));
+//                }
+//                
+//                if (!numericIds.isEmpty()) {
+//                    Integer min = (Integer) numericIds.first();
+//                    Integer max = (Integer) numericIds.last();
+//                    boolean found = false;
+//                    for (int i = min.intValue(); i <= max.intValue(); i++) {
+//                        if (!numericIds.contains(new Integer(i))) {
+//                            if (!found) {
+//                                out.println();
+//                                out.println("# Ids that were not used:");
+//                            }
+//                            out.println("# " + i);
+//                            found = true;
+//                        }
+//                    }
+//                }
+//            }
             
             out.close();
             out = null;
@@ -265,6 +297,17 @@ public class TextExtractor extends Task {
             }
         }
     }
+    
+//    private String getDigits(String s) {
+//        StringBuffer ret = new StringBuffer();
+//        for (int i = 0, n = s.length(); i < n; i++) {
+//            char c = s.charAt(i);
+//            if (Character.isDigit(c)) {
+//                ret.append(c);
+//            }
+//        }
+//        return ret.toString();
+//    }
     
     private static String read(String path) throws Exception {
         File f = new File(path);
@@ -363,7 +406,7 @@ public class TextExtractor extends Task {
      * 
      * @author fkieviet
      */
-    public static class TextEntries {
+    private static class TextEntry {
         private String jarURL;
         private String classname;
         private String text;
@@ -375,7 +418,7 @@ public class TextExtractor extends Task {
          * @param classname classname
          * @param text String
          */
-        public TextEntries(String jarurl, String classname, String text) {
+        public TextEntry(String jarurl, String classname, String text) {
             jarURL = jarurl;
             this.classname = classname;
             this.text = text;
@@ -477,8 +520,8 @@ public class TextExtractor extends Task {
                         List strings = readStrings(inp);
                         for (Iterator iter = strings.iterator(); iter.hasNext();) {
                             String s = (String) iter.next();
-                            if (TextEntries.matches(s)) {
-                                list.add(new TextEntries(currentPath, 
+                            if (TextEntry.matches(s)) {
+                                list.add(new TextEntry(currentPath, 
                                     entries[i].getAbsolutePath().substring(root.length() + 1), s));
                             }
                         }
@@ -515,8 +558,8 @@ public class TextExtractor extends Task {
                         List strings = readStrings(inp);
                         for (Iterator iter = strings.iterator(); iter.hasNext();) {
                             String s = (String) iter.next();
-                            if (TextEntries.matches(s)) {
-                                list.add(new TextEntries(currentPath, entry.getName(), s));
+                            if (TextEntry.matches(s)) {
+                                list.add(new TextEntry(currentPath, entry.getName(), s));
                             }
                         }
                     } catch (Exception ex) {
@@ -631,7 +674,7 @@ public class TextExtractor extends Task {
      *
      * @return String
      */
-    public String getDir() {
+    public File getDir() {
         return dir;
     }
 
@@ -640,7 +683,7 @@ public class TextExtractor extends Task {
      *
      * @param dir StringThe dir to set.
      */
-    public void setDir(String dir) {
+    public void setDir(File dir) {
         this.dir = dir;
     }
 
@@ -649,7 +692,7 @@ public class TextExtractor extends Task {
      *
      * @return String
      */
-    public String getFile() {
+    public File getFile() {
         return file;
     }
 
@@ -658,7 +701,7 @@ public class TextExtractor extends Task {
      *
      * @param file StringThe file to set.
      */
-    public void setFile(String file) {
+    public void setFile(File file) {
         this.file = file;
     }
 
