@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1450,7 +1450,12 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
         .createConnector(StcmsConnector.class);
-        cc.setOptions("JMSJCA.NoXA=true");
+        String url = cc.getConnectionURL();
+        if (url.indexOf('?') < 0) {
+            url += "?";
+        }
+        url += "JMSJCA.NoXA=true";
+        cc.setConnectionURL(url);
         dd.update();
 
         // Deploy
@@ -1491,7 +1496,12 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
         .createConnector(StcmsConnector.class);
-        cc.setOptions("JMSJCA.NoXA=true\r\nJMSJCA.IgnoreTx=false");
+        String url = cc.getConnectionURL();
+        if (url.indexOf('?') < 0) {
+            url += "?";
+        }
+        url += "JMSJCA.NoXA=true&JMSJCA.IgnoreTx=false";
+        cc.setConnectionURL(url);
         dd.update();
 
         // Deploy

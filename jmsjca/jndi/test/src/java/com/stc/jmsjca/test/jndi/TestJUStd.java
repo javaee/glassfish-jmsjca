@@ -30,6 +30,7 @@ import com.stc.jmsjca.test.core.XTestBase;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
+import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
@@ -264,6 +265,7 @@ public class TestJUStd extends XTestBase {
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.close();
         c.close();
+        getConnectionManager(fact).clear();
     }
     
     /**
@@ -301,5 +303,63 @@ public class TestJUStd extends XTestBase {
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.close();
         c.close();
+        getConnectionManager(fact).clear();
+    }
+
+    public void testCreateQueue() throws Throwable {
+        init(true, true);
+        
+        RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
+        ra.setConnectionURL("jndi://");
+        String host = mServerProperties.getProperty("host");
+        String port = mServerProperties.getProperty("stcms.instance.port");
+        
+        
+        ra.setOptions(
+                "java.naming.factory.initial=com.stc.jms.jndispi.InitialContextFactory\r\n" + 
+                "java.naming.provider.url=stcms://" + host + ":" + port + "\r\n" + 
+                "java.naming.security.principal=Administrator\r\n" + 
+                "java.naming.security.credentials=STC\r\n" +
+                "com.stc.jms.jndispi.disconnected=true\r\n" +
+                "JMSJCA.TopicCF=connectionfactories/xatopicconnectionfactory\r\n" + 
+                "JMSJCA.QueueCF=connectionfactories/xaqueueconnectionfactory\r\n" + 
+                "JMSJCA.UnifiedCF=connectionfactories/xaconnectionfactory");
+        
+        XMCFQueueXA mcf = new XMCFQueueXA();
+        mcf.setResourceAdapter(ra);
+        QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
+        assertTrue(fact != null);
+        
+        QueueConnection c = fact.createQueueConnection();
+        QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+        
+        // Queue creation
+        Queue q = s.createQueue("jndi://queues/Queue1");
+        assertTrue(q instanceof STCQueue);
+        assertTrue(q.getQueueName().equals("Queue1"));
+
+        // Queue caching
+        Queue q2 = s.createQueue("jndi://queues/Queue1");
+        assertTrue(q instanceof STCQueue);
+        assertTrue(q.getQueueName().equals("Queue1"));
+        assertTrue(q2 == q);
+        
+        // Normal creation
+        q = s.createQueue("Queue1");
+        assertTrue(q instanceof STCQueue);
+        assertTrue(q.getQueueName().equals("Queue1"));
+        
+        // Global lookup
+        try {
+            // Should fail: does not exist
+            q = s.createQueue("lookup://Queue1");
+            throw new Throwable("Did not throw");
+        } catch (Exception e) {
+            // Expected
+        }
+        
+        s.close();
+        c.close();
+        getConnectionManager(fact).clear();
     }
 }

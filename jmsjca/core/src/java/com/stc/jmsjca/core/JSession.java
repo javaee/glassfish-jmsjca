@@ -53,7 +53,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -767,7 +767,14 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Topic createTopic(String name) throws JMSException {
-        return mSessionConnection.createTopic(name);
+        Destination ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
+        if (ret == null) {
+            return mSessionConnection.createTopic(name);
+        } if (ret instanceof AdminDestination) {
+            return (Topic) createDestination((AdminDestination) ret);
+        } else {
+            return (Topic) ret;
+        }
     }
 
     /**
@@ -778,7 +785,14 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Queue createQueue(String name) throws JMSException  {
-        return mSessionConnection.createQueue(name);
+        Destination ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
+        if (ret == null) {
+            return mSessionConnection.createQueue(name);
+        } if (ret instanceof AdminDestination) {
+            return (Queue) createDestination((AdminDestination) ret);
+        } else {
+            return (Queue) ret;
+        }
     }
     
     /**

@@ -341,8 +341,10 @@ marginheight="12" marginwidth="12">
 <hr />
 <h2><a name="section-test-WhatIsRAJNDI">What is RAJNDI?</a></h2>
 RAJNDI is a generic connector for JMS servers of which the connection factories are obtained through JNDI
-<h2><a name="section-test-PackagingAndShipping">Packaging and shipping</a></h2>
+<h2><a name="section-test-PackagingShippingAndVersions">Packaging, shipping and versions</a></h2>
 This connector is shipped as <tt>rajndi.rar</tt>
+<p>New in 5.1.3U1: destination lookup semantics of <tt>createQueue()</tt> and <tt>createTopic()</tt>.
+</p>
 <h2><a name="section-test-UsageNotes">Usage notes</a></h2>
 <h3><a name="section-test-JNDINames">JNDI names</a></h3>
 The jndi names of the connection factories need to be specified. This can be done either as separate values in the deployment descriptor or by properties in the URL or the <tt>options</tt> field in the deployment descriptor.
@@ -376,11 +378,17 @@ connectionfactories/xaqueueconnectionfactory,JMSJCA.UnifiedCF=connectionfactorie
 jndispi.disconnected=true</tt>
 </p>
 <h3><a name="section-test-Destinations">Destinations</a></h3>
-When a destination name is prefixed with <tt>jndi://</tt> the destination is looked up in the jndi-provider specified as described above. If this prefix is missing, the destination is created using <tt>createQueue()</tt> or <tt>createTopic()</tt>.
-<h4><a name="section-test-Example">Example:</a></h4>
+When a destination name is prefixed with <tt>jndi://</tt> the destination is looked up in the jndi-provider specified as described above. If this prefix is missing, the destination is created using <tt>createQueue()</tt> or <tt>createTopic()</tt>. This works for activation specs as well as calls to <tt>Session.createQueue()</tt> or <tt>Session.createTopic()</tt>.
+<h4><a name="section-test-Example1">Example 1</a></h4>
 Extending the previous example, when the <tt>destination</tt> in the activation spec is <tt>jndi://queues/Queue1</tt>, the queue <tt>Queue1</tt> is looked up in the context <tt>queues</tt> in the JNDI provider with <tt>java.naming.provider.url=stcms://localhost:18007</tt>.
 <p>The same thing will happen if the <tt>destination</tt> is specified as <tt>lookup://q</tt> and <tt>q</tt> is an administrative object with name <tt>jndi://queues/Queue1</tt>.
 </p>
+<h4><a name="section-test-Example2">Example 2</a></h4>
+Extending the first example, when the executing this statement: <tt>Session.createQueue("jndi://queues/Queue1")</tt>, this will lookup the name <tt>queues/Queue1</tt> in the JNDI provider with <tt>java.naming.provider.url=stcms://localhost:18007</tt>.
+<h4><a name="section-test-Example3">Example 3</a></h4>
+In the previous example, if an administrative object had been bound in the container's jndi under the name <tt>jms/q1</tt>, and if the name attribute of this object had been <tt>jndi://queues/Queue1</tt>, then the statement <tt>Session.createQueue("lookup://jms/q1")</tt> would have resulted in a lookup of the name <tt>queues/Queue1</tt> in the JNDI provider with <tt>java.naming.provider.url=stcms://localhost:18007</tt>.
+<h4><a name="section-test-Example4">Example 4</a></h4>
+The statement <tt>Session.createQueue("Queue1")</tt> would result in calling <tt>Session.createQueue("Queue1")</tt> on the underlying JMS provider.
 
 
 

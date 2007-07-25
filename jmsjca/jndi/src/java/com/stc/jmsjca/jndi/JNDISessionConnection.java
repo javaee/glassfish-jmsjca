@@ -18,6 +18,7 @@ package com.stc.jmsjca.jndi;
 
 import com.stc.jmsjca.core.AdminDestination;
 import com.stc.jmsjca.core.AdminQueue;
+import com.stc.jmsjca.core.AdminTopic;
 import com.stc.jmsjca.core.DestinationCache;
 import com.stc.jmsjca.core.DestinationCacheEntry;
 import com.stc.jmsjca.core.GenericSessionConnection;
@@ -28,6 +29,8 @@ import com.stc.jmsjca.core.XManagedConnection;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
+import javax.jms.Queue;
+import javax.jms.Topic;
 
 /**
  * Provides some JNDI specific features:
@@ -35,7 +38,7 @@ import javax.jms.JMSException;
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class JNDISessionConnection extends GenericSessionConnection {
 
@@ -68,31 +71,55 @@ public class JNDISessionConnection extends GenericSessionConnection {
      */
     public Destination createDestination(AdminDestination dest) throws JMSException {
         RAJNDIObjectFactory o = (RAJNDIObjectFactory) getObjFact();
-
-        DestinationCache cache = dest instanceof AdminQueue 
-        ? mMC.getManagedConnectionFactory().getQueueCache() 
-            : mMC.getManagedConnectionFactory().getTopicCache();
-
-        DestinationCacheEntry d = cache.get(dest.getName());
-        synchronized (d) {
-            if (d.get() == null) {
-                String name = dest.getName();
-                if (name.startsWith(RAJNDIObjectFactory.JNDI_PREFIX)) {
-                    Destination realdest = (Destination) o.getJndiObject(getRA(), 
-                        null, mMC.getManagedConnectionFactory(), null, 
-                        name.substring(RAJNDIObjectFactory.JNDI_PREFIX.length()));                    
-                    d.set(realdest);
-                } else {
-                    Destination created;
-                    if (dest instanceof AdminQueue) {
-                        created = createQueue(name);
-                    } else {
-                        created = createTopic(name);
-                    }
-                    d.set(created);
-                }
+        Destination ret = null;
+        String name = dest.getName();
+        if (!name.startsWith(RAJNDIObjectFactory.JNDI_PREFIX)) {
+            // Not a JNDI name
+            if (dest instanceof AdminQueue) {
+                ret = super.createQueue(name);
+            } else {
+                ret = super.createTopic(name);
             }
-            return d.get();
+        } else {
+            // Lookup JNDI name in cache
+            name = name.substring(RAJNDIObjectFactory.JNDI_PREFIX.length());
+            DestinationCache cache = dest instanceof AdminQueue 
+            ? mMC.getManagedConnectionFactory().getQueueCache() 
+                : mMC.getManagedConnectionFactory().getTopicCache();
+
+            DestinationCacheEntry d = cache.get(name);
+            synchronized (d) {
+                Destination realdest; 
+                if (d.get() == null) {
+                    // Cache miss: lookup in JNDI
+                    realdest = (Destination) o.getJndiObject(getRA(), 
+                        null, mMC.getManagedConnectionFactory(), null, name);
+                    // Bind in cache
+                    d.set(realdest);
+                }
+                ret = d.get();
+            }
         }
+        
+        return ret;
     }
+
+    /**
+     * @see com.stc.jmsjca.core.SessionConnection#createQueue(java.lang.String)
+     */
+    public Queue createQueue(String name) throws JMSException {
+        AdminQueue admindest = new AdminQueue();
+        admindest.setName(name);
+        return (Queue) createDestination(admindest);
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.SessionConnection#createTopic(java.lang.String)
+     */
+    public Topic createTopic(String name) throws JMSException {
+        AdminTopic admindest = new AdminTopic();
+        admindest.setName(name);
+        return (Topic) createDestination(admindest);
+    }
+
 }

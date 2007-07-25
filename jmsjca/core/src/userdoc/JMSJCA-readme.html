@@ -400,6 +400,15 @@ J2EE 1.4 specifies J2EE Connector Architecture 1.5 as the basic mechanism to int
 <li> Improved support for WL JMS from applications running in Java CAPS IS and Sun Java System Application Server 8.2 and 9.x
 </li>
 </ul>
+<h4><a name="section-test-5.1.3U1">5.1.3U1</a></h4>
+<ul>
+<li> Support for distributed durable subscribers (see below)
+</li>
+<li> Extended semantics for <tt>lookup://</tt> to <tt>Session.createQueue()</tt> and <tt>Session.createTopic()</tt>
+</li>
+<li> Batching and HUA mode now also support <tt>cc</tt> concurrency mode
+</li>
+</ul>
 <h2><a name="section-test-Features">Features</a></h2>
 JMSJCA adapters provide the following advanced features:
 <ul>
@@ -446,6 +455,8 @@ JMSJCA adapters provide the following advanced features:
 <li> support for batch mode when used for inbound messaging
 </li>
 <li> support for a special hold-until-ack mode, a further extension to asynchronous processing (see below)
+</li>
+<li> support for distributed durable subscribers
 </li>
 </ul>
 <h2><a name="section-test-HowToUseAJMSJCAAdapter">How to use a JMSJCA adapter</a></h2>
@@ -560,11 +571,25 @@ At each place where the connection URL can be specified, it is also necessary to
 </p>
 <h3><a name="section-test-OverloadedUsername">Overloaded username</a></h3>
 Normally the connectionURL is tied to a connection factory, so for each JMS server there should be a separate connection factory. The application code then has to choose the correct connection factory that is tied to the desired JMS server.
-<p>A special feature of JMSJCA is that the ConnectionURL can also be specified in the application code when creating a connection through <tt>ConnectionFactory.createConnection(username, password)</tt> or one of the equivalents for queue and topic. If the username can be recognized as a ConnectionURL, e.g. if the username starts with <tt>stcms://</tt> or <tt>stcmss://</tt> for STCMS, the username is interpreted as a ConnectionURL rather than a username. The username can still be specified: the query parameters <tt>username</tt> and <tt>password</tt> will be read from the ConnectionURL. The password can also be specified in the password parameter to <tt>createConnection(username, password)</tt>.
+<p>A special feature of JMSJCA is that the ConnectionURL can also be specified in the application code when creating a connection through <tt>ConnectionFactory.createConnection(username, password)</tt> or one of the equivalents for queue and topic. If the username can be recognized as a ConnectionURL, e.g. if the username starts with <tt>stcms://</tt> or <tt>stcmss://</tt> for STCMS, the username is interpreted as a ConnectionURL rather than a username. Hence, <tt>createConnection()</tt>, <tt>createQueueConnection()</tt>, and <tt>createTopicConnection()</tt> can be used as follows:
 </p>
+<pre>
+createConnection("u", "p");
+createConnection("protocol://host:port?option=value", null);
+createConnection("protocol://host:port?option=value&amp;username=u&amp;password=p", null);
+createConnection("protocol://host:port?option=value&amp;username=u", "p");
+</pre>
+
+As shown, the username can still be specified: the query parameters <tt>username</tt> and <tt>password</tt> will be read from the ConnectionURL. The password can also be specified in the password parameter to <tt>createConnection(username, password)</tt>.
 <p>Example:<br />
-<tt>ConnectionFactory.createConnection("stcms://blue:18008?user=X", "Y")</tt> will create a connection to the STCMS server on BLUE at port 18008 using the username "X" and the password "Y". This is equivalent to <tt>ConnectionFactory.createConnection("stcms://blue:18008?user=X&password=Y", null)</tt>. If the username is not specified, e.g. as in <tt>ConnectionFactory.createConnection("stcms://blue:18008, null)</tt>, the username is obtained through the normal presedence rules, i.e. from the connection factory level specification or the connector.
+The following first two statements are equivalent and will all create a connection to the STCMS server on BLUE at port 18008 using the username "X" and the password "Y". In the third statement, the username is obtained through the normal presedence rules, i.e. from the connection factory level specification or the connector.
 </p>
+<pre>
+ConnectionFactory.createConnection("stcms://blue:18008?username=X", "Y")
+ConnectionFactory.createConnection("stcms://blue:18008?username=X&amp;password=Y", null)
+ConnectionFactory.createConnection("stcms://blue:18008, null)
+</pre>
+
 <p>Connections to JMS servers specified in the username parameter are pooled in the same pool as the "normal" connections in the connector pool.
 </p>
 <h3><a name="section-test-Concurrency">Concurrency</a></h3>
@@ -582,7 +607,9 @@ The JMSJCA connector can deliver messages to multiple MDBs concurrently. The fol
 The <tt>ra.xml</tt> defines two administrative objects: one for a <tt>javax.jms.Queue</tt>, and the other one for a <tt>javax.jms.Topic</tt>. These are generic objects that can be bound in JNDI. When they are created and bound in JNDI, they may not represent physical destinations in the JMS server yet. Only when the application code <b>uses</b> an administrative object is the object actually turned into a JMS destination specific for the JMS server in use. This happens in a manner that is specific for the type of JMS server. For example, for the RAWL adapter, the name of an administrative Queue is interpreted as a name bound in the same JNDI provider as is specified for the adapter.
 <p>The destination in an activation spec can also be specified as an administrative object. To indicate that the <tt>destination</tt> parameter in an activation spec denotes an object that should be looked up, prefix the name with <tt>lookup://</tt>.
 </p>
-<h4><a name="section-test-Example">Example</a></h4>
+<p>The destination obtained through <tt>Session.createQueueue()</tt> or <tt>Session.createTopic()</tt> also uses this approach: if the destination name supplied to these methods starts with <tt>lookup://</tt>, the destination is looked up in the container's JNDI instead of calling <tt>Session.createQueue()</tt> or <tt>Session.createTopic()</tt> on the underlying JMS provider. If the looked up destination is an administrative object, this destination is converted into a JMS provider specific destination using an approach specific for that provider.
+</p>
+<h4><a name="section-test-Example1">Example 1</a></h4>
 A JNDI adapter is configured to use a JNDI provider on server X. An administrative object is created and bound in the application server's JNDI using the name <tt>orders</tt>. The <tt>name</tt> attribute of the administrative object is specified as <tt>jndi://queues/q1234</tt>. Assume the application code looks like this:
 <pre>
     Destination q = (Destination) new InitialContext().lookup("orders");
@@ -593,6 +620,13 @@ A JNDI adapter is configured to use a JNDI provider on server X. An administrati
 In the first <tt>send()</tt> method in this code fragment, the destination is looked up in the JNDI provider at server X using the lookup-name <tt>queues/q1234</tt>. Because destinations are cached in the adapter, in the second <tt>send()</tt> method, the cached destination object is used.
 <p>In this example, the activation spec has the <tt>destination</tt> attribute has the value <tt>lookup://orders</tt>, the destination object is looked up in a similar fashion in the JNDI provider at server X using the lookup-name <tt>queues/q1234</tt>. If on the other hand the <tt>destination</tt> attribute has the value <tt>orders</tt>, the destination object is obtained using <tt>createQueue("orders")</tt> or <tt>createTopic("orders")</tt>.
 </p>
+<h4><a name="section-test-Example2">Example 2</a></h4>
+An STCMS adapter is used. An administrative object is created and bound in the application server's JNDI using the name <tt>jms/destinations/orders</tt>. The <tt>name</tt> attribute of the administrative object is specified as <tt>q1234</tt>. Assume the application code looks like this:
+<pre>
+    Destination q = session.createQueue("lookup://jms/destinations/orders");
+</pre>
+
+This will result in a lookup in the container's jndi of the object with the jndi-name <tt>jms/destinations/orders</tt>. The resulting object is an administrative object containing the name <tt>q1234</tt>. The adapter will call <tt>session.createQueue("q1234")</tt> on the STCMS JMS client, and return the resulting object.
 <p></p>
 <p></p>
 <h2><a name="section-test-RAOptions">RA Options</a></h2>
@@ -856,7 +890,7 @@ There is a default behavior for message redelivery handling:
 <h2><a name="section-test-Batching">Batching</a></h2>
 When the <tt>BatchSize</tt> parameter in the activation spec is set to a value greater than one, the resource adapter will deliver multiple messages <b>in one transaction</b> to the MDB.
 <h4><a name="section-test-SupportedConcurrencyModes">Supported concurrency modes</a></h4>
-This mode is supported in the <tt>sync</tt> concurrency modes only.
+This mode is supported in the <tt>sync</tt> and <tt>cc</tt> concurrency modes only.
 <h4><a name="section-test-EndOfBatchMessage">EndOfBatch message</a></h4>
 At the end of each batch, the connector delivers an EndOfBatch message to the MDB. Even if the transaction is marked for rollback, or if a message earlier caused an exception, the EndOfBatch message is delivered. Only if the MDB is shutdown by the application server, or if the application server unexpectedly exits, situations may arise where no EndOfBatch message is delivered.
 <p>The EndOfBatch message can be recognized using an Object message property with the name <tt>JMSJCA.EndOfBatch</tt> such that
@@ -928,6 +962,8 @@ This mode allows for the processing of a message to be done in a thread that is 
 <h4><a name="section-test-SupportedModes">Supported modes</a></h4>
 <ul>
 <li> <tt>sync</tt> (also in batch mode)
+</li>
+<li> <tt>cc</tt> (also in batch mode)
 </li>
 </ul>
 <h4><a name="section-test-AcknowledgingRollingBackAMessage">Acknowledging / rolling back a message</a></h4>
@@ -1022,6 +1058,44 @@ In addition to what is described above, the following constraints are there for 
     }    
 </pre>
 
+<p></p>
+<h2><a name="section-test-DistributedDurableSubscribers">Distributed durable subscribers</a></h2>
+The JMS spec mandates that there can be only one client connected to a server that has the same ClientID and durable subscriber name. For instance, if there is a topic T1, and a durable subscriber D1, there can be only one application reading from T1-D1. Through the connection consumer mechanism, this application can process messages from T1-D1 concurrently. If the application is being clustered, only one cluster node can process messages, i.e. the active cluster node. The other cluster nodes will fail to connect to the durable subscriber. Through the retry mechanism in jmsjca, these other cluster nodes will keep on trying to connect, so that if the active cluster node fails, another cluster node will succeed in connecting and become the active cluster node. There can be only one active cluster node, hence the application does not scale. The mechanism of distributed durable subscribers aims to resolve this.
+<p>There are three approaches to this problem:
+</p>
+<ol>
+<li> The JMS server supports distributed durable subscribers natively.
+</li>
+<li> The durable subscriber is partitioned into N separate durable subscribers so that each message is sent to only one of these durable subscribers; each cluster node then uses one of these partitioned durable subscribers. A problem is the management of these partitioned subscribers, and the dynamic re-assignment of partitioned durable subscribers in the case of cluster node failures.
+</li>
+<li> The messages from the durable subscriber are sent to a queue, and this queue is used by different cluster nodes to read messages from. The active subscriber takes care of this. Each cluster node tries continuously to become the active subscriber, so in case of failure of the active subscriber, another cluster node will become the active subscriber automatically.
+</li>
+</ol>
+<p>For those JMS servers for which the first approach does not work, jmsjca provides the third approach.
+</p>
+<h4><a name="section-test-Configuration">Configuration</a></h4>
+This feature is activated by providing a special durable subscriber name: 
+<pre>
+jmsjca://distribution=1&amp;subscribername=s[&amp;queue=q][&amp;mbeanname=m][&amp;batchsize=b]
+</pre>
+
+<table class="wikitable" border="1">
+<tr><th>Parameter</th><th>Required</th><th>Meaning</th><th>Default</th></tr>
+<tr><td><tt>distribution</tt></td><td>yes</td><td>turns on distributed durable subscribers. Valid values: 0=off, 1=distributed durable subscriber</td><td>0</td></tr>
+<tr><td><tt>subscribername</tt></td><td>yes</td><td>the name of the durable subscriber</td><td></td></tr>
+<tr><td><tt>queue</tt></td><td>no</td><td>name of the queue to send the messages to</td><td><tt>dt-topic-subscribername</tt></td></tr>
+<tr><td><tt>mbeanname</tt></td><td>no</td><td>name of the MBean associated with the topic-to-queue delivery object</td><td>specified MBean name + "-dt"</td></tr>
+<tr><td><tt>batchsize</tt></td><td>no</td><td>number of messages read in one batch from the topic and written to the queue</td><td>10</td></tr>
+</table>
+<h4><a name="section-test-Notes">Notes</a></h4>
+<ul>
+<li> This feature only works with JMS 1.1 compliant servers
+</li>
+<li> With these feature there are two message consumers: one that reads from the topic and writes to the queue, and another one that reads from the queue. Each MBean has its own MBean. The MBean specified in the activation spec is the one associated with the queue, the one specified in the subscriber name is associated with the topic.
+</li>
+</ul>
+<h4><a name="section-test-Example">Example</a></h4>
+Specifying the following subscription name <tt>jmsjca://distributed=1&subscribername=mysub</tt> on topic T will cause a subscriber to be created with subscriptionName=mysub; this subscriber reads messsages in batches of 10 and sends them to queue dt-T1-mysub. The application will read messages from this queue.
 
 
 
@@ -1038,6 +1112,3 @@ In addition to what is described above, the following constraints are there for 
 <br />
 
 </body>
-</html>
-
-
