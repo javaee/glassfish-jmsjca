@@ -59,7 +59,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -406,5 +406,15 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      */
     public String getJMSServerType() {
         return "WL";
+    }
+
+    /**
+     * If a connection failure occurs, the connection factory should be looked up 
+     * again.
+     * 
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#shouldCacheConnectionFactories()
+     */
+    public boolean shouldCacheConnectionFactories() {
+        return false;
     }
 }

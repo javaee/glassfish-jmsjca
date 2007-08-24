@@ -72,7 +72,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -445,10 +445,14 @@ public abstract class RAJMSObjectFactory {
         if (isXA) {
             if (isTopic) {
                 if (RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
-                    return ((XATopicSession) sess).getTopicSession().
+                    try {
+                        return ((XATopicSession) sess).getTopicSession().
                         createDurableSubscriber((Topic) dest,
-                        spec.getSubscriptionName(),
-                        spec.getMessageSelector(), false);
+                            spec.getSubscriptionName(),
+                            spec.getMessageSelector(), false);
+                    } catch (JMSException e) {
+                        throw new Exc.ConsumerCreationException(e);
+                    }
                 } else {
                     return ((XATopicSession) sess).getTopicSession().
                         createSubscriber((Topic) dest,
@@ -461,9 +465,13 @@ public abstract class RAJMSObjectFactory {
         } else {
             if (isTopic) {
                 if (RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
-                    return sess.createDurableSubscriber((Topic) dest,
-                        spec.getSubscriptionName(),
-                        spec.getMessageSelector(), false);
+                    try {
+                        return sess.createDurableSubscriber((Topic) dest,
+                            spec.getSubscriptionName(),
+                            spec.getMessageSelector(), false);
+                    } catch (JMSException e) {
+                        throw new Exc.ConsumerCreationException(e);
+                    }
                 } else {
                     return ((TopicSession) sess).
                     createSubscriber((Topic) dest,
@@ -623,7 +631,11 @@ public abstract class RAJMSObjectFactory {
      * @throws JMSException on failure
      */
     public void setClientID(Connection connection, String clientID) throws JMSException {
-        connection.setClientID(clientID);
+        try {
+            connection.setClientID(clientID);
+        } catch (JMSException e) {
+            throw new Exc.ConsumerCreationException(e);
+        }
     }
 
     /**
@@ -648,8 +660,8 @@ public abstract class RAJMSObjectFactory {
                     if (spec.getClientId().equals(currentClientId)) {
                         // ok: already set
                     } else {
-                        sLog.warn(LOCALE.x("E042: ClientID is already set to [{0}]; "  
-                            + "cannot set to [{1}] as required in "
+                        sLog.warn(LOCALE.x("E042: Ignoring ClientID: the ClientID is " 
+                            + "already set to [{0}]; cannot set to [{1}] as required in "
                             + "activationspec [{2}]", currentClientId, spec.getClientId(), spec)); 
                     }
                 }
@@ -913,5 +925,13 @@ public abstract class RAJMSObjectFactory {
             QueueSender sender = (QueueSender) producer;
             sender.send(m, deliveryMode, priority, 0);
         }
+    }
+
+    /**
+     * @return true if connection factories is beneficial for performance and does
+     * not interfere with connection failure recovery
+     */
+    public boolean shouldCacheConnectionFactories() {
+        return true;
     }
 }

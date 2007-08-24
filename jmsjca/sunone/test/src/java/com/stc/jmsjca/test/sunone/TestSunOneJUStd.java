@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.test.sunone;
 
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
@@ -1484,5 +1485,61 @@ public class TestSunOneJUStd extends XTestBase {
         p.getProperty("password").equals("d");
         p.getProperty("mqp1").equals("1");
         p.getProperty("imqaaa").equals("33");
+    }
+
+    /**
+     * Check to see that messages can be read from a durable subscriber and sent to a
+     * queue in a single unified transacted session using a single transaction
+     * 
+     * @throws Throwable
+     */
+    public void testUnifiedTransactedSession() throws Throwable {
+        init(true);
+
+        clearTopic("dur1", "Topic1", false);
+
+        // This is how the client would normally create connections
+        InitialContext ctx = getContext();
+        ConnectionFactory f = (ConnectionFactory) ctx.lookup(appjndiUnified);
+        getRA(f).setOptions(Options.NOXA + "=true\r\n" +  Options.Out.IGNORETX + "=false");
+
+        Connection conn = f.createConnection(USERID, PASSWORD);
+        setClientID(conn);
+        Session s = conn.createSession(true, Session.SESSION_TRANSACTED);
+
+        Topic t = s.createTopic("Topic1");
+        MessageConsumer cons = s.createDurableSubscriber(t, "dur1");
+        conn.start();
+
+        // SEND
+        final int N = 1000;
+        MessageProducer p = s.createProducer(t);
+        for (int i = 1; i <= N; i++) {
+            p.send(s.createTextMessage("msg " + i));
+            if (i % 10 == 0) {
+                s.commit();
+            }
+        }
+        p.close();
+        
+        // RECEIVE AND SEND
+        Queue q = s.createQueue("Queue1");
+        p = s.createProducer(q);
+        for (int i = 1; i <= N; i++) {
+            Message m = cons.receive(EXPECTWITHIN);
+            p.send(m);
+            if (i % 10 == 0) {
+                s.commit();
+            }
+        }
+        conn.close();
+        
+        
+        int n = clearQueue("Queue1", N);
+        assertTrue("n=" + n, n == N);
+        
+        conn.close();
+        getConnectionManager(f).clear();
+        
     }
 }

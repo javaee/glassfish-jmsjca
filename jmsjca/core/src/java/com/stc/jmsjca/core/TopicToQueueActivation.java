@@ -17,6 +17,7 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
@@ -41,12 +42,13 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
     private ActivationBase mTopicToQueue;
     private ActivationBase mQueue;
+    private String mQueuename;
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -67,8 +69,8 @@ public class TopicToQueueActivation extends ActivationBase {
         
         // Create a spec for topic-to-queue
         String subscribername = props.getProperty(Options.Subname.SUBSCRIBERNAME);
-        String defaultQueuename = "dt-" + spec.getDestination() + "-" + subscribername;
-        final String queuename = props.getProperty(Options.Subname.QUEUENAME, defaultQueuename);
+        String defaultQueuename = "LOADBALQ_" + spec.getDestination() + "_" + subscribername;
+        mQueuename = props.getProperty(Options.Subname.QUEUENAME, defaultQueuename);
         RAJMSActivationSpec topicSpec = copy(spec);
         topicSpec.setSubscriptionName(subscribername);
         topicSpec.setConcurrencyMode(
@@ -76,16 +78,22 @@ public class TopicToQueueActivation extends ActivationBase {
         topicSpec.setEndpointPoolMaxSize("1");
         if (!Str.empty(topicSpec.getMBeanName())) {
             String mbeanname = props.getProperty(Options.Subname.MBEANNAME, 
-                topicSpec.getMBeanName() + "-dt");
+                topicSpec.getMBeanName() + "-LOADBALQ");
             topicSpec.setMBeanName(mbeanname);
         }
         topicSpec.setBatchSize(Integer.parseInt(props.getProperty(Options.Subname.BATCHSIZE, "10")));
+        topicSpec.setHoldUntilAck("0");
+        Properties options = new Properties();
+        Str.deserializeProperties(topicSpec.getOptions(), options);
+        options.setProperty(Options.In.OPTION_CONCURRENCYMODE, 
+            RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC]);
+        topicSpec.setOptions(Str.serializeProperties(options));
         
         // Create spec for queue
         RAJMSActivationSpec queueSpec = copy(spec);
         queueSpec.setDestinationType(RAJMSActivationSpec.QUEUE);
         queueSpec.setSubscriptionName(null);
-        queueSpec.setDestination(queuename);
+        queueSpec.setDestination(mQueuename);
         queueSpec.setSubscriptionDurability(RAJMSActivationSpec.NONDURABLE);
         queueSpec.setClientId(null);
         
@@ -99,17 +107,41 @@ public class TopicToQueueActivation extends ActivationBase {
                 return false;
             }
         };
-        mTopicToQueue = new Activation(ra, topicEPF, topicSpec) {
-            public Delivery createDelivery() {
-                TopicToQueueDelivery ret = new TopicToQueueDelivery(this, getStats(), queuename);
-                return ret;
-            }
-        };
         
         // Create Queue activation
         mQueue = getObjectFactory().createActivation(ra, epf, queueSpec);
+
+        mTopicToQueue = new Activation(ra, topicEPF, topicSpec) {
+            private String queueName = mQueue.getName();
+
+            public Delivery createDelivery() {
+                TopicToQueueDelivery ret = new TopicToQueueDelivery(this, getStats(), mQueuename);
+                return ret;
+            }
+            public String getName() {
+              return super.getName() + " >> [" + queueName + "]";
+            }
+            protected void logDeliveryInitiationException(int attemptPlusOne, int dt, Exception e) {
+                if (e instanceof Exc.ConsumerCreationException) {
+                    if (attemptPlusOne == 1) {
+                    sLog.info(LOCALE.x("E093: [{0}]: message delivery could not be initiated due to " +
+                        "a failure to create the subscriber. Assuming that this deployment is on a node in " + 
+                        "a cluster, there is likely another cluster node already receiving messages from " +
+                        "this subscriber and delivering them to the load balancing queue where this " +
+                        "deployment will receive them. The subscriber creation attempt will be retried " +
+                        "periodically to detect when the active subscriber disconnects. Unsuccessful attempts " +
+                        "to subscribe will not be logged. The subscriber could not created because of the " +
+                        "following error: {3}", 
+                        getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), e.getCause()), e.getCause());
+                    } else {
+                        // Ignore
+                    }
+                } else {
+                    super.logDeliveryInitiationException(attemptPlusOne, dt, e);
+                }
+            }
+        };
     }
-    
     
     private RAJMSActivationSpec copy(RAJMSActivationSpec tocopy) throws Exception {
         MarshalledObject copier = new MarshalledObject(tocopy);
@@ -141,7 +173,7 @@ public class TopicToQueueActivation extends ActivationBase {
         mTopicToQueue.deactivate();
         mQueue.deactivate();
     }
-
+    
     /**
      * Copies messages from a topic to a queue so that the messages can be processed
      * concurrently, even over multiple machines. This delivery should be setup as non-XA,

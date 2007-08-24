@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1389,6 +1389,58 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             QueueDest dest = p.new QueueDest(p.getQueue1Name());
             dest.connect();
             dest.readback(N, 0);
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
+    public void testDlqDelete() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        spec.setConcurrencyMode("cc");
+        
+        spec.setRedeliveryHandling("1:delete");
+
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("rollback");
+        dd.findElementByText(EJBDD, "XContextName").setText("dlqDelete");
+
+        dd.update();
+        
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            final int N = 1;
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
+            p.setNMessagesToSend(N);
+            p.passToQ1();
+            
+            c.deployModule(mTestEar.getAbsolutePath());
+
+            ActivationMBean mbean = (ActivationMBean) c.getMBeanProxy(MBEAN,
+                ActivationMBean.class);
+
+            // Make sure that a msg was processed
+            int n = 0;
+            for (int k = 0; k < 40; k++) {
+                n = mbean.xgetNMessages();
+                if (n >= N) {
+                    break;
+                }
+                Thread.sleep(250);
+            }
+            Thread.sleep(250);
+            
+            c.undeploy(mTestEarName);
+
+            QueueDest dest = p.new QueueDest(p.getQueue1Name());
+            dest.connect();
+            int nleft = dest.drain();
+            assertTrue(nleft == 0);
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);

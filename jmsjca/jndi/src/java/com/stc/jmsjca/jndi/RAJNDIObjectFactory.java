@@ -32,25 +32,26 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TopicConnectionFactory;
-import javax.jms.TopicSession;
 import javax.jms.XAQueueConnectionFactory;
 import javax.jms.XAQueueSession;
 import javax.jms.XATopicConnectionFactory;
 import javax.jms.XATopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.RefAddr;
+import javax.naming.Reference;
 
 import java.io.Serializable;
+import java.util.Enumeration;
 import java.util.Properties;
 
 /**
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -106,7 +107,28 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
             } else {
                 ctx = new InitialContext(p);
             }
-            return ctx.lookup(name);
+            Object ret = ctx.lookup(name);
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Found object [" + ret + "], class=" + (ret == null ? null : ret.getClass()));
+            }
+            if (ret instanceof Reference) {
+                if (sLog.isDebugEnabled()) {
+                    Reference ref = (Reference) ret;
+                    sLog.debug("Reference properties: classname=" + ref.getClassName() 
+                        + ", factoryclassname" + ref.getFactoryClassName()
+                        + ", FactoryClassLocation" + ref.getFactoryClassLocation());
+                    int i = 0;
+                    for (Enumeration iter = ((Reference) ret).getAll(); iter.hasMoreElements();) {
+                        RefAddr element = (RefAddr) iter.nextElement();
+                        sLog.debug("RefAddr #" + i++ + ": tostring=[" + element 
+                            + "]\r\ncontent=[" + element.getContent() 
+                            + "]\r\ntype=[" + element.getType() 
+                            + "]\r\nclass=" + element.getClass());
+                        
+                    }
+                }
+            }
+            return ret; 
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALE.x("E400: Could not find JNDI object by name [{0}]: {1}", name, e), e);
         } finally {

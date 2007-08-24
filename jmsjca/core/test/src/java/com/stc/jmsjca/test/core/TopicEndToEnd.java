@@ -21,6 +21,12 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough.TopicDest;
 
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicSession;
+
 /**
  * Required:
  * test.server.properties = path to properties file containing server config
@@ -32,7 +38,7 @@ import com.stc.jmsjca.test.core.Passthrough.TopicDest;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     /**
@@ -47,7 +53,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             ActivationMBean.class);
         for (;;) {
             String str = mbean.xgetStatus();
-            System.out.println("Connected status: " + str);
+            System.out.println("Waiting until application is deployed and running; connected status: " + str);
             if (str.equals(com.stc.jmsjca.core.ActivationMBean.CONNECTED)) {
                 break;
             }
@@ -483,15 +489,43 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      *
      * @throws Throwable
      */
-    public void testDistributedSubscriberToQueueSerial() throws Throwable {
+    public void testDistributedSubscriberToQueueCMT() throws Throwable {
+        dotestDistributedSubscriberToQueueSerial(false);
+    }
+    
+    /**
+     * Topic to queue
+     * XA on in, XA on out
+     * serial-mode
+     * Durable
+     *
+     * @throws Throwable
+     */
+    public void testDistributedSubscriberToQueueBMT() throws Throwable {
+        dotestDistributedSubscriberToQueueSerial(true);
+    }
+    
+    /**
+     * Topic to queue
+     * BMT/CMT
+     * serial-mode
+     * Durable
+     *
+     * @throws Throwable
+     */
+    public void dotestDistributedSubscriberToQueueSerial(boolean bmt) throws Throwable {
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
+        if (bmt) {
+            dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+            dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        }
         StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
-        spec.setConcurrencyMode("serial");
+        spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(Options.Subname.PREFIX + "?"
@@ -499,6 +533,11 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             + Options.Subname.DISTRIBUTION_TYPE + "=1");
         String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
+
+//        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
+//        .createConnector(StcmsConnector.class);
+//        cc.setOptions("JMSJCA.NoXA=true\r\nJMSJCA.IgnoreTx=true");
+        
         dd.update();
 
         // Deploy
@@ -538,6 +577,65 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
+        }
+    }
+
+    public void testDistributedSubscriberSecondNode() throws Throwable {
+        Passthrough p = createPassthrough(mServerProperties);
+               
+        EmbeddedDescriptor dd = getDD();
+        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        spec.setContextName("j-testTTXAXA");
+        spec.setDestination(p.getTopic1Name());
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode("cc");
+        spec.setSubscriptionDurability("Durable");
+        String subscriptionName = p.getDurableTopic1Name();
+        spec.setSubscriptionName(Options.Subname.PREFIX + "?"
+            + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
+            + Options.Subname.DISTRIBUTION_TYPE + "=1&"
+            + Options.Subname.QUEUENAME + "=" + p.getQueue1Name());
+        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        spec.setClientId(clientID);
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        
+        // Create a durable subscriber
+        TopicConnectionFactory f = p.createTopicConnectionFactory();
+        TopicConnection conn = f.createTopicConnection(p.getUserid(), p.getPassword());
+        if (clientID != null && clientID.length() != 0) {
+            conn.setClientID(clientID);
+        }
+        TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
+        Topic t = sess.createTopic(p.getTopic1Name());
+        sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+     
+            p.drainQ2();
+          
+            
+            int iters = isFastTest() ? 1 : 2;
+            for (int i = 0; i < iters; i++) {
+                p.setBatchId(100 + i);
+                
+                c.redeployModule(mTestEar.getAbsolutePath());
+                waitUntilRunning(c);
+                p.passFromQ1ToQ2(); 
+                
+                c.undeploy(mTestEarName);
+                //p.removeDurableSubscriber(clientID, Passthrough.T1,subscriptionName);
+            }
+            
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+            conn.close();
         }
     }
 }

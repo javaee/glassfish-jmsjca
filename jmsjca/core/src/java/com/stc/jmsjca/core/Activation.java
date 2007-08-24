@@ -22,6 +22,7 @@ import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
 
+import javax.jms.Queue;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
@@ -72,7 +73,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -88,7 +89,6 @@ public class Activation extends ActivationBase {
     private ActivationMBean mActivationMBean;
     private ObjectName mServerMgtMBeanName;
     private int mDeliveryMode;
-    private String mName;
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -122,6 +122,7 @@ public class Activation extends ActivationBase {
     private boolean mXConnectingInterruptRequest;
     private boolean mRedeliveryRedirect;
     private RAJMSObjectFactory mObjFactory;
+    private String mURL;
 
     /**
      * Activation constructor
@@ -140,9 +141,8 @@ public class Activation extends ActivationBase {
         if (url == null || url.length() == 0) {
             url = ra.getConnectionURL();
         }
+        mURL = url;
         mObjFactory = ra.createObjectFactory(url);
-        mName = spec.getDestinationType() + " [" + spec.getDestination() + "] on [" 
-        + url + "]"; 
     }
     
     /**
@@ -194,7 +194,7 @@ public class Activation extends ActivationBase {
                 Class[] paramTypes = {javax.jms.Message.class };
                 mOnMessageMethod = msgListenerClass.getMethod("onMessage", paramTypes);
             } catch (NoSuchMethodException ex) {
-                LocalizedString msg = LOCALE.x("E008: {0}: could not locate onMessage() function: {1}", mName, ex);
+                LocalizedString msg = LOCALE.x("E008: {0}: could not locate onMessage() function: {1}", getName(), ex);
                 sLog.fatal(msg, ex);
                 throw new RuntimeException(msg.toString(), ex);
             }
@@ -370,8 +370,8 @@ public class Activation extends ActivationBase {
                         mLock.wait();
                     }
                 } catch (InterruptedException e) {
-                    sLog.warn(LOCALE.x("E011: {0}: stop() operation was " +
-                            "interrupted; state is now {1}", mName, STATES[mState]));
+                    sLog.warn(LOCALE.x("E011: [{0}]: stop() operation was " +
+                            "interrupted; state is now {1}", getName(), STATES[mState]));
                     return;
                 }
             }
@@ -401,17 +401,17 @@ public class Activation extends ActivationBase {
     private void internalDistress(Exception ex) {
         synchronized (mLock) {
             if (mState == DISCONNECTED) {
-                sLog.warn(LOCALE.x("E012: {0}: inconsistency error: the following exception was encountered "
-                    + "while the connector is in DISCONNECTED mode: {1}", mName, ex), ex);
+                sLog.warn(LOCALE.x("E012: [{0}]: inconsistency error: the following exception was encountered "
+                    + "while the connector is in DISCONNECTED mode: {1}", getName(), ex), ex);
                 return;
             } else if (mState == CONNECTING) {
-                sLog.warn(LOCALE.x("E013: {0}: the following exception was encountered while initiating or "
-                    + "during message delivery: [{1}]; adapter is already in reconnect mode.", mName, ex), ex);
+                sLog.warn(LOCALE.x("E013: [{0}]: the following exception was encountered while initiating or "
+                    + "during message delivery: [{1}]; adapter is already in reconnect mode.", getName(), ex), ex);
                 return;
             } else if (mState == CONNECTED) {
-                sLog.warn(LOCALE.x("E014: {0}: the following exception was encountered while initiating or "
+                sLog.warn(LOCALE.x("E014: [{0}]: the following exception was encountered while initiating or "
                     + "during message delivery: [{1}]; attempts will be made to (re-)start message delivery "
-                    + "(auto reconnect mode).", mName, ex), ex);
+                    + "(auto reconnect mode).", getName(), ex), ex);
                 setState(DISCONNECTING);
                 // Asynchronously stop and start
                 new Thread(new Runnable() {
@@ -475,16 +475,13 @@ public class Activation extends ActivationBase {
                 try {
                     mDelivery = createDelivery();
                     mDelivery.start();
-                    sLog.info(LOCALE.x("E015: {0}: message delivery initiation was successful.", mName));
+                    sLog.info(LOCALE.x("E015: [{0}]: message delivery initiation was successful.", getName()));
                     setState(CONNECTED);
                     break;
                 } catch (Exception e) {
                     mDelivery = null;
                     int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
-                    sLog.warn(LOCALE.x("E016: {0}: message delivery initiation failed " +
-                            "(attempt #{1}); will retry in {2} seconds. " +
-                            "The error was: {3}", 
-                            mName, Integer.toString(attempt  + 1), Integer.toString(dt), e), e);
+                    logDeliveryInitiationException(attempt + 1, dt, e);
                     tryAgainAt = System.currentTimeMillis() + dt * 1000;
                     attempt++;
                 }
@@ -503,10 +500,24 @@ public class Activation extends ActivationBase {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                sLog.info(LOCALE.x("E017: {0}: message delivery initiation attempt was interrupted", mName));
+                sLog.info(LOCALE.x("E017: [{0}]: message delivery initiation attempt was interrupted", getName()));
                 break;
             }
         }
+    }
+
+    /**
+     * Logs a failure when the delivery initiation attempt fails
+     * 
+     * @param attemptPlusOne one-based attempt index
+     * @param dt time to wait until next attempt
+     * @param e exception
+     */
+    protected void logDeliveryInitiationException(int attemptPlusOne, int dt, Exception e) {
+        sLog.warn(LOCALE.x("E016: [{0}]: message delivery initiation failed " +
+            "(attempt #{1}); will retry in {2} seconds. " +
+            "The error was: {3}", 
+            getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), e), e);
     }
 
     /**
@@ -617,7 +628,9 @@ public class Activation extends ActivationBase {
             try {
                 getRA().getMBeanServer().unregisterMBean(mServerMgtMBeanName);
             } catch (Exception e) {
-                sLog.warn(LOCALE.x("E020: {0}: exception on unregistering server MBean: {1}", mName, e), e);
+                sLog.warn(LOCALE.x(
+                    "E020: [{0}]: exception on unregistering server MBean [{1}]: {2}",
+                    getName(), mServerMgtMBeanName, e), e);
             }
             mServerMgtMBeanName = null;
         }
@@ -737,7 +750,23 @@ public class Activation extends ActivationBase {
      * @return a human friendly name
      */
     public String getName() {
-        return mName;
+        String consumertype;
+        if (Queue.class.getName().equals(mSpec.getDestinationType())) {
+            consumertype = "QueueReceiver";
+        } else {
+            if (RAJMSActivationSpec.DURABLE.equals(mSpec.getSubscriptionDurability())) {
+                consumertype = RAJMSActivationSpec.DURABLE + " TopicSubscriber(" + mSpec.getSubscriptionName() + ")"; 
+            } else {
+                consumertype = RAJMSActivationSpec.NONDURABLE + " TopicSubscriber"; 
+            }
+        }
+        
+        String deliveryType = Integer.toString(mDeliveryMode);
+        if (mDeliveryMode > 0 && mDeliveryMode < RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS.length) {
+            deliveryType = RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mDeliveryMode];
+        }
+        
+        return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ") @ [" + mURL + "]"; 
     }
     
     /**

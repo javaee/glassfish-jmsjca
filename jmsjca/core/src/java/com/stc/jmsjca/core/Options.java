@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public interface Options {
     /**
@@ -102,6 +102,11 @@ public interface Options {
 //         */
 //        String STALETIMEOUT = "JMSJCA.idletimeout";
         
+        /**
+         * Do not cache connection factories (for jndi, wl)
+         */
+        String DONOTCACHECONNECTIONFACTORIES = "JMSJCA.nocfcache";
+
         /**
          * The maximum number of connections in the pool (only applies when the
          * connection manager provided by the RA is used)

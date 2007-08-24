@@ -51,7 +51,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -87,6 +87,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private transient boolean mIgnoreTx;
     private transient boolean mClientContainer;
     private transient boolean mBypassRA;
+    private transient boolean mDoNotCacheConnectionFactories;
     private transient boolean mStrict;
     private transient String mTxMgrLocatorClass;
     
@@ -192,36 +193,42 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         if (domain >= XConnectionRequestInfo.NDOMAINS) {
             throw new JMSException("Logic fault: invalid domain " + domain);
         }
-
-        Object[] factories;
         
-        if (overrideUrl == null) {
-            if (mDefaultConnectionFactories == null) {
-                mDefaultConnectionFactories = new Object[XConnectionRequestInfo.NDOMAINS];
-            }
-            factories = mDefaultConnectionFactories;
+        if (getOptionDoNotCacheConnectionFactories()) {
+            Object o = getObjFactory().createConnectionFactory(domain, 
+                (RAJMSResourceAdapter) mRA, null, this, overrideUrl);
+            return o;
         } else {
-            // Lazy init
-            if (mConnectionFactories == null) {
-                mConnectionFactories = new HashMap();
+            Object[] factories;
+
+            if (overrideUrl == null) {
+                if (mDefaultConnectionFactories == null) {
+                    mDefaultConnectionFactories = new Object[XConnectionRequestInfo.NDOMAINS];
+                }
+                factories = mDefaultConnectionFactories;
+            } else {
+                // Lazy init
+                if (mConnectionFactories == null) {
+                    mConnectionFactories = new HashMap();
+                }
+
+                // Lookup factories with lazy init
+                factories = (Object[]) mConnectionFactories.get(overrideUrl);
+                if (factories == null) {
+                    factories = new Object[XConnectionRequestInfo.NDOMAINS];
+                    mConnectionFactories.put(overrideUrl, factories);
+                }
             }
-            
-            // Lookup factories with lazy init
-            factories = (Object[]) mConnectionFactories.get(overrideUrl);
-            if (factories == null) {
-                factories = new Object[XConnectionRequestInfo.NDOMAINS];
-                mConnectionFactories.put(overrideUrl, factories);
+
+            // Find proper factory type with lazy init
+            if (factories[domain] == null) {
+                RAJMSResourceAdapter ra = (RAJMSResourceAdapter) mRA;
+                Object o = getObjFactory().createConnectionFactory(domain, ra, null, this, overrideUrl);
+                factories[domain] = o;
             }
+
+            return factories[domain];
         }
-        
-        // Find proper factory type with lazy init
-        if (factories[domain] == null) {
-            RAJMSResourceAdapter ra = (RAJMSResourceAdapter) mRA;
-            Object o = getObjFactory().createConnectionFactory(domain, ra, null, this, overrideUrl);
-            factories[domain] = o;
-        }
-        
-        return factories[domain];
     }
 
     /**
@@ -502,6 +509,8 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mNoXA = Utility.getSystemProperty(Options.NOXA, mNoXA);
         mBypassRA = Utility.isTrue(p.getProperty(Options.Out.BYPASSRA), false);
         mBypassRA = Utility.getSystemProperty(Options.Out.BYPASSRA, mBypassRA);
+        mDoNotCacheConnectionFactories = Utility.isTrue(p.getProperty(Options.Out.DONOTCACHECONNECTIONFACTORIES), 
+            !getObjFactory().shouldCacheConnectionFactories());
         mStrict = Utility.isTrue(p.getProperty(Options.Out.STRICT), false);
         mStrict = Utility.getSystemProperty(Options.Out.STRICT, mStrict);
         mTxMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
@@ -772,6 +781,16 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     public boolean getOptionBypassRA() {
         extractOptions();
         return mBypassRA;
+    }
+
+    /**
+     * Returns true if connection factories should not be cached
+     *
+     * @return boolean
+     */
+    public boolean getOptionDoNotCacheConnectionFactories() {
+        extractOptions();
+        return mDoNotCacheConnectionFactories;
     }
 
     /**

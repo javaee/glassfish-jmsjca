@@ -2029,7 +2029,7 @@ abstract public class XTestBase extends BaseTestCase {
         }
     }
 
-    private static int EXPECTWITHIN = 2500;
+    protected static int EXPECTWITHIN = 2500;
     private static int DONTEXPECT = 500;
 
 
@@ -5480,5 +5480,4 @@ abstract public class XTestBase extends BaseTestCase {
     public void testXACCStopCloseRolback() throws Throwable {
         doTestXACCStopCloseRolback();
     }
-    
 }

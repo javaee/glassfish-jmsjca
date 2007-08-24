@@ -33,7 +33,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Exc {
 
@@ -171,5 +171,19 @@ public class Exc {
         setCause(toSetOn, cause);
         //toSetOn.setLinkedException(cause);
         return toSetOn;
+    }
+    
+    /**
+     * Marker for a failed consumer creation (clientID or durable subscriber already
+     * exists exception)
+     */
+    public static class ConsumerCreationException extends JMSException {
+        /**
+         * @param e exception to propagate
+         */
+        public ConsumerCreationException(JMSException e) {
+            super(e.getMessage());
+            initCause(e);
+        }
     }
 }

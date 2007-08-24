@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Application_1184191140828" version="1.4" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/application_1_4.xsd">
+    <description>Application description</description>
+    <display-name>ratest-test</display-name>
+    <module>
+        <connector>ratest.rar</connector>
+    </module>
+    <module>
+        <connector>ratest1.rar</connector>
+    </module>
+    <module id="EjbModule_1184191154000">
+        <ejb>mdbtest.jar</ejb>
+    </module>
+</application>

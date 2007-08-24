@@ -43,7 +43,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -208,7 +208,6 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         } catch (RuntimeException e) {
             sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}", e), e);
         } finally {
-sLog.infoNoloc("run(): deliverycomplete=" + deliveryComplete);            
             if (deliveryComplete) {
                 setState(STATE_IDLE);
                 mDelivery.workDone(this);
