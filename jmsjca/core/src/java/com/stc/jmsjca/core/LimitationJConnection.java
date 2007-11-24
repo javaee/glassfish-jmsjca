@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Indicates that this object has a JConnection
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public interface LimitationJConnection {
     /**

@@ -27,7 +27,7 @@ import javax.resource.spi.InvalidPropertyException;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
@@ -467,12 +467,13 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @param endpointPoolSteadySize The endpointPoolSteadySize
      */
-    public void setEndpointPoolSteadySize(int endpointPoolSteadySize) {
-        if (endpointPoolSteadySize < 0) {
+    public void setEndpointPoolSteadySize(String endpointPoolSteadySize) {
+        int iEndpointPoolSteadySize = Integer.parseInt(endpointPoolSteadySize);
+        if (iEndpointPoolSteadySize < 0) {
             throw new IllegalArgumentException(
                 "Invalid value for endpointPoolSteadySize: " + endpointPoolSteadySize);
         }
-        mEndpointPoolSteadySize = endpointPoolSteadySize;
+        mEndpointPoolSteadySize = iEndpointPoolSteadySize;
     }
 
     /**
@@ -489,12 +490,13 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @param endpointPoolResizeCount The endpointPoolResizeCount
      */
-    public void setEndpointPoolResizeCount(int endpointPoolResizeCount) {
-        if (endpointPoolResizeCount < 1) {
+    public void setEndpointPoolResizeCount(String endpointPoolResizeCount) {
+        int iEndpointPoolResizeCount = Integer.parseInt(endpointPoolResizeCount);
+        if (iEndpointPoolResizeCount < 1) {
             throw new IllegalArgumentException(
                 "Invalid value for endpointPoolResizeCount: " + endpointPoolResizeCount);
         }
-        this.mEndpointPoolResizeCount = endpointPoolResizeCount;
+        this.mEndpointPoolResizeCount = iEndpointPoolResizeCount;
     }
 
     /**
@@ -511,13 +513,14 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @param endpointPoolResizeTimeout The endpointPoolResizeTimeout
      */
-    public void setEndpointPoolResizeTimeout(int endpointPoolResizeTimeout) {
-        if (endpointPoolResizeTimeout < 1) {
+    public void setEndpointPoolResizeTimeout(String endpointPoolResizeTimeout) {
+        int iEndpointPoolResizeTimeout = Integer.parseInt(endpointPoolResizeTimeout);
+        if (iEndpointPoolResizeTimeout < 1) {
             throw new IllegalArgumentException(
                 "Invalid value for endpointPoolResizeTimeout: "
                     + endpointPoolResizeTimeout);
         }
-        mEndpointPoolResizeTimeout = endpointPoolResizeTimeout;
+        mEndpointPoolResizeTimeout = iEndpointPoolResizeTimeout;
     }
 
     /**
@@ -739,8 +742,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @param size int
      */
-    public void setBatchSize(int size) {
-        mBatchSize = size;
+    public void setBatchSize(String size) {
+        mBatchSize = Integer.parseInt(size);
     }
     
     /**

@@ -16,8 +16,10 @@
 
 package com.stc.jmsjca.test.core;
 
+import com.stc.jmsjca.core.Delivery;
 import com.stc.jmsjca.core.EndOfBatchMessage;
 import com.stc.jmsjca.core.JConnectionFactory;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.WMessageIn;
 import com.stc.jmsjca.util.Logger;
 
@@ -66,13 +68,13 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
     private boolean mInited = true;
     private InitialContext mCtx;
-
+   
 
     static final Logger sLog = Logger.getLogger(TestMessageBean.class);
     private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
@@ -563,8 +565,8 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             .lookup("java:comp/env/queuefact");
 
             conn = fact.createQueueConnection();
-            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            
+            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);            
+
             // Do rollback
             {
                 mMdc.getUserTransaction().begin();
@@ -572,8 +574,8 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 QueueSender prod = s.createSender(dest);
                 prod.send(s.createTextMessage("Should not have been sent"));
                 mMdc.getUserTransaction().rollback();
-            }
-            
+            }            
+
             // Do commit
             {
                 mMdc.getUserTransaction().begin();
@@ -588,6 +590,131 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         }
     }
 
+    /**
+     * Test XAsession rollback with connection allocated outside of TX
+     *
+     * @param message Message
+     * @throws Exception
+     */    
+    public void testXASessionRBAllocateOutsideOfTx(javax.jms.Message message) throws Exception {
+        QueueConnection conn = null;
+        try {
+
+            QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+            .lookup("java:comp/env/queuefact");
+
+            conn = fact.createQueueConnection();
+            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            boolean expectedException = false;
+            
+            // Do rollback
+            {
+                try {
+                    Queue dest = s.createQueue("Queue2");
+                    QueueSender prod = s.createSender(dest);
+                    prod.send(message);
+                    s.rollback();
+                    s.close();
+                } catch(javax.jms.IllegalStateException iex) {
+                    System.out.println("testXASessionRBAllocateOutsideOfTx Expected: " + iex.getMessage());
+                    expectedException = true;
+                    try {
+                        s.close();         
+                    } catch(Exception ex) {                        
+                    }                    
+                }
+            }
+            if (expectedException) {
+                mMdc.getUserTransaction().begin();
+                QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
+                Queue dest = ss.createQueue("Queue2");
+                QueueSender prod = ss.createSender(dest);
+                prod.send(message);
+                ss.close();                
+            }
+        } finally {
+            safeClose(conn);
+        }
+    }
+
+    /**
+     * Test XAsession commit with connection allocated outside of TX
+     *
+     * @param message Message
+     * @throws Exception
+     */    
+    public void testXASessionCommitAllocateOutsideOfTx(javax.jms.Message message) throws Exception {
+        QueueConnection conn = null;
+        try {
+
+            QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+            .lookup("java:comp/env/queuefact");
+            boolean expectedException = false;
+
+            conn = fact.createQueueConnection();
+            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            
+            // Do commit
+            {
+                try {
+                    Queue dest = s.createQueue("Queue2");
+                    QueueSender prod = s.createSender(dest);
+                    prod.send(message);
+                    s.commit();
+                    s.close();
+                } catch(javax.jms.IllegalStateException iex) {
+                    // should throw exception because s is XA session
+                    // which is not listed in Global transaction manager in WLS
+                    System.out.println("testXASessionCommitAllocateOutsideOfTx Expected: " + iex.getMessage());
+                    expectedException = true;
+                    try {
+                        s.close();
+                    } catch(Exception ex) {                        
+                    }
+                }
+                if (expectedException) {
+                    // auto commit
+                    mMdc.getUserTransaction().begin();
+                    QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
+                    Queue dest = ss.createQueue("Queue2");
+                    QueueSender prod = ss.createSender(dest);
+                    prod.send(message);
+                    ss.close();                
+                }                
+            }
+        } finally {
+            safeClose(conn);
+        }
+    }
+    
+    /**
+     * Test autocommit with connection allocated outside of TX
+     *
+     * @param message Message
+     * @throws Exception
+     */
+    public void testBeanManagedAutoCommitAllocateOutsideOfTx(javax.jms.Message message) throws Exception {
+        QueueConnection conn = null;
+        try {
+
+            QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+            .lookup("java:comp/env/queuefact");
+
+            conn = fact.createQueueConnection();
+            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            // Do commit
+            {
+                mMdc.getUserTransaction().begin();
+                Queue dest = s.createQueue("Queue2");
+                QueueSender prod = s.createSender(dest);
+                prod.send(message);
+                s.close();
+            }
+        } finally {
+            safeClose(conn);
+        }
+    }
+    
     /**
      * Test rollback with connection allocated inside of TX
      *
@@ -936,9 +1063,8 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
             if (shouldThrow()) {
                 sLog.infoNoloc("WILL NOW THROW INTENTIONAL EXCEPTION");
-                throw new IntentionalException("Random exception to force rollback");
+                throw new IntentionalException("Random exception to force rollback.");
             }
-
             mMdc.getUserTransaction().begin();
             conn = fact.createQueueConnection();
             QueueSession s = conn.createQueueSession(true,
@@ -951,7 +1077,29 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             safeClose(conn);
         }
     }
-    
+  
+    public void throwExceptionInBMT(javax.jms.Message message) throws Exception {
+        QueueConnection conn = null;
+        try {
+            QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+                .lookup("java:comp/env/queuefact");
+
+            mMdc.getUserTransaction().begin();
+            conn = fact.createQueueConnection();
+            QueueSession s = conn.createQueueSession(true,
+                Session.AUTO_ACKNOWLEDGE);
+            Queue dest = s.createQueue("Queue2");
+            QueueSender prod = s.createSender(dest);
+            prod.send(message);
+            if (shouldThrow()) {
+                sLog.infoNoloc("WILL NOW THROW INTENTIONAL EXCEPTION");
+                throw new IntentionalException("Random exception to force rollback.");
+            }            
+            mMdc.getUserTransaction().commit();
+        } finally {
+            safeClose(conn);
+        }
+    }
     /**
      * Passes from Q1 to Q2 assuming XA; the connection failure will apear during
      * enlisting the XAResource
@@ -1779,6 +1927,48 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
      * @throws Exception
      */
     public void throwException(Message m) throws Exception {
+        throw new IntentionalException("Intentional: to force rollback");    
+    }
+    
+    private void setPropsForRollback(Message m) throws JMSException {
+        m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "1", "x");
+        m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "2", "y");
+        
+        String ctid = Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "ct";
+        Integer ct = (Integer) m.getObjectProperty(Delivery.REDELIVERYCOUNT);
+        if (ct.intValue() == 0) {
+            m.setStringProperty(ctid, ct.toString());
+        } else {
+            m.setStringProperty(ctid, m.getStringProperty(ctid) + "," + m.getObjectProperty(Delivery.REDELIVERYCOUNT));
+        }
+        
+        String h = m.getStringProperty(Options.MessageProperties.REDELIVERY_HANDLING);
+        h = h.replaceAll("queue", "topic");
+        m.setStringProperty(Options.MessageProperties.REDELIVERY_HANDLING, h);
+    }
+    
+    /**
+     * Always performs a rollback
+     * @param m
+     * @throws Exception
+     */
+    public void rollbackSetProps(Message m) throws Exception {
+        setPropsForRollback(m);
+        mMdc.setRollbackOnly();    
+    }
+    
+    public void stopDelivery(Message m) throws Exception {
+        testQQXAXA(m);
+        m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR, "Test: stopDelivery()");
+    }
+    
+    /**
+     * Always performs a rollback
+     * @param m
+     * @throws Exception
+     */
+    public void throwExceptionSetProps(Message m) throws Exception {
+        setPropsForRollback(m);
         throw new IntentionalException("Intentional: to force rollback");    
     }
     

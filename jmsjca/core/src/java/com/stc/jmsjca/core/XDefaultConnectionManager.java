@@ -160,7 +160,7 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);

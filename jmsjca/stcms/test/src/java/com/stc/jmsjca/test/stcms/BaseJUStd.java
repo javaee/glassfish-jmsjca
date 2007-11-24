@@ -1966,7 +1966,7 @@ public class BaseJUStd extends XTestBase {
         spec.setConcurrencyMode("sync");
         spec.setDestinationType(javax.jms.Queue.class.getName());
         spec.setDestination(p.getQueue1Name());
-        spec.setBatchSize(5);
+        spec.setBatchSize("5");
         spec.setEndpointPoolMaxSize("1");
         spec.setHoldUntilAck("1");
 
@@ -2035,7 +2035,7 @@ public class BaseJUStd extends XTestBase {
         spec.setConcurrencyMode("sync");
         spec.setDestinationType(javax.jms.Queue.class.getName());
         spec.setDestination(p.getQueue1Name());
-        spec.setBatchSize(3);
+        spec.setBatchSize("3");
         spec.setEndpointPoolMaxSize("1");
         spec.setHoldUntilAck("1");
         spec.setRedeliveryHandling("1:move(queue:Queue2)");
@@ -2168,7 +2168,7 @@ public class BaseJUStd extends XTestBase {
         spec.setConcurrencyMode("sync");
         spec.setDestinationType(javax.jms.Queue.class.getName());
         spec.setDestination(p.getQueue1Name());
-        spec.setBatchSize(5);
+        spec.setBatchSize("5");
         spec.setEndpointPoolMaxSize("1");
         spec.setHoldUntilAck("1");
         spec.setRedeliveryHandling("3:move(queue:Queue2)");

@@ -25,7 +25,7 @@ import com.stc.jmsjca.util.UrlParser;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
     /**

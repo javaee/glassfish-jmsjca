@@ -37,7 +37,7 @@ import javax.transaction.xa.Xid;
  * should add a notice of this fact to the end-user documentation.
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class PseudoXAResource implements LastAgentResource {
     private Session mSession;

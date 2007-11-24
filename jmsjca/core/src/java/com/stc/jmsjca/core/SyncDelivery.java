@@ -73,6 +73,8 @@ import java.util.List;
  * </ul>
  * </pre>
  * 
+ * TODO: Looks like a msg is only wrapped when HUA mode is on; this is a bug
+ * 
  * @author fkieviet
  */
 public class SyncDelivery extends Delivery {
@@ -536,7 +538,9 @@ public class SyncDelivery extends Delivery {
             
             Message m = mCons.receive(TIMEOUT);
             if (m != null) {
-                m = wrapMsg(m, coord, -1);
+                if (mHoldUntilAck) {
+                    m = wrapMsg(m).setBatchSize(mBatchSize, coord, -1);
+                }
                 deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(result.getOnMessageSucceeded());
                 coord.setRollbackOnly(result.getException());
@@ -577,16 +581,18 @@ public class SyncDelivery extends Delivery {
 
             boolean msgsWereReceived = false;
             for (int i = 0; i < mBatchSize; i++) {
-                Message m = mCons.receive(i == 0 ? TIMEOUT : TIMEOUTBATCH);
+                Message m = mCons.receive(i == 0 ? TIMEOUT : TIMEOUTBATCH);                
                 if (m == null) {
                     break;
                 } else {
-                    m = wrapMsg(m, coord, coord.getNMsgsDelivered());
+                    if (mHoldUntilAck) {
+                        m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
+                    }
                     lastResult.resetDeliveryState();
                     deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                     msgsWereReceived = true;
                     coord.msgDelivered(lastResult.getOnMessageSucceeded());
-                    coord.setRollbackOnly(lastResult.getException());
+                    coord.setRollbackOnly(lastResult.getException());  
                     
                     // If rollback-only, don't continue processing remainder of batch 
                     if (coord.isRollbackOnly() || (tx != null && tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)) {
@@ -594,11 +600,13 @@ public class SyncDelivery extends Delivery {
                     }
                 }
             }
-        
-            if (coord.getNMsgsDelivered() > 0) {
-                // Msgs were delivered; signal end of batch
+                        
+            if (coord.getNMsgsDelivered() > 0) {            
+                // Msgs were delivered; signal end of batch                
                 Message m = new EndOfBatchMessage();
-                m = wrapMsg(m, coord, coord.getNMsgsDelivered());
+                if (mHoldUntilAck) {
+                    m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
+                }
                 lastResult.resetDeliveryState();
                 deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -621,7 +629,7 @@ public class SyncDelivery extends Delivery {
                     getTransaction(true).setRollbackOnly();
                 }
             }
-
+            
             // End transaction
             afterDelivery(lastResult, mMessageMoveConnection, mEndpoint, mMDB);
             if (lastResult.getShouldDiscardEndpoint()) {
@@ -646,7 +654,9 @@ public class SyncDelivery extends Delivery {
                     break;
                 } else {
                     msgsWereDelivered = true;
-                    m = wrapMsg(m, coord, coord.getNMsgsDelivered());
+                    if (mHoldUntilAck) {
+                        m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
+                    }
                     lastResult.reset();
                     deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                     coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -663,7 +673,9 @@ public class SyncDelivery extends Delivery {
             if (msgsWereDelivered) {
                 // Msgs were delivered; signal end of batch
                 Message m = new EndOfBatchMessage();
-                m = wrapMsg(m, coord, coord.getNMsgsDelivered());
+                if (mHoldUntilAck) {
+                    m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
+                }
                 lastResult.reset();
                 deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
@@ -693,7 +705,9 @@ public class SyncDelivery extends Delivery {
             
             if (m != null) {
                 // Optionally wrap for ack() call
-                m = wrapMsg(m, coord, -1);
+                if (mHoldUntilAck) {
+                    m = wrapMsg(m).setBatchSize(mBatchSize, coord, -1);
+                }
                 
                 // Deliver
                 DeliveryResults result = new DeliveryResults(); 

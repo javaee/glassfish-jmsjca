@@ -28,7 +28,7 @@ import javax.jms.MessageListener;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMessageConsumer implements MessageConsumer {
     /**

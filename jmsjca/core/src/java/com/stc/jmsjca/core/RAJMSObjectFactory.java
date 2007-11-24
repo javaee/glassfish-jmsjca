@@ -65,6 +65,8 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.transaction.xa.XAResource;
 
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -72,7 +74,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -426,6 +428,75 @@ public abstract class RAJMSObjectFactory {
         
         return ret;
     }
+    
+    /**
+     * Computes a message selector with substitutions
+     * 
+     * @param ra RA
+     * @param spec activation spec
+     * @return selector
+     * @throws JMSException on parse errors
+     */
+    public String getMessageSelector(RAJMSResourceAdapter ra, RAJMSActivationSpec spec) throws JMSException {
+        try {
+            
+            Properties q = new Properties();
+            getProperties(q, ra, spec, null, null);
+            
+            String ret = q.getProperty(Options.In.OPTION_SELECTOR);
+            if (Str.empty(ret)) {
+                ret = spec.getMessageSelector();
+            }
+            
+            String specsel = spec.getMessageSelector() == null ? "" : spec.getMessageSelector();
+            
+            if (!Str.empty(ret)) {
+                // Determine subscriber name
+                String subname = spec.getSubscriptionName();
+                if (subname != null && subname.startsWith(Options.Subname.PREFIX)) {
+                    UrlParser u = new UrlParser(subname);
+                    Properties p = u.getQueryProperties();
+                    subname = p.getProperty(Options.Subname.SUBSCRIBERNAME);
+                }
+
+                // Setup substitution parameters
+                final Map map = new HashMap();
+                map.put(Options.Selector.SUB_NAME, subname == null ? "" : subname);
+                map.put(Options.Selector.SELECTOR, specsel);
+                if (Str.empty(spec.getMessageSelector())) {
+                    map.put(Options.Selector.ANDSELECTOR, "");
+                    map.put(Options.Selector.SELECTORAND, "");
+                } else {
+                    map.put(Options.Selector.ANDSELECTOR, "and (" + specsel + ")");
+                    map.put(Options.Selector.SELECTORAND, "(" + specsel + ") and");
+                }
+
+                // MsgSelector
+                int[] nResolved = new int[1];
+                int[] nUnresolved = new int[1];
+                Str.Translator t = new Str.Translator() {
+                    public String get(String key) {
+                        String ret = (String) map.get(key);
+                        if (ret == null) {
+                            ret = System.getProperty(key);
+                        }
+                        return ret;
+                    }
+                };
+                ret = Str.substituteAntProperty(ret, t , nResolved, nUnresolved);
+
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Selector [" + spec.getMessageSelector() + "] --> [" + ret + "]"
+                        + " with " + nResolved[0] + " resolved, " + nUnresolved[0] + " unresolved.");
+                }
+            }
+
+            return ret;
+        } catch (Exception e) {
+            throw Exc.jmsExc(LOCALE.x("E116: Could not compute message selector. Selector in "
+                + "activation spec is [{0}], exception is: {1}", spec.getMessageSelector(), e), e);
+        }
+    }
 
     /**
      * Creates a message consumer for the inbound part of the RA
@@ -449,7 +520,7 @@ public abstract class RAJMSObjectFactory {
                         return ((XATopicSession) sess).getTopicSession().
                         createDurableSubscriber((Topic) dest,
                             spec.getSubscriptionName(),
-                            spec.getMessageSelector(), false);
+                            getMessageSelector(ra, spec), false);
                     } catch (JMSException e) {
                         throw new Exc.ConsumerCreationException(e);
                     }
@@ -922,8 +993,14 @@ public abstract class RAJMSObjectFactory {
             TopicPublisher publisher = (TopicPublisher) producer;
             publisher.publish(m, deliveryMode, priority, 0);
         } else {
-            QueueSender sender = (QueueSender) producer;
-            sender.send(m, deliveryMode, priority, 0);
+            // For unified domain which is not supported in 1.0.2, need to avoid cast
+            // to QueueSender 
+            if (producer instanceof QueueSender) {
+                QueueSender sender = (QueueSender) producer;
+                sender.send(m, deliveryMode, priority, 0);
+            } else {
+                producer.send(m, deliveryMode, priority, 0);
+            }
         }
     }
 

@@ -22,7 +22,7 @@ package com.stc.jmsjca.core;
  * describe queues and topics. 
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public abstract class AdminDestination implements javax.jms.Destination, java.io.Serializable {
     /**

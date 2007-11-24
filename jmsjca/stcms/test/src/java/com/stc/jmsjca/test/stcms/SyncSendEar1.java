@@ -27,7 +27,7 @@ import java.util.Properties;
  * Excercises the same tests using Sync mode
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SyncSendEar1 extends SendEar1 {
 

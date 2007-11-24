@@ -34,7 +34,7 @@ import java.util.Properties;
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class TopicJBossEar1 extends TopicEndToEnd {
         

@@ -33,7 +33,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class QueueWLEar1 extends QueueEndToEnd {
 

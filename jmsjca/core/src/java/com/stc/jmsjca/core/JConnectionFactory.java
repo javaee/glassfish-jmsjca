@@ -58,7 +58,7 @@ import java.util.WeakHashMap;
  * ManagedConnectionFactory</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JConnectionFactory implements javax.jms.ConnectionFactory,
     java.io.Serializable, javax.resource.Referenceable, javax.naming.spi.ObjectFactory {

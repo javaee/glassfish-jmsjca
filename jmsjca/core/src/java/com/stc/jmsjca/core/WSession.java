@@ -42,7 +42,7 @@ import javax.jms.TopicSubscriber;
  * calls to the JSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WSession implements Session {
     /**

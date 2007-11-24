@@ -61,7 +61,7 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public abstract class ActivationBase {
 //    private static Logger sLog = Logger.getLogger(ActivationBase.class);

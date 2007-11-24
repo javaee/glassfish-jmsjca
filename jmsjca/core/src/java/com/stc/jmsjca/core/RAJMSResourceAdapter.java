@@ -58,12 +58,12 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
-    private static final long RETRY_INTERVAL_MS = 500;
-    private static final int RETRY_COUNT = 10 * 4;
+    private static final long RETRY_INTERVAL_MS = 1000 * 3; // changed to 3 second to give ConfigMBean more time to load
+    private static final int RETRY_COUNT = 10 * 6; // increase retry count as well
     private String mConnectionURL;
     private String mUserName;
     private String mPassword;
@@ -102,6 +102,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private transient Map mStopListeners;
 
     private static final Localizer LOCALE = Localizer.get();
+    //flag for ldap MBean initialization
+    private boolean ldapReady;
 
     /**
      * Constructor
@@ -843,12 +845,22 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     sLog.debug("Transforming " + ldapURL + " using MBean [" + getTransformerMBeanName() + "]");
                 }
                 Object result = mbeanServer.invoke(mbeanName, "attemptTransform", parameters, signatures);
+                ldapReady = true;
                 return (String) result;
                 
             }
         } catch (Exception ex) {
-            sLog.warn(LOCALE.x("E049: Could not look up string [{0}]"
-             + " in ldap using MBean [{1}]: {2}.", ldapURL, mTransformerMBeanName, ex), ex);
+            if (ldapReady) {
+                sLog.warn(LOCALE.x("E049: Could not look up string [{0}]"
+                    + " in ldap using MBean [{1}]: {2}.", ldapURL, mTransformerMBeanName,
+                    ex), ex);
+            } else {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(LOCALE.x("E049: Could not look up string [{0}]"
+                        + " in ldap using MBean [{1}]: {2}.", ldapURL,
+                        mTransformerMBeanName, ex), ex);
+                }
+            }
         }
         return ldapURL;
     }

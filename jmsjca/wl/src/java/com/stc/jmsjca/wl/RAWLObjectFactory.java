@@ -59,7 +59,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);

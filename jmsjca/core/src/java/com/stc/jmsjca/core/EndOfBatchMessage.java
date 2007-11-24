@@ -27,7 +27,7 @@ import java.util.Enumeration;
  * Signals the end of a batch of messages
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class EndOfBatchMessage implements Message {
     /**

@@ -29,7 +29,7 @@ import java.util.Properties;
  * Tests STCMS reconnects on outbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class ReconnectOutboundStcmsEar1 extends ReconnectionTestsOutbound {
     

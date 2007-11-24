@@ -23,7 +23,7 @@ import javax.jms.JMSException;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WTextMessageIn extends WMessageIn implements TextMessage {
     private TextMessage mDelegate;
@@ -32,11 +32,9 @@ public class WTextMessageIn extends WMessageIn implements TextMessage {
      * Constructor
      * 
      * @param delegate real msg
-     * @param ackHandler callback to call when ack() or recover() is called
-     * @param ibatch index of this message in a batch; -1 for non-batched
      */
-    public WTextMessageIn(TextMessage delegate, AckHandler ackHandler, int ibatch) {
-        super(delegate, ackHandler, ibatch);
+    public WTextMessageIn(TextMessage delegate) {
+        super(delegate);
         mDelegate = delegate;
     }
 

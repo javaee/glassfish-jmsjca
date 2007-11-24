@@ -25,7 +25,7 @@ import java.io.Serializable;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WObjectMessageIn extends WMessageIn implements ObjectMessage {
     private ObjectMessage mDelegate;
@@ -34,11 +34,9 @@ public class WObjectMessageIn extends WMessageIn implements ObjectMessage {
      * Constructor
      * 
      * @param delegate real msg
-     * @param ackHandler callback to call when ack() or recover() is called
-     * @param ibatch index of this message in a batch; -1 for non-batched
      */
-    public WObjectMessageIn(ObjectMessage delegate, AckHandler ackHandler, int ibatch) {
-        super(delegate, ackHandler, ibatch);
+    public WObjectMessageIn(ObjectMessage delegate) {
+        super(delegate);
         mDelegate = delegate;
     }
 

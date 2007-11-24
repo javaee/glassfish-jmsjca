@@ -27,6 +27,7 @@ import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.test.core.XTestBase;
+import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.UrlParser;
 import com.stc.jmsjca.wave.RAWaveObjectFactory;
 import com.stc.jmsjca.wave.RAWaveResourceAdapter;
@@ -35,6 +36,10 @@ import com.stc.jmsjca.wave.WaveUrlParser;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
@@ -381,9 +386,64 @@ public class TestWaveJUStd extends XTestBase {
         p.getProperty("mqp1").equals("1");
         p.getProperty("imqaaa").equals("33");
     }
+
+    /**
+     * Grid does not implement batch size in CC
+     */
+    public void disabled_testXACCBatch() throws Throwable {
+        // JMS-Grid only loads one message to a serversession.
+        // JMS-Grid connection consumer does not support batch messages
+    }
     
-  public void disabled_test160tMixInsideACC() {}
-//  public void disabled_test160tMixTxMgr() {}
-//  public void test500t() {}
-//  public void test800t1() {}
+    /**
+     * To reproduce a concurrency issue...
+     * 
+     * @throws Throwable
+     */
+    public void x_testUnifiedStop() throws Throwable {
+        WaveProfile p = createWaveProfile(getConnectionUrl());
+        WaveXAConnectionFactory cf = new WaveXAConnectionFactory(p);
+        for (int j = 0; j < 1000; j++) {
+            System.out.println("X");
+            Connection c = cf.createConnection(USERID, PASSWORD);
+            c.start();
+            final Exception[] exc = new Exception[1];
+
+            final int N = 32;
+            final Semaphore sem = new Semaphore(N);
+            for (int i = 0; i < N; i++) {
+                final Session s = c.createSession(true, Session.SESSION_TRANSACTED);
+                MessageConsumer mc = s.createConsumer(s.createQueue("Queue1"));
+                final MessageProducer prod = s.createProducer(s.createQueue("Queue2"));
+                mc.setMessageListener(new MessageListener() {
+                    public void onMessage(Message arg0) {
+                        try {
+                            sem.acquire();
+                            prod.send(arg0);
+                            s.rollback();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            exc[0] = e;
+                        } finally {
+                            sem.release();
+                        }
+                    }
+                });
+                s.createProducer(s.createQueue("Queue1")).send(s.createTextMessage("hi"));
+                s.commit();
+            }
+
+            Thread.sleep(1000);
+            c.stop();
+            for (int i = 0; i < N; i++) {
+                sem.acquire();
+            }
+            c.close();
+        }         
+    }
+    
+    public void disabled_test160tMixInsideACC() {}
+    // public void disabled_test160tMixTxMgr() {}
+    // public void test500t() {}
+    // public void test800t1() {}
 }

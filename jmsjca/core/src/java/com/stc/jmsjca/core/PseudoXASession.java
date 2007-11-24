@@ -49,7 +49,7 @@ import java.io.Serializable;
  * used by adapters that don't support XA, such as WebLogic.
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class PseudoXASession implements XASession, XAQueueSession, XATopicSession {
     private Session mSession;

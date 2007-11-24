@@ -32,7 +32,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {

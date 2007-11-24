@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -81,7 +81,7 @@ public class TopicToQueueActivation extends ActivationBase {
                 topicSpec.getMBeanName() + "-LOADBALQ");
             topicSpec.setMBeanName(mbeanname);
         }
-        topicSpec.setBatchSize(Integer.parseInt(props.getProperty(Options.Subname.BATCHSIZE, "10")));
+        topicSpec.setBatchSize(props.getProperty(Options.Subname.BATCHSIZE, "10"));
         topicSpec.setHoldUntilAck("0");
         Properties options = new Properties();
         Str.deserializeProperties(topicSpec.getOptions(), options);

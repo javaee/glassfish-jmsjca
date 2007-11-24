@@ -53,7 +53,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);

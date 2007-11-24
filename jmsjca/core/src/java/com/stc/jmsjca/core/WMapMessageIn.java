@@ -25,7 +25,7 @@ import java.util.Enumeration;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMapMessageIn extends WMessageIn implements MapMessage {
     private MapMessage mDelegate;
@@ -34,11 +34,9 @@ public class WMapMessageIn extends WMessageIn implements MapMessage {
      * Constructor
      * 
      * @param delegate real msg
-     * @param ackHandler callback to call when ack() or recover() is called
-     * @param ibatch index of this message in a batch; -1 for non-batched
      */
-    public WMapMessageIn(MapMessage delegate, AckHandler ackHandler, int ibatch) {
-        super(delegate, ackHandler, ibatch);
+    public WMapMessageIn(MapMessage delegate) {
+        super(delegate);
         mDelegate = delegate;
     }
 

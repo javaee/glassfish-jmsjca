@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public interface Options {
     /**
@@ -66,6 +66,17 @@ public interface Options {
          * STCMS FIFO modes)
          */
         String OPTION_CONCURRENCYMODE = "JMSJCA.concurrencymode";
+
+        /**
+         * Wraps each message so that the listener can place redelivery data on the 
+         * message.
+         */
+        String OPTION_REDELIVERYWRAP = "JMSJCA.messagewrapping";
+        
+        /**
+         * Specifies an override selector
+         */
+        String OPTION_SELECTOR = "JMSJCA.selector";
     }
     
     /**
@@ -160,5 +171,87 @@ public interface Options {
          * Batch size
          */
         String BATCHSIZE = "batchsize";
+    }
+    
+    /**
+     * Additional properties on a message for redelivery handling
+     * 
+     * @author fkieviet
+     */
+    public interface MessageProperties {
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String ORIGINAL_MSGID = "JMS_Sun_JMSJCA_OriginalJMSMessageID";
+
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String ORIGINAL_CORRELATIONID = "JMS_Sun_JMSJCA_OriginalJMSCorrelationID";
+
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String ORIGINAL_CLIENTID = "JMS_Sun_JMSJCA_OriginalClientID";
+        
+        /**
+         * For stateful redelivery: the user can set these properties if prefixed with 
+         * these value
+         */
+        String USER_ROLLBACK_DATA_PREFIX = "JMS_Sun_JMSJCA_UserRollbackData.";
+
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String LAST_EXCEPTIONCLASS = "JMS_Sun_JMSJCA_ExceptionClass";
+
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String LAST_EXCEPTIONMESSAGE = "JMS_Sun_JMSJCA_ExceptionMessage";
+
+        /**
+         * Property name for copying messages to DLQ
+         */
+        String LAST_EXCEPTIONTRACE = "JMS_Sun_JMSJCA_ExceptionStackTrace";
+
+        /**
+         * Property name for msg wrapping
+         */
+        String REDELIVERY_HANDLING = "JMS_Sun_JMSJCA_RedeliveryHandling";
+
+        /**
+         * Property name for msg wrapping
+         */
+        String STOP_CONNECTOR = "JMS_Sun_JMSJCA_StopMessageDelivery";
+    }
+    
+    /**
+     * Selector related constants
+     * 
+     * @author fkieviet
+     */
+    public interface Selector {
+        /**
+         * Name of subscribername that can be used as "${subscribername}" in a selector
+         */
+        String SUB_NAME = "subscribername";
+        
+        /**
+         * Evaluates to the selector specified in the activation spec
+         */
+        String SELECTOR = "selector";
+        
+        /**
+         * Evaluates to "and (${selector})" if selector is non-empty string, or 
+         * evaluates to an empty string "" if selector is an empty string
+         */
+        String ANDSELECTOR = "andselector";
+        
+        /**
+         * Evaluates to "(${selector}) and" if selector is non-empty string, or 
+         * evaluates to an empty string "" if selector is an empty string
+         */
+        String SELECTORAND = "selectorand";
     }
 }

@@ -17,8 +17,10 @@
 package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.core.DeliveryStats;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RedeliveryHandler;
+import com.stc.jmsjca.core.WMessageIn;
 import com.stc.jmsjca.core.RedeliveryHandler.Action;
 import com.stc.jmsjca.core.RedeliveryHandler.Move;
 
@@ -247,15 +249,13 @@ public class ReliveryHandlerJUStd extends TestCase {
             }
 
             protected void deleteMessage(Message m, Encounter e) {
-                // TODO Auto-generated method stub
-                
             }
 
             protected void move(Message m, Encounter e, boolean isTopic, String destinationName, Object cookie) throws Exception {
-                // TODO Auto-generated method stub
-                
             }
-            
+
+            protected void stopConnector(String s) {
+            }
         };
 
         // Check survival of 1
@@ -286,9 +286,61 @@ public class ReliveryHandlerJUStd extends TestCase {
         }
         System.out.println(delay[0]);
         assertTrue(delay[0] == 220);
-        
-        
     }
-    
-    
+
+    public void testChangeActionsInMidFlight() throws Throwable {
+        RAJMSActivationSpec act = new Spec();
+        act.setRedeliveryHandling("5:10; 6:15; 10:30; 15:move(queue:a)");
+        act.setDestinationType(Queue.class.getName());
+        // 1*10 + 4*15 + 5*30 = 220
+        // 0 0 0 0 10 15 15 15 15 30 30 30 30 30 15*
+        
+        final long[] delay = new long[1];
+        final long[] movedat = new long[1];
+        final boolean[] shutdown = new boolean[1];
+        RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            protected void delayMessageDelivery(Message m, Encounter e, long howLong) {
+                delay[0] += howLong;
+            }
+            protected void deleteMessage(Message m, Encounter e) {
+            }
+
+            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, Object cookie) throws Exception {
+                if (movedat[0] == 0) {
+                    movedat[0] = e.getNEncountered();
+                }
+            }
+            protected void stopConnector(String s) {
+                shutdown[0] = true;
+            }
+        };
+        
+        // Standard behavior
+        WMessageIn m = new WMessageIn(new Msg("1x"));
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+        }
+        System.out.println(delay[0]);
+        assertTrue(delay[0] == 220);
+        System.out.println(movedat[0]);
+        assertTrue(movedat[0] == 15);
+
+        // Change actions
+        delay[0] = 0;
+        movedat[0] = 0;
+        m = new WMessageIn(new Msg("2x"));
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "1", "x");
+            m.setStringProperty(Options.MessageProperties.REDELIVERY_HANDLING, "5:11; 6:15; 10:35; 16:move(queue:a)");
+            m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR, "Some reason");
+        }
+        // 1*11 + 4*15 + 6*35 = 281
+        // 0 0 0 0 11 15 15 15 15 35 35 35 35 35 15*
+        System.out.println(delay[0]);
+        assertTrue(delay[0] == 281);
+        System.out.println(movedat[0]);
+        assertTrue(movedat[0] == 16);
+        assertTrue(shutdown[0]);
+    }
 }

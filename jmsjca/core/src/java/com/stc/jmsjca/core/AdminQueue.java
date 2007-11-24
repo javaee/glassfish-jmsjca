@@ -22,7 +22,7 @@ import javax.jms.JMSException;
  * An administrative queue
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class AdminQueue extends AdminDestination implements javax.jms.Queue, java.io.Serializable {
     private String mName;

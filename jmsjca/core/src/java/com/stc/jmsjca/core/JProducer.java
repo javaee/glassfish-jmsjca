@@ -32,7 +32,7 @@ import javax.jms.TopicPublisher;
 * to the JMS Producer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JProducer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JProducer.class);

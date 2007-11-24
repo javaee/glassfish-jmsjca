@@ -22,7 +22,7 @@ import com.stc.jmsjca.util.Str;
  * <p>Describes how to create a JMS connection</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequestInfo {
     private Class mConnectionClass;

@@ -29,7 +29,7 @@ import java.io.UnsupportedEncodingException;
  * service := 
  * path := file?query | ?query | file
  * @author misc
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SunOneConnectionUrl extends ConnectionUrl {
     private String mUrl;
@@ -284,7 +284,7 @@ public class SunOneConnectionUrl extends ConnectionUrl {
      * @param toAddTo Properties
      */
     public static void getQueryProperties(String q, Properties toAddTo) {
-        if (q == null || q.length() == 0) {
+        if (q == null || q.length() == 0 || q.indexOf('=') == -1) {
             return;
         }
         for (StringTokenizer iter = new StringTokenizer(q, "&");

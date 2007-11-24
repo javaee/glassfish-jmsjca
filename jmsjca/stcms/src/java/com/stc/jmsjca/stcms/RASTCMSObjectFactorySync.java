@@ -23,7 +23,7 @@ import com.stc.jmsjca.util.Logger;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMSObjectFactorySync extends RASTCMSObjectFactory implements
     java.io.Serializable {

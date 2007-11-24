@@ -38,7 +38,7 @@ import junit.framework.TestResult;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class EndToEndBase extends BaseTestCase {
     /**
@@ -87,6 +87,7 @@ public abstract class EndToEndBase extends BaseTestCase {
         public void setRedeliveryHandling(String actions);
         public void setBatchSize(String batchSize);
         public void setHoldUntilAck(String hua);
+        public void setMessageSelector(String s);
     }
     
     public static String CONTAINERID = "test.container.id";
@@ -98,6 +99,8 @@ public abstract class EndToEndBase extends BaseTestCase {
     public void run(TestResult result) {
         if (!getContainerID().equals(RTS_ID) && getName().indexOf("RTS_ONLY") > 0) {
             System.out.println("*** Skipping " + getName() + ": not an RTS container");
+        } else if (!getContainerID().equals(WL_ID) && getName().indexOf("WL_ONLY") > 0) {
+                System.out.println("*** Skipping " + getName() + ": not a WL container");
         } else {
             System.out.println("*** Now running test " + getName());
             super.run(result);
@@ -163,7 +166,7 @@ public abstract class EndToEndBase extends BaseTestCase {
         } else if (JBOSS_ID.equals(containerid)) {
             clz = Class.forName("com.stc.jmsjca.container.jboss.JBossContainer");            
         } else if (WAS_ID.equals(containerid)) {
-            clz = Class.forName("com.stc.jmsjca.container.was.WasContainer");            
+            clz = Class.forName("com.stc.jmsjca.container.was.WASContainer");            
         } else if (SJSAS_ID.equals(containerid)) {
             clz = Class.forName("com.stc.jmsjca.container.sjsas.SJSASContainer");
         } else if (GLASSFISH_ID.equals(containerid)) {

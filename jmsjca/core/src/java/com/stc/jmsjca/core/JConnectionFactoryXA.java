@@ -22,7 +22,7 @@ import javax.resource.spi.ConnectionManager;
  * <p>Marker class; see JConnectionFactory</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JConnectionFactoryXA extends JConnectionFactory
     implements javax.jms.ConnectionFactory,

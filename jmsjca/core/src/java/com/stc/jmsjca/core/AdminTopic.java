@@ -22,7 +22,7 @@ import javax.jms.JMSException;
  * Administrative topic
  *
  * @author Frank Kieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class AdminTopic extends AdminDestination implements javax.jms.Topic, java.io.Serializable {
     private String mName;

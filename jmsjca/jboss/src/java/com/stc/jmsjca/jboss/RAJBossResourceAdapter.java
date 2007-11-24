@@ -21,7 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 /**
  * Specializes the core resource adapter for JBoss Messageserver
  *
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * @author fkieviet
  */
 public class RAJBossResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {

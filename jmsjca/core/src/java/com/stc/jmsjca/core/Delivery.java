@@ -17,6 +17,7 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Utility;
 
@@ -40,6 +41,8 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -49,7 +52,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -93,7 +96,7 @@ public abstract class Delivery {
      * Property name for copying messages to DLQ
      */
     public static final String CONTEXTNAME = "JMS_Sun_JMSJCA_ContextName";
-
+    
     /**
      * The activation object
      */
@@ -174,8 +177,8 @@ public abstract class Delivery {
         private Connection getConnection(boolean isTopic) throws JMSException {
             if (mConn != null) {
                 if (isTopic != mIsTopic) {
-                    throw new JMSException(LOCALE.x("E007: Internal fault: cannot change messaging " +
-                            "domain after connection has been created.").toString());
+                    throw Exc.jmsExc(LOCALE.x("E007: Internal fault: cannot change messaging " +
+                            "domain after connection has been created."));
                 }
             } else {
                 mIsTopic = isTopic;
@@ -215,7 +218,7 @@ public abstract class Delivery {
             if (mDest != null) {
                 getConnection(isTopic);
                 if (!destname.equals(mDestName)) {
-                    throw new JMSException("Cannot change destination");
+                    throw Exc.jmsExc(LOCALE.x("E033:Cannot change destination"));
                 }
             } else {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
@@ -329,7 +332,7 @@ public abstract class Delivery {
 
         protected void deleteMessage(Message m, Encounter e) {
             sLog.info(LOCALE.x("E026: Message with msgid=[{0}] was seen {1} times. It "
-                + " will be acknowledged without being delivered.", 
+                + "will be acknowledged without being delivered.", 
                 e.getMsgid(), Integer.toString(e.getNEncountered())));
         }
 
@@ -373,6 +376,25 @@ public abstract class Delivery {
                     }
                     if (spec.getContextName() != null && spec.getContextName().length() > 0) {
                         newMsg.setStringProperty(CONTEXTNAME, spec.getContextName());
+                    }
+                    newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_MSGID, e.getMsgid());
+                    String correlationId = null;
+                    try {
+                        correlationId = m.getJMSCorrelationID();
+                    } catch (JMSException ignore) {
+                        // ignore
+                    }
+                    newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, correlationId);
+                    
+                    if (spec.getClientId() != null) {
+                        newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CLIENTID, spec.getClientId());
+                    }
+                    
+                    // Copy stateful redelivery properties
+                    Map statefulRedeliveryProperties = e.getStatefulRedeliveryProperties();
+                    for (Iterator iterator = statefulRedeliveryProperties.entrySet().iterator(); iterator.hasNext();) {
+                        Map.Entry kv = (Map.Entry) iterator.next();
+                        newMsg.setStringProperty((String) kv.getKey(), (String) kv.getValue());
                     }
                     
                     // Send msg
@@ -431,6 +453,10 @@ public abstract class Delivery {
             }
             
             x.setBusy(false);
+        }
+
+        protected void stopConnector(String s) {
+            mActivation.stopConnectorByMDB(s);
         }
     }
     
@@ -567,7 +593,6 @@ public abstract class Delivery {
     
     /**
      * Encapsulation of an endpoint
-     * TODO refactor the deliver() method below.
      */
     public class MDB {
         private XAResource mXA;
@@ -820,48 +845,52 @@ public abstract class Delivery {
      * Wraps a message for HUA mode
      * 
      * @param msgToWrap msg
-     * @param ack receives a callback when the msg is acknowledged by the application
-     * @param iBatch identifies the messages with an index in the batch
      * @return wrapped message if HUA mode is active, unwrapped otherwise
      * @throws JMSException on failure
      */
-    protected Message wrapMsg(Message msgToWrap, AckHandler ack, int iBatch) throws JMSException {
-        if (!mHoldUntilAck) {
-            return msgToWrap;
+    protected WMessageIn wrapMsg(Message msgToWrap) throws JMSException {
+        // Protect against unnecessary double wrapping
+        if (msgToWrap instanceof WMessageIn) {
+            return (WMessageIn) msgToWrap;
         }
         
-        WMessageIn ret;
+        WMessageIn ret = null;
         
         // Check for multiple interfaces
         int nItf = 0;
 
         if (msgToWrap instanceof TextMessage) {
             nItf++;
-            ret = new WTextMessageIn((TextMessage) msgToWrap, ack, iBatch);
-        } else if (msgToWrap instanceof BytesMessage) {
+            ret = new WTextMessageIn((TextMessage) msgToWrap);
+        } 
+        if (msgToWrap instanceof BytesMessage) {
             nItf++;
-            ret = new WBytesMessageIn((BytesMessage) msgToWrap, ack, iBatch);
-        } else if (msgToWrap instanceof MapMessage) {
+            ret = new WBytesMessageIn((BytesMessage) msgToWrap);
+        } 
+        if (msgToWrap instanceof MapMessage) {
             nItf++;
-            ret = new WMapMessageIn((MapMessage) msgToWrap, ack, iBatch);
-        } else if (msgToWrap instanceof ObjectMessage) {
+            ret = new WMapMessageIn((MapMessage) msgToWrap);
+        } 
+        if (msgToWrap instanceof ObjectMessage) {
             nItf++;
-            ret = new WObjectMessageIn((ObjectMessage) msgToWrap, ack, iBatch);
-        } else if (msgToWrap instanceof StreamMessage) {
+            ret = new WObjectMessageIn((ObjectMessage) msgToWrap);
+        } 
+        if (msgToWrap instanceof StreamMessage) {
             nItf++;
-            ret = new WStreamMessageIn((StreamMessage) msgToWrap, ack, iBatch);
-        } else {
+            ret = new WStreamMessageIn((StreamMessage) msgToWrap);
+        }
+        
+        // None found
+        if (ret == null) {
             nItf++;
-            ret = new WMessageIn(msgToWrap, ack, iBatch);
+            ret = new WMessageIn(msgToWrap);
         }
         
         if (nItf > 1) {
-            throw new JMSException("Cannot determine message type: the message " 
-                + "implements multiple interfaces.");
+            throw Exc.jmsExc(LOCALE.x("E032: Cannot determine message type: the message " 
+                + "implements multiple interfaces."));
         }
         
-        ret.setBatchSize(mBatchSize);
-
         return ret;
     }
 
@@ -975,105 +1004,6 @@ public abstract class Delivery {
         }
     }
 
-
-    
-    
-//    /**
-//     * Delivers the message to the specified MessageEndpoint; can be called both from CC
-//     * and serial delivery. In the case of CC, this is called by a worker thread. If an
-//     * exception is thrown in the MDB, it will be returned.
-//     *
-//     * @param result Result
-//     * @param connectionForMove provides a point to get access through to the JMS connection that
-//     * can be used to move a message
-//     * @param target MessageEndpoint
-//     * @param m Message
-//     * @param noBeforeAfterDelivery set to true to bypass before/after delivery
-//     * @param mdb MDB
-//     */
-//    public void deliverEx(DeliveryResults result, ConnectionForMove connectionForMove, MessageEndpoint target,
-//        javax.jms.Message m, boolean noBeforeAfterDelivery, MDB mdb) {
-//        if (sLog.isDebugEnabled()) {
-//            sLog.debug("Delivering message to endpoint");
-//        }
-//        
-//        RuntimeException mdbEx = null;
-//        
-//        // Stats
-//        mStats.aboutToDeliverMessage();
-//        
-//        try {
-//            // Container transaction mgt
-//            try {
-//                if (mIsXA && !noBeforeAfterDelivery) {
-//                    target.beforeDelivery(mMethod);
-//                }
-//            } catch (Exception e) {
-//                mdbEx = new BeforeDeliveryException(e);
-//                result.setBeforeDeliveryFailed(true);
-//                result.setException(mdbEx);
-//                throw mdbEx;
-//            }
-//
-//            boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(connectionForMove, m);
-//            
-//            if (shouldDeliver) {
-//                try {
-//                    ((javax.jms.MessageListener) target).onMessage(m);
-//                    result.setOnMessageSucceeded(true);
-//                } catch (RuntimeException ex) {
-//                    String msg =
-//                        "An unexpected exception was encountered delivering a message to an "
-//                        + "endpoint. The message will be rolled back. Exception: [" + ex
-//                        + "]";
-//                    sLog.warn(msg, ex);
-//                    mdbEx = ex;
-//                    result.setOnMessageFailed(true);
-//                    result.setException(mdbEx);
-//                }
-//            }
-//
-//            // Stats
-//            mStats.messageDelivered();
-//
-//            // Container transaction mgt
-//            try {
-//                if (mIsXA) {
-//                    if (!shouldDeliver) {
-//                        // Weblogic does not allow afterDelivery() to be called without
-//                        // having called onMessage(). This is required when a message
-//                        // is sent to a DLQ. In that case, commit the transaction
-//                        // manually and mark the endpoint for release so that the
-//                        // container will not reuse it to avoid inconsistent states.
-//                        Transaction tx = getTxMgr().getTransactionManager().getTransaction();
-//                        tx.delistResource(mdb.getXAResource(), XAResource.TMSUCCESS);
-//                        tx.commit();
-//                    }
-//                    
-//                    if (!noBeforeAfterDelivery && shouldDeliver) {
-//                        target.afterDelivery();
-//                    }
-//                }
-//            } catch (Exception e) {
-//                mdbEx = new AfterDeliveryException(e); 
-//                throw mdbEx;
-//            }
-//            
-//            // See above: mark for release if afterDelivery was not called
-//            if (mIsXA && !shouldDeliver && mdbEx == null) {
-//                mdbEx = new RuntimeException("MDB should be discarded");
-//                result.setShouldDiscardEndpoint(true);
-//                result.setShouldNotCallAfterDelivery(true);
-//                result.setException(mdbEx);
-//            }
-//        } catch (Exception ex) {
-//            String msg =
-//                "An unexpected exception was encountered processing a message. Exception: "
-//                + ex;
-//            sLog.warn(msg, ex);
-//        }
-//    }
-
     /**
      * Delivers the message to the specified MessageEndpoint; can be called both from CC
      * and serial delivery. In the case of CC, this is called by a worker thread. If an
@@ -1095,6 +1025,9 @@ public abstract class Delivery {
         mStats.aboutToDeliverMessage();
         
         try {
+            if (mActivation.shouldWrapAlways()) {
+                m = wrapMsg(m);
+            }
             boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(connectionForMove, m);
             
             if (!shouldDeliver) {
@@ -1111,6 +1044,8 @@ public abstract class Delivery {
                     result.setOnMessageFailed(true);
                     result.setRollbackOnly(true);
                     result.setException(ex);
+                    result.setShouldDiscardEndpoint(true);
+                    mRedeliveryChecker.rememberException(ex, m);
                 }
             }
         } catch (Exception ex) {
@@ -1122,92 +1057,6 @@ public abstract class Delivery {
         }
     }
     
-//    /**
-//     * Delivers the message to the specified MessageEndpoint; can be called both from CC
-//     * and serial delivery. In the case of CC, this is called by a worker thread. If an
-//     * exception is thrown in the MDB, it will be returned.
-//     *
-//     * @param connectionForMove provides a point to get access through to the JMS connection that
-//     * can be used to move a message
-//     * @param target MessageEndpoint
-//     * @param m Message
-//     * @param noBeforeAfterDelivery set to true to bypass before/after delivery
-//     * @param mdb MDB
-//     * @return RuntimeException
-//     */
-//    public RuntimeException deliver(ConnectionForMove connectionForMove, MessageEndpoint target,
-//        javax.jms.Message m, boolean noBeforeAfterDelivery, MDB mdb) {
-//        if (sLog.isDebugEnabled()) {
-//            sLog.debug("Delivering message to endpoint");
-//        }
-//        
-//        RuntimeException mdbEx = null;
-//        
-//        // Stats
-//        mStats.aboutToDeliverMessage();
-//        
-//        try {
-//            // Container transaction mgt
-//            try {
-//                if (mIsXA && !noBeforeAfterDelivery) {
-//                    target.beforeDelivery(mMethod);
-//                }
-//            } catch (Exception e) {
-//                mdbEx = new BeforeDeliveryException(e);
-//                throw mdbEx;
-//            }
-//
-//            boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(connectionForMove, m);
-//            
-//            if (shouldDeliver) {
-//                try {
-//                    ((javax.jms.MessageListener) target).onMessage(m);
-//                } catch (RuntimeException ex) {
-//                    sLog.warn(LOCALE.x("E031: The entity the message was sent to for "
-//                        + "processing, threw an exception. The message will be "
-//                        + "rolled back. Exception: [{0}]", ex), ex);
-//                    mdbEx = ex;
-//                }
-//            }
-//
-//            // Stats
-//            mStats.messageDelivered();
-//
-//            // Container transaction mgt
-//            try {
-//                if (mIsXA) {
-//                    if (!shouldDeliver) {
-//                        // Weblogic does not allow afterDelivery() to be called without
-//                        // having called onMessage(). This is required when a message
-//                        // is sent to a DLQ. In that case, commit the transaction
-//                        // manually and mark the endpoint for release so that the
-//                        // container will not reuse it to avoid inconsistent states.
-//                        Transaction tx = getTxMgr().getTransactionManager().getTransaction();
-//                        tx.delistResource(mdb.getXAResource(), XAResource.TMSUCCESS);
-//                        tx.commit();
-//                    }
-//                    
-//                    if (!noBeforeAfterDelivery && shouldDeliver) {
-//                        target.afterDelivery();
-//                    }
-//                }
-//            } catch (Exception e) {
-//                mdbEx = new AfterDeliveryException(e); 
-//                throw mdbEx;
-//            }
-//            
-//            // See above: mark for release if afterDelivery was not called
-//            if (mIsXA && !shouldDeliver && mdbEx == null) {
-//                mdbEx = new RuntimeException("MDB should be discarded");
-//            }
-//        } catch (Exception ex) {
-//            sLog.warn(LOCALE.x("E032: An unexpected exception occurred while processing "
-//                + "a message. Exception: {0}", ex), ex);
-//        }
-//
-//        return mdbEx;
-//    }
-
     /**
      * Releases any resources associated with delivery.
      * HAS TO BE CALLED FROM THE RA THREAD

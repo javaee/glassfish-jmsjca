@@ -27,7 +27,7 @@ import java.util.Properties;
  * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class DeployLoopEar1 extends EndToEndBase {
     

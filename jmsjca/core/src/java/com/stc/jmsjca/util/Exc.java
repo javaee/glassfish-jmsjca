@@ -22,6 +22,8 @@ import javax.resource.ResourceException;
 import javax.resource.spi.SecurityException;
 import javax.transaction.xa.XAException;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import javax.jms.JMSException;
 import javax.jms.JMSSecurityException;
@@ -33,7 +35,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Exc {
 
@@ -105,6 +107,48 @@ public class Exc {
      */
     public static JMSException jmsExc(LocalizedString msg) {
         return new JMSException(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static Exception exc(LocalizedString msg) {
+        return new Exception(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @param t Throwable
+     * @return new exception
+     */
+    public static Exception exc(LocalizedString msg, Throwable t) {
+        return new Exception(msg.toString(), t);
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static RuntimeException rtexc(LocalizedString msg) {
+        return new RuntimeException(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @param t Throwable
+     * @return new exception
+     */
+    public static RuntimeException rtexc(LocalizedString msg, Throwable t) {
+        return new RuntimeException(msg.toString(), t);
     }
     
     /**
@@ -185,5 +229,19 @@ public class Exc {
             super(e.getMessage());
             initCause(e);
         }
+    }
+
+    /**
+     * Gets the stacktrace of an exception
+     * 
+     * @param e exception to convert
+     * @return String 
+     */
+    public static String getStackTrace(Exception e) {
+        StringWriter s = new StringWriter();
+        PrintWriter p = new PrintWriter(s);
+        e.printStackTrace(p);
+        p.flush();
+        return s.getBuffer().toString();
     }
 }

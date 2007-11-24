@@ -56,7 +56,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -139,7 +139,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             mActivation.getRA(),
             dest,
             mActivation.getActivationSpec().getSubscriptionName(),
-            mActivation.getActivationSpec().getMessageSelector(),
+            o.getMessageSelector(mActivation.getRA(), mActivation.getActivationSpec()),
             this,
             mBatchSize < 1 ? 1 : mBatchSize);
 
@@ -304,7 +304,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                             + "WorkContainer; throwing exception");
                     }
 
-                    throw new Exception("Connector is shutting down");
+                    throw Exc.exc(LOCALE.x("E115: Cannot create endpoint: connector is shutting down"));
                 }
                 if (sLog.isDebugEnabled()) {
                     sLog.debug("getEmptyWorkContainer(): still waiting");
@@ -317,7 +317,11 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 // Check if endpoint needs to be refreshed
                 if (ret.hasBadEndpoint()) {
                     release(ret.getEndpoint());
-                    ret.setEndpoint(createMessageEndpoint(ret.getXAResource(), ret.getSession()));
+                    MessageEndpoint mep = createMessageEndpoint(ret.getXAResource(), ret.getSession());
+                    ret.setEndpoint(mep);
+                    if (mep == null) {
+                        throw Exc.exc(LOCALE.x("E115: Cannot create endpoint: connector is shutting down"));
+                    }
                 }
 
                 if (sLog.isDebugEnabled()) {

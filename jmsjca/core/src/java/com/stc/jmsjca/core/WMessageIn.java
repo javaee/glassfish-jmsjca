@@ -30,15 +30,52 @@ import java.util.Enumeration;
  * method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMessageIn implements Message, Unwrappable {
     private Message mDelegate;
+    
+    // Batch and HUA
+    private boolean mBatchAndHua;
     private AckHandler mAckHandler;
     private int mIBatch;
     private int mBatchSize;
     private boolean mIsRollbackOnly;
     private boolean mIsAckCalled;
+    
+    // Stateful redelivery
+    private RedeliveryStateHandler mRedeliveryStateHandler;
+    
+    /**
+     * Used to interface with the RedeliveryHandler
+     * 
+     * @author fkieviet
+     */
+    public interface RedeliveryStateHandler {
+        /**
+         * Allows a user property to be set from the MDB
+         * 
+         * @param key key
+         * @param value value
+         * @return true if the key was acceptable
+         * @throws JMSException propagated from getJMSMessageID()
+         */
+        boolean setProperty(String key, String value) throws JMSException;
+        
+        /**
+         * Allows a user property to be retrieved from the MDB
+         * 
+         * @param key key
+         * @return value, or null if no such value
+         * @throws JMSException propagated from getJMSMessageID()
+         */
+        String getProperty(String key) throws JMSException;
+        
+        /**
+         * @return the number of times the message was seen before
+         */
+        int getRedeliveryCount();
+    }
     
     /**
      * When used as a boolean property in setBooleanProperty() this sets the transaction
@@ -68,19 +105,22 @@ public class WMessageIn implements Message, Unwrappable {
      * Constructor
      * 
      * @param delegate real msg
-     * @param ackHandler callback to call when ack() or recover() is called
-     * @param iBatch index of this message in a batch; -1 for non-batched
      */
-    public WMessageIn(Message delegate, AckHandler ackHandler, int iBatch) {
+    public WMessageIn(Message delegate) {
         mDelegate = delegate;
-        mAckHandler = ackHandler;
-        mIBatch = iBatch;
     }
 
     /**
      * @see com.stc.jmsjca.core.Unwrappable#getWrappedObject()
      */
     public Object getWrappedObject() {
+        return mDelegate;
+    }
+    
+    /**
+     * @return the wrapped object 
+     */
+    public Message getDelegate() {
         return mDelegate;
     }
     
@@ -95,15 +135,19 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#acknowledge()
      */
     public void acknowledge() throws JMSException {
-        if (mAckHandler != null) {
-            if (mIsAckCalled) {
-                // ignore duplicate calls
-            } else {
-                mAckHandler.ack(mIsRollbackOnly, this);
-                mIsAckCalled = true;
-            }
-        } else {
+        if (!mBatchAndHua) {
             mDelegate.acknowledge();
+        } else {
+            if (mAckHandler != null) {
+                if (mIsAckCalled) {
+                    // ignore duplicate calls
+                } else {
+                    mAckHandler.ack(mIsRollbackOnly, this);
+                    mIsAckCalled = true;
+                }
+            } else {
+                mDelegate.acknowledge();
+            }
         }
     }
 
@@ -244,10 +288,12 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#getObjectProperty(java.lang.String)
      */
     public Object getObjectProperty(String name) throws JMSException {
-        if (IBATCH.equalsIgnoreCase(name)) {
+        if (mBatchAndHua && IBATCH.equalsIgnoreCase(name)) {
             return new Integer(mIBatch);
-        } else if (BATCHSIZE.equalsIgnoreCase(name)) {
-                return new Integer(mBatchSize);
+        } else if (mBatchAndHua && BATCHSIZE.equalsIgnoreCase(name)) {
+            return new Integer(mBatchSize);
+        } else if (mRedeliveryStateHandler != null && Delivery.REDELIVERYCOUNT.equalsIgnoreCase(name)) {
+            return new Integer(mRedeliveryStateHandler.getRedeliveryCount());
         } else {
             return mDelegate.getObjectProperty(name);
         }
@@ -271,7 +317,14 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#getStringProperty(java.lang.String)
      */
     public String getStringProperty(String arg0) throws JMSException {
-        return mDelegate.getStringProperty(arg0);
+        String ret = null;
+        if (mRedeliveryStateHandler != null) {
+            ret = mRedeliveryStateHandler.getProperty(arg0);
+        }
+        if (ret == null) {
+            ret = mDelegate.getStringProperty(arg0);
+        }
+        return ret;
     }
 
     /**
@@ -285,9 +338,7 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#setBooleanProperty(java.lang.String, boolean)
      */
     public void setBooleanProperty(String name, boolean value) throws JMSException {
-        if (!LEGACY_ISROLLBACKONLY.equalsIgnoreCase(name) && !SETROLLBACKONLY.equalsIgnoreCase(name)) {
-            mDelegate.setBooleanProperty(name, value);
-        } else {
+        if (mBatchAndHua && (LEGACY_ISROLLBACKONLY.equalsIgnoreCase(name) || SETROLLBACKONLY.equalsIgnoreCase(name))) {
             if (!value) {
                 throw new JMSException("Value must be true");
             }
@@ -295,6 +346,8 @@ public class WMessageIn implements Message, Unwrappable {
                 throw new JMSException("Cannot set isRollbackOnly after acknowledge() has been called.");
             }
             mIsRollbackOnly = true;
+        } else {
+            mDelegate.setBooleanProperty(name, value);
         }
     }
 
@@ -421,15 +474,35 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#setStringProperty(java.lang.String, java.lang.String)
      */
     public void setStringProperty(String arg0, String arg1) throws JMSException {
-        mDelegate.setStringProperty(arg0, arg1);
+        if (mRedeliveryStateHandler != null && mRedeliveryStateHandler.setProperty(arg0, arg1)) {
+            // Set by redelivery handler
+        } else {
+            mDelegate.setStringProperty(arg0, arg1);
+        }
     }
 
     /**
      * Relays the batchsize to the application through BATCHSIZE
      * 
      * @param batchSize int
+     * @param ackHandler callback to call when ack() or recover() is called
+     * @param iBatch index of this message in a batch; -1 for non-batched
+     * @return this
      */
-    public void setBatchSize(int batchSize) {
+    public WMessageIn setBatchSize(int batchSize, AckHandler ackHandler, int iBatch) {
+        mBatchAndHua = true;
         mBatchSize = batchSize;
+        mAckHandler = ackHandler;
+        mIBatch = iBatch;
+        return this;
+    }
+
+    /**
+     * Associates the redelivery state with this message wrapper
+     * 
+     * @param redeliveryState callback handler
+     */
+    public void setRedeliveryState(RedeliveryStateHandler redeliveryState) {
+        mRedeliveryStateHandler = redeliveryState;
     }
 }

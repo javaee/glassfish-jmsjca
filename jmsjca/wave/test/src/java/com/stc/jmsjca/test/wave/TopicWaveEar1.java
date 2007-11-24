@@ -34,7 +34,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class TopicWaveEar1 extends TopicEndToEnd {
     /**
@@ -64,6 +64,9 @@ public class TopicWaveEar1 extends TopicEndToEnd {
         super.setUp();
 
         mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(1));
+
+        // To speed up testsing, change number of send messages
+        // mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(100));
 
         // Update the original EAR file
         File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wave");

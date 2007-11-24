@@ -30,7 +30,7 @@ import javax.transaction.xa.XAResource;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class GenericSessionConnection extends SessionConnection {
 

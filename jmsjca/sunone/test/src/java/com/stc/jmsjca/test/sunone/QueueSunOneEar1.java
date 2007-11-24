@@ -33,7 +33,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class QueueSunOneEar1 extends QueueEndToEnd {
 
@@ -82,4 +82,12 @@ public class QueueSunOneEar1 extends QueueEndToEnd {
         dotest0(new String[] { "requestReply0", "requestReply1", "requestReply2",
             "requestReplyN1"  });
     }
+
+// Following tests need looking into:    
+//        public void skip_testNoTransaction() throws Throwable {
+//        }
+//        public void skip_testNoXATransacted() throws Throwable {
+//        }
+//        public void skip_testNoXANonTransacted() throws Throwable {
+//        }
 }

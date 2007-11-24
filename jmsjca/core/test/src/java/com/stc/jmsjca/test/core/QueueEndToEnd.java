@@ -54,8 +54,8 @@ import java.util.List;
  * -Dtest.ear.path=rastcms/test/rastcms-test.ear with working directory
  * ${workspace_loc:e-jmsjca/build}
  * 
- * @author fkieviet
- * @version $Revision: 1.7 $
+ * @author fkieviet, cye
+ * @version $Revision: 1.8 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -977,7 +977,89 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }
+
+    /**
+     * Queue to queue MDB throws runtime exception in about 20% of the cases
+     * 
+     * @throws Throwable
+     */
+    public void testExceptionInBMTCC() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("cc");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("throwExceptionInBMT");
+        dd.findElementByText(EJBDD, "XContextName").setText("testExceptionInBMTCC");
+        dd.update();
+
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
+    /**
+     * Queue to queue MDB throws runtime exception in about 20% of the cases
+     * 
+     * @throws Throwable
+     */
+    public void testExceptionInBMTSerial() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("throwExceptionInBMT");
+        dd.findElementByText(EJBDD, "XContextName").setText("throwExceptionInBMT");
+        dd.update();
+
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            p.setStrictOrder(true);
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
     
+    /**
+     * Queue to queue MDB throws runtime exception in about 20% of the cases
+     * 
+     * @throws Throwable
+     */
+    public void testExceptionInBMTSync() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("sync");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("throwExceptionInBMT");
+        dd.findElementByText(EJBDD, "XContextName").setText("throwExceptionInBMT");
+        dd.update();
+
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+       
     /**
      * A simple queue replier: listens on a queue and replies to each incoming message
      * 
@@ -1203,21 +1285,26 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         
         Passthrough p = createPassthrough(mServerProperties);
 
-        String handling = "4:1;5:move(topic:" + p.getTopic2Name() + ")";
+        // queue will be removed by topic in TestMessageBean
+        String handling = "4:1;5:move(queue:" + p.getTopic2Name() + ")";
         
         // Test both ways of setting the redelivery handling
+        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        String url = x.getConnectionURL();
         if (cc) {
             spec.setRedeliveryHandling(handling);
+            url = url + "?" + Options.In.OPTION_REDELIVERYWRAP + "=1";
+            x.setConnectionURL(url);
         } else {
-            StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-            .createConnector(StcmsConnector.class);
-            String url = x.getConnectionURL();
-            url = url + "?" + Options.In.OPTION_REDELIVERYHANDLING + "=" + handling;
+            url = url + "?" + Options.In.OPTION_REDELIVERYHANDLING + "=" + handling 
+            + "&" + Options.In.OPTION_REDELIVERYWRAP + "=1";
             x.setConnectionURL(url);
         }
 
-        dd.findElementByText(EJBDD, "testQQXAXA").setText(xa ? "rollback" : "throwException");
-        dd.findElementByText(EJBDD, "XContextName").setText("dlq" + xa + cc);
+        dd.findElementByText(EJBDD, "testQQXAXA").setText(xa ? "rollbackSetProps" : "throwExceptionSetProps");
+        String contextname = "dlq" + xa + cc;
+        dd.findElementByText(EJBDD, "XContextName").setText(contextname);
 
         dd.update();
         
@@ -1237,6 +1324,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 m1.setStringProperty("s1", "S1");
                 m1.setIntProperty("int1", 2);
                 m1.setLongProperty("long1", 3);
+                m1.setJMSCorrelationID("cid");
                 q1.send(m1);
                 q1.getSession().commit();
                 
@@ -1254,6 +1342,42 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 assertTrue(m2.getStringProperty(Delivery.ORIGINALDESTINATIONNAME).equals(p.getQueue1Name()));
                 assertTrue(m2.getStringProperty(Delivery.ORIGINALDESTINATIONTYPE).equals(Queue.class.getName()));
                 assertTrue(m2.getLongProperty(Delivery.ORIGINALTIMESTAMP) == m1.getJMSTimestamp());
+                assertTrue(m2.getStringProperty(Delivery.CONTEXTNAME).equals(contextname));
+                assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "1").equals("x"));
+                assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "2").equals("y"));
+                
+//              assertTrue(m2.(Delivery.SUBSCRIBERNAME).equals(contextname));
+//              assertTrue(m2.(Delivery.ORIGINAL_CLIENTID).equals(contextname));
+                
+                // Msgid and correlation id should be copied
+                assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_MSGID).equals(m1.getJMSMessageID()));
+                assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID).equals(m1.getJMSCorrelationID()));
+                
+                // Exceptions should be propagated
+                String s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONCLASS);
+                if (xa) {
+                    assertTrue(s == null);
+                } else {
+                    assertTrue(s != null);
+                }
+                s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONMESSAGE);
+                if (xa) {
+                    assertTrue(s == null);
+                } else {
+                    assertTrue(s != null);
+                }
+                s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONTRACE);
+                if (xa) {
+                    assertTrue(s == null);
+                } else {
+                    assertTrue(s != null);
+                }
+                
+                // Redelivery count; also checks that user strings can be read in the MDB
+                s = m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "ct");
+                String expected = "0,1,2,3,4";
+                assertTrue(expected + "!=" + s, expected.equals(s));
+                
 
                 // Validate user props
                 assertTrue(m2.getStringProperty("s1").equals("S1"));
@@ -1807,4 +1931,82 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         int nErrors = q4.drain();
         assertTrue("There were " + nErrors + " errors in the error queue", nErrors == 0);
     }
+    
+    /**
+     * Test autocommit with connection allocated outside of TX
+     */
+    public void testBeanManagedAutoCommitAllocateOutsideOfTx_WL_ONLY() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testBeanManagedAutoCommitAllocateOutsideOfTx");
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testQQBM2b");
+        dd.update();
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            p.setStrictOrder(true);
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }        
+    } 
+    
+    /**
+     * Test XAsession commit with connection allocated outside of TX
+     */    
+    public void testXASessionCommitAllocateOutsideOfTx() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testXASessionCommitAllocateOutsideOfTx");
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testQQBM2b");
+        dd.update();
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            p.setStrictOrder(true);
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }        
+    } 
+    
+    /**
+     * Test XAsession rollback with connection allocated outside of TX
+     */    
+    public void testXASessionRBAllocateOutsideOfTx() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testXASessionRBAllocateOutsideOfTx");
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testQQBM2b");
+        dd.update();
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            p.setStrictOrder(true);
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }                
+    }        
 }

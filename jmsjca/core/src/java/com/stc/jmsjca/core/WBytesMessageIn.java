@@ -23,7 +23,7 @@ import javax.jms.JMSException;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WBytesMessageIn extends WMessageIn implements BytesMessage {
     private BytesMessage mDelegate;
@@ -32,11 +32,9 @@ public class WBytesMessageIn extends WMessageIn implements BytesMessage {
      * Constructor
      * 
      * @param delegate real msg
-     * @param ackHandler callback to call when ack() or recover() is called
-     * @param ibatch index of this message in a batch; -1 for non-batched
      */
-    public WBytesMessageIn(BytesMessage delegate, AckHandler ackHandler, int ibatch) {
-        super(delegate, ackHandler, ibatch);
+    public WBytesMessageIn(BytesMessage delegate) {
+        super(delegate);
         mDelegate = delegate;
     }
 

@@ -32,7 +32,7 @@ import javax.naming.NamingException;
  * The MDB
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class StcmsPerfMDB implements MessageDrivenBean, MessageListener {
     private InitialContext mCtx;

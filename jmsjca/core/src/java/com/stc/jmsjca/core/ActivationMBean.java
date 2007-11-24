@@ -31,7 +31,7 @@ import java.util.Properties;
  * connection, and through that control over message delivery to the MDB.
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class ActivationMBean extends CommonMBean implements EmManagementInterface {
     //private static Logger sLog = Logger.getLogger(ActivationMBean.class);

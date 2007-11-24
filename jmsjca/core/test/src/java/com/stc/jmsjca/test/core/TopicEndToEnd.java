@@ -21,11 +21,15 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough.TopicDest;
 
+import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.Session;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSession;
+
+import java.net.URLEncoder;
 
 /**
  * Required:
@@ -38,7 +42,7 @@ import javax.jms.TopicSession;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     /**
@@ -51,10 +55,20 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {
         ActivationMBean mbean = (ActivationMBean) c.getMBeanProxy(MBEAN,
             ActivationMBean.class);
+        int retry = 0;
         for (;;) {
-            String str = mbean.xgetStatus();
+            if (mbean != null) {
+                String str = mbean.xgetStatus();
             System.out.println("Waiting until application is deployed and running; connected status: " + str);
-            if (str.equals(com.stc.jmsjca.core.ActivationMBean.CONNECTED)) {
+                if (str.equals(com.stc.jmsjca.core.ActivationMBean.CONNECTED)) {
+                    break;
+                }
+            } else if (retry < 5) { 
+                // try five times
+                retry++;
+                mbean = (ActivationMBean) c.getMBeanProxy(MBEAN,
+                    ActivationMBean.class);
+            } else {
                 break;
             }
             Thread.sleep(1000);
@@ -84,7 +98,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         Container c = createContainer();
         Passthrough p = createPassthrough(mServerProperties);
         p.drainQ2();
-        
+
         try {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
@@ -178,7 +192,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
-     
+
             p.removeDurableSubscriber(clientID, p.getTopic1Name(), subscriptionName);
             p.drainQ2();
             
@@ -189,7 +203,11 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 // deploy bean to create a durable subscription then undeploy it
                 c.deployModule(mTestEar.getAbsolutePath());
                 waitUntilRunning(c);
+                p.drainQ2();
                 c.undeploy(mTestEarName);
+                
+                p.removeDurableSubscriber(clientID, p.getTopic1Name(), subscriptionName);
+                p.drainQ2();
                 
                 // send messages to T1 - these should be stored in the durable subscription
                 p.sendToT1();
@@ -204,7 +222,6 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 c.undeploy(mTestEarName);
                 //p.removeDurableSubscriber(clientID, Passthrough.T1,subscriptionName);
             }
-            
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
@@ -553,7 +570,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             
             int iters = isFastTest() ? 1 : 2;
             for (int i = 0; i < iters; i++) {
-                p.setBatchId(100 + i);
+                p.setBatchId(160 + i);
                 
                 // deploy bean to create a durable subscription then undeploy it
                 c.deployModule(mTestEar.getAbsolutePath());
@@ -622,7 +639,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             
             int iters = isFastTest() ? 1 : 2;
             for (int i = 0; i < iters; i++) {
-                p.setBatchId(100 + i);
+                p.setBatchId(170 + i);
                 
                 c.redeployModule(mTestEar.getAbsolutePath());
                 waitUntilRunning(c);
@@ -638,4 +655,99 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             conn.close();
         }
     }
+
+    /**
+     * Topic to queue
+     * XA on in, XA on out
+     * CC
+     * Durable
+     * Selector substitution
+     *
+     * @throws Throwable
+     */
+    public void testDT2QCCSelectorSubstitution() throws Throwable {
+        Passthrough p = createPassthrough(mServerProperties);
+        EmbeddedDescriptor dd = getDD();
+        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
+            EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        spec.setContextName("j-testTTXAXA");
+        spec.setDestination(p.getTopic1Name());
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        
+        spec.setSubscriptionDurability("Durable");
+        final String subscriptionName = p.getDurableTopic1Name();
+        spec.setSubscriptionName(subscriptionName);
+        String clientId = getClientId(p.getDurableTopic1Name() + "clientID");
+        spec.setClientId(clientId);
+        spec.setMessageSelector("a = 1");
+        
+        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        String url = x.getConnectionURL();
+        url = url + "?" + Options.In.OPTION_SELECTOR + "=" 
+        + URLEncoder.encode("(sub = '${" + Options.Selector.SUB_NAME + "}')  ${andselector}", "UTF-8");
+        x.setConnectionURL(url);
+        
+        dd.update();
+        
+        // Deploy
+        Container c = createContainer();
+ 
+        try {
+            int iters = isFastTest() ? 1 : 2;
+            for (int i = 0; i < iters; i++) {
+                if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                    c.undeploy(mTestEarName);
+                }
+                p.removeDurableSubscriber(clientId, p.getTopic1Name(), subscriptionName);
+                p.drainQ2();
+                p.setBatchId(190 + i);
+                
+                // deploy bean to create a durable subscription then undeploy it
+                c.deployModule(mTestEar.getAbsolutePath());
+                waitUntilRunning(c);
+                c.undeploy(mTestEarName);
+                assertTrue(p.drainQ2() == 0);
+                
+                // send messages to T1 - these should be stored in the durable subscription
+                // a) should not be selected
+                p.setMessageGenerator(new Passthrough.MessageGenerator() {
+                    public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+                        super.setMsgPayload(m, i, iBatch, type);
+                        m.setIntProperty("a", 1);
+                        m.setStringProperty("sub", subscriptionName + "wrong");
+                    }                    
+                });
+                p.sendToT1();
+
+                // b) should be selected
+                p.setMessageGenerator(new Passthrough.MessageGenerator() {
+                    public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+                        super.setMsgPayload(m, i, iBatch, type);
+                        m.setIntProperty("a", 1);
+                        m.setStringProperty("sub", subscriptionName);
+                    }                    
+                });
+                p.sendToT1();
+
+                
+                p.get(p.getTopic1Name()).close();
+                
+                // now redeploy the bean 
+                // this should then receive the messages from the durable subscription
+                // and sends them on to Q2
+                c.deployModule(mTestEar.getAbsolutePath());
+                waitUntilRunning(c);
+                p.readFromQ2(); 
+                
+                c.undeploy(mTestEarName);
+                //p.removeDurableSubscriber(p.getTopic1Name(),subscriptionName);
+            }
+            
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+    
 }

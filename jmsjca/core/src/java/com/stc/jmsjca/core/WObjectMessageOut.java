@@ -25,7 +25,7 @@ import java.io.Serializable;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WObjectMessageOut extends WMessageOut implements ObjectMessage {
     private ObjectMessage mDelegate;

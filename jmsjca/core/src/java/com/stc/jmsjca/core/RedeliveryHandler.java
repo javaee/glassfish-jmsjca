@@ -17,6 +17,7 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.JMSException;
@@ -25,6 +26,7 @@ import javax.jms.Queue;
 import javax.jms.Topic;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -148,7 +150,7 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
@@ -158,6 +160,8 @@ public abstract class RedeliveryHandler {
     private HashMap mNewMsgs;
     private boolean mLoggedOnce;
     private Action[] mActions;
+    private String mActionStr;
+    private RAJMSActivationSpec mActivationSpec;
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -175,10 +179,10 @@ public abstract class RedeliveryHandler {
          */
         public Action(int at) {
             if (at <= 0) {
-                throw new RuntimeException("Index " + at + " should be > 0");
+                throw Exc.rtexc(LOCALE.x("E111: Index {0} should be > 0", Integer.toString(at)));
             }
             if (at > 5000) {
-                throw new RuntimeException("Index " + at + " should be <= 5000");
+                throw Exc.rtexc(LOCALE.x("E112: Index {0} should be < 5000", Integer.toString(at)));
             }
             mAt = at;
         }
@@ -199,10 +203,11 @@ public abstract class RedeliveryHandler {
          */
         public int checkLast(int lastAt) throws Exception {
             if (lastAt == mAt) {
-                throw new Exception("Duplicate entry at: " + lastAt);
+                throw Exc.exc(LOCALE.x("E107: Duplicate entry at: {0}", Integer.toString(lastAt)));
             }
             if (lastAt >= mAt) {
-                throw new Exception("Should be properly ordered: " + lastAt + " >= " + mAt);
+                throw Exc.exc(LOCALE.x("E106: Should be properly ordered: {0} >= {1}"
+                    , Integer.toString(lastAt), Integer.toString(mAt)));
             }
             return mAt;
         }
@@ -266,6 +271,7 @@ public abstract class RedeliveryHandler {
          */
         public static Pattern sPattern = Pattern.compile(PATTERN);
         private long mDelay;
+        private static long MAX = 5000;
         
         /**
          * Constructor
@@ -276,9 +282,10 @@ public abstract class RedeliveryHandler {
          */
         public Delay(int at, long delay) throws Exception {
             super(at);
-            if (delay > 5000 && delay != Integer.MAX_VALUE) {
+            if (delay > MAX && delay != Integer.MAX_VALUE) {
                 // Note: max_value is used for testing
-                throw new Exception("Delay of [" + delay + "] exceeds maximum of 5000 ms");
+                throw Exc.exc(LOCALE.x("E109: Delay of [{0}] exceeds maximum of {1} ms"
+                    , Long.toString(delay), Long.toString(MAX)));
             }
             mDelay = delay;
         }
@@ -346,7 +353,7 @@ public abstract class RedeliveryHandler {
             super(at);
             mName = name;
             if (!Queue.class.getName().equals(destinationType) && !Topic.class.getName().equals(destinationType)) {
-                throw new Exception("Invalid destination type [" + destinationType + "]");
+                throw Exc.exc(LOCALE.x("E110: Invalid destination type [{0}]", destinationType));
             }
             if ("same".equals(type)) {
                 mType = destinationType;
@@ -355,7 +362,7 @@ public abstract class RedeliveryHandler {
             } else if ("topic".equals(type)) {
                 mType = Topic.class.getName();
             } else {
-                throw new Exception("Invalid type [" + type + "]");
+                throw Exc.exc(LOCALE.x("E108: Invalid type [{0}]", type));
             }
         }
         
@@ -472,7 +479,14 @@ public abstract class RedeliveryHandler {
      */
     protected abstract void move(Message m, Encounter e, boolean isTopic,
         String destinationName, Object cookie) throws Exception;
-
+    
+    /**
+     * Gives the MDB the option to shut down the connector
+     * 
+     * @param s reason for shutdown
+     */
+    protected abstract void stopConnector(String s);
+        
     /**
      * Parses an action string into separate actions and performs validations. 
      * The returned action array is guaranteed to be ordered and without duplicates.
@@ -481,9 +495,9 @@ public abstract class RedeliveryHandler {
      * @param destName destination name being used (for dlq name construction)
      * @param destType type from activation spec (javax.jms.Queue or javax.jms.Topic)
      * @return array of actions
-     * @throws Exception upon parsing failure
+     * @throws JMSException upon parsing failure
      */
-    public static Action[] parse(String s, String destName, String destType) throws Exception {
+    public static Action[] parse(String s, String destName, String destType) throws JMSException {
         if (s.trim().length() == 0) {
             return new Action[] {new VoidAction() };
         }
@@ -522,7 +536,7 @@ public abstract class RedeliveryHandler {
                     String at = m.group(1);
 
                     if (!last) {
-                        throw new Exception("Move command should be last command");
+                        throw Exc.jmsExc(LOCALE.x("E105: Delete command should be last command"));
                     }
                     
                     ret[i] = new Delete(Integer.parseInt(at));
@@ -540,13 +554,13 @@ public abstract class RedeliveryHandler {
                     String guts = m.group(2);
                     Matcher g = Move.sArgPattern.matcher(guts);
                     if (!g.matches()) {
-                        throw new Exception("Wrong arguments: should match " + Move.ARGPATTERN);
+                        throw Exc.jmsExc(LOCALE.x("E104: Wrong arguments: should match {0}", Move.ARGPATTERN));
                     }
                     String type = g.group(1);
                     String name = g.group(2);
                     
                     if (!last) {
-                        throw new Exception("Move command should be last command");
+                        throw Exc.jmsExc(LOCALE.x("E103: Move command should be last command"));
                     }
                     
                     name = name.replaceAll("\\$", destName);
@@ -559,10 +573,10 @@ public abstract class RedeliveryHandler {
                     continue;
                 }
                 
-                throw new Exception("Not recognized");
+                throw Exc.jmsExc(LOCALE.x("E102: Token not recognized: {0}", actions[i]));
             } catch (Exception e) {
-                throw new Exception("Could not parse [" + s + "]: error [" + e
-                    + "] in element number " + i + ": [" + actions[i] + "]", e);
+                throw Exc.jmsExc(LOCALE.x("E101: Could not parse [{0}]: error [{1}]"
+                    + " in element number {2}: [{3}]", s, e, Integer.toString(i), actions[i]), e);
             }
         }
         
@@ -578,14 +592,21 @@ public abstract class RedeliveryHandler {
         private int mNEncountered;
         private int mActionCursor;
         private String mMsgid;
+        private Map mStatefulRedeliveryProperties;
+        private Action[] mEncActions;
+        private String mEncActionString;
         
         /**
          * Constructor 
          * 
          * @param msgid jms msg id
+         * @param actions actions to perform upon redelivery
+         * @param actionString for readback: actions to perform on redelivery
          */
-        public Encounter(String msgid) {
+        public Encounter(String msgid, Action[] actions, String actionString) {
             mMsgid = msgid;
+            mEncActions = actions;
+            mEncActionString = actionString;
         }
         
         /**
@@ -624,6 +645,45 @@ public abstract class RedeliveryHandler {
         public String getMsgid() {
             return mMsgid;
         }
+
+        /**
+         * @return properties that the user can set on a msg
+         */
+        public Map getStatefulRedeliveryProperties() {
+            if (mStatefulRedeliveryProperties == null) {
+                mStatefulRedeliveryProperties = new HashMap();
+            }
+            return mStatefulRedeliveryProperties;
+        }
+        
+        /**
+         * @return Actions
+         */
+        public Action[] getEncActions() {
+            return mEncActions;
+        }
+
+        /**
+         * Getter for encActionString
+         *
+         * @return String
+         */
+        public String getEncActionString() {
+            return mEncActionString;
+        }
+
+        /**
+         * Associates a new set of actions with this encounter
+         *  
+         * @param a actions
+         * @param s actions in the form of a string for readback
+         * @param newcursor index into array where the next action should take place
+         */
+        public void setNewActions(Action[] a, String s, int newcursor) {
+            mEncActions = a;
+            mEncActionString = s;
+            setActionCursor(newcursor);
+        }
     }
 
     /**
@@ -637,6 +697,7 @@ public abstract class RedeliveryHandler {
     public RedeliveryHandler(RAJMSActivationSpec spec, DeliveryStats stats, int lookbackSize) {
         mStats = stats;
         mLookbackSize = lookbackSize;
+        mActivationSpec = spec;
         mOldMsgs = new HashMap();
         mNewMsgs = new HashMap(mLookbackSize);
         
@@ -648,20 +709,175 @@ public abstract class RedeliveryHandler {
         } catch (Exception e) {
             sLog.warn(LOCALE.x("E050: Unexpected exception parsing of redelivery actions: {0}", e), e);
         }
-        
+        mActions = sanitizeActions(actions);
+        mActionStr = spec.getRedeliveryHandling();
+    }
+    
+    /**
+     * Ensure that there is an action with index = 1: there are ALWAYS actions, and
+     * the first action (i.e. with index = 1) ALWAYS exists.
+     * 
+     * @param actions actions to cleanup
+     * @return valid action array
+     */
+    private static Action[] sanitizeActions(Action[] actions) {
+        Action[] ret;
         // Ensure that there is an action with index = 1: there are ALWAYS actions, and
         // the first action (i.e. with index = 1) ALWAYS exists.
         if (actions.length == 0) {
-            mActions = new Action[] {new VoidAction() };
+            ret = new Action[] {new VoidAction() };
         } else if (actions[0].getAt() != 1) {
-            mActions = new Action[actions.length + 1];
-            mActions[0] = new VoidAction();
+            ret = new Action[actions.length + 1];
+            ret[0] = new VoidAction();
             for (int i = 0; i < actions.length; i++) {
-                mActions[i + 1] = actions[i];
+                ret[i + 1] = actions[i];
             }
         } else {
-            mActions = actions;
+            ret = actions;
         }
+        return ret;
+    }
+    
+    /**
+     * A state handler that is used when the message is not seen before, so it may not
+     * need to have an Encounter object, which is the typical case. To conserve memory
+     * for the typical case, the creation of Encounters should be avoided until the point
+     * that the application indeed wants to create state on the message.
+     * 
+     * This delegates to a Handler that represents a real Encounter.
+     * 
+     * This object is created if the RedeliveryFlag was set to false; hence there is no
+     * Encounter and no state associated with the msg.
+     * 
+     * @author fkieviet
+     */
+    private class LazyRedeliveryState implements WMessageIn.RedeliveryStateHandler {
+        private Message mMsg;
+        private WMessageIn.RedeliveryStateHandler mRealHandler;
+        
+        public LazyRedeliveryState(Message m) {
+            mMsg = m;
+        }
+        
+        /**
+         * Ensures that an Encounter object exists and that the RealHandler is set
+         * 
+         * @throws JMSException propagated from getJMSMessageID()
+         */
+        private void checkEncounter() throws JMSException {
+            if (mRealHandler != null) {
+                return;
+            }
+            String msgid = mMsg.getJMSMessageID();
+            if (msgid == null) {
+                throw Exc.jmsExc(LOCALE.x("E033: Cannot retain state for this message: "
+                    + "the getJMSMessageID() method of this method returns null."));
+            }
+            mRealHandler = new ActiveRedeliveryState(getEncounter(msgid, false));
+        }
+        
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getProperty(java.lang.String)
+         */
+        public String getProperty(String key) throws JMSException {
+            if (Options.MessageProperties.REDELIVERY_HANDLING.equals(key)) {
+                return mActionStr;
+            }
+            if (mRealHandler == null) {
+                return null;
+            } else {
+                return mRealHandler.getProperty(key);
+            }
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#setProperty(java.lang.String, java.lang.String)
+         */
+        public boolean setProperty(String key, String value) throws JMSException {
+            // It's extremely likely that setting properties involves state  
+            checkEncounter();
+            return mRealHandler.setProperty(key, value);
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getRedeliveryCount()
+         */
+        public int getRedeliveryCount() {
+            return 0;
+        }
+    }
+    
+    /**
+     * State handler for an existing Encounter
+     * 
+     * @author fkieviet
+     */
+    private class ActiveRedeliveryState implements WMessageIn.RedeliveryStateHandler {
+        private Encounter mEncounter;
+        
+        /**
+         * @param e Encounter
+         */
+        public ActiveRedeliveryState(Encounter e) {
+            mEncounter = e;
+        }
+        
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getProperty(java.lang.String)
+         */
+        public String getProperty(String key) {
+            if (Options.MessageProperties.REDELIVERY_HANDLING.equals(key)) {
+                return mEncounter.getEncActionString();
+            } else {
+                return (String) mEncounter.getStatefulRedeliveryProperties().get(key);
+            }
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#setProperty(java.lang.String, java.lang.String)
+         */
+        public boolean setProperty(String key, String value) throws JMSException {
+            if (key.startsWith(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX)) {
+                // User data
+                mEncounter.getStatefulRedeliveryProperties().put(key, value);
+                return true;
+            } else if (key.startsWith(Options.MessageProperties.REDELIVERY_HANDLING)) {
+                // Redelivery
+                setActions(value, mEncounter);
+                return true;
+            } else if (key.startsWith(Options.MessageProperties.STOP_CONNECTOR)) {
+                stopConnector(value);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getRedeliveryCount()
+         */
+        public int getRedeliveryCount() {
+            return mEncounter.getNEncountered();
+        }
+    }
+    
+    private void setActions(String s, Encounter enc) throws JMSException {
+        Action[] a = parse(s, mActivationSpec.getDestination(), mActivationSpec.getDestinationType());
+        a = sanitizeActions(a);
+        
+        // Calculate action cursor
+        int ienc = enc.getNEncountered();
+        int newcursor = 0;
+        for (int cursor = 0; cursor < a.length; cursor++) {
+            if (a[cursor].getAt() <= ienc) {
+                newcursor = cursor;
+            } else {
+                break;
+            }
+        }
+
+        // Update
+        enc.setNewActions(a, s, newcursor);
     }
     
     /**
@@ -674,10 +890,22 @@ public abstract class RedeliveryHandler {
      * message just should be acknowledged.
      */
     public boolean shouldDeliver(Object cookie, Message m) {
+        WMessageIn wmsg = null;
+        if (m instanceof WMessageIn) {
+            wmsg = (WMessageIn) m;
+        }
+
         // Obtain msgid; ignore non-redelivered messages and failures
         String msgid;
         try {
             if (!m.getJMSRedelivered()) {
+                if (wmsg != null) {
+                    // Not redelivered; the application MAY set state on this msg.
+                    // This is unlikely, so only create an Encounter if this is indeed
+                    // done by the application.
+                    wmsg.setRedeliveryState(new LazyRedeliveryState(wmsg.getDelegate()));
+                }
+                
                 return true;
             }
             
@@ -702,7 +930,14 @@ public abstract class RedeliveryHandler {
 
         
         // Find previous or new encounter
-        Encounter enc = getEncounter(msgid);
+        Encounter enc = getEncounter(msgid, true);
+        
+        if (wmsg != null) {
+            // Associate the encounter with the message so that if the message gets
+            // delivered to the application, the application can get data from and set
+            // data to the encounter.
+            wmsg.setRedeliveryState(new ActiveRedeliveryState(enc));
+        }
        
         // Bump up counter
         enc.encounteredAgain();
@@ -715,17 +950,49 @@ public abstract class RedeliveryHandler {
         return shouldDeliver(cookie, enc, m);
     }
     
-    private synchronized Encounter getEncounter(String msgid) {
+    /**
+     * Stores an exception in an encounter
+     * 
+     * @param e exception
+     * @param m message
+     */
+    public void rememberException(Exception e, Message m) {
+        String msgid = null;
+        try {
+            msgid = m.getJMSMessageID();
+        } catch (JMSException ex) {
+            // This failure is likely endemic for the provider and is
+            // logged in shouldDeliver()
+        }
+        if (msgid == null) {
+            // Nothing that can be done
+        } else {
+            // Find previous or new encounter
+            Encounter enc = getEncounter(msgid, false);
+            enc.getStatefulRedeliveryProperties().put(
+                Options.MessageProperties.LAST_EXCEPTIONMESSAGE, e.getMessage());
+            enc.getStatefulRedeliveryProperties().put(
+                Options.MessageProperties.LAST_EXCEPTIONCLASS, e.getClass().getName());
+            enc.getStatefulRedeliveryProperties().put(
+                Options.MessageProperties.LAST_EXCEPTIONTRACE, Exc.getStackTrace(e));
+        }
+    }
+
+    private synchronized Encounter getEncounter(String msgid, boolean redelivered) {
         // Check most recent msgs first (msg may be in old AND new cache)
-        mStats.msgRedelivered();
+        if (redelivered) {
+            mStats.msgRedelivered();
+        }
         Encounter enc = (Encounter) mNewMsgs.get(msgid);
         if (enc == null) {
             // Check old msgs
             enc = (Encounter) mOldMsgs.get(msgid);
             if (enc == null) {
                 // First encounter
-                enc = new Encounter(msgid);
-                mStats.msgRedeliveredFirstTime();
+                enc = new Encounter(msgid, mActions, mActionStr);
+                if (redelivered) {
+                    mStats.msgRedeliveredFirstTime();
+                }
             }
             
             // Ensure msg is in most recent cache
@@ -742,15 +1009,22 @@ public abstract class RedeliveryHandler {
     }
     
     private boolean shouldDeliver(Object cookie, Encounter enc, Message m) {
+        // Preconditions:
+        // - ienc indicates the number of times this msg was seen before, i.e. 1 on the 
+        //   first redelivery
+        // - cursor points to action to undertake
+        // Post condition: 
+        // - cursor points to action to undertake on next encounter
+        // - actions[cursor].getAt() == ienc
         int ienc = enc.getNEncountered();
         int cursor = enc.getActionCursor();
         
         // Action to execute:
-        Action action = mActions[cursor];
+        Action action = enc.mEncActions[cursor];
         
         // Move to next action? E.g. nextaction.at = 11, ienc = 11
-        if (cursor < (mActions.length - 1)) {
-            Action next = mActions[cursor + 1];
+        if (cursor < (enc.mEncActions.length - 1)) {
+            Action next = enc.mEncActions[cursor + 1];
             if (next.getAt() == ienc) {
                 enc.setActionCursor(cursor + 1);
                 action = next;

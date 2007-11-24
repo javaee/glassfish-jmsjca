@@ -25,7 +25,7 @@ import javax.jms.Destination;
  * The caller may synchronize on the object; none of the methods are synchronized.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class DestinationCacheEntry  {
     private Destination mDestination;

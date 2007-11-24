@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -63,6 +63,7 @@ public abstract class Passthrough {
     private int mTimeout = 60000;
     private int mBatchId;
     private String mMethodname;
+    private MessageGenerator mMessageGenerator = new MessageGenerator();
     private Class mMsgType = TextMessage.class;
     private boolean mStrictOrder;
     private String mQueue1Name = "Queue1";
@@ -108,6 +109,20 @@ public abstract class Passthrough {
      */
     public void setCommitSize(int n) {
         mCommitSize = n;
+    }
+    
+    /**
+     * @param gen generator
+     */
+    public void setMessageGenerator(MessageGenerator gen) {
+        mMessageGenerator = gen;
+    }
+    
+    /**
+     * @return current message generator
+     */
+    public MessageGenerator getMessageGenerator() {
+        return mMessageGenerator;
     }
     
     /**
@@ -258,6 +273,20 @@ public abstract class Passthrough {
     }
     
     /**
+     * @return drain timeout
+     */
+    public int getDrainTimeout() {
+        return mDrainTimeout;
+    }
+
+    /**
+     * @return commit sie
+     */
+    public int getCommitSize() {
+        return mCommitSize;
+    }
+
+    /**
      * @param batchid an index that is common to all messages to be sent through the 
      * system
      */
@@ -348,6 +377,90 @@ public abstract class Passthrough {
      */
     public Topic createTopic(Session s, String name) throws JMSException {
         return s.createTopic(name);
+    }
+
+    /**
+     * Generates and checks messages to be sent / read back
+     * 
+     * @author fkieviet
+     */
+    public static class MessageGenerator {
+        
+        /**
+         * Called for each message to be sent; sets the payload of the msg
+         * 
+         * @param m message
+         * @param i msg index
+         * @param iBatch batch index
+         * @param type one of the message types
+         * @throws JMSException fault
+         */
+        public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+            if (type == BytesMessage.class) {
+                // nothing
+            } else if (type == MapMessage.class) {
+                // nothing
+            } else if (type == ObjectMessage.class) {
+                // nothing
+            } else if (type == StreamMessage.class) {
+                // nothing
+            } else if (type == TextMessage.class) {
+                TextMessage msg = (TextMessage) m;
+                msg.setText(getStringPayload(i, iBatch));
+            } else {
+                // nothing (unknown type)
+            }
+        }
+        
+        /**
+         * Generates a string payload
+         * 
+         * @param i msg index
+         * @param iBatch msg batch index
+         * @return payload
+         */
+        public String getStringPayload(int i, int iBatch) {
+            return "Batch=" + iBatch + "; msgidx=" + i;
+        }
+        
+        /**
+         * Creates a msg
+         * 
+         * @param s session
+         * @param type desired type (may be ignored)
+         * @return msg
+         * @throws JMSException fault
+         */
+        public Message createMessage(Session s, Class type) throws JMSException {
+            Message msg;
+            if (type == BytesMessage.class) {
+                msg = s.createBytesMessage();
+            } else if (type == MapMessage.class) {
+                msg = s.createMapMessage();
+            } else if (type == ObjectMessage.class) {
+                msg = s.createObjectMessage();
+            } else if (type == StreamMessage.class) {
+                msg = s.createStreamMessage();
+            } else if (type == TextMessage.class) {
+                msg = s.createTextMessage();
+            } else {
+                msg = s.createMessage();
+            }
+            return msg;
+        }
+
+        /**
+         * Checks the validity of a received message
+         * 
+         * @param m msg to check
+         * @param i extracted msg index
+         * @param iBatch extracted batch index
+         * @return null if ok, error msg if faulty
+         * @throws JMSException fault
+         */
+        public String checkMessage(Message m, int i, int iBatch) throws JMSException {
+            return null;
+        }
     }
 
     /**
@@ -563,6 +676,17 @@ public abstract class Passthrough {
                     nFailures++;
                 }
 
+                try {
+                    String checkFail = mMessageGenerator.checkMessage(m, iRB, iBatchRB);
+                    if (checkFail != null) {
+                        System.out.println("Message check failure: " + checkFail);
+                        nFailures++;
+                    }
+                } catch (JMSException e) {
+                    System.out.println("Check failure: " + e);
+                    nFailures++;
+                }
+
                 // Check count
                 if (iRB >= readbackCount.length) {
                     String err = "#" + i + ": Out of range: index " + iRB;
@@ -651,32 +775,35 @@ public abstract class Passthrough {
          * @throws JMSException fault
          */
         public void sendBatch(int n, int iBatch, String start, Class type) throws JMSException {
+            sendBatch(n, iBatch, type, mMessageGenerator);
+        }
+
+        /**
+         * Sends a batch of messages
+         * 
+         * @param n number of messages
+         * @param iBatch index common to all messages
+         * @param type type of messages to send
+         * @param gen how to create and populate messages
+         * @throws JMSException fault
+         */
+        private void sendBatch(int n, int iBatch, Class type, MessageGenerator gen) throws JMSException {
             System.out.println("Sending " + n + " msgs of type " + type + " to "
                 + getName() + "; batch " + iBatch);
+            
             for (int i = 0; i < n; i++) {
-                Message msg;
-                if (type == BytesMessage.class) {
-                    msg = getSession().createBytesMessage();
-                } else if (type == MapMessage.class) {
-                    msg = getSession().createMapMessage();
-                } else if (type == ObjectMessage.class) {
-                    msg = getSession().createObjectMessage();
-                } else if (type == StreamMessage.class) {
-                    msg = getSession().createStreamMessage();
-                } else if (type == TextMessage.class) {
-                    msg = getSession().createTextMessage("Batch " + iBatch + " ("
-                        + start + "), msg " + i);
-                } else {
-                    msg = getSession().createMessage();
-                }
+                Message msg = gen.createMessage(getSession(), type);
+                
                 msg.setIntProperty("batch", iBatch);
                 msg.setIntProperty("idx", i);
                 if (mMethodname != null) {
                     msg.setStringProperty("methodname", mMethodname);
                 }
+                gen.setMsgPayload(msg, i, iBatch, type);
                 send(msg);
             }
             getSession().commit();
+            
             System.out.println("Sent " + n + " msgs of type " + type + " to "
                     + getName() + "; batch " + iBatch);            
         }

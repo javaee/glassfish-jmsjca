@@ -34,7 +34,7 @@ import javax.jms.JMSException;
  *   options  := key=value[&key=value]*       
  *
  * @author misc
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SunOneUrlParser extends ConnectionUrl {
     private SunOneConnectionUrl[] mConnectionUrls;
@@ -60,6 +60,10 @@ public class SunOneUrlParser extends ConnectionUrl {
      */
     public static final String PROT_HTTPS = "httpsjms";
     /**
+     * Protocol 6
+     */
+    public static final String PROT_LDAP = "ldap";
+    /**
      *  conection schema list
      */
     public static final String[] URL_PREFIXES = new String[] {
@@ -68,6 +72,7 @@ public class SunOneUrlParser extends ConnectionUrl {
         PROT_MQSSL + "://",
         PROT_HTTP + "://",
         PROT_HTTPS + "://",        
+        PROT_LDAP + "://",
     };
     /**
      *  connection schema list
@@ -78,6 +83,7 @@ public class SunOneUrlParser extends ConnectionUrl {
         PROT_MQSSL,
         PROT_HTTP,
         PROT_HTTPS,        
+        PROT_LDAP,
     };
     
     /**
@@ -87,9 +93,18 @@ public class SunOneUrlParser extends ConnectionUrl {
      */
     public SunOneUrlParser(String s) {
         ArrayList urls = new ArrayList();
-        for (StringTokenizer it = new StringTokenizer(s, ","); it.hasMoreTokens();) {
-            String url = it.nextToken();
-            urls.add(new SunOneConnectionUrl(url));
+        if (s != null && s.startsWith(PROT_LDAP))
+        {
+        	// this is a ldap reference, do not tokenize using ","
+        	urls.add(new SunOneConnectionUrl(s));
+        }
+        else
+        {
+        	for (StringTokenizer it = new StringTokenizer(s, ","); it.hasMoreTokens();) 
+        	{
+        		String url = it.nextToken();
+        		urls.add(new SunOneConnectionUrl(url));
+        	}
         }
         mConnectionUrls = (SunOneConnectionUrl[]) urls.toArray(new SunOneConnectionUrl[urls.size()]);
     }

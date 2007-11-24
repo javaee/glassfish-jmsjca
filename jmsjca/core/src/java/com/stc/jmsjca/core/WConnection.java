@@ -32,7 +32,7 @@ import javax.jms.Topic;
  * wrapper will delegate the calls to the JConnection.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WConnection implements Connection {
     /**

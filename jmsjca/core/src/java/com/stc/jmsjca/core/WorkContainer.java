@@ -43,7 +43,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -263,7 +263,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         // Deliver messages
         for (int i = 0, n = mMsgs.size(); i < n; i++) {
             Message message = (Message) mMsgs.get(i);
-            message = wrapMsg(message, sc, mResult.getNOnMessageWasCalled(), mResult);
+            if (mDelivery.mHoldUntilAck) {
+                message = wrapMsg(message, sc, mResult.getNOnMessageWasCalled(), mResult);
+            }
             mResult.resetDeliveryState();
             mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, message);
             if (mResult.getOnMessageFailed()) {
@@ -275,7 +277,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         if (mDelivery.mBatchSize > 1 &&  mResult.getNOnMessageWasCalled() > 0) {
             // Msgs were delivered; signal end of batch
             Message m = new EndOfBatchMessage();
-            m = wrapMsg(m, sc, mResult.getNOnMessageWasCalled(), mResult);
+            if (mDelivery.mHoldUntilAck) {
+                m = wrapMsg(m, sc, mResult.getNOnMessageWasCalled(), mResult);
+            }
             mResult.resetDeliveryState();
             mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m);
         }
@@ -302,7 +306,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      */
     private Message wrapMsg(Message msgToWrap, AckHandler ack, int iBatch, DeliveryResults result) {
         try {
-            return mDelivery.wrapMsg(msgToWrap, ack, iBatch);
+            return mDelivery.wrapMsg(msgToWrap).setBatchSize(mDelivery.mBatchSize, ack, iBatch); 
         } catch (Exception e) {
             result.setRollbackOnly(true);
             result.setException(e);

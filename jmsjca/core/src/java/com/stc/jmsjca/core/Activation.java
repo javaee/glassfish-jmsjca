@@ -73,7 +73,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -121,8 +121,10 @@ public class Activation extends ActivationBase {
     private int mState = DISCONNECTED;
     private boolean mXConnectingInterruptRequest;
     private boolean mRedeliveryRedirect;
+    private boolean mWrapAlways;
     private RAJMSObjectFactory mObjFactory;
     private String mURL;
+    private boolean mStopByConnectorInProgress;
 
     /**
      * Activation constructor
@@ -214,6 +216,7 @@ public class Activation extends ActivationBase {
             
             // Extract options for redelivery handling
             mRedeliveryRedirect = Utility.isTrue(p.getProperty(Options.In.OPTION_REDIRECT), false);
+            mWrapAlways = "1".equals(p.getProperty(Options.In.OPTION_REDELIVERYWRAP, "0"));
             String redeliveryHandling = p.getProperty(Options.In.OPTION_REDELIVERYHANDLING
                 , mSpec.getRedeliveryHandling());
             RedeliveryHandler.parse(redeliveryHandling, mSpec.getDestination(), mSpec.getDestinationType());
@@ -427,6 +430,52 @@ public class Activation extends ActivationBase {
         }
     }
     
+    /**
+     * Stops from an MDB; starts a new thread to invoke the stop.
+     * This method returns almost immediately.
+     * 
+     * @param msg the reason for the shutdown
+     */
+    public void stopConnectorByMDB(String msg) {
+        // Avoid starting multiple threads that all will call stop()
+        synchronized (mLock) {
+            if (mStopByConnectorInProgress) {
+                return;
+            }
+            mStopByConnectorInProgress = true;
+        }
+        
+        try {
+            sLog.warn(LOCALE.x("E114: [{0}]: the MDB requested a shutdown of the connector. " 
+                + "No messages will be delivered until message delivery is restarted. "
+                + "The reason for the shutdown is: {1}", getName(), msg));
+
+            Thread t = new Thread("JMSJCA shutdown by MDB") {
+                public void run() {
+                    try {
+                        if (sLog.isDebugEnabled()) {
+                            sLog.debug("Starting deactivation by MDB");
+                        }
+                        Activation.this.stop();
+                        if (sLog.isDebugEnabled()) {
+                            sLog.debug("Deactivation by MDB finished");
+                        }
+                    } finally {
+                        synchronized (mLock) {
+                            mStopByConnectorInProgress = false;
+                        }
+                    }
+                }
+            };
+            t.start();
+        } catch (RuntimeException e) {
+            synchronized (mLock) {
+                mStopByConnectorInProgress = false;
+            }
+            throw e;
+        }
+    }
+
     /**
      * Creates a delivery
      * 
@@ -774,5 +823,12 @@ public class Activation extends ActivationBase {
      */
     public boolean shouldRedirectRatherThanForward() {
         return mRedeliveryRedirect;
+    }
+    
+    /**
+     * @return true if the message should always be wrapped for stateful redelivery
+     */
+    public boolean shouldWrapAlways() {
+        return mWrapAlways;
     }
 }

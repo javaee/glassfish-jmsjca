@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.stcms.SpecialFeaturesEar1.JmsMgt;
 
@@ -27,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class CCStopEar1 extends StcmsEndToEnd {
     
@@ -110,6 +111,96 @@ public class CCStopEar1 extends StcmsEndToEnd {
            // Done
            c.undeploy(mTestEarName);
            p.get("Queue1").assertEmpty();
+       } finally {
+           Container.safeClose(c);
+           Passthrough.safeClose(p);
+       }
+   }
+
+   /**
+    * Tests to see if the queueviewer statistics are correct when suspending
+    * an MDB.
+    *
+    * @throws Throwable on failure
+    */
+   public void testStopFromMDB() throws Throwable {
+       EmbeddedDescriptor dd = getDD();
+       dd.findElementByText(EJBDD, "XContextName").setText("j-testmbean");
+       dd.findElementByText(EJBDD, "testQQXAXA").setText("stopDelivery");
+       
+       StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+       .createConnector(StcmsConnector.class);
+       String url = x.getConnectionURL();
+       url = url + "?" + Options.In.OPTION_REDELIVERYWRAP + "=1";
+       x.setConnectionURL(url);
+
+       
+       dd.update();
+
+       Container c = createContainer();
+       Passthrough p = createPassthrough(mServerProperties);
+       try {
+           // Undeploy
+           if (c.isDeployed(mTestEar.getAbsolutePath())) {
+               c.undeploy(Container.getModuleName(mTestEar.getAbsolutePath()));
+           }
+           
+           // Send batch of msgs; wait until some have been processed
+           int N = 1000;
+           p.prepareQ1ToQ2();
+           p.get("Queue2").close();
+           
+           c.deployModule(mTestEar.getAbsolutePath());
+           
+           // Interrogate queue statistics: should be empty
+           ActivationMBean actmbean = (ActivationMBean) c.getMBeanProxy(MBEAN,
+               ActivationMBean.class);
+           JmsMgt jmsmgt = (JmsMgt) c.getMBeanProxy(actmbean.getJMSServerMBean(), JmsMgt.class);
+           validate(jmsmgt);
+           int n1 = getQueueStatsNMsgs(jmsmgt, "Queue1");
+           assertTrue(n1 == 0);
+           int n2 = getQueueStatsNMsgs(jmsmgt, "Queue2");
+           assertTrue(n2 == 0);
+
+           // Send msgs and wait until some have been processed
+           p.get("Queue1").sendBatch(N, 0, "x");
+           
+           // Readback status
+           boolean ok = false;
+           for (int i = 0; i < 100; i++) {
+               String status = actmbean.xgetStatus();
+               if (com.stc.jmsjca.core.ActivationMBean.DISCONNECTED.equals(status)) {
+                   ok = true;
+                   break;
+               }
+               Thread.sleep(1000);
+           }
+           assertTrue(ok);
+           
+           actmbean.stopService();
+           
+           // Interrogate queue statistics
+           n1 = getQueueStatsNMsgs(jmsmgt, "Queue1");
+           n2 = getQueueStatsNMsgs(jmsmgt, "Queue2");
+           System.out.println("n1 = " + n1 + "; n2 = " + n2 + "; N = " + N);
+           assertTrue(n1 > 0);
+           assertTrue(n1 + n2 == N);
+           
+           // Done
+           int n1a = p.get("Queue1").drain();
+           ((Passthrough.QueueDest) p.get("Queue2")).connect();
+           int n2a = p.get(p.getQueue2Name()).drain();
+           System.out.println("n1 = " + n1a + "; n2 = " + n2a + "; N = " + N);
+           assertTrue(n1a == n1);
+           assertTrue(n1a + n2a == N);
+
+           n1 = getQueueStatsNMsgs(jmsmgt, "Queue1");
+           n2 = getQueueStatsNMsgs(jmsmgt, "Queue2");
+           System.out.println("n1 = " + n1 + "; n2 = " + n2 + "; N = " + N);
+           assertTrue(n1 == 0);
+           assertTrue(n2 == 0);
+
+           c.undeploy(mTestEarName);
        } finally {
            Container.safeClose(c);
            Passthrough.safeClose(p);

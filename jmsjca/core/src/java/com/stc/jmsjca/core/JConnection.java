@@ -51,7 +51,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);

@@ -28,7 +28,7 @@ import java.util.Set;
  * Utilities that have to do with password credentials
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Cred {
     /**
