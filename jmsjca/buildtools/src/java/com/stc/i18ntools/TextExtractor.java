@@ -49,69 +49,103 @@ import java.util.zip.ZipInputStream;
  * @author fkieviet
  */
 public class TextExtractor extends Task {
-    private File dir;
-    private File file;
+   private File classesDir;
+   private File targetBundle;
     private boolean strict = true;
+   private String prefix;
+   private String prefixU;
+   private String pattern = "([A-Z]\\d\\d\\d)(: )(.*)";
+   private Pattern splitter;
     
     /**
      * @see org.apache.tools.ant.Task#execute()
      */
     public void execute() {
-        if (dir == null) {
+       if (classesDir == null) {
             throw new BuildException("Directory must be specified");
         }
-        if (file == null) {
+       if (targetBundle == null) {
             throw new BuildException("File must be specified");
         }
-        extract(dir.getAbsolutePath(), file.getAbsolutePath());
+       splitter = Pattern.compile(pattern, Pattern.DOTALL);
+
+       extract(classesDir.getAbsolutePath(), targetBundle.getAbsolutePath());
     }
     
-    /**
-     * @param args args
-     */
-    public static void main(String[] args) {
-        TextExtractor t = new TextExtractor();
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\core\\classes", 
-            "Q:\\jmsjca\\core\\src\\java\\com\\stc\\jmsjca\\localization\\msgs.properties"
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rawmq\\classes",
-            "Q:\\jmsjca\\wmq\\src\\java\\com\\stc\\jmsjca\\wmq\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rawl\\classes",
-            "Q:\\jmsjca\\wl\\src\\java\\com\\stc\\jmsjca\\wl\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rawave\\classes",
-            "Q:\\jmsjca\\wave\\src\\java\\com\\stc\\jmsjca\\wave\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\raunifiedjms\\classes",
-            "Q:\\jmsjca\\unifiedjms\\src\\java\\com\\stc\\jmsjca\\unifiedjms\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rasunone\\classes",
-            "Q:\\jmsjca\\sunone\\src\\java\\com\\stc\\jmsjca\\sunone\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rastcms453\\classes",
-            "Q:\\jmsjca\\stcms453\\src\\java\\com\\stc\\jmsjca\\stcms453\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rastcms\\classes",
-            "Q:\\jmsjca\\stcms\\src\\java\\com\\stc\\jmsjca\\stcms\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rajndi\\classes",
-            "Q:\\jmsjca\\jndi\\src\\java\\com\\stc\\jmsjca\\jndi\\msgs.properties" 
-        );
-        t.extract(
-            "Q:\\BUILD\\Modules\\jmsjca\\rajboss\\classes",
-            "Q:\\jmsjca\\jboss\\src\\java\\com\\stc\\jmsjca\\jboss\\msgs.properties" 
-        );
-    }    
+   /*
+    * Converts unicodes to encoded &#92;uxxxx and escapes
+    * special characters with a preceding slash
+    * From JDK Properties
+    */
+   private String saveConvert(String theString, boolean escapeSpace) {
+       int len = theString.length();
+       int bufLen = len * 2;
+       if (bufLen < 0) {
+           bufLen = Integer.MAX_VALUE;
+       }
+       StringBuffer outBuffer = new StringBuffer(bufLen);
+
+       for (int x = 0; x < len; x++) {
+           char aChar = theString.charAt(x);
+           // Handle common case first, selecting largest block that
+           // avoids the specials below
+           if ((aChar > 61) && (aChar < 127)) {
+               if (aChar == '\\') {
+                   outBuffer.append('\\'); outBuffer.append('\\');
+                   continue;
+               }
+               outBuffer.append(aChar);
+               continue;
+           }
+           switch(aChar) {
+                case ' ':
+                    if (x == 0 || escapeSpace) {
+                        outBuffer.append('\\');
+                    }
+                    outBuffer.append(' ');
+                    break;
+               case '\t':outBuffer.append('\\'); outBuffer.append('t');
+                         break;
+               case '\n':outBuffer.append('\\'); outBuffer.append('n');
+                         break;
+               case '\r':outBuffer.append('\\'); outBuffer.append('r');
+                         break;
+               case '\f':outBuffer.append('\\'); outBuffer.append('f');
+                         break;
+               case '=': // Fall through
+               case ':': // Fall through
+               case '#': // Fall through
+               case '!':
+                   outBuffer.append('\\'); outBuffer.append(aChar);
+                   break;
+               default:
+                   if ((aChar < 0x0020) || (aChar > 0x007e)) {
+                       outBuffer.append('\\');
+                       outBuffer.append('u');
+                       outBuffer.append(toHex((aChar >> 12) & 0xF));
+                       outBuffer.append(toHex((aChar >>  8) & 0xF));
+                       outBuffer.append(toHex((aChar >>  4) & 0xF));
+                       outBuffer.append(toHex(aChar & 0xF));
+                   } else {
+                       outBuffer.append(aChar);
+                   }
+           }
+       }
+       return outBuffer.toString();
+   }
+
+   /**
+    * Convert a nibble to a hex character
+    * @param    nibble  the nibble to convert.
+    */
+   private static char toHex(int nibble) {
+        return HEXDIGIT[(nibble & 0xF)];
+   }
+
+   /** A table of hex digits */
+   private static final char[] HEXDIGIT = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+   };
     
     /**
      * Extracts internationalizable text out of a jar and puts it in a properties file
@@ -123,6 +157,10 @@ public class TextExtractor extends Task {
         try {
             boolean error = false;
             boolean couldBeImproved = false;
+           String effectiveprefix = this.prefixU != null ? this.prefixU.toUpperCase() : this.prefix;
+           if (effectiveprefix == null) {
+               effectiveprefix = "";
+           }
             
             List list = new ArrayList();
             readDir(list, new File(dir).getAbsolutePath(), dir);
@@ -166,7 +204,12 @@ public class TextExtractor extends Task {
                 List sources = (List) byId.get(e.getID());
                 for (Iterator iterator = sources.iterator(); iterator.hasNext();) {
                     TextEntry e2 = (TextEntry) iterator.next();
-                    out.println("# " + e2.getClassname());
+                   String clname = e2.getClassname();
+                   clname = clname.replace(File.separatorChar, '.');
+                   clname = clname.replace('$', '.') + '\t';
+                   clname = clname.replace(".class\t", "");
+                   
+                   out.println("# " + clname);
                     if (!e2.getContent().equals(e.getContent())) {
                         error = true;
                         System.err.println();
@@ -177,7 +220,7 @@ public class TextExtractor extends Task {
                         System.err.println(e2.getText());
                     }
                 }
-                out.println(e.getID() + " = " + e.getContent());
+               out.println(effectiveprefix + e.getID() + " = " + saveConvert(e.getContent(), false));
                 out.println();
             }
             
@@ -192,6 +235,7 @@ public class TextExtractor extends Task {
                         return lhs.getID().compareTo(rhs.getID());
                     }
                 });
+               ids.addAll(dups);
                 if (ids.size() > 1) {
                     System.err.println();
                     System.err.println("SAME TEXTS, DIFFERENT IDS");
@@ -256,8 +300,6 @@ public class TextExtractor extends Task {
             e.printStackTrace();
         } 
     }
-    
-    static Pattern PATTERN = Pattern.compile("([A-Z]\\d\\d\\d)(: )(.*)");
     
     /**
      * @param s Stream to close
@@ -333,7 +375,7 @@ public class TextExtractor extends Task {
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(path);
-            out.write(contents.getBytes());
+           out.write(contents.getBytes("8859_1"));
         } finally {
             safeClose(out);
         }
@@ -406,7 +448,7 @@ public class TextExtractor extends Task {
      * 
      * @author fkieviet
      */
-    private static class TextEntry {
+   private class TextEntry {
         private String jarURL;
         private String classname;
         private String text;
@@ -465,7 +507,7 @@ public class TextExtractor extends Task {
          */
         public String getID() {
             if (id == null) {
-                Matcher m = PATTERN.matcher(text);
+               Matcher m = splitter.matcher(text);
                 if (!m.matches()) {
                     throw new RuntimeException("String not match pattern: " + text);
                 }
@@ -489,8 +531,8 @@ public class TextExtractor extends Task {
          * @param s to test
          * @return true if matches
          */
-        public static boolean matches(String s) {
-            Matcher m = PATTERN.matcher(s);
+       public boolean matches(String s) {
+           Matcher m = splitter.matcher(s);
             return m.matches();
         }
     }
@@ -506,7 +548,7 @@ public class TextExtractor extends Task {
 
     private static String[] mArchiveExtensions = new String[] {".jar", ".zip", ".nbm", ".war", ".ear", ".rar", ".sar"};
     
-    private static void readDir(List list, String root, String currentPath) throws Exception {
+    private void readDir(List list, String root, String currentPath) throws Exception {
         File[] entries = new File(currentPath).listFiles();
         for (int i = 0; i < entries.length; i++) {
             if (entries[i].isDirectory()) {
@@ -520,7 +562,8 @@ public class TextExtractor extends Task {
                         List strings = readStrings(inp);
                         for (Iterator iter = strings.iterator(); iter.hasNext();) {
                             String s = (String) iter.next();
-                            if (TextEntry.matches(s)) {
+                            Matcher m = splitter.matcher(s);
+                            if (m.matches()) {
                                 list.add(new TextEntry(currentPath, 
                                     entries[i].getAbsolutePath().substring(root.length() + 1), s));
                             }
@@ -541,7 +584,7 @@ public class TextExtractor extends Task {
      * @param currentPath Path prefix
      * @throws Exception on fault
      */
-    public static void readJar(List list, InputStream jar, String currentPath) throws Exception {
+    public void readJar(List list, InputStream jar, String currentPath) throws Exception {
         ZipInputStream inp = new ZipInputStream(jar);
         for (;;) {
             ZipEntry entry = inp.getNextEntry();
@@ -558,7 +601,8 @@ public class TextExtractor extends Task {
                         List strings = readStrings(inp);
                         for (Iterator iter = strings.iterator(); iter.hasNext();) {
                             String s = (String) iter.next();
-                            if (TextEntry.matches(s)) {
+                            Matcher m = splitter.matcher(s);
+                            if (m.matches()) {
                                 list.add(new TextEntry(currentPath, entry.getName(), s));
                             }
                         }
@@ -675,7 +719,7 @@ public class TextExtractor extends Task {
      * @return String
      */
     public File getDir() {
-        return dir;
+       return classesDir;
     }
 
     /**
@@ -684,7 +728,7 @@ public class TextExtractor extends Task {
      * @param dir StringThe dir to set.
      */
     public void setDir(File dir) {
-        this.dir = dir;
+       this.classesDir = dir;
     }
 
     /**
@@ -693,7 +737,7 @@ public class TextExtractor extends Task {
      * @return String
      */
     public File getFile() {
-        return file;
+       return targetBundle;
     }
 
     /**
@@ -702,8 +746,26 @@ public class TextExtractor extends Task {
      * @param file StringThe file to set.
      */
     public void setFile(File file) {
-        this.file = file;
+       this.targetBundle = file;
     }
+
+   /**
+    * Getter for prefix
+    *
+    * @return String
+    */
+   public String getPrefix() {
+       return prefix;
+   }
+
+   /**
+    * Setter for prefix
+    *
+    * @param prefix StringThe prefix to set.
+    */
+   public void setPrefix(String prefix) {
+       this.prefix = prefix;
+   }
 
     /**
      * Getter for strict
@@ -722,4 +784,40 @@ public class TextExtractor extends Task {
     public void setStrict(boolean strict) {
         this.strict = strict;
     }
+
+   /**
+    * Getter for prefixU
+    *
+    * @return String
+    */
+   public String getPrefixU() {
+       return prefixU;
+   }
+
+   /**
+    * Setter for prefixU
+    *
+    * @param prefixU StringThe prefixU to set.
+    */
+   public void setPrefixU(String prefixU) {
+       this.prefixU = prefixU;
+   }
+
+   /**
+    * Getter for pattern
+    *
+    * @return String
+    */
+   public String getPattern() {
+       return pattern;
+   }
+
+   /**
+    * Setter for pattern
+    *
+    * @param pattern StringThe pattern to set.
+    */
+   public void setPattern(String pattern) {
+       this.pattern = pattern;
+   }
 }

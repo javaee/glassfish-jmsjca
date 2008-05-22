@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -27,9 +30,11 @@ import java.util.Enumeration;
  * Signals the end of a batch of messages
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class EndOfBatchMessage implements Message {
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * Property used to signal an end of batch
      */
@@ -45,7 +50,7 @@ public class EndOfBatchMessage implements Message {
      * @see javax.jms.Message#acknowledge()
      */
     public void acknowledge() throws JMSException {
-        throw new JMSException("Invalid method call");
+        throw Exc.jmsExc(LOCALE.x("E123: Invalid method call"));
     }
 
     /**
@@ -64,35 +69,35 @@ public class EndOfBatchMessage implements Message {
      * @see javax.jms.Message#getBooleanProperty(java.lang.String)
      */
     public boolean getBooleanProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
      * @see javax.jms.Message#getByteProperty(java.lang.String)
      */
     public byte getByteProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
      * @see javax.jms.Message#getDoubleProperty(java.lang.String)
      */
     public double getDoubleProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
      * @see javax.jms.Message#getFloatProperty(java.lang.String)
      */
     public float getFloatProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
      * @see javax.jms.Message#getIntProperty(java.lang.String)
      */
     public int getIntProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
@@ -176,7 +181,7 @@ public class EndOfBatchMessage implements Message {
      * @see javax.jms.Message#getLongProperty(java.lang.String)
      */
     public long getLongProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
@@ -186,7 +191,7 @@ public class EndOfBatchMessage implements Message {
         if (KEY_ENDOFBATCH.equals(name)) {
             return Boolean.TRUE;
         }
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
@@ -194,21 +199,21 @@ public class EndOfBatchMessage implements Message {
      */
     public Enumeration getPropertyNames() throws JMSException {
         //TODO
-        throw new JMSException("Not implemented");
+        throw Exc.jmsExc(LOCALE.x("E125: Method not implemented"));
     }
 
     /**
      * @see javax.jms.Message#getShortProperty(java.lang.String)
      */
     public short getShortProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
      * @see javax.jms.Message#getStringProperty(java.lang.String)
      */
     public String getStringProperty(String name) throws JMSException {
-        throw new JMSException("No such name [" + name + "]");
+        throw Exc.jmsExc(LOCALE.x("E124: Invalid property name [{0}]", name));
     }
 
     /**
@@ -223,132 +228,132 @@ public class EndOfBatchMessage implements Message {
      * @see javax.jms.Message#setBooleanProperty(java.lang.String, boolean)
      */
     public void setBooleanProperty(String name, boolean value) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setByteProperty(java.lang.String, byte)
      */
     public void setByteProperty(String arg0, byte arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setDoubleProperty(java.lang.String, double)
      */
     public void setDoubleProperty(String arg0, double arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setFloatProperty(java.lang.String, float)
      */
     public void setFloatProperty(String arg0, float arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setIntProperty(java.lang.String, int)
      */
     public void setIntProperty(String arg0, int arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSCorrelationID(java.lang.String)
      */
     public void setJMSCorrelationID(String arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSCorrelationIDAsBytes(byte[])
      */
     public void setJMSCorrelationIDAsBytes(byte[] arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSDeliveryMode(int)
      */
     public void setJMSDeliveryMode(int arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSDestination(javax.jms.Destination)
      */
     public void setJMSDestination(Destination arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSExpiration(long)
      */
     public void setJMSExpiration(long arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSMessageID(java.lang.String)
      */
     public void setJMSMessageID(String arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSPriority(int)
      */
     public void setJMSPriority(int arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSRedelivered(boolean)
      */
     public void setJMSRedelivered(boolean arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSTimestamp(long)
      */
     public void setJMSTimestamp(long arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setJMSType(java.lang.String)
      */
     public void setJMSType(String arg0) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setLongProperty(java.lang.String, long)
      */
     public void setLongProperty(String arg0, long arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setObjectProperty(java.lang.String, java.lang.Object)
      */
     public void setObjectProperty(String arg0, Object arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setShortProperty(java.lang.String, short)
      */
     public void setShortProperty(String arg0, short arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 
     /**
      * @see javax.jms.Message#setStringProperty(java.lang.String, java.lang.String)
      */
     public void setStringProperty(String arg0, String arg1) throws JMSException {
-        throw new JMSException("Readonly");
+        throw Exc.jmsExc(LOCALE.x("E126: Message is read-only"));
     }
 }

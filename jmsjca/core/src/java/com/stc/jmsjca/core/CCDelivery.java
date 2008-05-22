@@ -56,7 +56,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -79,8 +79,9 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      *
      * @param a Activation
      * @param stats DeliveryStats
+     * @throws Exception on failure
      */
-    public CCDelivery(Activation a, DeliveryStats stats) {
+    public CCDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
         mNMaxWorkContainers = 
             a.getActivationSpec().getEndpointPoolMaxSize().intValue();
@@ -96,26 +97,28 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      */
     public void start() throws Exception {
         RAJMSObjectFactory o = mActivation.getObjectFactory();
+        final int domain = XConnectionRequestInfo.guessDomain(mActivation.isCMT() && !mActivation.isXAEmulated()
+            , mActivation.isTopic()); 
         javax.jms.ConnectionFactory fact = o.createConnectionFactory(
-            XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+            domain,
             mActivation.getRA(),
             mActivation.getActivationSpec(),
             null,
             null);
         mConnection = o.createConnection(
             fact,
-            XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+            domain,
             mActivation.getActivationSpec(),
             mActivation.getRA(),
             mActivation.getUserName() == null ? mActivation.getRA().getUserName() : mActivation.getUserName(),
-            mActivation.getPassword() == null ? mActivation.getRA().getPassword() : mActivation.getPassword());
+            mActivation.getPassword() == null ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
         o.setClientID(mConnection, 
             mActivation.isTopic(), 
             mActivation.getActivationSpec(), 
             mActivation.getRA());
         javax.jms.Session sess = o.createSession(
             mConnection,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic() ? TopicSession.class : QueueSession.class,
             mActivation.getRA(),
             mActivation.getActivationSpec(),
@@ -123,7 +126,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             javax.jms.Session.AUTO_ACKNOWLEDGE);
         javax.jms.Destination dest = o.createDestination(
             sess,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic(),
             mActivation.getActivationSpec(),
             null,
@@ -132,7 +135,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
         sess.close();
         o.createConnectionConsumer(
             mConnection,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic(),
             mActivation.isDurable(),
             mActivation.getActivationSpec(),
@@ -249,16 +252,22 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
 
                 s = mActivation.getObjectFactory().createSession(
                     mConnection,
-                    mActivation.isXA(),
+                    mActivation.isCMT() && !mActivation.isXAEmulated(),
                     mActivation.isTopic() ? TopicSession.class : QueueSession.class,
                     mActivation.getRA(),
                     mActivation.getActivationSpec(),
                     true, // In case of BMT, rollback should happen by message listener
                     Session.AUTO_ACKNOWLEDGE);
                 
-                XAResource xa = mActivation.getObjectFactory().getXAResource(
-                    mActivation.isXA(), s);
-
+                XAResource xa = null;
+                if (mActivation.isCMT()) {
+                    if (!mActivation.isXAEmulated()) {
+                        xa = mActivation.getObjectFactory().getXAResource(true, s);
+                    } else {
+                        xa = new PseudoXAResource(s); 
+                    }
+                }
+                
                 MessageEndpoint m = createMessageEndpoint(xa, s);
 
                 if (m == null) {
@@ -268,7 +277,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                     WorkContainer w = new WorkContainer(this, m,
                         mActivation.getOnMessageMethod(), s, mConnection, new MDB(xa));
                     s.setMessageListener(mActivation.getObjectFactory().
-                        getMessagePreprocessor(w, mActivation.isXA()));
+                        getMessagePreprocessor(w, mActivation.isCMT() && !mActivation.isXAEmulated()));
                     addEmptyWorkContainer(w);
                     mAllWorkContainers.add(w);
                 }
@@ -315,8 +324,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 }
                 
                 // Check if endpoint needs to be refreshed
-                if (ret.hasBadEndpoint()) {
-                    release(ret.getEndpoint());
+                if (!ret.hasEndpoint()) {
                     MessageEndpoint mep = createMessageEndpoint(ret.getXAResource(), ret.getSession());
                     ret.setEndpoint(mep);
                     if (mep == null) {

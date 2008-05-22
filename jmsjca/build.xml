@@ -23,7 +23,7 @@ Relevant properties to set:
     <taskdef name="JUnitUpload" classname="com.stc.unittrack.ant.Upload" classpath="./core/test/lib/unittracktask.jar" />
     <property environment="env" />
     <property name="glassfish.lib" value="${env.GLASSFISH_HOME}/lib" />
-    <import file="../RTS/public-test.xml" optional="true" />
+    <import file="public-test.xml" optional="true" />
 
 <!--===========================================================================
     Targets required by CM
@@ -69,67 +69,84 @@ Relevant properties to set:
 
 
 <!--===========================================================================
+    Global initializations (used to be in a separate target, but this no longer
+    works in later versions of Ant).
+-->
+    <!-- Properties -->
+    <property file="${stc.root.dir}/stc.properties" />
+    <pathconvert property="stc.root.dir" targetOS="unix">
+        <path>
+            <pathelement path="${env.STC_ROOT}"/>
+        </path>
+    </pathconvert>
+    <property file="${env.STC_ROOT}/stc.properties" />
+    <property file="${stc.root.dir}/stc.properties" />
+    <property file="build-RTS.properties" />
+    <property file="build.properties" />
+    
+    <!-- container specific classpath goes here (rts, sjsas, wl, glassfish)-->
+    <path id="rts.container.classpath">
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    </path>
+
+    <path id="bare-rts.container.classpath">
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    </path>
+
+    <path id="jboss.container.classpath">
+        <fileset file="jboss/lib/jboss-jmx.jar" />            
+        <fileset file="jboss/lib/xml-apis.jar" />            
+        <fileset file="jboss/lib/xercesImpl.jar" />                        
+        <fileset file="jboss/lib/jnp-client.jar" />                                    
+        <fileset file="jboss/lib/jboss-system.jar" />                                                
+        <fileset file="jboss/lib/jbossall-client.jar" />                                                
+        <fileset file="jboss/lib/jboss-client.jar" />                                                                                   
+        <fileset file="jboss/lib/jmx-invoker-adaptor-client.jar" /> 
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+    </path>
+
+    <path id="wl.container.classpath">
+        <fileset file="${wl.install.lib.path}/weblogic.jar" />
+        <fileset file="${wl.install.lib.path}/wlclient.jar" />
+        <fileset file="${wl.install.lib.path}/wljmsclient.jar" />            
+        <fileset file="${wl.install.lib.path}/wljmxclient.jar" />            
+        <!-- use JDK 1.5 instead	                
+        <fileset file="${stc.api.dir}/jmxremote.jar" />
+        <fileset file="${stc.api.dir}/jmxremote_optional.jar" /> 
+        -->               
+        <fileset file="${stc.api.dir}/j2ee.jar" />                   
+        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    </path>
+
+    <path id="was.container.classpath">
+        <fileset dir="${was.install.lib.path}" >
+        	<include name="*.jar" />        
+        </fileset>		              
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    </path>
+    
+    <path id="sjsas.container.classpath">
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    </path>
+    
+    <path id="glassfish.container.classpath">
+        <fileset file="${glassfish.lib}/appserv-deployment-client.jar" />
+        <fileset file="${glassfish.lib}/javaee.jar" />
+        <fileset file="${glassfish.lib}/appserv-rt.jar" />
+        <fileset file="${glassfish.lib}/appserv-ext.jar" />
+        <fileset file="${glassfish.lib}/jmxremote_optional.jar" />
+    </path>
+
+
+<!--===========================================================================
     Initializes variables etc
+    (Made obsolete by the global initalization of properties above)
 -->
     <target name="init" unless="init.ed">
-        <!-- Properties -->
-        <property file="${stc.root.dir}/stc.properties" />
-        <pathconvert property="stc.root.dir" targetOS="unix">
-            <path>
-                <pathelement path="${env.STC_ROOT}"/>
-            </path>
-        </pathconvert>
-        <property file="${env.STC_ROOT}/stc.properties" />
-        <property file="${stc.root.dir}/stc.properties" />
-        <property file="${stc.root.dir}/RTS/build.properties" />
-        <property file="build.properties" />
-        
-        <!-- container specific classpath goes here (rts, sjsas, wl, glassfish)-->
-        <path id="rts.container.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-        </path>
-
-        <path id="bare-rts.container.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-        </path>
-
-        <path id="jboss.container.classpath">
-            <fileset file="jboss/lib/jboss-jmx.jar" />            
-            <fileset file="jboss/lib/xml-apis.jar" />            
-            <fileset file="jboss/lib/xercesImpl.jar" />                        
-            <fileset file="jboss/lib/jnp-client.jar" />                                    
-            <fileset file="jboss/lib/jboss-system.jar" />                                                
-            <fileset file="jboss/lib/jbossall-client.jar" />                                                
-            <fileset file="jboss/lib/jboss-client.jar" />                                                                                   
-            <fileset file="jboss/lib/jmx-invoker-adaptor-client.jar" /> 
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-        </path>
-
-        <path id="wl.container.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-        </path>
-
-        <path id="was.container.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-        </path>
-        
-        <path id="sjsas.container.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-        </path>
-        
-        <path id="glassfish.container.classpath">
-            <fileset file="${glassfish.lib}/appserv-deployment-client.jar" />
-            <fileset file="${glassfish.lib}/javaee.jar" />
-            <fileset file="${glassfish.lib}/appserv-rt.jar" />
-            <fileset file="${glassfish.lib}/appserv-ext.jar" />
-            <fileset file="${glassfish.lib}/jmxremote_optional.jar" />
-        </path>
-
         <property name="init.ed" value="true" />
     </target>
 
@@ -198,6 +215,16 @@ Relevant properties to set:
             <zipfileset dir="${jmsjca.artefacts.dir}" prefix="jars"></zipfileset>
             <zipfileset file="scripts/install.xml"></zipfileset>
         </zip>
+        
+        <antcall target="copy-runtime-image" />
+        
+    </target>
+    
+    <target name="copy-runtime-image" if="stc.runtime.dir">
+        <!-- 5.2 runtime -->
+    		<mkdir dir="${jmsjca.runtime-image.dir}" />
+        <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.runtime-image.dir}" failonerror="false" />
+        <foreach list="${jcaids}" target="call-copy-runtime-image" param="jcaid" />
     </target>
 
     <target name="call-sar">
@@ -205,6 +232,17 @@ Relevant properties to set:
         <ant
             antfile="build-${jcaid}.xml"
             target="sar"
+            inheritall="false"
+        >
+            <property name="jcaid" value="${jcaid}" />
+        </ant>
+    </target>
+
+    <target name="call-copy-runtime-image">
+        <fail unless="jcaid" message="missing parm jcaid" />
+        <ant
+            antfile="build-${jcaid}.xml"
+            target="copy-runtime-image"
             inheritall="false"
         >
             <property name="jcaid" value="${jcaid}" />
@@ -256,7 +294,7 @@ Relevant properties to set:
         
         <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
         <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
-        <i18n dir="${jmsjca.core.classes.dir}" file="core/src/java/com/stc/jmsjca/localization/msgs.properties" />
+        <i18n dir="${jmsjca.core.classes.dir}" file="core/src/java/com/stc/jmsjca/localization/msgs.properties" prefix="JMSJCA-" />
         <copy todir="${jmsjca.core.classes.dir}">
             <fileset dir="core/src/java" excludes="**/*.java"/>
         </copy>
@@ -475,11 +513,11 @@ Relevant properties to set:
         <fail unless="jcaid" message="missing parm jcaid" />
 
         <antcall target="compile-container" />
-        
         <ant
             antfile="build-${jcaid}.xml"
             target="compile-test"
             inheritall="false"
+            inheritRefs="true"
         >
             <property name="jcaid" value="${jcaid}" />
             <reference refid="${testcontainer.id}.container.classpath" 

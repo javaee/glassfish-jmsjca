@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.util;
 
+import com.stc.jmsjca.localization.Localizer;
+
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
@@ -28,13 +30,14 @@ import javax.management.ReflectionException;
  * invoke.
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class MBeanBase extends MBeanHelper {
 //    private static Logger sLog = Logger.getLogger(MBeanBase.class);
     private String mDescription;
     private ClassLoader mContextClassloader;
     private boolean mGetContextClassLoaderFailure;
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * Constructor
@@ -95,9 +98,9 @@ public abstract class MBeanBase extends MBeanHelper {
                 return super.invoke(opName, opArgs, sig);
             } catch (MBeanException e) {
                 if (cclSetFailure || mGetContextClassLoaderFailure) {
-                    throw new MBeanException(new RuntimeException("Invocation error " +
+                    throw new MBeanException(Exc.rtexc(LOCALE.x("E170: Invocation error " +
                             "(the error may be due to a failure to set the " +
-                            "ContextClassLoader -- check permissions): " + e, e));
+                            "ContextClassLoader -- check permissions): {0}", e), e));
                 } else {
                     throw e;
                 }

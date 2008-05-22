@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project basedir="." name="RTS test control">
+    <description>
+Exported tasks for automated testing with RTS.
+    </description>
+
+<!--===========================================================================
+    Runs the RTS test server, installing it if necessary
+    The installation properties will be written to "properties"
+-->
+    <macrodef name="run-test-server-x">
+        <attribute
+            name="properties"
+            description="Path to file to which test server properties will be written"
+        />
+        <sequential>
+            <property environment="xenv" />
+            <pathconvert property="p.path" targetOS="unix">
+                <path>
+                    <pathelement path="@{properties}"/>
+                </path>
+            </pathconvert>
+
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="run-test-server"
+                 antfile="test.xml"
+            >
+                <property name="properties.path" value="${p.path}" />
+            </ant>
+        </sequential>
+    </macrodef>
+    
+<!--===========================================================================
+    Installs the RTS test server
+-->
+    <macrodef name="install-test-server">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="install-test-server"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Runs the RTS test server, installing it if necessary
+-->
+    <macrodef name="run-test-server">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="run-test-server"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Stops the RTS test server
+-->
+    <macrodef name="stop-test-server">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="stop-test-server"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Destroys the RTS test server
+-->
+    <macrodef name="clean-test-server">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="clean-test-server"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Turns debugging on
+-->
+    <macrodef name="debug-on">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="debug-on"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Deploys an EAR. Parameter "ear" is the path to the module to the deployed.
+-->
+    <macrodef name="test-deploy">
+        <attribute name="ear" description="path to ear-file" />
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="deploy"
+                 antfile="test.xml"
+            >
+                <property name="ear.path" value="@{ear}" />
+            </ant>
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Undeploys an EAR. Parameter "ear" is the module name of the module to be
+    undeployed.
+-->
+    <macrodef name="test-undeploy">
+        <attribute name="ear" description="name of module" />
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="undeploy"
+                 antfile="test.xml"
+            >
+                <property name="ear.path" value="@{ear}" />
+            </ant>
+        </sequential>
+    </macrodef>
+
+<!--===========================================================================
+    Lists the components on the test server
+-->
+    <macrodef name="test-list">
+        <sequential>
+            <property environment="xenv" />
+            <ant inheritrefs="false"
+                 inheritall="false"
+                 dir="${xenv.STC_ROOT}/RTS"
+                 target="list"
+                 antfile="test.xml"
+            />
+        </sequential>
+    </macrodef>
+</project>

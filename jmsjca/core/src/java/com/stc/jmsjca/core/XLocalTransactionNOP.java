@@ -23,7 +23,7 @@ import javax.resource.ResourceException;
  * the transaction mode in ra.xml is *not* set to NoTransaction.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class XLocalTransactionNOP implements javax.resource.spi.LocalTransaction {
     /**

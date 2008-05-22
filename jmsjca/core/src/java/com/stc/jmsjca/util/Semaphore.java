@@ -19,7 +19,7 @@ package com.stc.jmsjca.util;
 /**
  * Copied from Doug Lea / Concurrent: the Semaphore class
  *
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * @author Doug Lea
  */
 public class Semaphore {

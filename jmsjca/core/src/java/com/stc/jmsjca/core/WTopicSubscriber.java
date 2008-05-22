@@ -24,7 +24,7 @@ import javax.jms.TopicSubscriber;
  * See WConsumer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WTopicSubscriber extends WMessageConsumer implements TopicSubscriber {
     private TopicSubscriber mDelegate;

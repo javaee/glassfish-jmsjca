@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jts.jtsxa.LastAgentResource;
 
@@ -37,10 +38,11 @@ import javax.transaction.xa.Xid;
  * should add a notice of this fact to the end-user documentation.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class PseudoXAResource implements LastAgentResource {
     private Session mSession;
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * Constructor
@@ -51,7 +53,7 @@ public class PseudoXAResource implements LastAgentResource {
     public PseudoXAResource(Session s) throws JMSException {
         mSession = s;
         if (!mSession.getTransacted()) {
-            throw new JMSException("The session should be transacted.");
+            throw Exc.jmsExc(LOCALE.x("E134: The session should be transacted."));
         }
     }
 

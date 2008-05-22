@@ -20,6 +20,7 @@ import com.stc.jmsjca.core.Delivery.ConnectionForMove;
 import com.stc.jmsjca.core.Delivery.DeliveryResults;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
@@ -43,7 +44,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -110,22 +111,19 @@ public class WorkContainer implements javax.resource.spi.work.Work,
     }
     
     /**
-     * @return MEP
+     * @return true if this container has an endpoint
      */
-    MessageEndpoint getEndpoint() {
-        return mEndpoint;
+    boolean hasEndpoint() {
+        return mEndpoint != null;
     }
     
     /**
-     * @param mep MEP
+     * Sets a new endpoint in this work container
+     * 
+     * @param mep new endpoint
      */
     void setEndpoint(MessageEndpoint mep) {
         mEndpoint = mep;
-        mResult.setShouldDiscardEndpoint(false);
-    }
-    
-    boolean hasBadEndpoint() {
-        return mResult.getShouldDiscardEndpoint();
     }
     
     /**
@@ -168,12 +166,28 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 }
             }
 
-            throw new RuntimeException("Invalid state transition: " + mState + " to " + newState + " on " + this);
+            throw Exc.rtexc(LOCALE.x("E157: Invalid state transition from {0} to {1} on {2}"
+                , Integer.toString(mState), Integer.toString(newState), this));
         }
     }
     
     /**
      * @see java.lang.Runnable#run()
+     * 
+     * Error handling:
+     * WC.run():
+     *     beforeDelivery 
+     *         fails: rethrow
+     *     Session.run()
+     *         fails: setRBO
+     *            fails: rethrow
+     *     deliver()
+     *            fails: setRBO
+     *                fails: continue
+     *     afterDelivery()
+     *            fails: continue
+     * on any failure: discard endpoint
+     * log all failures
      */
     public void run() {
         if (mContextName != null) {
@@ -181,7 +195,6 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         }
 
         int state = STATE_IDLE;
-        boolean deliveryComplete = true;
 
         try {
             if (sLog.isDebugEnabled()) {
@@ -192,26 +205,39 @@ public class WorkContainer implements javax.resource.spi.work.Work,
             if (state == STATE_DESTROYED) {
                 sLog.debug("Shutting down... skipped");
             } else {
-                mDelivery.beforeDelivery(mResult, mEndpoint);
+                // Before delivery
                 mResult.reset();
+                mDelivery.beforeDelivery(mResult, mEndpoint, true);
+                
+                // Collect messages
                 mMsgs = new ArrayList();
-                mSession.run();
-                deliveryComplete = deliver();
-                mMsgs = null;
-                if (deliveryComplete) {
-                    mDelivery.afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB);
-                    mDelivery.afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint, mMDB);
+                try {
+                    mSession.run();
+                } catch (RuntimeException e) {
+                    sLog.warn(LOCALE.x(
+                        "E063: Unexpected error encountered while executing a JMS CC-session: {0}", e), e);
+                    mDelivery.txSetRollbackOnly(mResult, true);
                 }
+                
+                // Deliver messages to MDB
+                deliver();
+                mMsgs = null;
+                
+                // After delivery
+                mDelivery.afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB, false);
+                mDelivery.afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint);
             }
-        } catch (Error e) {
-            sLog.warn(LOCALE.x("E063: Unexpected error encountered while executing a JMS CC-session: {0}", e), e);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
+            Exception ex = e instanceof Exception ? (Exception) e : new Exception(e);
             sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}", e), e);
+            mDelivery.mActivation.distress(ex);
         } finally {
-            if (deliveryComplete) {
-                setState(STATE_IDLE);
-                mDelivery.workDone(this);
+            setState(STATE_IDLE);
+            if (mResult.getShouldDiscardEndpoint()) {
+                mDelivery.release(mEndpoint);
+                mEndpoint = null;
             }
+            mDelivery.workDone(this);
             if (mContextName != null) {
                 sContextExit.info(mContextName);
             }
@@ -253,11 +279,10 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         mMsgs.add(message);
     }
     
-    private boolean deliver() {
+    private void deliver() throws Exception {
         if (sLog.isDebugEnabled()) {
             sLog.debug("WorkContainer.deliver() -- start");
         }
-        boolean deliveryComplete = true;
         SC sc = new SC();
         
         // Deliver messages
@@ -267,7 +292,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 message = wrapMsg(message, sc, mResult.getNOnMessageWasCalled(), mResult);
             }
             mResult.resetDeliveryState();
-            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, message);
+            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, message, false);
             if (mResult.getOnMessageFailed()) {
                 break;
             }
@@ -281,20 +306,17 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 m = wrapMsg(m, sc, mResult.getNOnMessageWasCalled(), mResult);
             }
             mResult.resetDeliveryState();
-            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m);
+            mDelivery.deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m, false);
         }
         
         // HUA
         if (mDelivery.mHoldUntilAck && mResult.getNOnMessageWasCalled() > 0) {
-            sc.arm(mResult.getNOnMessageWasCalled());
-//            deliveryComplete = false;
+            sc.waitForAck(mResult.getNOnMessageWasCalled());
         }
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("WorkContainer.deliver() -- end");
         }
-
-        return deliveryComplete;
     }
     
     /**
@@ -334,8 +356,8 @@ public class WorkContainer implements javax.resource.spi.work.Work,
             }
         }
         
-        public void arm(int acksExpected) {
-            if (mDelivery.isXA()) {
+        public void waitForAck(int acksExpected) {
+            if (mDelivery.mActivation.isCMT()) {
                 mTx = mDelivery.getTransaction(true);
             }
 
@@ -359,9 +381,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
 
             // If the transaction was moved to a different thread, take it back
             try {
-                if (!mResult.getShouldNotCallAfterDelivery() && mDelivery.isXA()) {
+                if (!mResult.getBeforeDeliveryFailed() && mDelivery.mActivation.isCMT()) {
                     if (mDelivery.mHoldUntilAck && mDelivery.getTransaction(true) == null) {
-                        mDelivery.getTxMgr().getTransactionManager().resume(mTx);
+                        mDelivery.getTxMgr().resume(mTx);
                     }
 
                     if (mDelivery.mHoldUntilAck && mIsRollbackOnly) {

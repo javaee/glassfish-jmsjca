@@ -33,6 +33,7 @@ import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageEOFException;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -64,6 +65,7 @@ import javax.naming.InitialContext;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.transaction.xa.XAResource;
 
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -219,7 +221,7 @@ public abstract class RAJMSObjectFactory {
             ? ((XAConnectionFactory) fact).createXAConnection() 
             : ((XAConnectionFactory) fact).createXAConnection(uname, pwd);
         default:
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALE.x("E133: Unknown domain {0}", Integer.toString(domain)));
         }
     }
     
@@ -329,7 +331,7 @@ public abstract class RAJMSObjectFactory {
                 return ((Connection) conn).createSession(transacted, ackmode);
             }
         }
-        throw new RuntimeException("Unknown class " + sessionClass);
+        throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", sessionClass));
     }
 
     /**
@@ -370,6 +372,7 @@ public abstract class RAJMSObjectFactory {
                 }
             }
         }
+        ret = checkGeneric(ret);
         return ret;
     }
     
@@ -397,9 +400,11 @@ public abstract class RAJMSObjectFactory {
         }
         Destination ret = adminDestinationLookup(destName);
         
+        ret = checkGeneric(ret);
+        
         // Unwrap admin destination
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).getName();
+            destName = ((AdminDestination) ret).retrieveCheckedName();
             if (sLog.isDebugEnabled()) {
                 sLog.debug(ret + " is an admin object: embedded name: " + destName);
             }
@@ -527,11 +532,11 @@ public abstract class RAJMSObjectFactory {
                 } else {
                     return ((XATopicSession) sess).getTopicSession().
                         createSubscriber((Topic) dest,
-                        spec.getMessageSelector(), false);
+                            getMessageSelector(ra, spec), false);
                 }
             } else {
                 return ((XAQueueSession) sess).getQueueSession().createReceiver(
-                    (Queue) dest, spec.getMessageSelector());
+                    (Queue) dest, getMessageSelector(ra, spec));
             }
         } else {
             if (isTopic) {
@@ -539,18 +544,18 @@ public abstract class RAJMSObjectFactory {
                     try {
                         return sess.createDurableSubscriber((Topic) dest,
                             spec.getSubscriptionName(),
-                            spec.getMessageSelector(), false);
+                            getMessageSelector(ra, spec), false);
                     } catch (JMSException e) {
                         throw new Exc.ConsumerCreationException(e);
                     }
                 } else {
                     return ((TopicSession) sess).
                     createSubscriber((Topic) dest,
-                    spec.getMessageSelector(), false);
+                        getMessageSelector(ra, spec), false);
                 }
             } else {
                 return ((QueueSession) sess).createReceiver((Queue) dest,
-                    spec.getMessageSelector());
+                    getMessageSelector(ra, spec));
             }
         }
     }
@@ -741,6 +746,52 @@ public abstract class RAJMSObjectFactory {
     }
 
     /**
+     * Sets the clientID from the activation spec. If none is specified, it will set
+     * a synthetic generated one as CLIENDID-SUBNAME. If the connection already has a
+     * different ClientID, a warning will be logged.    
+     * 
+     * @param connection Connection
+     * @param isTopic true if TopicConnection
+     * @param spec ActivationSpec
+     * @param ra RA
+     * @throws JMSException propagated
+     */
+    protected void setClientIDIfNotSpecified(Connection connection, boolean isTopic,
+        RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
+        if (isTopic
+            && RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
+            // Ensure a clientID will be set
+            String newClientId = spec.getClientId();
+            boolean notSpecified = false;
+            if (newClientId == null || newClientId.length() == 0) {
+                newClientId = "CLIENTID-" + spec.getSubscriptionName();
+                notSpecified = true;
+            }
+
+            String currentClientId = connection.getClientID();
+            if (currentClientId == null || currentClientId.length() == 0) {
+                // Set it
+                setClientID(connection, newClientId);
+            } else {
+                if (newClientId.equals(currentClientId)) {
+                    // ok: already set
+                } else {
+                    if (notSpecified) {
+                        // Apparently the clientID was specified in the
+                        // connection factory, and the user did not specify a
+                        // clientid
+                    } else {
+                        sLog.warn(LOCALE.x("E195: ClientID is already set to [{0}]"
+                                + "; cannot set to [{1}] as required in "
+                                + "activationspec [{2}]", currentClientId, newClientId,
+                                spec));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Gets the non-XA type session from an XA session, e.g. a QueueSession from an XAQueueSession.
      * For non-XA, simply will return the same object.
      * 
@@ -762,7 +813,7 @@ public abstract class RAJMSObjectFactory {
                 return ((XASession) session).getSession();
             }
         }
-        throw new RuntimeException("Unknown class " + sessionClass);
+        throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", sessionClass));
     }
 
     /**
@@ -843,8 +894,8 @@ public abstract class RAJMSObjectFactory {
             ret = new SyncDelivery(activation, stats);
             break;
         default:
-            throw new Exception("Invalid concurrency: "
-                + activation.getActivationSpec().getDeliveryConcurrencyMode());
+            throw Exc.exc(LOCALE.x("E140 Invalid concurrency ''{0}''",
+                Integer.toString(activation.getActivationSpec().getDeliveryConcurrencyMode())));
         }
         return ret;
     }
@@ -891,8 +942,8 @@ public abstract class RAJMSObjectFactory {
             nItf++;
         }
         if (nItf > 1) {
-            throw new JMSException("Cannot determine message type: the message " 
-                + "implements multiple interfaces.");
+            throw Exc.jmsExc(LOCALE.x("E188: Cannot determine message type: the message [{0}]" 
+                + "implements multiple interfaces ({1}).", toCopy, Integer.toString(nItf)));
         }
         
         // Create a new message and copy the payload
@@ -926,7 +977,12 @@ public abstract class RAJMSObjectFactory {
             StreamMessage in = (StreamMessage) toCopy;
             StreamMessage out = s.createStreamMessage();
             for (;;) {
-                Object o = in.readObject();
+                Object o;
+                try {
+                    o = in.readObject();
+                } catch (MessageEOFException stop) {
+                    break;
+                }
                 if (o == null) {
                     break;
                 }
@@ -958,8 +1014,8 @@ public abstract class RAJMSObjectFactory {
             } else if (o instanceof Double) {
                 ret.setDoubleProperty(name, ((Double) o).doubleValue());
             } else {
-                throw new JMSException("Unknown property type for " + name + ": "
-                    + o.getClass().getName());
+                throw Exc.jmsExc(LOCALE.x("E189: Unknown property type for {0}: {1}"
+                    , name, o.getClass().getName()));
             }
             
             // Copy other properties
@@ -1010,5 +1066,50 @@ public abstract class RAJMSObjectFactory {
      */
     public boolean shouldCacheConnectionFactories() {
         return true;
+    }
+
+    /**
+     * @return true if producer pooling should be used
+     */
+    public boolean shouldUseProducerPooling() {
+        return false;
+    }
+
+    /**
+     * Converts optionally from a genericra destination to an admin destination
+     * 
+     * @param d destination to inspect
+     * @return admin destination or same destination
+     * @throws JMSException on conversion failure
+     */
+    public Destination checkGeneric(Destination d) throws JMSException {
+        if (d == null) {
+            return null;
+        }
+        
+        Class c = d.getClass();
+        String classname = c.getName();
+        boolean isGenQueue = classname.equals("com.sun.genericra.outbound.QueueProxy");
+        boolean isGenTopic = !isGenQueue && classname.equals("com.sun.genericra.outbound.TopicProxy"); 
+        if (isGenQueue || isGenTopic) { 
+            try {
+                Method m = c.getMethod("getDestinationJndiName", null);
+                String jndiname = (String) m.invoke(d, null);
+                if (isGenQueue) {
+                    AdminQueue ret = new AdminQueue();
+                    ret.setName("jndi://" + jndiname);
+                    d = ret;
+                } else {
+                    AdminTopic ret = new AdminTopic();
+                    ret.setName("jndi://" + jndiname);
+                    d = ret;
+                }
+            } catch (Exception e) {
+                throw Exc.jmsExc(LOCALE.x("E117: Could not convert automatically "
+                    + "from genericra destination: {0}", e), e);
+            }
+        }
+        
+        return d;
     }
 }

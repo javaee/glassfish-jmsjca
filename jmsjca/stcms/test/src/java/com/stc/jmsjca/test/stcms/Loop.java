@@ -20,6 +20,7 @@ import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.Options;
 
 /**
  * Required:
@@ -33,7 +34,7 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Loop extends StcmsEndToEnd {
     public void testLoop1() throws Throwable {
@@ -121,7 +122,7 @@ public class Loop extends StcmsEndToEnd {
 
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
         cc.setConnectionURL("stcms://localhost:2222?com.stc.jms.mock=true");
-        cc.setOptions("JMSJCA.NoXA=true\r\nJMSJCA.IgnoreTx=false");
+        cc.setOptions(Options.FORCE_BMT + "=true\r\nJMSJCA.IgnoreTx=false");
 
         StcmsActivation a = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
         a.setConcurrencyMode(System.getProperty("loop.concurrency", "serial"));

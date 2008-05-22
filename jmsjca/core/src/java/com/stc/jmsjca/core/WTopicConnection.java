@@ -27,7 +27,7 @@ import javax.jms.TopicSession;
  * See WConnection
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WTopicConnection extends WConnection implements TopicConnection {
 

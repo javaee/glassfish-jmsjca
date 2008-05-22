@@ -46,7 +46,7 @@ import javax.naming.NamingException;
  * and use this configuration information in the getDelegate() method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class RAJMSContext implements Context, java.io.Serializable {
 //    private static Logger sLog = Logger.getLogger(RAJMSActivationSpec.class);

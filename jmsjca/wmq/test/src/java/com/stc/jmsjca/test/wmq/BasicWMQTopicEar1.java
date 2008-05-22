@@ -35,7 +35,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author   jmsjca team
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class BasicWMQTopicEar1 extends TopicEndToEnd {
     
@@ -69,8 +69,6 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
 
         mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(10));
         mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(10));
-
-        //System.setProperty("JMSJCA.NoXA","true");
 
         // Update the original EAR file
         File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wmq");

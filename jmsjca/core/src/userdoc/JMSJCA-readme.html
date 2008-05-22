@@ -346,8 +346,8 @@ J2EE 1.4 specifies J2EE Connector Architecture 1.5 as the basic mechanism to int
 <li> RASTCMS: the JMS connector for STCMS 5.0 and above
 </li>
 <li> RASTCMS453: the JMS connector for STCMS SRE and 4.5.3
-
 </li>
+
 <li> RAJNDI a generic JNDI connector that can work with any JMS server that supports connection factories bound in JNDI
 </li>
 <li> RASunOne: a connector for Sun Java System Message Queue
@@ -432,15 +432,23 @@ J2EE 1.4 specifies J2EE Connector Architecture 1.5 as the basic mechanism to int
 <li> Selectors now support substitution parameters
 </li>
 </ul>
+<h4><a name="section-test-6">6</a></h4>
+<ul>
+<li> Activationspec now allows <tt>lookup://name</tt> for the <tt>ConnectionURL</tt> where <tt>name</tt> is a JNDI name to which a JMSJCA connection factory is bound.
+
+</li>
+<li> CAPS Application Configuration features added: configuration can be externalized into java.util.Properties objects that are bound in JNDI. This is useful when using embedded RARs.
+</li>
+</ul>
 <h2><a name="section-test-Features">Features</a></h2>
 JMSJCA adapters provide the following advanced features:
 <ul>
-
 <li> JMX MBean support: the connector can register MBeans so that
 <ul>
 <li> the performance of the connector can be monitored
 </li>
 <li> message flow can be paused (the alternative to using this functionality is to deactivate the application)
+
 </li>
 <li> additional MBeans can be looked up that provide management of queues and topics so that end-users can see the live status and contents of destinations in Java CAPS Enterprise Manager, and can even view, edit and delete individual messages in these destinations.
 </li>
@@ -448,49 +456,49 @@ JMSJCA adapters provide the following advanced features:
 </li>
 <li> asynchronous activation: instead of failing the deployment of an application that reads from a JMS server that is not up and running yet, deployment will proceed successfully and message flow will start as soon as the adapter can make contact with the JMS server.
 </li>
-
 <li> inbound connection monitoring: if connectivity is lost with the JMS server, message flow will resume as soon as contact with the JMS server can be re-established.
 </li>
 <li> outbound connection validation: outbound connections with the JMS server are monitored for their validity so that connections that have caused exceptions or connections that have not been used successfully for some time, are invalidated so that the application server can destroy these connections after which it can create new connections to the JMS server.
 </li>
 <li> producer pooling: the connector can pool JMS producers (queue senders and topic publishers) on the JMS session, so that producers do not have to be created each time an EJB retrieves a connection from the pool.
+
 </li>
 <li> different concurrency modes: the inbound part of the connector supports different concurrency modes 
 <ul>
 <li> serial: delivers messages serially using an asynchronous listener
 </li>
 <li> connection consumer: delivers messages concurrently using the Connection Consumer facility from the JMS spec
-
 </li>
 <li> sync: uses synchronous receivers to deliver messages either serially or concurrently
 </li>
 </ul>
 </li>
 <li> redelivery handling (also known as dead letter queue): message delivery is monitored so that those messages that are redelivered too often are delayed and optionally sent to a dead letter queue.
+
 </li>
 <li> "dynamic" connection factory: the application code in an EJB can specify the URL to a different JMS server in the username (<tt>createConnection(username, password)</tt>) so that it can connect to an arbitrary JMS server, rather than being limited to the ones bound in JNDI.
 </li>
 <li> binding of JNDI contexts as administrative objects: for those JMS servers that provide their own JNDI provider, the connector provides an administrative object that allows binding of this JNDI context into the application server's JNDI.
 </li>
-
 <li> binding of destinations through administrative objects: JMS destinations can be bound in JNDI through the application server's administration console
 </li>
 <li> support for both JMS 1.0.2 and JMS 1.1: the adapter does not require the JMS server to be compliant with JMS 1.1, but can also work with servers that are still at JMS 1.0.2
 </li>
 <li> support for XA, LocalTransaction and NoTransaction
+
 </li>
 <li> support for batch mode when used for inbound messaging
 </li>
 <li> support for a special hold-until-ack mode, a further extension to asynchronous processing (see below)
 </li>
 <li> support for distributed durable subscribers
-
 </li>
 </ul>
 <h2><a name="section-test-HowToUseAJMSJCAAdapter">How to use a JMSJCA adapter</a></h2>
 There are two ways to use a JMSJCA adapter with an EAR:
 <ol>
 <li> the adapter can be packaged in the EAR as a "local RAR"
+
 </li>
 <li> the adapter can be deployed in the application server as a "global RAR"
 </li>
@@ -499,7 +507,6 @@ There are two ways to use a JMSJCA adapter with an EAR:
 </p>
 <p>Example:
 </p>
-
 <pre>
 TopicConnection topicConn = null;
 try {
@@ -521,17 +528,17 @@ try {
 </p>
 <ul>
 <li> Per the J2EE 1.4 spec, there can be only one session per connection
+
 </li>
 <li> When the connector is deployed as XATransaction or LocalTransaction, the application server manages the transaction in JMS on behalf of the application, either through Container Managed Transactions (CMT) or Bean Managed Transactions (BMT). The application should not call <tt>commit</tt> on the session object. Moreover, the parameters to the <tt>createTopicSession()</tt> are ignored.
-
 </li>
 <li> The application has no visibility to if a session is XA or transacted.
 </li>
 <li> The adapter does not expose XA-connection factories, but may use them under the cover. Hence the only connection factories that are exposed are <tt>javax.jms.QueueConnectionFactory</tt>, <tt>javax.jms.TopicConnectionFactory</tt> and a new one: <tt>javax.jms.ConnectionFactory</tt>.
+
 </li>
 </ul>
 <h2><a name="section-test-Configuration">Configuration</a></h2>
-
 The connector is configured through <tt>ra.xml</tt>. The configuration is divided into these sections:
 <ol>
 <li> for each MDB there is an activation spec; it is defined in <tt>ra.xml</tt>, but the values for the activation spec parameters are specified in the <tt>ejb-jar.xml</tt> of the EJB.
@@ -558,7 +565,7 @@ The following parameters can be specified at the connector level, i.e. at the to
 
 <table class="wikitable" border="1">
 <tr><th>Parameter name</th><th>Meaning</th></tr>
-<tr><td><tt>ConnectionURL</tt></td><td>connectionURL. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+<tr><td><tt>ConnectionURL</tt></td><td>connection URL. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>. This can be of the form of <tt>lookup://name</tt>. See below.</td></tr>
 <tr><td><tt>UserName</tt></td><td>username. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
 <tr><td><tt>Password</tt></td><td>password. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
 
@@ -606,11 +613,28 @@ The query string is optional and contains both properties for the JMS server as 
 of the three JMS factory classes. Hence, the number of connection factories is limited to three per connector. Hence, if no global connectors are used, a separate embedded connector has to be used for each distinct JMS server used in an EAR. An alternative construct to using one different embedded connector for each distinct JMS server is by using a special facility in JMSJCA in which the username is overloaded: see below "Overloaded username".
 
 </p>
+<p>In the activation spec, the <tt>ConnectionURL</tt> can take the form of <tt>lookup://jndiname</tt> where <tt>jndiname</tt> should represent a JMSJCA connection pool bound in JNDI. The advantage of this construct is that all connectivity parameters no longer need to be present in the activation spec, but can be delegated to a globally shared connection pool. The connection pool is typically configured in the application server, i.e. outside of the application, i.e. outside of the EAR file.
+</p>
+<p>During activation, JMSJCA checks the <tt>ConnectionURL</tt>; if it starts with <tt>lookup://</tt> it will try to use the remainder of that string to lookup an object in the default JNDI provider. The returned object must a connection factory that was created with JMSJCA; the activation and the connection pool also must use the same classloader. The configuration of both the connection pool (MCF) and its resource adapter (RA) will be inspected. Next, the following properties will be changed in the activation spec:
+
+</p>
+<ul>
+<li> <tt>ConnectionURL</tt>: will be overwritten with the ConnectionURL of the MCF; if the MCF does not specify a value, it will use the value of the RA.
+</li>
+<li> <tt>UserName</tt>: only if the activation spec does not specify a value for <tt>UserName</tt> will it receive a value from the MCF or RA.
+</li>
+<li> <tt>Password</tt>: see <tt>UserName</tt>
+
+</li>
+<li> <tt>Options</tt>: The options will be used from the RA, additional values or overrides will be added from the MCF, and lastly values in the activation spec will override or add to the options.
+</li>
+</ul>
 <h3><a name="section-test-Authentication">Authentication</a></h3>
 At each place where the connection URL can be specified, it is also necessary to specify the credentials to connect to that JMS server: hence the username and password can be specified at the connector level, the connection factory level, and at the activation spec level. Further, for outbound connections, the application code can specify a username and password when calling <tt>ConnectionFactory.createConnection(username, password)</tt> or one of the equivalents for queue and topic. See also the section "Overloaded username".
 <p>The precedence order for outbound connections is as follows: 1) <tt>createConnection(username, password)</tt>, 2) at the connection factory level, and 3) at the connector level.
 </p>
 <p>The precedence order for MDBs is as follows: 1) at the activation spec level, and 2) at the connector level.
+
 </p>
 <h3><a name="section-test-OverloadedUsername">Overloaded username</a></h3>
 Normally the connectionURL is tied to a connection factory, so for each JMS server there should be a separate connection factory. The application code then has to choose the correct connection factory that is tied to the desired JMS server.
@@ -1050,7 +1074,7 @@ Selectors are typically specified in the activation spec. It is also possible to
 <li> Example of an override specified in the <tt>Options</tt> section: <tt>JMSJCA.selector=(sub = null or sub = '${subscribername}') ${andselector} </tt> will yield this selector for the case where the selector in the activation spec is <tt>msgtype = 1</tt>: <tt> (sub = null or sub = 'sub47') and (msgtype = 1) </tt>. If no selector was specified in the activation spec, the following selector would be used: <tt> (sub = null or sub = 'sub47') </tt>.
 
 </li>
-<li> If the previous example would use the URL to specify the selector, the URL would look something like this: <tt>stcms://localhost:18007?%24%7Bselectorand%7D+%28sub+%3D+null+or+sub+%3D+%27%24%7Bsubscribername%7D%27%29</tt>.
+<li> If the previous example would use the URL to specify the selector, the URL would look something like this: <tt>stcms://localhost:18007?JMSJCA.selector=%24%7Bselectorand%7D+%28sub+%3D+null+or+sub+%3D+%27%24%7Bsubscribername%7D%27%29</tt>.
 </li>
 </ul>
 <p></p>
@@ -1195,8 +1219,8 @@ The following code snippet illustrates the intended use of the hold-for-ack mode
 </pre>
     
 <h4><a name="section-test-HowToConfigure">How to configure</a></h4>
-
 Specify the <tt>HoldUntilAck</tt> parameter in the activation spec; the value should be "1" to turn on the hold-until-ack mode.
+
 <p></p>
 <p></p>
 <h2><a name="section-test-HoldForAcknowledgeModeInBatchMode">Hold-for-acknowledge mode in batch mode</a></h2>
@@ -1289,10 +1313,11 @@ jmsjca://distribution=1&amp;subscribername=s[&amp;queue=q][&amp;mbeanname=m][&am
 <h4><a name="section-test-Example">Example</a></h4>
 Specifying the following subscription name <tt>jmsjca://distributed=1&subscribername=mysub</tt> on topic T will cause a subscriber to be created with subscriptionName=mysub; this subscriber reads messsages in batches of 10 and sends them to queue dt-T1-mysub. The application will read messages from this queue.
 <p></p>
-<p></p>
+<h2><a name="section-test-GenericjmsraCompatibility">Genericjmsra compatibility</a></h2>
 
-
-
+Genericjmsra is a purely JNDI based connector. Like JMSJCA it provides administrative objects: queues and topics. These queues and topics may be passed to and can be used by JMSJCA.
+<p>Genericjmsra's queues and topics contain the name of a destination object bound in JNDI. JMSJCA will take this name, prefix it with <tt>jndi://</tt> and create its own administrative object for it. This approach will work if the JNDI adapter is used, and if this adapter is pointing to the the same JNDI store as Genenericjmsra.
+</p>
 
 
 

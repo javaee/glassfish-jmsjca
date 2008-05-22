@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.util;
 
+import com.stc.jmsjca.localization.Localizer;
+
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.net.URLDecoder;
@@ -34,7 +36,7 @@ import java.io.UnsupportedEncodingException;
  *
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class UrlParser extends ConnectionUrl {
     private String mUrl;
@@ -45,6 +47,7 @@ public class UrlParser extends ConnectionUrl {
     private String mPath;
     private String mFile;
     private String mQuery;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -66,7 +69,7 @@ public class UrlParser extends ConnectionUrl {
         // Protocol
         int i = r.indexOf("://");
         if (i < 0) {
-            throw new RuntimeException("Invalid URL [" + mUrl + "]: no protocol specified");
+            throw Exc.rtexc(LOCALE.x("E183: Invalid URL [{0}]: no protocol specified", mUrl));
         }
         mProtocol = r.substring(0, i);
         r = r.substring(i + "://".length());
@@ -249,13 +252,14 @@ public class UrlParser extends ConnectionUrl {
         if (q == null || q.length() == 0) {
             return;
         }
+        q = q.replaceAll("&amp;" , "&");
         for (StringTokenizer iter = new StringTokenizer(q, "&");
             iter.hasMoreElements();/*-*/) {
             String pair = (String) iter.nextToken();
             int split = pair.indexOf('=');
             if (split <= 0) {
-                throw new RuntimeException("Invalid pair [" + pair
-                    + "] in query string [" + q + "]");
+                throw Exc.rtexc(LOCALE.x("E184: Invalid pair [{0}] in query string [{1}]"
+                    , pair, q));
             } else {
                 String key = pair.substring(0, split);
                 String value = pair.substring(split + 1);
@@ -263,9 +267,8 @@ public class UrlParser extends ConnectionUrl {
                     key = URLDecoder.decode(key, "UTF-8");
                     value = URLDecoder.decode(value, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException("Invalid encoding in [" + pair
-                        + "] in query string [" + q + "]",
-                        e);
+                    throw Exc.rtexc(LOCALE.x(
+                        "E185: Invalid encoding in [{0}] in query string [{1}]: {2}", pair, q, e), e);
                 }
                 toAddTo.setProperty(key, value);
             }

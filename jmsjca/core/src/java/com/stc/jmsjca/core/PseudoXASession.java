@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.BytesMessage;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -49,11 +52,12 @@ import java.io.Serializable;
  * used by adapters that don't support XA, such as WebLogic.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class PseudoXASession implements XASession, XAQueueSession, XATopicSession {
     private Session mSession;
     private PseudoXAResource mXAResource;
+    private static final Localizer LOCALE = Localizer.get();
     
 
     /**
@@ -92,7 +96,7 @@ public class PseudoXASession implements XASession, XAQueueSession, XATopicSessio
      * @see javax.jms.Session#commit()
      */
     public void commit() throws JMSException {
-        throw new JMSException("Invalid call");
+        throw Exc.jmsExc(LOCALE.x("E132: Invalid call"));
     }
 
     /**
@@ -261,14 +265,14 @@ public class PseudoXASession implements XASession, XAQueueSession, XATopicSessio
      * @see javax.jms.Session#recover()
      */
     public void recover() throws JMSException {
-        throw new JMSException("Invalid call");
+        throw Exc.jmsExc(LOCALE.x("E132: Invalid call"));
     }
 
     /**
      * @see javax.jms.Session#rollback()
      */
     public void rollback() throws JMSException {
-        throw new JMSException("Invalid call");
+        throw Exc.jmsExc(LOCALE.x("E132: Invalid call"));
     }
 
     /**

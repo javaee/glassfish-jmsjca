@@ -28,6 +28,7 @@ import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.UrlParser;
 
+import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 
@@ -39,12 +40,13 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RASTCMSObjectFactory.class);
-
+    private static final Localizer LOCALE = Localizer.get();
+    
     /**
      * Name under which the STCMS port number should be available if no port
      * number is specified in the URL
@@ -83,6 +85,19 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     private static final String STRICTPERSISTENCE = "com.stc.jms.strictPersistence";
 
     private static final Localizer LOCALIZER = Localizer.get();
+    
+    private String getCAPSKey(String hostOrUsername) {
+        if (hostOrUsername != null 
+            && hostOrUsername.startsWith("(") 
+            && hostOrUsername.endsWith(")") 
+            && hostOrUsername.length() > 2) {
+            // CAPS 6 integration: use System properties that were put there by the 
+            // STCMS lifecycle listener
+            String key = hostOrUsername.substring(1, hostOrUsername.length() - 1);
+            return key;
+        }
+        return null;
+    }
 
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
@@ -107,8 +122,27 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
             // ...
             return false;
         } else {
-            throw new JMSException("Invalid protocol [" + url.getProtocol()
-                + "]: should be stcms or stcmss");
+            throw Exc.jmsExc(LOCALE.x("E306: Invalid protocol [{0}]:"
+                + " should be ''stcms'' or ''stcmss''",  url.getProtocol()));
+        }
+
+        // For CAPS6 integration: if the host is of the form (key), this will try to 
+        // lookup the port number in the System properties, which was put in there
+        // by the STCMS lifecycle listener.
+        String capsKey = getCAPSKey(url.getHost());
+        if (capsKey != null) {
+            url.setHost("localhost");
+            hasChanged = true;
+
+            String propname = "STCMS-" + capsKey + (isSSL ? "-SSLPORT" : "-PORT");
+            String s = System.getProperty(propname);
+            if (s != null) {
+                int port = Integer.parseInt(s);
+                url.setPort(port);
+            } else {
+                throw Exc.jmsExc(LOCALE.x("E307: No port specified in URL [{0}]"
+                    + ", and also not available in System property [{1}]", url, propname));
+            }
         }
 
         // Check port
@@ -122,8 +156,8 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
                 url.setPort(port);
                 hasChanged = true;
             } else {
-                throw new JMSException("No port specified in URL [" + url
-                    + "], and also not available in System property [" + propname + "]");
+                throw Exc.jmsExc(LOCALE.x("E307: No port specified in URL [{0}]"
+                    + ", and also not available in System property [{1}]", url, propname));
             }
         }
 
@@ -136,6 +170,31 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
 
         return hasChanged;
     }
+    
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createConnection(java.lang.Object, int, 
+     * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter, 
+     * java.lang.String, java.lang.String)
+     */
+    public Connection createConnection(Object fact, int domain,
+        RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra, String username,
+        String password) throws JMSException {
+        
+        String capsKey = getCAPSKey(username);
+        if (capsKey != null) {
+            String token = System.getProperty("STCMS-" + capsKey + "-TOKEN");
+            if (token != null) {
+                username = "File://" + username + "?admin?trusted";
+                password = token;
+
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Overriding username " + username + " and password with system properties");
+                }
+            }
+        }
+        
+        return super.createConnection(fact, domain, activationSpec, ra, username, password);
+    }    
 
     /**
      * Gets the connection type properties and connection URL
@@ -217,7 +276,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
             classname = "com.stc.jms.client.STCXAConnectionFactory";
             break;
         default:
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALIZER.x("E308: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
         
         try {
@@ -342,9 +401,9 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
             if (username == null) {
                 username = ra.getUserName();
             }
-            String password = spec == null ? null : spec.getPassword();
+            String password = spec == null ? null : spec.getClearTextPassword();
             if (password == null) {
-                password = ra.getPassword();
+                password = ra.getClearTextPassword();
             }
 
             try {

@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -51,7 +52,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -191,7 +192,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     public synchronized Object getConnectionFactory(int domain, String overrideUrl) throws
         JMSException {
         if (domain >= XConnectionRequestInfo.NDOMAINS) {
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALE.x("E133: Unknown domain {0}", Integer.toString(domain)));
         }
         
         if (getOptionDoNotCacheConnectionFactories()) {
@@ -297,10 +298,10 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
             password = descr.getPassword();
         } else if (!Str.empty(getUserName())) {
             userid = getUserName();
-            password = getPassword();
+            password = getClearTextPassword();
         } else if (!Str.empty(getRAJMSResourceAdapter().getUserName())) {
             userid = getRAJMSResourceAdapter().getUserName();
-            password = getRAJMSResourceAdapter().getPassword();
+            password = getRAJMSResourceAdapter().getClearTextPassword();
         }
         
         return new String[] {userid, password};
@@ -487,7 +488,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         Str.deserializeProperties(Str.parseProperties(Options.SEP, mRAOptionsStr), p);  
 
         // Higher precedence: RA-url
-        if (mRAUrl != null) {
+        if (!Str.empty(mRAUrl)) {
             getObjFactory().createConnectionUrl(mRAUrl).getQueryProperties(p);
         }
 
@@ -515,7 +516,11 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mStrict = Utility.getSystemProperty(Options.Out.STRICT, mStrict);
         mTxMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
         mTxMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, mTxMgrLocatorClass);
-
+        mProducerPoolingOn = Utility.isTrue(p.getProperty(Options.Out.PRODUCER_POOLING, null)
+            , mProducerPoolingOn || getObjFactory().shouldUseProducerPooling());
+        
+        mIdleTimeout = Long.parseLong(p.getProperty(Options.Out.STALETIMEOUT, Long.toString(mIdleTimeout)));
+        
         mOptionsAreSet = true;
     }
 
@@ -701,6 +706,15 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      */
     public void setPassword(String password) {
         mPassword = password;
+    }
+
+    /**
+     * getPassword
+     *
+     * @return String
+     */
+    public String getClearTextPassword() {
+        return Str.pwdecode(mPassword);
     }
 
     /**
@@ -929,8 +943,8 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      */
     public void internalSetIdleTimeout(long idleTimeout) {
         if (idleTimeout < 1000) {
-            throw new RuntimeException("Invalid timeout [" + idleTimeout 
-                + "] ms: should be > 1000 ms");
+            throw Exc.rtexc(LOCALE.x("E168: Invalid timeout [{0}] ms: should be > 1000 ms"
+                , Long.toString(idleTimeout)));
         }
         mIdleTimeout = idleTimeout;
     }

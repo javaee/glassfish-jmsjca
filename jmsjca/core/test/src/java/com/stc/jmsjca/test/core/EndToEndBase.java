@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 
 import org.jdom.Namespace;
@@ -38,7 +39,7 @@ import junit.framework.TestResult;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class EndToEndBase extends BaseTestCase {
     /**
@@ -119,7 +120,7 @@ public abstract class EndToEndBase extends BaseTestCase {
         EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setPassword(Str.pwencode(mServerProperties.getProperty("admin.password")));
         cc.setMBeanObjectName(RAMMBEAN);
 
         cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
@@ -325,6 +326,7 @@ public abstract class EndToEndBase extends BaseTestCase {
         void setConnectionURL(String u) throws Exception;
         String getConnectionURL() throws Exception;
         void setOptions(String o) throws Exception;
+        String getOptions() throws Exception;
         void setMBeanObjectName(String o) throws Exception;
     }
 

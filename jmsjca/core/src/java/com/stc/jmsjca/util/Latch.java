@@ -46,7 +46,7 @@ package com.stc.jmsjca.util;
  *      go.release();              // let all threads proceed
  *    }
  *    
- *  @version $Revision: 1.1 $
+ *  @version $Revision: 1.2 $
  *  @author Doug Lea
  */
 

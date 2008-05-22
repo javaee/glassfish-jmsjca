@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
  * package to the java.util.logging package easier.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public final class Logger {
     private final java.util.logging.Logger mDelegate;

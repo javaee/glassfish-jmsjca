@@ -38,7 +38,7 @@ import javax.jms.Topic;
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class JNDISessionConnection extends GenericSessionConnection {
 
@@ -72,7 +72,7 @@ public class JNDISessionConnection extends GenericSessionConnection {
     public Destination createDestination(AdminDestination dest) throws JMSException {
         RAJNDIObjectFactory o = (RAJNDIObjectFactory) getObjFact();
         Destination ret = null;
-        String name = dest.getName();
+        String name = dest.retrieveCheckedName();
         if (!name.startsWith(RAJNDIObjectFactory.JNDI_PREFIX)) {
             // Not a JNDI name
             if (dest instanceof AdminQueue) {

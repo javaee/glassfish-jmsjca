@@ -19,6 +19,7 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
@@ -58,7 +59,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -73,7 +74,9 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private String mTransformerMBeanName;
     // Prefix to use when a clientID needs to be automatically generated
     private String mClientIDPrefix;
-
+    private String mConfigurationOverride;
+    private String mConfigurationTemplate;
+    private String mProjectInfo;
     
     // For closing connections associated with getXAResources()
     private transient List mRecoveryConnections;
@@ -86,7 +89,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * All current activations
      */
-    protected transient List mActivations;
+    protected transient List mActivations = new ArrayList();
 
     private transient RAMBean mAdapterMBean;
     private transient ObjectName mServerMgtMBeanName;
@@ -124,6 +127,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         if (sLog.isDebugEnabled()) {
             sLog.debug("Starting RA");
         }
+        
+        overrideRAConfigFromJNDI();
         
         try {
             // Create MBean
@@ -245,10 +250,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * 
      * @param endpointFactory MessageEndpointFactory
      * @param spec ActivationSpec
-     * @throws NotSupportedException failure
+     * @throws ResourceException failure
      */
     public void endpointActivation(MessageEndpointFactory endpointFactory,
-        ActivationSpec spec) throws NotSupportedException {
+        ActivationSpec spec) throws ResourceException {
         checkRecoveryConnections();
         if (mActivations == null) {
             mActivations = new ArrayList();
@@ -272,6 +277,15 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             sLog.debug("Activation spec configuration is: ["
                 + ((RAJMSActivationSpec) spec).dumpConfiguration() + "]");
         }
+        
+        // Adjust spec in case of url=lookup://
+        boolean adjusted = adjustActivationSpec((RAJMSActivationSpec) spec);
+        if (adjusted) {
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Activation spec configuration afer adjustment is: ["
+                    + ((RAJMSActivationSpec) spec).dumpConfiguration() + "]");
+            }
+        }
 
         // Validate spec
         try {
@@ -281,7 +295,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 sLog.debug("Validation of Activation Spec failed: " + ex1, ex1);
             }
 
-            throw new NotSupportedException("ActivationSpec validation error: " + ex1,
+            throw new NotSupportedException(LOCALE.x("E140: ActivationSpec validation error: {0}", ex1).toString(),
                 ex1);
         }
 
@@ -310,6 +324,172 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         if (sLog.isDebugEnabled()) {
             sLog.debug("Activation " + a + " succeeded");
         }
+    }
+
+    /**
+     * Changes the values in an activation spec with values from an MCF and/or its RA.
+     * This will only happen if the ConnectionURL of the spec denotes a JNDI name of an
+     * MCF (lookup://).
+     * 
+     * @param spec activation spec to change
+     * @return true if the spec was changed
+     * @throws ResourceException propagated
+     */
+    private boolean adjustActivationSpec(RAJMSActivationSpec spec) throws ResourceException {
+        boolean changed = false;
+        String url = spec.getConnectionURL();
+        if (Str.empty(url)) {
+            url = getConnectionURL();
+        }
+        
+        if (!Str.empty(url) && url.startsWith(Options.LOCAL_JNDI_LOOKUP)) {
+            Context ctx = null;
+            String name = url.substring(Options.LOCAL_JNDI_LOOKUP.length()); 
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Lookup in JNDI: " + name);
+            }
+            try {
+                // Lookup object
+                ctx = new InitialContext();
+                Object o = ctx.lookup(name);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Found in JNDI using [" + name + "]: " + o);
+                }
+                
+                // Cast
+                if (!(o instanceof JConnectionFactory)) {
+                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                        + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
+                        , url, o.getClass().getName()));
+                }
+                JConnectionFactory fact = (JConnectionFactory) o;
+                XManagedConnectionFactory mcf = fact.getMCF();
+                
+                String _url = null;
+                String _userid = null;
+                String _pw = null;
+                Properties options = new Properties();
+                
+                
+                // Merge properties from RA
+                if (fact.getRA() != this) {
+                    if (!Str.empty(fact.getRA().getConnectionURL())) {
+                        _url = fact.getRA().getConnectionURL();
+                    }
+                    if (!Str.empty(fact.getRA().getUserName())) {
+                        _userid = fact.getRA().getUserName();
+                    }
+                    if (!Str.empty(fact.getRA().getClearTextPassword())) {
+                        _pw = fact.getRA().getClearTextPassword();
+                    }
+                    Str.deserializeProperties(Str.parseProperties(Options.SEP, fact.getRA().getOptions()), options);
+                }
+                
+                // Merge properties from MCF
+                if (!Str.empty(mcf.getConnectionURL())) {
+                    _url = mcf.getConnectionURL();
+                }
+                if (!Str.empty(mcf.getUserName())) {
+                    _userid = mcf.getUserName();
+                }
+                if (!Str.empty(mcf.getClearTextPassword())) {
+                    _pw = mcf.getClearTextPassword();
+                }
+                Str.deserializeProperties(Str.parseProperties(Options.SEP, mcf.getOptions()), options);
+                
+                // Merge properties into spec. URL: always
+                if (_url == null) {
+                    throw Exc.jmsExc(LOCALE.x("E192: A URL is not specified in the connection " 
+                        + "pool or its resource adapter instance"));
+                }
+                spec.setConnectionURL(_url);
+
+                // username/pw if not set
+                if (Str.empty(spec.getUserName())) {
+                    spec.setUserName(_userid);
+                }
+                if (Str.empty(spec.getClearTextPassword())) {
+                    spec.setPassword(_pw);
+                }
+                
+                // Options: inherit from mcf but allow overrides in spec; 
+                // No need to bother with mark because the options will not be serialized to a single line
+                Str.deserializeProperties(spec.getOptions(), options);
+                spec.setOptions(Str.serializeProperties(options));
+
+                changed = true;
+            } catch (Exception e) {
+                throw Exc.rsrcExc(LOCALE.x("E096: Failed to lookup [{0}] in [{1}]: {2}", name, url, e), e);
+            } finally {
+                if (ctx != null) {
+                    try {
+                        ctx.close();
+                    } catch (Exception ignore) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        
+        return changed;
+    }
+    
+    /**
+     * Checks for a java.util.Properties object in JNDI and if found, overrides the 
+     * configuration of the RA with the one in the Properties object.
+     * 
+     * @return true if the RA got changed
+     */
+    public boolean overrideRAConfigFromJNDI() {
+        boolean changed = false;
+        if (!Str.empty(getConfigurationJNDIName())) {
+            Context ctx = null;
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Lookup in JNDI: " + getConfigurationJNDIName());
+            }
+            try {
+                // Lookup object
+                ctx = new InitialContext();
+                Object o = ctx.lookup(getConfigurationJNDIName());
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Found in JNDI using [" + getConfigurationJNDIName() + "]: " + o);
+                }
+                
+                // Cast
+                if (!(o instanceof Properties)) {
+                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                        + "but the object bound to ''{1}'' is of type ''{2}''", Properties.class.getName()
+                        , getConfigurationJNDIName(), o.getClass().getName()));
+                }
+
+                // Change values
+                Properties p = (Properties) o;
+                setConnectionURL(p.getProperty("MSURL", p.getProperty("ConnectionURL", getConnectionURL())));
+                setUserName(p.getProperty("MSUsername", p.getProperty("UserName", getUserName())));
+                setPassword(p.getProperty("MSPassword", p.getProperty("Password", getPassword())));
+                setOptions(p.getProperty("MSOptions", p.getProperty("Options", getOptions())));
+                
+                changed = true;
+            } catch (NamingException e) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Could not find " + getConfigurationJNDIName() + ": " + e, e);
+                }
+            } catch (Exception e) {
+                sLog.warn(LOCALE.x("E193: The configuration overrides bound to JNDI name " 
+                    + "''{0}'' could not be applied; the default values will be used instead. " 
+                    + "The error was: {1}", getConfigurationJNDIName(), e), e);
+            } finally {
+                if (ctx != null) {
+                    try {
+                        ctx.close();
+                    } catch (Exception ignore) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        
+        return changed;
     }
 
     /**
@@ -445,8 +625,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     XConnectionRequestInfo.DOMAIN_QUEUE_XA, this, s, null, null);
                 String username = s.getUserName() == null ? getUserName() 
                     : s.getUserName();
-                String password = s.getPassword() == null ? getPassword() 
-                    : s.getPassword();
+                String password = s.getClearTextPassword() == null ? getClearTextPassword() 
+                    : s.getClearTextPassword();
                 Connection con = fact.createConnection(qcf,
                     XConnectionRequestInfo.DOMAIN_QUEUE_XA, s, this, username, password);
                 connections.add(con);
@@ -549,6 +729,15 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * 
      * @return String
      */
+    public final String getClearTextPassword() {
+        return Str.pwdecode(mPassword);
+    }
+
+    /**
+     * getPassword
+     * 
+     * @return String
+     */
     public final String getPassword() {
         return mPassword;
     }
@@ -560,6 +749,40 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      */
     public final void setPassword(String Password) {
         this.mPassword = Password;
+    }
+    
+    /**
+     * @param override jndi name of Properties set that overrides the configuration
+     */
+    public final void setConfigurationJNDIName(String override) {
+        this.mConfigurationOverride = override;
+    }
+
+    /**
+     * Getter for configurationOverride
+     *
+     * @return String jdni name
+     */
+    public final String getConfigurationJNDIName() {
+        return mConfigurationOverride;
+    }
+    
+    /**
+     * Sets the configuration template; the template is not used by the RA itself but
+     * only by external configuration tools. It's populated by CAPS. Having this method
+     * here avoids warnings in the log about missing setter methods.
+     * 
+     * @param template String
+     */
+    public final void setConfigurationTemplate(String template) {
+        this.mConfigurationTemplate = template;
+    }
+    
+    /**
+     * @return template
+     */
+    public final String getConfigurationTemplate() {
+        return mConfigurationTemplate;
     }
 
     /**
@@ -750,10 +973,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * Obtains an MBeanServer using the domain name specified in the RA, or the default
      * (first one) if none specified
      *
-     * @throws Exception if no server could be obtained
+     * @throws JMSException if no server could be obtained
      * @return MBeanServer
      */
-    public MBeanServer getMBeanServer() throws Exception {
+    public MBeanServer getMBeanServer() throws JMSException {
         if (mMBeanServer != null) {
             return mMBeanServer;
         }
@@ -790,8 +1013,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     getMBeanServerDomain());
             }
         } catch (Exception e) {
-            throw new Exception("No MBeanServer found; specified domain = ["
-                + getMBeanServerDomain() + "]");
+            throw Exc.jmsExc(LOCALE.x("E141: No MBeanServer found; specified domain = [{0}]"
+                , getMBeanServerDomain()));
         }
         if (sLog.isDebugEnabled()) {
             sLog.debug("Found MBeanServer [" + mbeanServer.getDefaultDomain()
@@ -827,7 +1050,6 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 int reTryCount = 0;
                 while (objectNames.isEmpty()) {
                     if (reTryCount++ >= RETRY_COUNT) {
-                        //throw new Exception("MBean " + mbeanName.toString() + " is not created for transforming");
                         break;
                     }
                     try {
@@ -884,4 +1106,22 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * @return object factory, new or cached
      */
     public abstract RAJMSObjectFactory createObjectFactory(String urlstr);
+
+    /**
+     * Getter for projectInfo; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getProjectInfo() {
+        return mProjectInfo;
+    }
+
+    /**
+     * Setter for projectInfo, for CAPS only -- not used for JMSJCA
+     *
+     * @param projectInfo StringThe projectInfo to set.
+     */
+    public void setProjectInfo(String projectInfo) {
+        mProjectInfo = projectInfo;
+    }
 }

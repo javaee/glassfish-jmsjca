@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public interface Options {
     /**
@@ -29,9 +29,16 @@ public interface Options {
     String TXMGRLOCATOR = "JMSJCA.LocatorClass";
 
     /**
-     * Property name to specify that XA should not be supported
+     * Property name to specify that XA should be emulated
      */
     String NOXA = "JMSJCA.NoXA";
+    
+    /**
+     * Property name to specify that the indication by the application server about 
+     * the MDB being transactional should be ignored, and that BMT should be assumed
+     * instead.
+     */
+    String FORCE_BMT = "JMSJCA.ForceBMT";
     
     /**
      * Separator to be able to have a properties set in one line 
@@ -108,10 +115,10 @@ public interface Options {
          */
         String STRICT = "JMSJCA.Strict";
         
-//        /**
-//         * Number of ms after which an idle connection becomes invalid
-//         */
-//        String STALETIMEOUT = "JMSJCA.idletimeout";
+        /**
+         * Number of ms after which an idle connection becomes invalid
+         */
+        String STALETIMEOUT = "JMSJCA.idletimeout";
         
         /**
          * Do not cache connection factories (for jndi, wl)
@@ -136,6 +143,11 @@ public interface Options {
          * will block before it will throw an exception back to the application
          */
         String POOL_TIMEOUT = "JMSJCA.pooltimeout";
+        
+        /**
+         * Turns on producer pooling
+         */
+        String PRODUCER_POOLING = "JMSJCA.producerpooling";
     }
 
     /**
@@ -224,6 +236,17 @@ public interface Options {
          * Property name for msg wrapping
          */
         String STOP_CONNECTOR = "JMS_Sun_JMSJCA_StopMessageDelivery";
+        
+        /**
+         * Object property that returns the MBean server used to register the 
+         * Activation MBean
+         */
+        String MBEANSERVER = "JMS_Sun_JMSJCA_MBeanServer";
+        
+        /**
+         * String property that returns the MBean Name from the activation spec
+         */
+        String MBEANNAME = "JMS_Sun_JMSJCA_MBeanName";
     }
     
     /**

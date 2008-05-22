@@ -22,7 +22,7 @@ package com.stc.jmsjca.core;
  * manager so that it can destroy connections and mark the connection manager as stopped.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public interface RAStopListener {
     /**

@@ -35,7 +35,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author  cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class BasicWMQQueueEar1 extends QueueEndToEnd {
 
@@ -57,7 +57,6 @@ public class BasicWMQQueueEar1 extends QueueEndToEnd {
     public void setUp() throws Exception {
         super.setUp();
 
-        //System.setProperty("JMSJCA.NoXA","true");        
         mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(10));
         mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(10));
         

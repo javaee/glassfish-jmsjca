@@ -5480,4 +5480,72 @@ abstract public class XTestBase extends BaseTestCase {
     public void testXACCStopCloseRolback() throws Throwable {
         doTestXACCStopCloseRolback();
     }
+
+    /**
+     * Purpose: simple send/receive<br>
+     * Assertion: 
+     * Strategy: <br>
+     *
+     * @throws Throwable on failure of the test
+     */
+    public void testRequestReplyTopic() throws Throwable {
+        init(true, true);
+
+        // This is how the client would normally create connections
+        InitialContext ctx = getContext();
+        TopicConnectionFactory f = (TopicConnectionFactory) ctx.lookup(appjndiTopic);
+        setNoXA(f);
+
+        // First send a request msg
+        TopicSubscriber receiver; 
+        Topic dest;
+        TopicSession s;
+        TopicConnection conn = f.createTopicConnection(USERID, PASSWORD);
+        conn.start();
+
+        TopicConnection conn2 = f.createTopicConnection(USERID, PASSWORD);
+        conn2.start();
+        TopicSession s2 = conn2.createTopicSession(true, 0);
+        dest = s2.createTopic("TOPICX1");
+        TopicSubscriber cons = s2.createSubscriber(dest);
+        
+        {
+            s = conn.createTopicSession(true, 0);
+            Message m = s.createTextMessage("x");
+            TemporaryTopic temporaryTopic = s.createTemporaryTopic();
+            m.setJMSReplyTo(temporaryTopic);
+            TopicPublisher prod = s.createPublisher(dest);
+            receiver = s.createSubscriber(temporaryTopic);
+            prod.send(m);
+            s.commit();
+        }
+        
+        // Receive request and send two replies
+        {
+            Message m = cons.receive(EXPECTWITHIN);
+            assertTrue(m != null);
+            
+            Topic tempdest = (Topic) m.getJMSReplyTo();
+            TopicPublisher sender = s2.createPublisher(tempdest);
+            sender.send(s2.createTextMessage("Reply1"));
+            sender.send(s2.createTextMessage("Reply2"));
+
+            s2.commit();
+            s2.close();
+            conn2.close();
+        }
+
+        // Receive reply
+        {
+            Message m1 = receiver.receive(EXPECTWITHIN);
+            assertTrue(m1 != null);
+            Message m2 = receiver.receive(EXPECTWITHIN);
+            assertTrue(m2 != null);
+            s.commit();
+            s.close();
+            conn.close();
+        }
+
+        getConnectionManager(f).clear();
+    }
 }

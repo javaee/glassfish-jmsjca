@@ -21,7 +21,7 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.test.core.TcpProxy;
+import com.stc.jmsjca.test.core.TcpProxyNIO;
 
 import java.net.InetAddress;
 import java.util.Iterator;
@@ -39,7 +39,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author misc
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SpecialFeaturesEar1 extends EndToEndBase {
     
@@ -113,7 +113,7 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
      */
     public void dotestMgt(boolean local) throws Throwable {
         // Setup proxy
-        TcpProxy proxy = new TcpProxy(mServerProperties.getProperty("host"), 
+        TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty("host"), 
             Integer.parseInt(mServerProperties.getProperty("stcms.instance.port")));
         
         // Modify DDs
@@ -168,7 +168,7 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
             // Send messages
             source.sendBatch(N, 0, "");
             
-            proxy.getNPassThroughsCreated();
+            proxy.getConnectionsCreated();
 
             for (int type = 0; type < 1; type++) {
                 JmsMgt jmsmgt;
@@ -202,7 +202,7 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
-            proxy.done();
+            proxy.close();
         }
     }
 

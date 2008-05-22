@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
@@ -28,9 +31,11 @@ import javax.jms.MessageListener;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMessageConsumer implements MessageConsumer {
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * The JConsumer that owns this wrapper
      */
@@ -54,7 +59,7 @@ public class WMessageConsumer implements MessageConsumer {
      * @throws javax.jms.IllegalStateException always
      */
     public void invokeOnClosed() throws javax.jms.IllegalStateException {
-        throw new javax.jms.IllegalStateException("This MessageConsumer is closed");
+        throw Exc.illstate(LOCALE.x("E153: This {0} is closed", "MessageConsumer"));
     }
 
     /**

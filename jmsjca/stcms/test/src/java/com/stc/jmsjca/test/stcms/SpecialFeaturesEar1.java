@@ -20,7 +20,7 @@ import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.test.core.TcpProxy;
+import com.stc.jmsjca.test.core.TcpProxyNIO;
 
 import java.net.InetAddress;
 import java.util.Iterator;
@@ -38,7 +38,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     
@@ -282,7 +282,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         EmbeddedDescriptor dd = getDD();
 
         // Setup proxy
-        TcpProxy proxy = new TcpProxy(mServerProperties.getProperty("host"), 
+        TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty("host"), 
             Integer.parseInt(mServerProperties.getProperty("stcms.instance.port")));
 
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
@@ -307,10 +307,10 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         Passthrough p = createPassthrough(mServerProperties);
         try {
             c.redeployModule(mTestEar.getAbsolutePath());
-            int n0 = proxy.getNPassThroughsCreated();
+            int n0 = proxy.getConnectionsCreated();
             p.setNMessagesToSend(20);
             p.passFromQ1ToQ2();
-            int n1 = proxy.getNPassThroughsCreated();
+            int n1 = proxy.getConnectionsCreated();
             System.out.println("Wires created after passthrough: " + (n1 - n0));
             assertTrue(n1 > n0);
             c.undeploy(mTestEarName);
@@ -318,7 +318,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
-            proxy.done();
+            proxy.close();
         }
     }
 
@@ -369,7 +369,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
      */
     public void dotestMgt(boolean local) throws Throwable {
         // Setup proxy
-        TcpProxy proxy = new TcpProxy(mServerProperties.getProperty("host"), 
+        TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty("host"), 
             Integer.parseInt(mServerProperties.getProperty("stcms.instance.ssl.port")));
         
         // Modify DDs
@@ -426,7 +426,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
             // Send messages
             source.sendBatch(N, 0, "");
             
-            int n0 = proxy.getNPassThroughsCreated();
+            int n0 = proxy.getConnectionsCreated();
 
             for (int type = 0; type < 1; type++) {
                 JmsMgt jmsmgt;
@@ -448,17 +448,23 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
                 
                 assertTrue(jmsmgt.isServerReady());
                 
+                long t0 = System.currentTimeMillis();
                 List queues = jmsmgt.getQueues();
                 assertTrue(queues.contains("Queue1"));
                 assertTrue(queues.contains("Queue2"));
+                long t1 = System.currentTimeMillis();
+                System.out.println("getQueues() took " + (t1 - t0) + " ms, " + queues.size() + " queues");
                 
+                t0 = System.currentTimeMillis();
                 List queueprops = jmsmgt.getQueuesWithHeaders(0);
+                t1 = System.currentTimeMillis();
+                System.out.println("getQueuesWithHeaders(0) took " + (t1 - t0) + " ms, " + queues.size() + " queues");
                 Properties stats = find(queueprops, JmsMgt.Q_QUEUE_NAME, "Queue1");
                 int nmsg = Integer.parseInt(stats.getProperty(JmsMgt.Q_MESSAGE_COUNT));
                 assertTrue(nmsg == N || nmsg == (N - 1));
                 stats = find(queueprops, JmsMgt.Q_QUEUE_NAME, "Queue2");
                 assertEquals(Integer.toString(0), stats.get(JmsMgt.Q_MESSAGE_COUNT));
-                int n1 = proxy.getNPassThroughsCreated();
+                int n1 = proxy.getConnectionsCreated();
                 if (local) {
                     assertTrue(n1 == n0);
                 } else {
@@ -474,7 +480,7 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
-            proxy.done();
+            proxy.close();
         }
     }
 

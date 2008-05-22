@@ -16,11 +16,13 @@
 
 package com.stc.jmsjca.util;
 
+import com.stc.jmsjca.localization.Localizer;
+
 /**
  * A baseclass for wrapper managers, i.e. objects that give out wrappers.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class NoProxyWrapper  {
 //    private static Logger sLog = Logger.getLogger(NoProxyWrapper.class);
@@ -29,6 +31,7 @@ public abstract class NoProxyWrapper  {
     private int mCtExceptions;
     private Exception mFirstException;
     private String mSignature;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Initializes the object
@@ -108,7 +111,7 @@ public abstract class NoProxyWrapper  {
      * @throws javax.jms.IllegalStateException always
      */
     public void invokeOnClosed() throws javax.jms.IllegalStateException {
-        throw new javax.jms.IllegalStateException(Str.msg("This {0} is closed",
+        throw Exc.illstate(LOCALE.x("E153: This {0} is closed",
             getItfClass().getName()));
     }
 

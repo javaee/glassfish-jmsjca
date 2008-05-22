@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
 
@@ -73,6 +74,24 @@ import java.util.List;
  * </ul>
  * </pre>
  * 
+ * Error handling:
+ * for() {
+ *    beforeDelivery()
+ *    m = receive()
+ *    deliver()
+ *    afterDelivery()
+ * }
+ *
+ * beforeDelivery()
+ *     fails: rethrow
+ * m = receive()
+ *     fails: rethrow
+ * deliver()
+ *     fails: setRBO
+ *         fails: rethrow
+ * afterDelivery()
+ *    fails: rethrow
+ * 
  * TODO: Looks like a msg is only wrapped when HUA mode is on; this is a bug
  * 
  * @author fkieviet
@@ -104,8 +123,9 @@ public class SyncDelivery extends Delivery {
      * 
      * @param a Activation
      * @param stats DeliveryStats
+     * @throws Exception on failure
      */
-    public SyncDelivery(Activation a, DeliveryStats stats) {
+    public SyncDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
         
         if (a.getActivationSpec().getDeliveryConcurrencyMode() == 
@@ -144,7 +164,7 @@ public class SyncDelivery extends Delivery {
         }
         
         if (mConnection != null) {
-            throw new JMSException("Logic fault: connection not null");
+            throw Exc.jmsExc(LOCALE.x("E148: Logic fault: connection not null"));
         }
         try {
             RAJMSObjectFactory o = mActivation.getObjectFactory();
@@ -159,8 +179,10 @@ public class SyncDelivery extends Delivery {
                 getDomain(),
                 mActivation.getActivationSpec(),
                 mActivation.getRA(),
-                mActivation.getUserName() == null ? mActivation.getRA().getUserName() : mActivation.getUserName(),
-                mActivation.getPassword() == null ? mActivation.getRA().getPassword() : mActivation.getPassword());
+                mActivation.getUserName() == null 
+                ? mActivation.getRA().getUserName() : mActivation.getUserName(),
+                mActivation.getPassword() == null 
+                ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
             o.setClientID(mConnection, 
                 mActivation.isTopic(), 
                 mActivation.getActivationSpec(), 
@@ -430,7 +452,8 @@ public class SyncDelivery extends Delivery {
      *  delivery which requires a unified connection 
      */
     protected int getDomain() {
-        return XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic());        
+        return XConnectionRequestInfo.guessDomain(mActivation.isCMT() && !mActivation.isXAEmulated(), 
+            mActivation.isTopic());        
     }
     
     private class SyncWorker extends Thread {
@@ -461,7 +484,7 @@ public class SyncDelivery extends Delivery {
             RAJMSObjectFactory o = mActivation.getObjectFactory();
             mSess = o.createSession(
                 mConnection,
-                mActivation.isXA(),
+                mActivation.isCMT() && !mActivation.isXAEmulated(),
                 getSessionClass(),
                 mActivation.getRA(),
                 mActivation.getActivationSpec(),
@@ -469,7 +492,7 @@ public class SyncDelivery extends Delivery {
                 javax.jms.Session.SESSION_TRANSACTED);
             javax.jms.Destination dest = o.createDestination(
                 mSess,
-                mActivation.isXA(),
+                mActivation.isCMT() && !mActivation.isXAEmulated(),
                 mActivation.isTopic(),
                 mActivation.getActivationSpec(),
                 null,
@@ -477,13 +500,18 @@ public class SyncDelivery extends Delivery {
                 mActivation.getActivationSpec().getDestination());
             mCons = o.createMessageConsumer(
                 mSess,
-                mActivation.isXA(),
+                mActivation.isCMT() && !mActivation.isXAEmulated(),
                 mActivation.isTopic(),
                 dest,
                 mActivation.getActivationSpec(),
                 mActivation.getRA());
-            mXA = mActivation.getObjectFactory().getXAResource(
-                mActivation.isXA(), mSess);
+            if (mActivation.isCMT()) {
+                if (mActivation.isXAEmulated()) {
+                    mXA = new PseudoXAResource(mSess);
+                } else {
+                    mXA = mActivation.getObjectFactory().getXAResource(true, mSess);
+                }
+            }
             mMDB = new Delivery.MDB(mXA);
             mMessageMoveConnection = createConnectionForMove();
             mMessageMoveConnection.setDelayedCommit();
@@ -525,10 +553,7 @@ public class SyncDelivery extends Delivery {
             DeliveryResults result = new DeliveryResults();
 
             // XA Mode
-            beforeDelivery(result, mEndpoint);
-            if (result.getBeforeDeliveryFailed()) {
-                throw result.getException();
-            }
+            beforeDelivery(result, mEndpoint, true);
             
             // The MDB may move the transaction to a different thread
             Transaction tx = null;
@@ -541,45 +566,34 @@ public class SyncDelivery extends Delivery {
                 if (mHoldUntilAck) {
                     m = wrapMsg(m).setBatchSize(mBatchSize, coord, -1);
                 }
-                deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m);
+                deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m, true);
                 coord.msgDelivered(result.getOnMessageSucceeded());
                 coord.setRollbackOnly(result.getException());
             }
             
             coord.waitForAcks();
             
-            if (!result.getShouldNotCallAfterDelivery()) {
+            if (!result.getBeforeDeliveryFailed()) {
                 // If the transaction was moved to a different thread, take it back
                 if (mHoldUntilAck && getTransaction(true) == null) {
-                    getTxMgr().getTransactionManager().resume(tx);
+                    getTxMgr().resume(tx);
                 }
 
                 if (mHoldUntilAck && coord.isRollbackOnly()) {
-                    getTransaction(true).setRollbackOnly();
+                    result.setRollbackOnly(true);
                 }
             }
             
-            afterDelivery(result, mMessageMoveConnection, mEndpoint, mMDB);
-            if (result.getAfterDeliveryFailed()) {
-                throw result.getException();
-            }
-
-            if (result.getShouldDiscardEndpoint()) {
-                coord.setNeedsToDiscardEndpoint();
-            }
+            afterDelivery(result, mMessageMoveConnection, mEndpoint, mMDB, true);
         }
         
         private void runOnceBatchXA(Coordinator coord) throws Exception {
             // XA Mode
             DeliveryResults lastResult = new DeliveryResults();
-            beforeDelivery(lastResult, mEndpoint);
-            if (lastResult.getShouldDiscardEndpoint()) {
-                throw lastResult.getException();
-            }
+            beforeDelivery(lastResult, mEndpoint, true);
 
             Transaction tx = getTransaction(mHoldUntilAck);
 
-            boolean msgsWereReceived = false;
             for (int i = 0; i < mBatchSize; i++) {
                 Message m = mCons.receive(i == 0 ? TIMEOUT : TIMEOUTBATCH);                
                 if (m == null) {
@@ -589,8 +603,7 @@ public class SyncDelivery extends Delivery {
                         m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
                     }
                     lastResult.resetDeliveryState();
-                    deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
-                    msgsWereReceived = true;
+                    deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m, true);
                     coord.msgDelivered(lastResult.getOnMessageSucceeded());
                     coord.setRollbackOnly(lastResult.getException());  
                     
@@ -608,7 +621,7 @@ public class SyncDelivery extends Delivery {
                     m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
                 }
                 lastResult.resetDeliveryState();
-                deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
+                deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m, true);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
                 coord.setRollbackOnly(lastResult.getException());
                 
@@ -618,27 +631,18 @@ public class SyncDelivery extends Delivery {
                 }
             }
             
-            if (msgsWereReceived && !lastResult.getShouldNotCallAfterDelivery()) {
-                // If the transaction was moved to a different thread, take it back
-                if (mHoldUntilAck && getTransaction(true) == null) {
-                    getTxMgr().getTransactionManager().resume(tx);
-                }
+            // If the transaction was moved to a different thread, take it back
+            if (mHoldUntilAck && getTransaction(true) == null) {
+                getTxMgr().resume(tx);
+            }
 
-                // Assure rollback if necessary before committing the transaction
-                if (mHoldUntilAck && coord.isRollbackOnly()) {
-                    getTransaction(true).setRollbackOnly();
-                }
+            // Assure rollback if necessary before committing the transaction
+            if (mHoldUntilAck && coord.isRollbackOnly()) {
+                txSetRollbackOnly(lastResult, true);
             }
             
             // End transaction
-            afterDelivery(lastResult, mMessageMoveConnection, mEndpoint, mMDB);
-            if (lastResult.getShouldDiscardEndpoint()) {
-                throw lastResult.getException();
-            }
-            
-            if (lastResult.getShouldDiscardEndpoint()) {
-                coord.setNeedsToDiscardEndpoint();
-            }
+            afterDelivery(lastResult, mMessageMoveConnection, mEndpoint, mMDB, true);
         }
         
         private void runOnceBatchNoXA(Coordinator coord) throws Exception {
@@ -658,7 +662,7 @@ public class SyncDelivery extends Delivery {
                         m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
                     }
                     lastResult.reset();
-                    deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
+                    deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m, true);
                     coord.msgDelivered(lastResult.getOnMessageSucceeded());
                     coord.setRollbackOnly(lastResult.getException());
                     
@@ -677,19 +681,16 @@ public class SyncDelivery extends Delivery {
                     m = wrapMsg(m).setBatchSize(mBatchSize, coord, coord.getNMsgsDelivered());
                 }
                 lastResult.reset();
-                deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m);
+                deliverToEndpoint(lastResult, mMessageMoveConnection, mEndpoint, m, true);
                 coord.msgDelivered(lastResult.getOnMessageSucceeded());
                 coord.setRollbackOnly(lastResult.getException());
                 
                 coord.waitForAcks();
                 
-                if (!coord.isRollbackOnly()) {
-                    mMessageMoveConnection.nonXACommit(true);
-                    mSess.commit();
-                } else {
-                    mMessageMoveConnection.nonXACommit(false);
-                    mSess.rollback();
+                if (coord.isRollbackOnly()) {
+                    lastResult.setRollbackOnly(true);
                 }
+                afterDeliveryNoXA(lastResult, mSess, mMessageMoveConnection, mEndpoint);
             }
             
             if (lastResult.getShouldDiscardEndpoint()) {
@@ -711,7 +712,7 @@ public class SyncDelivery extends Delivery {
                 
                 // Deliver
                 DeliveryResults result = new DeliveryResults(); 
-                deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m);
+                deliverToEndpoint(result, mMessageMoveConnection, mEndpoint, m, true);
 
                 // Increment counter if msg was delivered
                 coord.msgDelivered(result.getOnMessageSucceeded());
@@ -719,15 +720,12 @@ public class SyncDelivery extends Delivery {
                 
                 // Wait for ack() to be called if applicable
                 coord.waitForAcks();
-                
+
                 // Commit/rollback
-                if (!coord.isRollbackOnly()) {
-                    mMessageMoveConnection.nonXACommit(true);
-                    mSess.commit();
-                } else {
-                    mMessageMoveConnection.nonXACommit(false);
-                    mSess.rollback();
+                if (coord.isRollbackOnly()) {
+                    result.setRollbackOnly(true);
                 }
+                afterDeliveryNoXA(result, mSess, mMessageMoveConnection, mEndpoint);
 
                 if (result.getShouldDiscardEndpoint()) {
                     coord.setNeedsToDiscardEndpoint();
@@ -753,9 +751,10 @@ public class SyncDelivery extends Delivery {
                         mEndpoint = createMessageEndpoint(mXA, mSess);
                     }
                     if (mEndpoint == null) {
-                        throw new Exception("No endpoint created; RA shutting down?");
+                        throw Exc.exc(LOCALE.x("E143: No endpoint was created, "
+                            + "possibly because the RA may be shutting down"));
                     }
-
+                    
                     // Run single receive-onMessage() loop
                     Coordinator coord = newCoord();
                     if (mXA != null) {
@@ -785,10 +784,14 @@ public class SyncDelivery extends Delivery {
                         }
                     }
                 } catch (Exception ex) {
+                    release(mEndpoint);
+                    mEndpoint = null;
                     mActivation.distress(ex);
                     break;
                 } catch (Throwable ex) {
-                    mActivation.distress(new Exception("Unexpected Throwable: " + ex, ex));
+                    release(mEndpoint);
+                    mEndpoint = null;
+                    mActivation.distress(Exc.exc(LOCALE.x("E190: Caught unexpected Throwable: {0}", ex), ex));
                     break;
                 }
             }

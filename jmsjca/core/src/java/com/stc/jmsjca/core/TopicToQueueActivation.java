@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -84,7 +84,7 @@ public class TopicToQueueActivation extends ActivationBase {
         topicSpec.setBatchSize(props.getProperty(Options.Subname.BATCHSIZE, "10"));
         topicSpec.setHoldUntilAck("0");
         Properties options = new Properties();
-        Str.deserializeProperties(topicSpec.getOptions(), options);
+        Str.deserializeProperties(Str.parseProperties(Options.SEP, topicSpec.getOptions()), options);
         options.setProperty(Options.In.OPTION_CONCURRENCYMODE, 
             RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC]);
         topicSpec.setOptions(Str.serializeProperties(options));
@@ -114,7 +114,7 @@ public class TopicToQueueActivation extends ActivationBase {
         mTopicToQueue = new Activation(ra, topicEPF, topicSpec) {
             private String queueName = mQueue.getName();
 
-            public Delivery createDelivery() {
+            public Delivery createDelivery() throws Exception {
                 TopicToQueueDelivery ret = new TopicToQueueDelivery(this, getStats(), mQueuename);
                 return ret;
             }
@@ -190,11 +190,12 @@ public class TopicToQueueActivation extends ActivationBase {
          * @param a Activation
          * @param stats DeliveryStats
          * @param queuename name of queue to send to 
+         * @throws Exception on failure
          */
-        public TopicToQueueDelivery(Activation a, DeliveryStats stats, String queuename) {
+        public TopicToQueueDelivery(Activation a, DeliveryStats stats, String queuename) throws Exception {
             super(a, stats);
             XAssert.xassert(a.isTopic());
-            XAssert.xassert(!a.isXA());
+            XAssert.xassert(!a.isCMT());
             mQueueName = queuename;
         }
         
@@ -247,7 +248,7 @@ public class TopicToQueueActivation extends ActivationBase {
                     mActivation.getRA(),
                     mQueueName);
                 mProducer = o.createMessageProducer(mSession,
-                    mActivation.isXA(),
+                    mActivation.isCMT() && !mActivation.isXAEmulated(),
                     false,
                     dest,
                     mActivation.getRA());
@@ -292,7 +293,7 @@ public class TopicToQueueActivation extends ActivationBase {
                             m.getJMSPriority(), m.getJMSDeliveryMode());
                     }
                 } catch (JMSException e) {
-                    throw new RuntimeException("Redirecting message failed: " + e, e);
+                    throw Exc.rtexc(LOCALE.x("E149: Redirecting message failed: {0}", e), e);
                 }
             }
         }

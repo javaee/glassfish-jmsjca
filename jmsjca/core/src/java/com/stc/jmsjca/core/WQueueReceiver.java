@@ -27,7 +27,7 @@ import javax.jms.QueueReceiver;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WQueueReceiver extends WMessageConsumer implements QueueReceiver {
     private QueueReceiver mDelegate;

@@ -51,7 +51,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -97,7 +97,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
         }
 
         if (name == null || name.length() == 0) {
-            throw new JMSException("The JNDI name is null");
+            throw Exc.jmsExc(LOCALE.x("E401: The JNDI name is null"));
         }
 
         InitialContext ctx = null;
@@ -196,7 +196,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
             return (ConnectionFactory) getJndiObject(p,
                     p.getProperty(RAJNDIResourceAdapter.UNIFIEDCF));
         default:
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALE.x("E402: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
     }
 
@@ -272,9 +272,11 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
         }
         Destination ret = adminDestinationLookup(destName);
         
+        ret = checkGeneric(ret);
+        
         // Unwrap admin destination
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).getName();
+            destName = ((AdminDestination) ret).retrieveCheckedName();
             if (sLog.isDebugEnabled()) {
                 sLog.debug(ret + " is an admin object: embedded name: " + destName);
             }

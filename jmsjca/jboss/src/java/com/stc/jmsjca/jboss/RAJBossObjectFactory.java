@@ -37,7 +37,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJBossObjectFactory.class);
@@ -116,7 +116,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
         }
 
         if (name == null || name.length() == 0) {
-            throw new JMSException("The JNDI name is null");
+            throw Exc.jmsExc(LOCALE.x("E202: The JNDI name is null"));
         }
 
         InitialContext ctx = null;
@@ -176,7 +176,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
             Object o = getJndiObject(q, name);
             return (ConnectionFactory) o; 
         default:
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALE.x("E204: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
     }
 

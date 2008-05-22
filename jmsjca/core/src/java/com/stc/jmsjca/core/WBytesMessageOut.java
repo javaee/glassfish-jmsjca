@@ -23,7 +23,7 @@ import javax.jms.JMSException;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WBytesMessageOut extends WMessageOut implements BytesMessage {
     private BytesMessage mDelegate;

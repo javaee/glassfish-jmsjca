@@ -64,18 +64,8 @@
                     <config-property-type>java.lang.String</config-property-type>
                 </config-property>
                 <config-property>
-                    <config-property-name>ProducerPooling</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>true</config-property-value>
-                </config-property>
-                <config-property>
                     <config-property-name>Options</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
-                </config-property>
-                <config-property>
-                    <config-property-name>IdleTimeout</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>30000</config-property-value>
                 </config-property>
                 <connectionfactory-interface>javax.jms.ConnectionFactory</connectionfactory-interface>
                 <connectionfactory-impl-class>com.stc.jmsjca.core.JConnectionFactoryXA</connectionfactory-impl-class>
@@ -101,11 +91,6 @@
                     <config-property-name>ProducerPooling</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
                     <config-property-value>true</config-property-value>
-                </config-property>
-                <config-property>
-                    <config-property-name>IdleTimeout</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>30000</config-property-value>
                 </config-property>
                 <config-property>
                     <config-property-name>Options</config-property-name>
@@ -135,11 +120,6 @@
                     <config-property-name>ProducerPooling</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
                     <config-property-value>true</config-property-value>
-                </config-property>
-                <config-property>
-                    <config-property-name>IdleTimeout</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>30000</config-property-value>
                 </config-property>
                 <config-property>
                     <config-property-name>Options</config-property-name>

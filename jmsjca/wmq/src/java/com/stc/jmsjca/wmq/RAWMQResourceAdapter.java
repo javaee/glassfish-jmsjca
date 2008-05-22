@@ -17,15 +17,17 @@
 package com.stc.jmsjca.wmq;
 
 import com.stc.jmsjca.core.RAJMSObjectFactory;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.UrlParser;
 
 /**
  * Specializes the core resource adapter for IBM WebSphere Message Server
  *
  * @author cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
+    private static Localizer LOCALE = Localizer.get();    
 
     /**
      * Default constructor (required by spec)
@@ -41,7 +43,7 @@ public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapt
         try {
             new RAWMQObjectFactory().validateAndAdjustURL(u);
         } catch (Exception ex) {
-            throw new RuntimeException("Invalid connectionURL: " + ex.getMessage(), ex);
+            throw Exc.rtexc(LOCALE.x("E310: Invalid connectionURL [{0}]: {1}", connectionURL, ex), ex);
         }
         super.setConnectionURL(u.toString());        
     }

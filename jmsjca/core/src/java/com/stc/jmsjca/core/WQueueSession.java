@@ -28,7 +28,7 @@ import javax.jms.QueueSession;
  * calls to the JSession.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WQueueSession extends WSession implements QueueSession {
     /**
@@ -50,6 +50,7 @@ public class WQueueSession extends WSession implements QueueSession {
     public QueueReceiver createReceiver(Queue queue) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(queue);
+        queue = (Queue) mMgr.checkGeneric(queue);
         if (queue instanceof AdminQueue) {
             queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
         }
@@ -75,6 +76,7 @@ public class WQueueSession extends WSession implements QueueSession {
     public QueueReceiver createReceiver(Queue queue, String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(queue);
+        queue = (Queue) mMgr.checkGeneric(queue);
         if (queue instanceof AdminQueue) {
             queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
         }
@@ -98,6 +100,7 @@ public class WQueueSession extends WSession implements QueueSession {
      */
     public QueueSender createSender(Queue queue) throws JMSException {
         checkClosed();
+        queue = (Queue) mMgr.checkGeneric(queue);
         if (queue instanceof AdminQueue) {
             queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
         }

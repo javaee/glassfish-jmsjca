@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<project default="install" basedir="." name="jmsjca">
+    <import file="build.xml" />
+</project>

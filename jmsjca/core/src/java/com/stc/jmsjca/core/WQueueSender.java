@@ -28,7 +28,7 @@ import javax.jms.QueueSender;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WQueueSender extends WMessageProducer implements QueueSender {
     private QueueSender mDelegate;
@@ -85,6 +85,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
         if (mMgr == null) {
             invokeOnClosed();
         }
+        queue = (Queue) mMgr.getSession().checkGeneric(queue);
         if (queue instanceof AdminQueue) {
             queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
         }
@@ -117,6 +118,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
         if (mMgr == null) {
             invokeOnClosed();
         }
+        queue = (Queue) mMgr.getSession().checkGeneric(queue);
         if (queue instanceof AdminQueue) {
             queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
         }

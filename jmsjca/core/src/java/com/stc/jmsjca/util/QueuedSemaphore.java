@@ -38,7 +38,7 @@ package com.stc.jmsjca.util;
  * href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">
  * Introduction to this package. </a>]
  * 
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * @author Doug Lea
  */
 public abstract class QueuedSemaphore extends Semaphore {

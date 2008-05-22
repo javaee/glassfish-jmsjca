@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
-<project default="compile" basedir="." name="jmsjca">
+<project default="compile" basedir="." name="wmq">
     <description>
     </description>
+    <import file="build-common.xml" />
 
 <!--
   Conventions:
@@ -32,7 +33,7 @@
         <property file="${stc.root.dir}/stc.properties" />
 
         <property file="build.properties" />
-        <property file="${env.STC_ROOT}/RTS/build.properties" />
+        <property file="build-RTS.properties" />
         <property file="build-${jcaid}.properties" />
         <property file="build-xxx.properties" />
 
@@ -138,7 +139,7 @@
 
         <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
         <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
-        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" />
+        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" prefixU="ra${jcaid}-" />
         <copy todir="${jmsjca.xxx.rar.classes.dir}">
             <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
         </copy>

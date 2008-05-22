@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.EmManagementInterface;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough.TopicDest;
 
@@ -42,7 +43,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     /**
@@ -60,7 +61,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             if (mbean != null) {
                 String str = mbean.xgetStatus();
             System.out.println("Waiting until application is deployed and running; connected status: " + str);
-                if (str.equals(com.stc.jmsjca.core.ActivationMBean.CONNECTED)) {
+                if (str.equals(EmManagementInterface.CONNECTED)) {
                     break;
                 }
             } else if (retry < 5) { 
@@ -203,10 +204,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 // deploy bean to create a durable subscription then undeploy it
                 c.deployModule(mTestEar.getAbsolutePath());
                 waitUntilRunning(c);
-                p.drainQ2();
                 c.undeploy(mTestEarName);
                 
-                p.removeDurableSubscriber(clientID, p.getTopic1Name(), subscriptionName);
                 p.drainQ2();
                 
                 // send messages to T1 - these should be stored in the durable subscription
@@ -551,10 +550,6 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
 
-//        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-//        .createConnector(StcmsConnector.class);
-//        cc.setOptions("JMSJCA.NoXA=true\r\nJMSJCA.IgnoreTx=true");
-        
         dd.update();
 
         // Deploy
@@ -666,6 +661,18 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      * @throws Throwable
      */
     public void testDT2QCCSelectorSubstitution() throws Throwable {
+        dotestDT2QCCSelectorSubstitution("cc");
+    }        
+    
+    public void testDT2QSerialSelectorSubstitution() throws Throwable {
+        dotestDT2QCCSelectorSubstitution("serial");
+    }        
+    
+    public void testDT2QSyncSelectorSubstitution() throws Throwable {
+        dotestDT2QCCSelectorSubstitution("sync");
+    }        
+    
+    protected void dotestDT2QCCSelectorSubstitution(String ccmode) throws Throwable {
         Passthrough p = createPassthrough(mServerProperties);
         EmbeddedDescriptor dd = getDD();
         StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
@@ -673,6 +680,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode(ccmode);
         
         spec.setSubscriptionDurability("Durable");
         final String subscriptionName = p.getDurableTopic1Name();

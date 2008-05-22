@@ -59,7 +59,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -196,7 +196,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
                 return ((Connection) conn).createSession(transacted, ackmode);
             }
         }
-        throw new RuntimeException("Unknown class " + sessionClass);
+        throw Exc.rtexc(LOCALE.x("E824: Unknown class {0}", sessionClass));
     }
 
     /**
@@ -228,7 +228,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         }
 
         if (name == null || name.length() == 0) {
-            throw new JMSException("The JNDI name is null");
+            throw Exc.jmsExc(LOCALE.x("E401: The JNDI name is null"));
         }
 
         InitialContext ctx = null;
@@ -296,7 +296,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
             Object o = getJndiObject(url, factoryname);
             return (ConnectionFactory) o; 
         default:
-            throw new JMSException("Logic fault: invalid domain " + domain);
+            throw Exc.jmsExc(LOCALE.x("E402: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
     }
 
@@ -317,7 +317,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         
         // Unwrap admin destination
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).getName();
+            destName = ((AdminDestination) ret).retrieveCheckedName();
             ret = null;
         }
         
@@ -371,34 +371,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      */
     public void setClientID(Connection connection, boolean isTopic,
         RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
-        if (isTopic && RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
-            // Ensure a clientID will be set
-            String newClientId = spec.getClientId();
-            boolean auto = false;
-            if (newClientId == null || newClientId.length() == 0) {
-                newClientId = "CLIENTID-" + spec.getSubscriptionName();
-                auto = false;
-            }
-            
-            String currentClientId = connection.getClientID();
-            if (currentClientId == null || currentClientId.length() == 0) {
-                // Set it
-                setClientID(connection, newClientId);
-            } else {
-                if (newClientId.equals(currentClientId)) {
-                    // ok: already set
-                } else {
-                    if (auto) {
-                        // Apparently the clientID was specified in the connection 
-                        // factory, and the user did not specify a clientid
-                    } else {
-                        sLog.warn(LOCALE.x("E822: ClientID is already set to [{0}]" 
-                            + "; cannot set to [{1}] as required in "
-                            + "activationspec [{2}]", currentClientId, newClientId, spec));
-                    }
-                }
-            }
-        }
+        setClientIDIfNotSpecified(connection, isTopic, spec, ra);
     }
 
     /**

@@ -53,7 +53,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -438,7 +438,7 @@ public class JSession {
         } else if (mSessionClass == javax.jms.TopicSession.class) {
             return new WTopicSession(this);
         } else {
-            throw new RuntimeException("Unknown class " + mSessionClass);
+            throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", mSessionClass));
         }
     }
 
@@ -467,8 +467,19 @@ public class JSession {
      * @param w WSession
      */
     public void close(WSession w) throws JMSException {
-        stop();
+        Exception closeException = null;
+        try {
+            stop();
+        } catch (Exception e) {
+            closeException = e;
+        }
         mManagedConnection.notifyClosedByApplicationConnection(w);
+        
+        if (closeException != null) {
+            throw Exc.jmsExc(LOCALE.x(
+                "E094: This {0} could not be closed properly: {1}", w,
+                closeException), closeException);            
+        }
     }
 
     /**
@@ -701,7 +712,7 @@ public class JSession {
      * @throws JMSException failure
      */
     public void setMessageListener(MessageListener listener) throws JMSException {
-        throw new JMSException("Connection consumers cannot be used with JCA 1.5 connections");
+        throw Exc.jmsExc(LOCALE.x("E129: ExceptionListeners cannot be set in a JCA 1.5 connection"));
     }
 
     /**
@@ -804,5 +815,16 @@ public class JSession {
      */
     public Destination createDestination(AdminDestination dest) throws JMSException {
         return mSessionConnection.createDestination(dest);
+    }
+    
+    /**
+     * Converts optionally from a genericra destination to an admin destination
+     * 
+     * @param d destination to inspect
+     * @return admin destination or same destination
+     * @throws JMSException on conversion failure
+     */
+    public Destination checkGeneric(Destination d) throws JMSException {
+        return mSessionConnection.checkGeneric(d);
     }
 }

@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -897,6 +897,66 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
 
     /**
+     * Tests NoXA with rollback, CC mode
+     * 
+     * @throws Throwable
+     */
+    public void testRollbackNoXACMTCC() throws Throwable {
+        doTestRollbackNoXA("cc");
+    }
+    
+    /**
+     * Tests NoXA with rollback, Sync mode
+     * 
+     * @throws Throwable
+     */
+    public void testRollbackNoXACMTSync() throws Throwable {
+        doTestRollbackNoXA("sync");
+    }
+    
+    /**
+     * Tests NoXA with rollback, serial mode
+     * 
+     * @throws Throwable
+     */
+    public void testRollbackNoXACMTSerial() throws Throwable {
+        doTestRollbackNoXA("serial");
+    }
+    
+    private void doTestRollbackNoXA(String ccmode) throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByText(EJBDD, "cc").setText(ccmode);
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("rollbackCMT");
+        dd.findElementByText(EJBDD, "XContextName").setText("rollbackCMT");
+        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        cc.setOptions(cc.getOptions() + "\r\n" + Options.NOXA + "=true");
+        dd.update();
+
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
+            
+            c.deployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get(p.getQueue1Name()).assertEmpty();
+
+            Passthrough.QueueDest q3 = p.new QueueDest(p.getQueue3Name()); 
+            q3.connect();
+            int ninvalidRollbacks = q3.drain(); 
+            assertTrue("Invalid rollbacks", ninvalidRollbacks == 0);
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
+    /**
      * Queue to queue MDB throws runtime exception in about 20% of the cases
      * 
      * @throws Throwable
@@ -1585,7 +1645,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(RAXML1, "XATransaction").setText("NoTransaction");
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
         .createConnector(StcmsConnector.class);
-        cc.setOptions("JMSJCA.NoXA=true\r\nJMSJCA.IgnoreTx=false");
+        cc.setOptions(cc.getOptions() + "\r\n" + Options.FORCE_BMT + "=true\r\nJMSJCA.IgnoreTx=false");
         dd.update();
 
         // Deploy
@@ -1630,7 +1690,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         if (url.indexOf('?') < 0) {
             url += "?";
         }
-        url += "JMSJCA.NoXA=true";
+        url += Options.NOXA + "=true";
         cc.setConnectionURL(url);
         dd.update();
 
@@ -1661,6 +1721,100 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     /**
      * Assert that a connection can be used in no-xa, transacted mode
      */
+    public void testForceBMT() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
+        dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testNoXATransacted");
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXATransacted");
+
+        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        String url = cc.getConnectionURL();
+        if (url.indexOf('?') < 0) {
+            url += "?";
+        }
+        url += Options.FORCE_BMT + "=true&" + Options.NOXA + "=true" ;
+        cc.setConnectionURL(url);
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
+
+            Passthrough.QueueSource source = p.new QueueSource("Queue1");
+            source.connect();
+            source.drain();
+
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
+    /**
+     * Assert that a replyTo destination is not a wrapped object
+     */
+    public void testReplyToIsNotWrapped() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testReplyToIsNotWrapped");
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXATransacted");
+
+        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        String url = cc.getConnectionURL();
+        if (url.indexOf('?') < 0) {
+            url += "?";
+        }
+        url += "";
+        cc.setConnectionURL(url);
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
+
+            Passthrough.QueueSource source = p.new QueueSource("Queue1");
+            source.connect();
+            source.drain();
+
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+
+            Passthrough.QueueDest q3 = p.new QueueDest(p.getQueue3Name()); 
+            q3.connect();
+            int ninvalidRollbacks = q3.drain(); 
+            assertTrue("Invalid rollbacks", ninvalidRollbacks == 0);
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
+    /**
+     * Assert that a connection can be used in no-xa, transacted mode
+     */
     public void testNoXANonTransacted() throws Throwable {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -1676,7 +1830,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         if (url.indexOf('?') < 0) {
             url += "?";
         }
-        url += "JMSJCA.NoXA=true&JMSJCA.IgnoreTx=false";
+        url += Options.NOXA + "=true&JMSJCA.IgnoreTx=false";
         cc.setConnectionURL(url);
         dd.update();
 

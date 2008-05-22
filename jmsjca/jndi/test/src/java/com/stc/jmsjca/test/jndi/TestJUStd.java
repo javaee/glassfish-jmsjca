@@ -21,6 +21,7 @@ import com.stc.jms.client.STCQueue;
 import com.stc.jms.client.STCXAConnectionFactory;
 import com.stc.jms.client.STCXAQueueConnectionFactory;
 import com.stc.jms.client.STCXATopicConnectionFactory;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
@@ -220,7 +221,7 @@ public class TestJUStd extends XTestBase {
      * @return wire count
      */
     protected int getWireCount() {
-        return com.stc.jms.sockets.Wire.sObjectCount;
+        return com.stc.jms.sockets.Wire.sObjectCount - com.stc.jms.sockets.WirePool.sObjectCount;
     }
 
     public void testTemporaryTopicConnectionClosesTestRA() {
@@ -254,7 +255,7 @@ public class TestJUStd extends XTestBase {
                 "JMSJCA.TopicCF=connectionfactories/topicconnectionfactory\r\n" + 
                 "JMSJCA.QueueCF=connectionfactories/queueconnectionfactory\r\n" + 
                 "JMSJCA.UnifiedCF=connectionfactories/connectionfactory\r\n" + 
-                "JMSJCA.NoXA=true");
+                Options.NOXA + "=true");
         
         XMCFQueueXA mcf = new XMCFQueueXA();
         mcf.setResourceAdapter(ra);
@@ -292,7 +293,7 @@ public class TestJUStd extends XTestBase {
                 "JMSJCA.TopicCF=connectionfactories/topicconnectionfactory" + sep + 
                 "JMSJCA.QueueCF=connectionfactories/queueconnectionfactory" + sep +
                 "JMSJCA.UnifiedCF=connectionfactories/connectionfactory" + sep +
-                "JMSJCA.NoXA=true");
+                Options.NOXA + "=true");
         
         XMCFQueueXA mcf = new XMCFQueueXA();
         mcf.setResourceAdapter(ra);

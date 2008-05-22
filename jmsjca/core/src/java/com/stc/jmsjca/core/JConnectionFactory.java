@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
@@ -58,12 +60,13 @@ import java.util.WeakHashMap;
  * ManagedConnectionFactory</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JConnectionFactory implements javax.jms.ConnectionFactory,
     java.io.Serializable, javax.resource.Referenceable, javax.naming.spi.ObjectFactory {
 
     private static Logger sLog = Logger.getLogger(JConnectionFactory.class);
+    private static final Localizer LOCALE = Localizer.get();
     private ConnectionManager mConnectionManager;
     private XManagedConnectionFactory mManagedConnectionFactory;
     private javax.naming.Reference mReference;
@@ -355,10 +358,10 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
             if (Str.empty(username)) {
                 if (!Str.empty(mManagedConnectionFactory.getUserName())) {
                     username = mManagedConnectionFactory.getUserName();
-                    password = mManagedConnectionFactory.getPassword();
+                    password = mManagedConnectionFactory.getClearTextPassword();
                 } else if (!Str.empty(getRA().getUserName())) {
                     username = getRA().getUserName();
-                    password = getRA().getPassword();
+                    password = getRA().getClearTextPassword();
                 }
             }
             
@@ -385,7 +388,7 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
                 return useridpwurl[0] == null ? f.createConnection() 
                     : f.createConnection(useridpwurl[0], useridpwurl[1]);
             } else {
-                throw new JMSException("Unknown domain " + c);
+                throw Exc.jmsExc(LOCALE.x("E133: Unknown domain {0}", c));
             }
         }
     }
@@ -425,6 +428,15 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
         return mManagedConnectionFactory.getRAJMSResourceAdapter();
     }
     
+    /**
+     * Returns the MCF associated with this CF
+     * 
+     * @return mcf
+     */
+    public XManagedConnectionFactory getMCF() {
+        return mManagedConnectionFactory;
+    }
+
     /**
      * For unit testing only: returns the MCF associated with this CF
      * 

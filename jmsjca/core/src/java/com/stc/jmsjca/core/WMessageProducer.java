@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -28,7 +31,7 @@ import javax.jms.MessageProducer;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMessageProducer implements MessageProducer {
     /**
@@ -36,6 +39,7 @@ public class WMessageProducer implements MessageProducer {
      */
     protected JProducer mMgr;
     private MessageProducer mDelegate;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -54,7 +58,7 @@ public class WMessageProducer implements MessageProducer {
      * @throws javax.jms.IllegalStateException always
      */
     public void invokeOnClosed() throws javax.jms.IllegalStateException {
-        throw new javax.jms.IllegalStateException("This MessageProducer is closed");
+        throw Exc.illstate(LOCALE.x("E153: This {0} is closed", "MessageProducer"));
     }
 
     /**

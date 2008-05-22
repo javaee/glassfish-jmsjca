@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * Updates all SeeBeyond headers to CDDL headers
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class ReplaceHeaders {
     
@@ -160,8 +160,8 @@ public class ReplaceHeaders {
 //    private static String REPLACE2 = ""
 //    + "/*\n"
 //    + " * $RCSfile: ReplaceHeaders.java,v $\n"
-//    + " * $Revision: 1.4 $\n"
-//    + " * $Date: 2007-02-03 01:49:20 $\n"
+//    + " * $Revision: 1.5 $\n"
+//    + " * $Date: 2008-05-22 20:01:54 $\n"
 //    + " *\n"
 //    + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  \n"
 //    + " */";

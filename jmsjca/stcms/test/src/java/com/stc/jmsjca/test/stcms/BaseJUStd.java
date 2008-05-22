@@ -297,7 +297,7 @@ public class BaseJUStd extends XTestBase {
      * @return wire count
      */
     protected int getWireCount() {
-        return com.stc.jms.sockets.Wire.sObjectCount;
+        return com.stc.jms.sockets.Wire.sObjectCount - com.stc.jms.sockets.WirePool.sObjectCount;
     }
 
     /**
@@ -1238,6 +1238,10 @@ public class BaseJUStd extends XTestBase {
         // No msgs until a connection is closed
         clearQueue(dest, 0);
         clearQueue(dest, 0);
+        
+        // Wait until the thread that was just started is running
+        // (not safe -- could be improved)
+        Thread.sleep(500);
         
         // Release a connection
         getRA(f).stop();

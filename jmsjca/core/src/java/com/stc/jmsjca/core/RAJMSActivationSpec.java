@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Str;
 
 import javax.resource.ResourceException;
@@ -27,7 +29,7 @@ import javax.resource.spi.InvalidPropertyException;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
@@ -128,6 +130,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     private int mBatchSize;
     private String mHoldUntilAckMode;
 
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * ActivationSpec must provide a default constructor
      */
@@ -161,7 +165,7 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     private void assertNotEmpty(String name, String toTest) {
         if (empty(toTest)) {
-            throw new IllegalArgumentException(name + " cannot be empty");
+            throw Exc.illarg(LOCALE.x("E135: {0} cannot be empty", name));
         }
     }
 
@@ -176,54 +180,52 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     public void validate() throws InvalidPropertyException {
         if (!isValidDestinationName(mDestination)) {
-            throw new InvalidPropertyException("Invalid destination: " + mDestination);
+            throw Exc.invprop(LOCALE.x("E136: Invalid destination: {0}", mDestination));
         }
 
         // Check subscription
         if (TOPIC.equals(mDestinationType) && DURABLE.equals(mSubscriptionDurability)) {
             if (empty(mSubscriptionName)) {
-                throw new InvalidPropertyException("Missing value for subscription name");
+                throw Exc.invprop(LOCALE.x("E137: Missing value for subscription name"));
             }
-            // if (empty(mClientId)) {
-            // throw new InvalidPropertyException("Missing value for
-            // subscription name");
-            // }
         }
 
         // Require valid values of endpoint properties
         if (mEndpointExceptionRedeliveryInterval < 1) {
-            throw new InvalidPropertyException(
-                "Invalid value for endpointExceptionRedeliveryInterval ("
-                    + mEndpointExceptionRedeliveryInterval + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointExceptionRedeliveryInterval), "endpointExceptionRedeliveryInterval"));
         }
         if (mEndpointExceptionRedeliveryAttempts < 0) {
-            throw new InvalidPropertyException(
-                "Invalid value for endpointExceptionRedeliveryAttempts ("
-                    + mEndpointExceptionRedeliveryAttempts + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointExceptionRedeliveryAttempts), "endpointExceptionRedeliveryAttempts"));
         }
         if (mEndpointPoolResizeTimeout < 1) {
-            throw new InvalidPropertyException(
-                "Invalid value for endpointPoolResizeTimeout ("
-                    + mEndpointPoolResizeTimeout + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointPoolResizeTimeout), "endpointPoolResizeTimeout"));
         }
         if (mEndpointPoolResizeCount < 1) {
-            throw new InvalidPropertyException(
-                "Invalid value for endpointPoolResizeCount (" + mEndpointPoolResizeCount
-                    + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointPoolResizeCount), "endpointPoolResizeCount"));
         }
         if (mEndpointPoolMaxSize < 1) {
-            throw new InvalidPropertyException("Invalid value for endpointPoolMaxSize ("
-                + mEndpointPoolMaxSize + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointPoolMaxSize), "endpointPoolMaxSize"));
         }
         if (mEndpointPoolSteadySize < 0) {
-            throw new InvalidPropertyException(
-                "Invalid value for endpointPoolSteadySize (" + mEndpointPoolSteadySize
-                    + ")");
+            throw Exc.invprop(LOCALE.x(
+                "E138: {0} is not a valid value for ''{1}''"
+                    , Integer.toString(mEndpointPoolSteadySize), "endpointPoolSteadySize"));
         }
         try {
             RedeliveryHandler.parse(mRedeliveryActions, "", mDestinationType);
         } catch (Exception e) {
-            throw new InvalidPropertyException("RepeatedRedeliveryActions could not be parsed: " + e, e);
+            throw Exc.invprop(LOCALE.x(
+                "E144: Invalid value for ''redeliveryHandling'' ({0}): {1}", mRedeliveryActions, e), e);
         }
     }
 
@@ -238,12 +240,12 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
         throws ResourceException {
         synchronized (this) {
             if (mRA != null) {
-                throw new ResourceException("Cannot change resource adaptor association "
-                    + "once set.");
+                throw Exc.rsrcExc(LOCALE.x("E145: Cannot change resource adaptor association "
+                    + "once set."));
             }
             if (!(ra instanceof RAJMSResourceAdapter)) {
-                throw new ResourceException("Invalid class " + ra.getClass()
-                    + "; must be instance of " + RAJMSResourceAdapter.class);
+                throw Exc.rsrcExc(LOCALE.x("E146: Invalid class {0}; must be instance of {1)", 
+                    ra.getClass(), RAJMSResourceAdapter.class));
             }
             mRA = ra;
         }
@@ -270,15 +272,15 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     public void setDestinationType(String destinationType) {
         if (empty(destinationType)) {
-            throw new IllegalArgumentException("Destination type can not be null");
+            throw Exc.illarg(LOCALE.x("E147: ''destinationType'' can not be null"));
         }
 
         // Must be javax.jms.Queue or Topic
         if (QUEUE.equals(destinationType) || TOPIC.equals(destinationType)) {
             mDestinationType = destinationType;
         } else {
-            throw new IllegalArgumentException("Invalid value for destination type: "
-                + destinationType);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , destinationType, "destinationType"));
         }
     }
 
@@ -299,7 +301,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     public void setDestination(String destination) {
         if (!isValidDestinationName(destination)) {
-            throw new IllegalArgumentException("Invalid destination name: " + destination);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , destination, "destinationName"));
         }
         mDestination = destination;
     }
@@ -345,9 +348,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
             || DUPSOKACKNOWLEDGE.equals(acknowledgeMode)) {
             this.mAcknowledgeMode = acknowledgeMode;
         } else {
-            throw new IllegalArgumentException("Invalid acknowledge mode: "
-                + acknowledgeMode + "; must be " + AUTOACKNOWLEDGE + " or "
-                + DUPSOKACKNOWLEDGE);
+            throw Exc.illarg(LOCALE.x("E150: Invalid value for ''acknowledgeMode'' ({0})"
+                + "; must be {1} or {2}", acknowledgeMode, AUTOACKNOWLEDGE, DUPSOKACKNOWLEDGE));
         }
     }
 
@@ -374,8 +376,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
             || NONDURABLE.equals(subscriptionDurability)) {
             this.mSubscriptionDurability = subscriptionDurability;
         } else {
-            throw new IllegalArgumentException("Invalid subscriptionDurability: "
-                + subscriptionDurability + "; must be " + DURABLE + " or " + NONDURABLE);
+            throw Exc.illarg(LOCALE.x("E151: Invalid value for ''subscriptionDurability'' ({0})"
+                + "; must be {1} or {2}", subscriptionDurability, DURABLE, NONDURABLE));
         }
     }
 
@@ -434,8 +436,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     public void setEndpointPoolMaxSize(Integer endpointPoolMaxSize) {
         if (endpointPoolMaxSize.intValue() < 1) {
-            throw new IllegalArgumentException("Invalid value for endpointPoolMaxSize: "
-                + endpointPoolMaxSize);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , endpointPoolMaxSize, "endpointPoolMaxSize"));
         }
         mEndpointPoolMaxSize = endpointPoolMaxSize.intValue();
     }
@@ -448,8 +450,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointPoolMaxSize(String endpointPoolMaxSize) {
         int iEndpointPoolMaxSize = Integer.parseInt(endpointPoolMaxSize);
         if (iEndpointPoolMaxSize < 1) {
-            throw new IllegalArgumentException("Invalid value for endpointPoolMaxSize: "
-                + endpointPoolMaxSize);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , endpointPoolMaxSize, "endpointPoolMaxSize"));
         }
         mEndpointPoolMaxSize = iEndpointPoolMaxSize;
     }
@@ -470,8 +472,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointPoolSteadySize(String endpointPoolSteadySize) {
         int iEndpointPoolSteadySize = Integer.parseInt(endpointPoolSteadySize);
         if (iEndpointPoolSteadySize < 0) {
-            throw new IllegalArgumentException(
-                "Invalid value for endpointPoolSteadySize: " + endpointPoolSteadySize);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , endpointPoolSteadySize, "endpointPoolSteadySize"));
         }
         mEndpointPoolSteadySize = iEndpointPoolSteadySize;
     }
@@ -493,8 +495,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointPoolResizeCount(String endpointPoolResizeCount) {
         int iEndpointPoolResizeCount = Integer.parseInt(endpointPoolResizeCount);
         if (iEndpointPoolResizeCount < 1) {
-            throw new IllegalArgumentException(
-                "Invalid value for endpointPoolResizeCount: " + endpointPoolResizeCount);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , endpointPoolResizeCount, "endpointPoolResizeCount"));
         }
         this.mEndpointPoolResizeCount = iEndpointPoolResizeCount;
     }
@@ -516,9 +518,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointPoolResizeTimeout(String endpointPoolResizeTimeout) {
         int iEndpointPoolResizeTimeout = Integer.parseInt(endpointPoolResizeTimeout);
         if (iEndpointPoolResizeTimeout < 1) {
-            throw new IllegalArgumentException(
-                "Invalid value for endpointPoolResizeTimeout: "
-                    + endpointPoolResizeTimeout);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , endpointPoolResizeTimeout, "endpointPoolResizeTimeout"));
         }
         mEndpointPoolResizeTimeout = iEndpointPoolResizeTimeout;
     }
@@ -543,9 +544,9 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointExceptionRedeliveryAttempts(
         int endpointExceptionRedeliveryAttempts) {
         if (endpointExceptionRedeliveryAttempts < 0) {
-            throw new IllegalArgumentException(
-                "Invalid value for endpointExceptionRedeliveryAttempts: "
-                    + endpointExceptionRedeliveryAttempts);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , Integer.toString(endpointExceptionRedeliveryAttempts)
+                , "endpointExceptionRedeliveryAttempts")); 
         }
         mEndpointExceptionRedeliveryAttempts = endpointExceptionRedeliveryAttempts;
     }
@@ -571,9 +572,9 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     public void setEndpointExceptionRedeliveryInterval(
         int endpointExceptionRedeliveryInterval) {
         if (endpointExceptionRedeliveryInterval < 1) {
-            throw new IllegalArgumentException(
-                "Invalid value for endpointExceptionRedeliveryInterval: "
-                    + endpointExceptionRedeliveryInterval);
+            throw Exc.illarg(LOCALE.x("E138: {0} is not a valid value for ''{1}''"
+                , Integer.toString(endpointExceptionRedeliveryInterval)
+                , "endpointExceptionRedeliveryInterval"));
         }
         mEndpointExceptionRedeliveryInterval = endpointExceptionRedeliveryInterval;
     }
@@ -624,8 +625,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
             values += (i != 0 ? ", " : "") + DELIVERYCONCURRENCY_STRS[i];
         }
 
-        throw new IllegalArgumentException("Invalid value for SerialDelivery: " + mode
-            + "; must be one of " + values);
+        throw Exc.illarg(LOCALE.x("E139: {0} is not a valid value for ''{1}''; must be one of {2}"
+            , mode, "concurrencyMode", values));
     }
 
     /**
@@ -690,6 +691,15 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      */
     public void setPassword(String password) {
         mPassword = password;
+    }
+
+    /**
+     * getPassword
+     * 
+     * @return String
+     */
+    public String getClearTextPassword() {
+        return Str.pwdecode(mPassword);
     }
 
     /**

@@ -68,7 +68,7 @@ import java.util.Map;
  * read-only.    
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
     private static Logger sLog = Logger.getLogger(MBeanHelper.class);
@@ -257,7 +257,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     attrinfos.add(info);
                 } catch (Exception e) {
                     if (throwFailures) {
-                        throw new RuntimeException("getAttributeInfo failed: " + e, e);
+                        throw Exc.rtexc(LOCALE.x("E169: getAttributeInfo() failed: {0}", e), e);
                     } else {
                         sLog.warn(LOCALE.x("E091: Failure while building attribute descriptions for "
                             + "{0}: {1}", this.getClass().getName(), e));
@@ -312,7 +312,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     }
 
                     if (targetMethod == null) {
-                        throw new Exception("Target method not found for " + m);
+                        throw Exc.exc(LOCALE.x("E171: Target method not found for {0}", m));
                     }
 
                     // Invoke method to get description
@@ -323,7 +323,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     }
                     String[] descr = (String[]) m.invoke(meta, args);
                     if (descr.length - 1 != types.length) {
-                        throw new Exception("Mismatching number of arguments for " + m);
+                        throw Exc.exc(LOCALE.x("E172: Mismatching number of arguments for {0}", m));
                     }
 
                     MBeanParameterInfo[] paraminfos = new MBeanParameterInfo[types.length];
@@ -345,8 +345,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                         MBeanOperationInfo.UNKNOWN));
                 } catch (Exception e) {
                     if (throwFailures) {
-                        throw new RuntimeException(
-                            "Failure in getOperationsInfo() for method [" + m + "]: " + e,
+                        throw Exc.rtexc(LOCALE.x(
+                            "E173: Failure in getOperationsInfo() for method [{0}]: {1}", m, e),
                             e);
                     } else {
                         sLog.warn(LOCALE.x("E092: Failure while building method descriptions for "
@@ -437,8 +437,8 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                         if (sLog.isDebugEnabled()) {
                             sLog.debug("Class not found: " + sig[i]);
                         }
-                        final String msg = "Parameter class not found: [" + sig[i] + "]";
-                        throw new ReflectionException(e, msg);
+                        throw new ReflectionException(e, LOCALE.x(
+                            "Parameter class not found: [{0}]", sig[i]).toString());
                     }
                 }
             }
@@ -478,11 +478,10 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
         String tracename = opName + "(" + concat(opArgs, ", ") + ")"; 
         
         if (opName == null) {
-            final RuntimeException x =
-                new IllegalArgumentException("Method name must not be null");
-            throw new RuntimeOperationsException(x,
-                "An exception occured while trying to " +
-            "invoke MBean method [" + tracename + "]: " + x);
+            final RuntimeException x = Exc.illarg(LOCALE.x("E175: Method name must not be null"));
+            throw new RuntimeOperationsException(x, LOCALE.x(
+                "E176: An exception occured while trying to " +
+            "invoke MBean method [{0}]: {1}", tracename, x).toString());
         }
         
         // Determine classname and method
@@ -511,90 +510,36 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
         // Find invmethod
         Method invMethod = resolveMethod(getDelegate().getClass(), opMethodName, sig);
         if (invMethod == null) {
-            throw new MBeanException(new RuntimeException("Method " + tracename
-                + " not found on " + getDelegate().getClass()));
+            throw new MBeanException(Exc.rtexc(LOCALE.x("E174: Method {0} not found on {1}"
+                , tracename, getDelegate().getClass())));
         }
         
         // Determine if invocation is allowed
         Method metaMethod = resolveMethod(getMetaObject().getClass(), MBM + opMethodName, sig);
         if (metaMethod == null) {
-            throw new MBeanException(new RuntimeException("Method " + tracename
-                + " not found on " + getMetaObject().getClass() + " (invocation check)"));
+            throw new MBeanException(Exc.rtexc(LOCALE.x("E177: Method {0} not found on {1} (invokation check"
+                , tracename, getMetaObject().getClass())));
         }
         Object invAllowed;
         try {
             invAllowed = metaMethod.invoke(getMetaObject(), opArgs);
         } catch (Exception e) {
-            throw new MBeanException(new RuntimeException("Access check invocation " +
-                    "error on method " + tracename + " on " + getMetaObject().getClass(), e));
+            throw new MBeanException(Exc.rtexc(LOCALE.x("E178: Access check invocation " +
+                    "error on method {0} on {1}", tracename, getMetaObject().getClass()), e));
         }
         if (invAllowed == null) {
-            throw new MBeanException(new RuntimeException("Method " + tracename
-                + " may not be invoked on " + getMetaObject().getClass()));
+            throw new MBeanException(Exc.rtexc(LOCALE.x("E179: Method {0} may not be invoked on {1}"
+                , tracename, getMetaObject().getClass())));
         }
         
         // Invoke
         try {
             return invMethod.invoke(getDelegate(), opArgs);
         } catch (Exception e) {
-            throw new MBeanException(new RuntimeException("Invocation error on method "
-                + tracename + " on " + getDelegate().getClass(), e));
+            throw new MBeanException(Exc.rtexc(LOCALE.x("E180: Invocation error on method {0} on {1}"
+                , tracename, getDelegate().getClass()), e));
         }
     }
-    
-//    /**
-//     * invoke
-//     * 
-//     * @param methodName String
-//     * @param args Object[]
-//     * @param argTypes String[]
-//     * @return Object
-//     * @throws MBeanException on failure
-//     */
-//    public Object xinvoke(String methodName, Object[] args, String[] argTypes)
-//        throws MBeanException {
-//        // Clean arguments
-//        if (args == null) {
-//            args = new Object[0];
-//        }
-//        if (argTypes == null) {
-//            argTypes = new String[0];
-//        }
-//
-//        try {
-//            Object target = getDelegate();
-//            Method[] targetmethods = target.getClass().getMethods();
-//
-//            // Find method
-//            Method m = null;
-//            for (int i = 0; i < targetmethods.length; i++) {
-//                Method cand = targetmethods[i];
-//                if (cand.getName().equals(methodName)
-//                    && cand.getParameterTypes().length == argTypes.length) {
-//                    boolean matches = true;
-//                    for (int j = 0; j < cand.getParameterTypes().length; j++) {
-//                        if (!cand.getParameterTypes()[j].getName().equals(argTypes[j])) {
-//                            matches = false;
-//                        }
-//                    }
-//                    if (matches) {
-//                        m = cand;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (m == null) {
-//                throw new Exception("Could not find method [" + methodName + "("
-//                    + concat(argTypes, ", ") + ")]");
-//            }
-//
-//            return m.invoke(target, args);
-//        } catch (Exception ex) {
-//            throw new MBeanException(ex, "Invocation of method [" + methodName
-//                + "] failed: " + ex);
-//        }
-//    }
 
     /**
      * getAttribute
@@ -626,10 +571,10 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                 return m.invoke(target, new Object[0]);
             }
         } catch (Exception ex) {
-            throw new MBeanException(ex, "Retrieval of attribute [" + name + "] failed: "
-                + ex);
+            throw new MBeanException(ex, LOCALE.x("E181: Retrieval of attribute [{0}] failed: {1}"
+                , name, ex).toString());
         }
-        throw new AttributeNotFoundException("Invalid attribute [" + name + "]");
+        throw new AttributeNotFoundException(LOCALE.x("E182: Invalid attribute [{0}]", name).toString());
     }
 
     /**

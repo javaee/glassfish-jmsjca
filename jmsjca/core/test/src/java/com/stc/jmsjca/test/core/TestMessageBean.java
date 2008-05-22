@@ -20,6 +20,7 @@ import com.stc.jmsjca.core.Delivery;
 import com.stc.jmsjca.core.EndOfBatchMessage;
 import com.stc.jmsjca.core.JConnectionFactory;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.core.Unwrappable;
 import com.stc.jmsjca.core.WMessageIn;
 import com.stc.jmsjca.util.Logger;
 
@@ -29,6 +30,7 @@ import javax.ejb.MessageDrivenContext;
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
@@ -50,6 +52,8 @@ import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicPublisher;
 import javax.jms.TopicSession;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.naming.Binding;
 import javax.naming.InitialContext;
 import javax.naming.NamingEnumeration;
@@ -57,6 +61,7 @@ import javax.naming.NamingException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -68,7 +73,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -212,7 +217,11 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     throwExceptionBMT(message);
                 } else {
                     Method meth = this.getClass().getMethod(fname, new Class[] { javax.jms.Message.class });
-                    meth.invoke(this, new Object[] { message });
+                    try {
+                        meth.invoke(this, new Object[] { message });
+                    } catch (InvocationTargetException e1) {
+                        throw e1.getTargetException();
+                    }
                 }
                 if (sLog.isDebugEnabled()) {
                     sLog.debug("Function " + fname + " called; no exc. thrown");
@@ -228,6 +237,10 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             sLog.errorNoloc(".onMessage() encountered an exception: " + e, e);
             throw new EJBException(
                 "SimpleMessageBean.onMessage() encountered an exception: " + e, e);
+        } catch (Throwable e) {
+            sLog.errorNoloc(".onMessage() encountered an exception: " + e, e);
+            throw new EJBException(
+                "SimpleMessageBean.onMessage() encountered an unexpected throwable: " + e, new Exception(e));
         }
     }
 
@@ -604,34 +617,14 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             .lookup("java:comp/env/queuefact");
 
             conn = fact.createQueueConnection();
-            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            boolean expectedException = false;
+            QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
+            mMdc.getUserTransaction().begin();
+            Queue dest = ss.createQueue("Queue2");
+            QueueSender prod = ss.createSender(dest);
+            prod.send(message);
+            mMdc.getUserTransaction().commit();
+            ss.close();                
             
-            // Do rollback
-            {
-                try {
-                    Queue dest = s.createQueue("Queue2");
-                    QueueSender prod = s.createSender(dest);
-                    prod.send(message);
-                    s.rollback();
-                    s.close();
-                } catch(javax.jms.IllegalStateException iex) {
-                    System.out.println("testXASessionRBAllocateOutsideOfTx Expected: " + iex.getMessage());
-                    expectedException = true;
-                    try {
-                        s.close();         
-                    } catch(Exception ex) {                        
-                    }                    
-                }
-            }
-            if (expectedException) {
-                mMdc.getUserTransaction().begin();
-                QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
-                Queue dest = ss.createQueue("Queue2");
-                QueueSender prod = ss.createSender(dest);
-                prod.send(message);
-                ss.close();                
-            }
         } finally {
             safeClose(conn);
         }
@@ -649,39 +642,14 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
             QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
             .lookup("java:comp/env/queuefact");
-            boolean expectedException = false;
-
             conn = fact.createQueueConnection();
-            QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
             
-            // Do commit
-            {
-                try {
-                    Queue dest = s.createQueue("Queue2");
-                    QueueSender prod = s.createSender(dest);
-                    prod.send(message);
-                    s.commit();
-                    s.close();
-                } catch(javax.jms.IllegalStateException iex) {
-                    // should throw exception because s is XA session
-                    // which is not listed in Global transaction manager in WLS
-                    System.out.println("testXASessionCommitAllocateOutsideOfTx Expected: " + iex.getMessage());
-                    expectedException = true;
-                    try {
-                        s.close();
-                    } catch(Exception ex) {                        
-                    }
-                }
-                if (expectedException) {
-                    // auto commit
-                    mMdc.getUserTransaction().begin();
-                    QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
-                    Queue dest = ss.createQueue("Queue2");
-                    QueueSender prod = ss.createSender(dest);
-                    prod.send(message);
-                    ss.close();                
-                }                
-            }
+            // auto commit
+            QueueSession ss = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);                    
+            Queue dest = ss.createQueue("Queue2");
+            QueueSender prod = ss.createSender(dest);
+            prod.send(message);
+            ss.close();                
         } finally {
             safeClose(conn);
         }
@@ -1055,6 +1023,72 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         }
     }
 
+    /**
+     * Random rollback
+     *
+     * @param message Message
+     * @throws Exception
+     */
+    public void rollbackCMT(javax.jms.Message message) throws Exception {
+        QueueConnection conn1 = null;
+        try {
+            QueueConnectionFactory qfact = (QueueConnectionFactory) mCtx
+                .lookup("java:comp/env/queuefact");
+
+            conn1 = qfact.createQueueConnection();
+            QueueSession s = conn1.createQueueSession(true,
+                Session.AUTO_ACKNOWLEDGE);
+            Queue dest = s.createQueue("Queue2");
+            QueueSender prod = s.createSender(dest);
+            prod.send(message);
+
+            if (shouldThrow()) {
+                mMdc.setRollbackOnly();
+
+                dest = s.createQueue("Queue3");
+                prod = s.createSender(dest);
+                prod.send(s.createTextMessage("Should have been rolled back"));
+            }
+        } finally {
+            safeClose(conn1);
+        }
+    }
+
+    /**
+     * Random rollback
+     *
+     * @param message Message
+     * @throws Exception
+     */
+    public void testReplyToIsNotWrapped(javax.jms.Message message) throws Exception {
+        QueueConnection conn1 = null;
+        try {
+            QueueConnectionFactory qfact = (QueueConnectionFactory) mCtx
+                .lookup("java:comp/env/queuefact");
+
+            conn1 = qfact.createQueueConnection();
+            QueueSession s = conn1.createQueueSession(true,
+                Session.AUTO_ACKNOWLEDGE);
+            Queue dest = s.createQueue("Queue2");
+            QueueSender prod = s.createSender(dest);
+            
+            Message m = s.createTextMessage();
+            TemporaryQueue tempq = s.createTemporaryQueue();
+            m.setJMSReplyTo(tempq);
+            
+            Destination destback = m.getJMSReplyTo();
+            
+            if (destback instanceof Unwrappable) {
+                // ERROR!
+                s.createSender(s.createQueue("Queue3")).send(message);
+            }
+            
+            prod.send(message);
+        } finally {
+            safeClose(conn1);
+        }
+    }
+
     public void throwExceptionBMT(javax.jms.Message message) throws Exception {
         QueueConnection conn = null;
         try {
@@ -1092,6 +1126,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             QueueSender prod = s.createSender(dest);
             prod.send(message);
             if (shouldThrow()) {
+                mMdc.getUserTransaction().rollback();
                 sLog.infoNoloc("WILL NOW THROW INTENTIONAL EXCEPTION");
                 throw new IntentionalException("Random exception to force rollback.");
             }            
@@ -1451,8 +1486,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 prod.send(message);
                 
                 // For 453: creation of the receiver will actually create the temp dest
-                QueueReceiver cons = s.createReceiver(tempdest);
-                cons.close();
+                s.createReceiver(tempdest);
                 
                 mMdc.getUserTransaction().commit();
                 prod.close();
@@ -1962,6 +1996,16 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR, "Test: stopDelivery()");
     }
     
+    public void stopDeliveryThroughAlert(Message m) throws Exception {
+        testQQXAXA(m);
+        
+        // Invoke stop directly
+        MBeanServer srv = (MBeanServer) m.getObjectProperty(Options.MessageProperties.MBEANSERVER);
+        ObjectName oname = new ObjectName(m.getStringProperty(Options.MessageProperties.MBEANNAME));
+        srv.invoke(oname, "stop", new Object[0], new String[0]);
+    }
+        
+    
     /**
      * Always performs a rollback
      * @param m
@@ -2145,14 +2189,13 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 Queue dest = s.createQueue("Queue3");
                 QueueSender prod = s.createSender(dest);
                 prod.send(s.createTextMessage("endofbatch"));
+                if (shouldThrow()) {
+                    throw new IntentionalException("BatchRollback");
+                }
             } else {
                 Queue dest = s.createQueue("Queue2");
                 QueueSender prod = s.createSender(dest);
                 prod.send(message);
-
-                if (shouldThrow()) {
-                    throw new IntentionalException("BatchRollback");
-                }
             }
             conn.close();
         } finally {
@@ -2464,6 +2507,39 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 mMdc.getUserTransaction().commit();
             }
             conn.close();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (JMSException ignore) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Sends from Queue1 to Queue2; the output queue cf is looked in JNDI
+     *
+     * @param message Message
+     */
+    public void testGlobalFact(javax.jms.Message message) {
+        Connection conn = null;
+        try {
+            ConnectionFactory fact = (ConnectionFactory) mCtx
+            .lookup(message.getStringProperty("cf"));
+            conn = fact.createConnection();
+            Session s = conn.createSession(true,
+                Session.AUTO_ACKNOWLEDGE);
+            Queue dest = s.createQueue("Queue2");
+            MessageProducer prod = s.createProducer(dest);
+            prod.send(message);
+
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Msg sent to " + dest.getQueueName());
+            }
+        } catch (Exception e) {
+            sLog.errorNoloc("Failed: " + e, e);
+            throw new EJBException("Failed: " + e, e);
         } finally {
             if (conn != null) {
                 try {

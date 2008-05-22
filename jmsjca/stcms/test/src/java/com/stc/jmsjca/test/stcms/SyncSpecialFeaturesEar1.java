@@ -24,7 +24,7 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
  * Tests the sync mode
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SyncSpecialFeaturesEar1 extends SpecialFeaturesEar1 {
     /**

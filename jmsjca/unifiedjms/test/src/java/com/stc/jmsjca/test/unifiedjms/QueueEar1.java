@@ -20,6 +20,11 @@ import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.QueueEndToEnd;
+
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
 
 import java.util.Properties;
 
@@ -34,7 +39,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class QueueEar1 extends EndToEndBase {
     
@@ -97,4 +102,43 @@ public class QueueEar1 extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }
+
+    public void testXActivationSpecDelegation() throws Throwable {
+        // TODO: ensure connection factory tied to jms/stcms1
+        final String FACTURL = "jms/stcms1";
+
+        EmbeddedDescriptor dd = getDD();
+
+        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        cc.setConnectionURL("lookup://" + FACTURL);
+
+        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        spec.setContextName("j-testQQXAXA");
+        spec.setConcurrencyMode("serial");
+        
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testGlobalFact");
+
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        try {
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.setMessageGenerator(new Passthrough.MessageGenerator() {
+                public Message createMessage(Session s, Class type) throws JMSException {
+                    Message ret = super.createMessage(s, type);
+                    ret.setStringProperty("cf", FACTURL);
+                    return ret;
+                }
+            });
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+    
 }

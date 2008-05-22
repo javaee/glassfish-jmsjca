@@ -34,7 +34,7 @@ import javax.jms.JMSException;
  *   options  := key=value[&key=value]*       
  *
  * @author misc
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SunOneUrlParser extends ConnectionUrl {
     private SunOneConnectionUrl[] mConnectionUrls;
@@ -132,10 +132,9 @@ public class SunOneUrlParser extends ConnectionUrl {
         if (mConnectionUrls.length ==0) {
             throw new JMSException("URL should be a comma delimited set of URLs");            
         }        
-        boolean protOk = true;        
         for (int j = 0; j < mConnectionUrls.length; j++) {
             SunOneConnectionUrl url = mConnectionUrls[j];
-            protOk = false;
+            boolean protOk = false;
             for (int i = 0; i < PROTOCOLS.length; i++) {
                 if (PROTOCOLS[i].equals(url.getProtocol())) {
                     protOk = true;
@@ -147,7 +146,7 @@ public class SunOneUrlParser extends ConnectionUrl {
                     + "]: should be one of [" + Str.concat(PROTOCOLS, ", ") + "].");
             }
         }        
-        return protOk;
+        return false;
     }    
     
     /**

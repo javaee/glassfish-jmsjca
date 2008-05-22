@@ -34,7 +34,7 @@ import javax.jms.Topic;
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WLSessionConnection extends GenericSessionConnection {
 //    private static Logger sLog = Logger.getLogger(WLSessionConnection.class);

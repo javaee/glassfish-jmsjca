@@ -23,7 +23,7 @@ import javax.transaction.xa.Xid;
 /**
  * A wrapper of MQXAResource
  * 
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * @author cye
  */
 public class WMQXAResource implements XAResource {

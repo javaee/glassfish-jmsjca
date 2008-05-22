@@ -25,7 +25,7 @@ import java.util.Enumeration;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMapMessageIn extends WMessageIn implements MapMessage {
     private MapMessage mDelegate;

@@ -27,6 +27,7 @@ import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
 
+import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
@@ -39,7 +40,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -136,15 +137,9 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         UrlParser url = (UrlParser) connectionUrl;
 
         // protocol
-        if (PROTOCOL.equals(url.getProtocol())) {
-            // ...
-        } else if (PROTOCOL.equals(url.getProtocol())) {
-            // ...
-            throw new JMSException("protocol [" + url.getProtocol()
-                    + "] not supported");
-        } else {
-            throw new JMSException("Invalid protocol [" + url.getProtocol()
-                + "]: should be " + PROTOCOL);
+        if (!PROTOCOL.equals(url.getProtocol())) {
+            throw Exc.jmsExc(LOCALE.x("E306: Invalid protocol [{0}]:"
+                + " should be ''{1}''",  url.getProtocol(), PROTOCOL));
         }
 
         // Check port
@@ -341,7 +336,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                     "com.ibm.mq.jms.MQXAConnectionFactory").newInstance();
                 break;
             default:
-                throw new JMSException("Logic fault: invalid domain " + domain);
+                throw Exc.jmsExc(LOCALE.x("E309: Logic fault: invalid domain {0}", Integer.toString(domain)));
             }
         } catch (Exception ex) {
             throw Exc.jmsExc(LOCALE.x("E840: MQ connection factory instantiation failure: {0}", ex), ex);
@@ -362,8 +357,8 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             clazz.getMethod("setTransportType", new Class[] {int.class}).invoke(
                 cf, new Object[] {Integer.valueOf(cfp.getProperty(TRANSPORTTYPE))});
 
-            clazz.getMethod("setClientID", new Class[] {String.class}).invoke(
-                cf, new Object[] {cfp.getProperty(CLIENTID)});
+//            clazz.getMethod("setClientID", new Class[] {String.class}).invoke(
+//                cf, new Object[] {cfp.getProperty(CLIENTID)});
 
             String channelName = cfp.getProperty(CHANNEL);
             if (channelName != null) {
@@ -417,5 +412,14 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      */    
     public String getJMSServerType() {
         return "WMQ";
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#setClientID(javax.jms.Connection, 
+     *   boolean, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter)
+     */
+    public void setClientID(Connection connection, boolean isTopic,
+            RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
+        setClientIDIfNotSpecified(connection, isTopic, spec, ra);
     }
 }

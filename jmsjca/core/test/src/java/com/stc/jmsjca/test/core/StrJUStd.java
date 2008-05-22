@@ -82,6 +82,35 @@ public class StrJUStd extends TestCase {
         assertTrue("a=b\r\nJMSJCA.sep=\r\nc=\\~d\\".equals(out));
     }
     
+    public void test9() throws Throwable {
+        String inp = "JMSJCA.sep=~c=\\\\~d\\";
+        String out = Str.unpackOptions(inp);
+        String inp2 = Str.packOptions(inp, out);
+        assertTrue(inp.equals(inp2));
+
+        inp = "JMSJCA.sep=~";
+        out = Str.unpackOptions(inp);
+        inp2 = Str.packOptions(inp, out);
+        assertTrue(inp.equals(inp2));
+
+        inp = "JMSJCA.sep=";
+        out = Str.unpackOptions(inp);
+        inp2 = Str.packOptions(inp, out);
+        assertTrue(!inp.equals(inp2));
+
+        inp = "JMSJCA.sep=,a=b";
+        out = Str.unpackOptions(inp);
+        assertTrue(out.equals("a=b"));
+        inp2 = Str.packOptions(inp, out);
+        assertTrue(inp.equals(inp2));
+
+        inp = "JMSJCA.sep=,a=b,c=d,,e=f,";
+        out = Str.unpackOptions(inp);
+        assertTrue(out.equals("a=b\r\nc=d\r\n\r\ne=f\r\n"));
+        inp2 = Str.packOptions(inp, out);
+        assertTrue(inp.equals(inp2));
+}
+    
     private static class T implements Str.Translator {
         private Properties mP = new Properties();
         
@@ -206,5 +235,16 @@ public class StrJUStd extends TestCase {
         } catch (Exception e) {
             // ok
         }
+    }
+
+    public void testPW1() throws Throwable {
+        String x = "a${a";
+        String y = Str.pwdecode(x);
+        assertTrue(x.equals(y));
+        
+        y = Str.pwencode(x);
+        assertTrue(!x.equals(y));
+        y = Str.pwdecode(y);
+        assertTrue(x.equals(y));
     }
 }

@@ -160,7 +160,7 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
@@ -381,12 +381,12 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 synchronized (this) {
                     mWaiters++;
                     if (mStopped) {
-                        throw new ResourceException("Resource adapter was stopped");
+                        throw Exc.rsrcExc(LOCALE.x("E159: Resource adapter was stopped"));
                     }
                 }
                 acquired = mSemaphore.attempt(mTimeout);
             } catch (InterruptedException e) {
-                throw new ResourceException("Interrupted");
+                throw Exc.rsrcExc(LOCALE.x("Interrupted"));
             } finally {
                 synchronized (this) {
                     mWaiters--;
@@ -395,9 +395,9 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             
             // TIMEOUT
             if (!acquired) {
-                throw new ResourceException("Connection could not be acquired in the "
-                + "configured time of " + mTimeout + " ms; " + mMaxSize + " connections "
-                + "are in use");
+                throw Exc.rsrcExc(LOCALE.x("E158: Connection could not be acquired in the "
+                + "configured time of {0} ms; {1} connections are in use", Integer.toString(mTimeout)
+                , Integer.toString(mMaxSize)));
             }
             
             // OBTAIN CONNECTION
@@ -435,7 +435,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             // of the synchronized block peform those (potentially lengthy!) operations.
             synchronized (this) {
                 if (mStopped) {
-                    throw new ResourceException("RA is stopped");
+                    throw Exc.rsrcExc(LOCALE.x("E161: RA is stopped"));
                 }
 
                 boolean done = false;
@@ -467,8 +467,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 }
 
                 if (!done) {
-                    throw new Exception("Logic exception (current pool size=" + mCurrentPoolsize
-                        + "; semaphore=" + mSemaphore.peek() + ")");
+                    throw Exc.exc(LOCALE.x("E162: Logic exception (current pool size={0}; semaphore={1})"
+                        , Integer.toString(mCurrentPoolsize), Long.toString(mSemaphore.peek())));
                 }
             }
 
@@ -819,8 +819,9 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
      */
     public void testIdleConsistency() {
         if (mSemaphore.peek() != mIdle.size() + (mMaxSize - mAll.size())) {
-            throw new RuntimeException("Inconsistent: semaphore=" + mSemaphore.peek()
-                + ", idle=" + mIdle.size() + ", max=" + mMaxSize + ",all=" + mAll.size());
+            throw Exc.rtexc(LOCALE.x("E163: Inconsistent: semaphore={0}, idle={1}, max={2}, all={3}"
+                , Long.toString(mSemaphore.peek()), Integer.toString(mIdle.size())
+                , Integer.toString(mMaxSize), Integer.toString(mAll.size())));
         }
     }
 
@@ -833,8 +834,9 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         }
         init();
         if (mSemaphore.peek() > mMaxSize || mAll.size() > mMaxSize) {
-            throw new RuntimeException("Inconsistent: semaphore=" + mSemaphore.peek()
-                + ", idle=" + mIdle.size() + ", max=" + mMaxSize + ",all=" + mAll.size());
+            throw Exc.rtexc(LOCALE.x("E163: Inconsistent: semaphore={0}, idle={1}, max={2}, all={3}"
+                , Long.toString(mSemaphore.peek()), Integer.toString(mIdle.size())
+                , Integer.toString(mMaxSize), Integer.toString(mAll.size())));
         }
     }
 

@@ -37,7 +37,6 @@ import javax.jms.TemporaryTopic;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
 import javax.jms.TopicSession;
-import javax.resource.ResourceException;
 import javax.transaction.Synchronization;
 
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);
@@ -120,6 +119,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
             }
         }
 
+        WSession w = null;
         try {
             // Get password if not overridden in createConnection(string,string)
             String[] useridpassword = mManagedConnectionFactory.
@@ -128,17 +128,27 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
             XConnectionRequestInfo descr = new XConnectionRequestInfo(mConnectionClass,
                 sessionClass, useridpassword[0], useridpassword[1], useridpassword[2],
                 mClientID, transacted, acknowledgeMode);
-            WSession w = (WSession) mConnectionManager.
+            w = (WSession) mConnectionManager.
                 allocateConnection(mManagedConnectionFactory, descr);
             w.setConnection(this);
             w.getJSession().setSpecifiedAcknowledgeMode(orgAckmode);
             if (mStarted) {
+                // Exception may happen here for some JMS servers if they are disconnected
                 w.getJSession().start();
             }
             mSessions.add(w);
 
             return w;
-        } catch (ResourceException ex) {
+        } catch (Exception ex) {
+            // Avoid connection leaks
+            if (w != null) {
+                try {
+                    w.close();
+                } catch (Throwable ignore) {
+                    // ignore
+                }
+            }
+
             throw Exc.jmsExc(LOCALE.x("E034: Could not create session {0}: {1}", 
                 sessionClass.getName(), ex), ex);
         }
@@ -155,7 +165,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
         if (dest instanceof TemporaryQueue || dest instanceof TemporaryTopic) {
             mTemporaryDestinations.add(dest);
         } else {
-            throw new JMSException("Not a temporary destination: " + dest);
+            throw Exc.jmsExc(LOCALE.x("E128: Destination [{0}] is not a temporary destination.", dest));
         }
     }
 
@@ -321,10 +331,12 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public void setClientID(String clientID) throws JMSException {
         if (clientID == null || clientID.length() == 0) {
-            throw new javax.jms.InvalidClientIDException("Client ID should be a non-empty string");
+            throw new javax.jms.InvalidClientIDException(
+                LOCALE.x("E121: Client ID should be a non-empty string").toString());
         }
         if (mClientID != null) {
-            throw new javax.jms.IllegalStateException("The client ID already configured");
+            throw new javax.jms.IllegalStateException(
+                LOCALE.x("E122: The client ID already configured").toString());
         }
         mClientID = clientID;
         for (Iterator it = mSessions.iterator(); it.hasNext();/*-*/) {
@@ -372,7 +384,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public void setExceptionListener(ExceptionListener exceptionListener) throws
         JMSException {
-        throw new JMSException("ExceptionListeners cannot be set in a JCA 1.5 connection");
+        throw Exc.jmsExc(LOCALE.x("E129: ExceptionListeners cannot be set in a JCA 1.5 connection"));
     }
 
     /**
@@ -413,7 +425,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public ConnectionConsumer createConnectionConsumer(Destination destination,
         String string, ServerSessionPool serverSessionPool, int int3) throws JMSException {
-        throw new JMSException("Connection consumers cannot be used with a JCA 1.5 connection");
+        throw Exc.jmsExc(LOCALE.x("E130: Connection consumers cannot be used with a JCA 1.5 connection"));
     }
 
     /**
@@ -429,7 +441,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public ConnectionConsumer createDurableConnectionConsumer(Topic topic, String string,
         String string2, ServerSessionPool serverSessionPool, int int4) throws JMSException {
-        throw new JMSException("Connection consumers cannot be used with a JCA 1.5 connection");
+        throw Exc.jmsExc(LOCALE.x("E130: Connection consumers cannot be used with a JCA 1.5 connection"));
     }
 
     /**
@@ -444,7 +456,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public ConnectionConsumer createConnectionConsumer(Queue queue, String string,
         ServerSessionPool serverSessionPool, int int3) throws JMSException {
-        throw new JMSException("Connection consumers cannot be used with a JCA 1.5 connection");
+        throw Exc.jmsExc(LOCALE.x("E130: Connection consumers cannot be used with a JCA 1.5 connection"));
     }
 
     /**
@@ -459,7 +471,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public ConnectionConsumer createConnectionConsumer(Topic topic, String string,
         ServerSessionPool serverSessionPool, int int3) throws JMSException {
-        throw new JMSException("Connection consumers cannot be used with a JCA 1.5 connection");
+        throw Exc.jmsExc(LOCALE.x("E130: Connection consumers cannot be used with a JCA 1.5 connection"));
     }
 
     /**
@@ -487,7 +499,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
         } else if (getItfClass() == javax.jms.TopicConnection.class) {
             setWrapper(new WTopicConnection(this));
         } else {
-            throw new RuntimeException("Unknown class: " + getItfClass());
+            throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", getItfClass()));
         }
     }
 
@@ -495,6 +507,6 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      * physicalClose
      */
     public void physicalClose() {
-        throw new IllegalStateException("Invalid call");
+        throw new IllegalStateException(LOCALE.x("E132: Invalid call").toString());
     }
 }

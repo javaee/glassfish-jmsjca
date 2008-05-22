@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<project default="install" basedir="." name="jmsjca-common">
+
+<!--===========================================================================
+    Empty place holder for RARs that do not contribute anything to the 
+    runtime image
+-->
+    <target name="copy-runtime-image">
+    </target>
+</project>

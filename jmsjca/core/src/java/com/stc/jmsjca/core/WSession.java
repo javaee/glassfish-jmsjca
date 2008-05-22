@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import java.io.Serializable;
 import javax.jms.BytesMessage;
 import javax.jms.Destination;
@@ -42,9 +45,11 @@ import javax.jms.TopicSubscriber;
  * calls to the JSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WSession implements Session {
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * The currently associated owner of this wrapper
      */
@@ -110,7 +115,7 @@ public class WSession implements Session {
         if (dest instanceof LimitationJConnection) {
             LimitationJConnection limited = (LimitationJConnection) dest;
             if (limited.getConnection() != getConnection()) {
-                throw new JMSException("Temporary destination can only be used in the same connection");
+                throw Exc.jmsExc(LOCALE.x("E154: Temporary destination can only be used in the same connection"));
             }
         }
     }
@@ -121,7 +126,7 @@ public class WSession implements Session {
      * @throws javax.jms.IllegalStateException always
      */
     public void invokeOnClosed() throws javax.jms.IllegalStateException {
-        throw new javax.jms.IllegalStateException("This session is closed");
+        throw Exc.illstate(LOCALE.x("E153: This {0} is closed", "Session"));
     }
 
     /**
@@ -341,11 +346,22 @@ public class WSession implements Session {
      * @throws JMSException on failure
      */
     public void close() throws JMSException {
+        Exception closeException = null;
         if (mMgr != null) {
-            mMgr.close(this);
+            try {
+                mMgr.close(this);
+            } catch (Exception e) {
+                closeException = e;
+            }
             mMgr = null;
         }
         mCon.notifyWSessionClosedByApplication(this);
+        
+        if (closeException != null) {
+            throw Exc.jmsExc(LOCALE.x(
+                "E094: This {0} could not be closed properly: {1}", Session.class.getName(),
+                closeException), closeException);            
+        }
     }
 
     /**
@@ -400,7 +416,7 @@ public class WSession implements Session {
      */
     public void run() {
         if (mMgr == null) {
-            throw new RuntimeException("Illegal call: run is not supported");
+            throw Exc.rtexc(LOCALE.x("E160: Illegal call: run() is not supported"));
         }
     }
     
@@ -413,6 +429,7 @@ public class WSession implements Session {
      */
     public MessageProducer createProducer(Destination destination) throws JMSException {
         checkClosed();
+        destination = mMgr.checkGeneric(destination);
         if (destination instanceof AdminDestination) {
             destination = mMgr.createDestination((AdminDestination) destination); 
         }
@@ -437,6 +454,7 @@ public class WSession implements Session {
     public MessageConsumer createConsumer(Destination destination) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        destination = mMgr.checkGeneric(destination);
         if (destination instanceof AdminDestination) {
             destination = mMgr.createDestination((AdminDestination) destination); 
         }
@@ -463,6 +481,7 @@ public class WSession implements Session {
         String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        destination = mMgr.checkGeneric(destination);
         if (destination instanceof AdminDestination) {
             destination = mMgr.createDestination((AdminDestination) destination); 
         }
@@ -490,6 +509,7 @@ public class WSession implements Session {
         boolean boolean2) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(destination);
+        destination = mMgr.checkGeneric(destination);
         if (destination instanceof AdminDestination) {
             destination = mMgr.createDestination((AdminDestination) destination); 
         }

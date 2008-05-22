@@ -25,6 +25,25 @@ import java.util.Properties;
  * @author EM team
  */
 public interface EmManagementInterface {
+    /**
+     * Status
+     */
+    public static final String DISCONNECTED = "Down";
+
+    /**
+     * Status
+     */
+    public static final String CONNECTED = "Up";
+
+    /**
+     * Status
+     */
+    public static final String CONNECTING = "Connecting";
+
+    /**
+     * Status
+     */
+    public static final String DISCONNECTING = "Disconnecting";
 
     /**
      * start method

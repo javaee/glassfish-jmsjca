@@ -28,7 +28,7 @@ public class LocalizationJUStd extends TestCase {
     
     private class Localizer extends LocalizationSupport {
         public Localizer() {
-            super(LocalizationSupport.DEFAULTPATTERN, "TEST");
+            super(LocalizationSupport.DEFAULTPATTERN, "TEST-", null);
         }
     }
     
@@ -127,12 +127,12 @@ public class LocalizationJUStd extends TestCase {
         {
             LocalizedString s = loc.x("Some text", "a", "b", "c");
             String ss = s.toString();
-            assertTrue("TEST: Some text".equals(ss));
+            assertTrue("TEST-<?>: Some text".equals(ss));
         }
         {
             LocalizedString s = loc.x("Some test a={0}, b={1}", "a", "b", "c");
             String ss = s.toString();
-            assertTrue("TEST: Some test a=a, b=b".equals(ss));
+            assertTrue("TEST-<?>: Some test a=a, b=b".equals(ss));
         }
     }
 

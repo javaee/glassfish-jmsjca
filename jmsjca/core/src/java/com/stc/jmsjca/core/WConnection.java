@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.Connection;
 import javax.jms.ConnectionConsumer;
 import javax.jms.ConnectionMetaData;
@@ -32,9 +35,11 @@ import javax.jms.Topic;
  * wrapper will delegate the calls to the JConnection.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WConnection implements Connection {
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * The JConnection that owns this Wrapper
      */
@@ -55,7 +60,7 @@ public class WConnection implements Connection {
      * @throws javax.jms.IllegalStateException always
      */
     public void invokeOnClosed() throws javax.jms.IllegalStateException {
-        throw new javax.jms.IllegalStateException("This connection is closed");
+        throw Exc.illstate(LOCALE.x("E153: This {0} is closed", "connection"));
     }
 
     /**

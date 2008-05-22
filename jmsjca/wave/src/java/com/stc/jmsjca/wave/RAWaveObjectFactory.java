@@ -44,7 +44,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -192,7 +192,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
         WaveUrlParser waveParser = (WaveUrlParser) aurl;
         UrlParser[] parsers = waveParser.getUrlParsers();
         if (parsers.length == 0) {
-            throw new JMSException("URL should be a comma delimited set of URLs");
+            throw Exc.jmsExc(LOCALE.x("E905: URL should be a comma delimited set of URLs"));
         }
         
         for (int j = 0; j < parsers.length; j++) {
@@ -205,8 +205,8 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 }
             }
             if (!protOk) {
-                throw new JMSException("Invalid protocol [" + url.getProtocol()
-                    + "]: should be one of [" + Str.concat(PROTOCOLS, ", ") + "].");
+                throw Exc.jmsExc(LOCALE.x("E906: Invalid protocol [{0}]: should be one of [{1}]"
+                    , url.getProtocol(), Str.concat(PROTOCOLS, ", ")));
             }
         }
 
@@ -308,7 +308,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 classname = "com.spirit.wave.jms.WaveXAConnectionFactory";
                 break;
             default:
-                throw new JMSException("Logic fault: invalid domain " + domain);
+                throw Exc.jmsExc(LOCALE.x("E309: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
         
         try {
@@ -573,9 +573,9 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
             if (username == null) {
                 username = ra.getUserName();
             }
-            String password = spec == null ? null : spec.getPassword();
+            String password = spec == null ? null : spec.getClearTextPassword();
             if (password == null) {
-                password = ra.getPassword();
+                password = ra.getClearTextPassword();
             }
             
             try {

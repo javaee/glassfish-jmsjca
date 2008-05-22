@@ -19,12 +19,16 @@ package com.stc.jmsjca.util;
 import com.stc.jmsjca.localization.LocalizedString;
 
 import javax.resource.ResourceException;
+import javax.resource.spi.InvalidPropertyException;
 import javax.resource.spi.SecurityException;
 import javax.transaction.xa.XAException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+
+import javax.ejb.EJBException;
+import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
 import javax.jms.JMSSecurityException;
 
@@ -35,7 +39,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class Exc {
 
@@ -152,6 +156,71 @@ public class Exc {
     }
     
     /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static InvalidPropertyException invprop(LocalizedString msg) {
+        return new InvalidPropertyException(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @param cause cause
+     * @return new exception
+     */
+    public static InvalidPropertyException invprop(LocalizedString msg, Throwable cause) {
+        return new InvalidPropertyException(msg.toString(), cause);
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static IllegalArgumentException illarg(LocalizedString msg) {
+        return new IllegalArgumentException(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @param cause cause
+     * @return new exception
+     */
+    public static IllegalArgumentException illarg(LocalizedString msg, Throwable cause) {
+        return new IllegalArgumentException(msg.toString(), cause);
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @return new exception
+     */
+    public static IllegalStateException illstate(LocalizedString msg) {
+        return new IllegalStateException(msg.toString());
+    }
+    
+    /**
+     * Creates a new exception
+     *
+     * @param msg error text
+     * @param cause cause
+     * @return new exception
+     */
+    public static IllegalStateException illstate(LocalizedString msg, Throwable cause) {
+        IllegalStateException ret = new IllegalStateException(msg.toString());
+        setCause(ret, cause);
+        return ret;
+    }
+    
+    /**
      * If the specified exception has a linked exception but no cause, this will copy
      * the linked exception into the exception's cause field. This is so that when a
      * JMSException is thrown by a provider who doesn't set the cause field, and the 
@@ -243,5 +312,21 @@ public class Exc {
         e.printStackTrace(p);
         p.flush();
         return s.getBuffer().toString();
+    }
+
+    /**
+     * Some exceptions don't have the cause set... 
+     * 
+     * @param ex exception to inspect
+     */
+    public static void fixup(RuntimeException ex) {
+        if (ex.getCause() == null) {
+            if (ex instanceof EJBException) {
+                EJBException e = (EJBException) ex;
+                if (e.getCausedByException() != null) {
+                    ex.initCause(e.getCausedByException());
+                }
+            }
+        }
     }
 }

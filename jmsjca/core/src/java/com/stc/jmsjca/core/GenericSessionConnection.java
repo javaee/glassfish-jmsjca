@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.Connection;
 import javax.jms.ConnectionMetaData;
 import javax.jms.Destination;
@@ -30,9 +33,10 @@ import javax.transaction.xa.XAResource;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class GenericSessionConnection extends SessionConnection {
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * mConnection
@@ -131,7 +135,7 @@ public class GenericSessionConnection extends SessionConnection {
      */
     public XAResource getXAResource() throws JMSException {
         if (!mIsXA) {
-            throw new JMSException("Logic fault: cannot return XAResource from non-XA session");
+            throw Exc.jmsExc(LOCALE.x("E127: Logic fault: cannot return XAResource from non-XA session"));
         }
         return mObjFact.getXAResource(true, mSession);
     }
@@ -143,10 +147,22 @@ public class GenericSessionConnection extends SessionConnection {
      * @throws JMSException failure
      */
     public void destroy() throws JMSException {
-        if (mConnection != null) {
-            mConnection.close();
+        try {
+            // Closing the session is necessary for MQSeries: for that JMS server it's
+            // not sufficient to just close the connection.
+            if (mSession != null) {
+                mSession.close();
+                mSession = null;
+            }
+        } finally {
+            // Make sure that the connection is closed even if session.close
+            // throws an exception. If close() throws an exception, this will
+            // overwrite the exception thrown from session.close, which is fine.
+            if (mConnection != null) {
+                mConnection.close();
+                mConnection = null;
+            }
         }
-        mConnection = null;
     }
 
     /**
@@ -209,6 +225,13 @@ public class GenericSessionConnection extends SessionConnection {
     public Topic createTopic(String name) throws JMSException {
         return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass).createTopic(name);
     }
+    
+    /**
+     * @see com.stc.jmsjca.core.SessionConnection#checkGeneric(javax.jms.Destination)
+     */
+    public Destination checkGeneric(Destination d) throws JMSException {
+        return mObjFact.checkGeneric(d);
+    }
 
     /**
      * Getter for objFact
@@ -233,9 +256,9 @@ public class GenericSessionConnection extends SessionConnection {
      */
     public Destination createDestination(AdminDestination dest) throws JMSException {
         if (dest instanceof AdminQueue) {
-            return createQueue(dest.getName());
+            return createQueue(dest.retrieveCheckedName());
         } else {
-            return createTopic(dest.getName());
+            return createTopic(dest.retrieveCheckedName());
         }
     }
 }

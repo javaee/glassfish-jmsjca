@@ -28,13 +28,13 @@ import java.util.regex.Pattern;
  * internationalizable messages in the java files in this jar.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class Localizer extends LocalizationSupport {
     private static Localizer sLocalizer = new Localizer(LocalizationSupport.DEFAULTPATTERN);
 
     private Localizer(Pattern idpattern) {
-        super(idpattern, "RAWMQ");
+        super(idpattern, "RAWMQ-", null);
     }
 
     /**

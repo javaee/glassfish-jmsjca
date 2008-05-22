@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.unifiedjms;
 
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * @author misc
  */
 public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
@@ -45,7 +46,7 @@ public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceA
         }
         
         if (url == null || url.length() == 0) {
-            throw new RuntimeException("URL is not set");
+            throw Exc.rtexc(LOCALE.x("E701: URL is not set"));
         }
         
         String[] classnames = new String[] {
@@ -72,7 +73,7 @@ public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceA
                     + "classname [{1}]: {2}", url, classnames[i], e), e);
             }
         }
-        throw new RuntimeException("The url [" + url + "] cannot be matched with a JMS provider");
+        throw Exc.rtexc(LOCALE.x("E702: The url [{0}] cannot be matched with a JMS provider", url));
     }
 
     /**

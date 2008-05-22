@@ -34,7 +34,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="build-lib/com.stc.rts.deployimpl.jar"/>
 	<classpathentry kind="lib" path="build-api/com.stc.jms.stcjms.jar" sourcepath="/stcms/jmsprov/src/java"/>
-	<classpathentry kind="lib" path="build-api/com.stc.jms.stcqueueviewer.jar"/>
+	<classpathentry kind="lib" path="build-api/com.stc.jms.stcqueueviewer.jar" sourcepath="/stcms/queueviewer/src/java"/>
 	<classpathentry kind="lib" path="junit/junit.jar"/>
 	<classpathentry kind="lib" path="wl/lib/wlclient.jar"/>
 	<classpathentry kind="lib" path="wl/lib/wljmsclient.jar"/>

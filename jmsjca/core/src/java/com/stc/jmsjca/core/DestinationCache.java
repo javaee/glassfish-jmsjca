@@ -26,7 +26,7 @@ import java.util.Map;
  * is an example.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class DestinationCache  {
     private Map mEntries = new HashMap();

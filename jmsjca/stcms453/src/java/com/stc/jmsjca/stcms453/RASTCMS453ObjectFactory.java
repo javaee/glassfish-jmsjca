@@ -34,7 +34,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -74,14 +74,14 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
         if (PROT.equals(url.getProtocol())) {
             // ...
         } else {
-            throw new JMSException("Invalid protocol [" + url.getProtocol()
-                + "]: should be " + PROT);
+            throw Exc.jmsExc(LOCALE.x("E306: Invalid protocol [{0}]:"
+                + " should be ''stcms453''",  url.getProtocol()));
         }
 
         // Check port
         int port = url.getPort();
         if (port <= 0) {
-            throw new JMSException("No port specified in URL [" + url + "]");
+            throw Exc.jmsExc(LOCALE.x("E307: No port specified in URL [{0}]", url));
         }
 
         return hasChanged;
@@ -134,9 +134,9 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_NONXA:
             case XConnectionRequestInfo.DOMAIN_UNIFIED_XA:
-                throw new JMSException("Unified domain not supported in 4.5.3");
+                throw Exc.jmsExc(LOCALE.x("E308: Unified domain not supported in 4.5.3"));
             default:
-                throw new JMSException("Logic fault: invalid domain " + domain);
+                throw Exc.jmsExc(LOCALE.x("E309: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
         
         Class clazz;
@@ -145,7 +145,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
             return (ConnectionFactory) clazz.getConstructor(
                 new Class[] {Properties.class}).newInstance(new Object[] {p});
         } catch (Exception e) {
-            throw Exc.jmsExc(LOCALE.x("E500: Failed to instantiate connection factory: {0}", e), e);
+            throw Exc.jmsExc(LOCALE.x("E300: Failed to instantiate connection factory: {0}", e), e);
         }
     }
 
@@ -169,5 +169,12 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
      */
     public String getJMSServerType() {
         return "STCMS453";
+    }
+    
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#shouldUseProducerPooling()
+     */
+    public boolean shouldUseProducerPooling() {
+        return true;
     }
 }

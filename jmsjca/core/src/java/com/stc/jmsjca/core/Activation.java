@@ -22,6 +22,7 @@ import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
 
+import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -73,7 +74,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -83,7 +84,8 @@ public class Activation extends ActivationBase {
     private Method mOnMessageMethod;
     private DeliveryStats mStats;
     private Delivery mDelivery;
-    private boolean mIsXA;
+    private boolean mIsCMT;
+    private boolean mIsXAEmulated;
     private boolean mIsTopic;
     private boolean mIsDurable;
     private ActivationMBean mActivationMBean;
@@ -202,21 +204,21 @@ public class Activation extends ActivationBase {
             }
 
             // Determine if XA, topic, and cache, support Non-XA
-            mIsXA = mEndpointFactory.isDeliveryTransacted(mOnMessageMethod);
+            mIsCMT = mEndpointFactory.isDeliveryTransacted(mOnMessageMethod);
             
             // Override properties
             Properties p = new Properties();
             getObjectFactory().getProperties(p, getRA(), getActivationSpec(),
                 null, null);
-            if (mIsXA) {
-                boolean noXA = Utility.isTrue(p.getProperty(Options.NOXA), false);
-                noXA = Utility.getSystemProperty(Options.NOXA, noXA);
-                mIsXA = !noXA;
+            if (mIsCMT) {
+                boolean forceBMT = Utility.isTrue(p.getProperty(Options.FORCE_BMT), false);
+                forceBMT = Utility.getSystemProperty(Options.FORCE_BMT, forceBMT);
+                mIsCMT = !forceBMT;
             }
             
             // Extract options for redelivery handling
             mRedeliveryRedirect = Utility.isTrue(p.getProperty(Options.In.OPTION_REDIRECT), false);
-            mWrapAlways = "1".equals(p.getProperty(Options.In.OPTION_REDELIVERYWRAP, "0"));
+            mWrapAlways = "1".equals(p.getProperty(Options.In.OPTION_REDELIVERYWRAP, "1"));
             String redeliveryHandling = p.getProperty(Options.In.OPTION_REDELIVERYHANDLING
                 , mSpec.getRedeliveryHandling());
             RedeliveryHandler.parse(redeliveryHandling, mSpec.getDestination(), mSpec.getDestinationType());
@@ -226,8 +228,8 @@ public class Activation extends ActivationBase {
             mIsDurable = RAJMSActivationSpec.DURABLE.equals(
                 mSpec.getSubscriptionDurability());
             if (sLog.isDebugEnabled()) {
-                sLog.debug("XA: " + mIsXA + "; isTopic: " + mIsTopic + "; isDurable: "
-                    + mIsDurable);
+                sLog.debug("CMT: " + mIsCMT + "; isTopic: " + mIsTopic + "; isDurable: "
+                    + mIsDurable + "; isXAEmulation: " + mIsXAEmulated);
             }
 
             // Create MBean
@@ -278,7 +280,7 @@ public class Activation extends ActivationBase {
                 mSpec.setConcurrencyMode(overridemode);
             } 
             mDeliveryMode = mSpec.getDeliveryConcurrencyMode();
-            mDeliveryMode = getObjectFactory().adjustDeliveryMode(mDeliveryMode, mIsXA);
+            mDeliveryMode = getObjectFactory().adjustDeliveryMode(mDeliveryMode, mIsCMT && !mIsXAEmulated);
             
             internalStart();
         } catch (Exception e) {
@@ -344,8 +346,8 @@ public class Activation extends ActivationBase {
                 // ignore
                 break;
             case DISCONNECTING: {
-                throw new Exception(
-                    "Invalid state: cannot call start() when state is DISCONNECTING");
+                throw new Exception(LOCALE.x("E118: Internal error: " 
+                    + "Invalid state: cannot call start() when state is DISCONNECTING").toString());
             }
             }
         }
@@ -573,7 +575,12 @@ public class Activation extends ActivationBase {
      * Suspends message delivery
      */
     public void stop() {
-        internalStop();
+        Delivery d = mDelivery;
+        if (d != null && d.isThisCalledFromOnMessage()) {
+            stopConnectorByMDB("<unspecified>");
+        } else {
+            internalStop();
+        }
     }
 
     /**
@@ -649,8 +656,15 @@ public class Activation extends ActivationBase {
      *
      * @return boolean
      */
-    public boolean isXA() {
-        return mIsXA;
+    public boolean isCMT() {
+        return mIsCMT;
+    }
+    
+    /**
+     * @return true if XA is emulated, i.e. NoXA is set
+     */
+    public boolean isXAEmulated() {
+        return mIsXAEmulated;
     }
 
     /**
@@ -759,9 +773,9 @@ public class Activation extends ActivationBase {
      * @return String
      */
     public String getPassword() {
-        String ret = mRA.getPassword();
+        String ret = mRA.getClearTextPassword();
         if (!Str.empty(mSpec.getUserName())) {
-            ret = mSpec.getPassword();
+            ret = mSpec.getClearTextPassword();
         }
 
         return ret;
@@ -811,11 +825,24 @@ public class Activation extends ActivationBase {
         }
         
         String deliveryType = Integer.toString(mDeliveryMode);
-        if (mDeliveryMode > 0 && mDeliveryMode < RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS.length) {
+        if (mDeliveryMode >= 0 && mDeliveryMode < RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS.length) {
             deliveryType = RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mDeliveryMode];
         }
         
-        return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ") @ [" + mURL + "]"; 
+        // Compute selector string in form of "(selector)"
+        String selector = "";
+        try {
+            selector = getObjectFactory().getMessageSelector(getRA(), mSpec);
+        } catch (JMSException ignore) {
+            // ignore
+        }
+        if (!Str.empty(selector)) {
+            selector = "(" + selector + ")";
+        } else {
+            selector = "";
+        }
+        
+        return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ")" + selector + " @ [" + mURL + "]"; 
     }
     
     /**

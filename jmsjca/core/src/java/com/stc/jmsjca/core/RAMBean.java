@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import java.util.Properties;
 
 /**
@@ -25,6 +28,7 @@ import java.util.Properties;
  */
 public class RAMBean extends CommonMBean implements EmManagementInterface {
     private RAJMSResourceAdapter mAdapter;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -97,7 +101,7 @@ public class RAMBean extends CommonMBean implements EmManagementInterface {
      * @see com.stc.jmsjca.core.EmManagementInterface#start()
      */
     public void start() throws Exception {
-        throw new Exception("Method is invalid for this MBean");
+        throw Exc.exc(LOCALE.x("E142: Method is invalid for this MBean"));
     }
 
     /**
@@ -112,7 +116,7 @@ public class RAMBean extends CommonMBean implements EmManagementInterface {
      * @see com.stc.jmsjca.core.EmManagementInterface#restart()
      */
     public void restart() throws Exception {
-        throw new Exception("Method is invalid for this MBean");
+        throw Exc.exc(LOCALE.x("E142: Method is invalid for this MBean"));
     }
 
     /**
@@ -127,7 +131,7 @@ public class RAMBean extends CommonMBean implements EmManagementInterface {
      * @see com.stc.jmsjca.core.EmManagementInterface#stop()
      */
     public void stop() throws Exception {
-        throw new Exception("Method is invalid for this MBean");
+        throw Exc.exc(LOCALE.x("E142: Method is invalid for this MBean"));
     }
 
     /**
@@ -142,7 +146,7 @@ public class RAMBean extends CommonMBean implements EmManagementInterface {
      * @see com.stc.jmsjca.core.EmManagementInterface#getStatus()
      */
     public String getStatus() throws Exception {
-        throw new Exception("Method is invalid for this MBean");
+        return CONNECTED;
     }
 
     /**

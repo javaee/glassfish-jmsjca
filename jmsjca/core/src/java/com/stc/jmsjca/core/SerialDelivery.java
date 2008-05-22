@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 
 import javax.jms.JMSException;
@@ -32,7 +33,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -56,8 +57,9 @@ public class SerialDelivery extends Delivery implements MessageListener,
      *
      * @param a Activation
      * @param stats DeliveryStats
+     * @throws Exception on failure 
      */
-    public SerialDelivery(Activation a, DeliveryStats stats) {
+    public SerialDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
     }
 
@@ -70,26 +72,28 @@ public class SerialDelivery extends Delivery implements MessageListener,
      */
     public void start() throws Exception {
         mObjFactory = mActivation.getObjectFactory();
+        final int domain = XConnectionRequestInfo.guessDomain(
+            mActivation.isCMT() && !mActivation.isXAEmulated(), mActivation.isTopic());
         javax.jms.ConnectionFactory fact = mObjFactory.createConnectionFactory(
-            XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+            domain,
             mActivation.getRA(),
             mActivation.getActivationSpec(),
             null,
             null);
         mConnection = mObjFactory.createConnection(
             fact,
-            XConnectionRequestInfo.guessDomain(mActivation.isXA(), mActivation.isTopic()),
+            domain,
             mActivation.getActivationSpec(),
             mActivation.getRA(),
             mActivation.getUserName() == null ? mActivation.getRA().getUserName() : mActivation.getUserName(),
-            mActivation.getPassword() == null ? mActivation.getRA().getPassword() : mActivation.getPassword());
+            mActivation.getPassword() == null ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
         mObjFactory.setClientID(mConnection, 
             mActivation.isTopic(), 
             mActivation.getActivationSpec(), 
             mActivation.getRA());
         mSession = mObjFactory.createSession(
             mConnection,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic() ? TopicSession.class : QueueSession.class,
             mActivation.getRA(),
             mActivation.getActivationSpec(),
@@ -97,7 +101,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
             javax.jms.Session.SESSION_TRANSACTED);
         javax.jms.Destination dest = mObjFactory.createDestination(
             mSession,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic(),
             mActivation.getActivationSpec(),
             null,
@@ -105,17 +109,22 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mActivation.getActivationSpec().getDestination());
         javax.jms.MessageConsumer cons = mObjFactory.createMessageConsumer(
             mSession,
-            mActivation.isXA(),
+            mActivation.isCMT() && !mActivation.isXAEmulated(),
             mActivation.isTopic(),
             dest,
             mActivation.getActivationSpec(),
             mActivation.getRA());
         cons.setMessageListener(
             mActivation.getObjectFactory().getMessagePreprocessor(
-                this, mActivation.isXA()));
+                this, mActivation.isCMT() && !mActivation.isXAEmulated()));
 
-        mXA = mActivation.getObjectFactory().getXAResource(
-            mActivation.isXA(), mSession);
+        if (mActivation.isCMT()) {
+            if (mActivation.isXAEmulated()) {
+                mXA = new PseudoXAResource(mSession);
+            } else {
+                mXA = mActivation.getObjectFactory().getXAResource(true, mSession);
+            }
+        }
         
         mMDB = new Delivery.MDB(mXA);
 
@@ -188,6 +197,21 @@ public class SerialDelivery extends Delivery implements MessageListener,
 
     /**
      * onMessage
+     * 
+     * onMessage() {
+     *    beforeDelivery()
+     *    deliver()
+     *    afterDelivery()
+     * }
+     * 
+     * before()
+     *     fails: rethrow
+     * deliver()
+     *     fails: setRBO
+     *         fails: rethrow
+     * after()
+     *     fails: rethrow
+     * 
      *
      * @param m Message
      */
@@ -205,26 +229,35 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 try {
                     mEndpoint = createMessageEndpoint(mXA, mSession);
                     if (mEndpoint == null) {
-                        throw new Exception("No endpoint created; RA shutting down?");
+                        throw Exc.exc(LOCALE.x("E143: No endpoint was created, "
+                            + "possibly because the RA may be shutting down"));
                     }
                 } catch (Exception ex1) {
                     LocalizedString msg = LOCALE.x("E056: Failure to create an endpoint to deliver message to; "
                         + "delivery attempt aborted. Exception: {0}", ex1);
                     sLog.warn(msg, ex1);
-                    throw new RuntimeException(msg.toString(), ex1);
+                    throw Exc.rtexc(msg, ex1);
                 }
             }
 
             mResult.reset();
-            beforeDelivery(mResult, mEndpoint);
-            deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m);
-            afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB);
-            afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint, mMDB);
-            
-            // Disard of endpoint if exception was thrown
-            if (mResult.getShouldDiscardEndpoint()) {
-                release(mEndpoint);
-                mEndpoint = null;
+            try {
+                beforeDelivery(mResult, mEndpoint, true);
+                deliverToEndpoint(mResult, mMessageMoveConnection, mEndpoint, m, true);
+                afterDelivery(mResult, mMessageMoveConnection, mEndpoint, mMDB, true);
+                afterDeliveryNoXA(mResult, mSession, mMessageMoveConnection, mEndpoint);
+            } catch (Exception e) {
+                mActivation.distress(e);
+                throw Exc.rtexc(LOCALE.x("E196: An unexpected exception happened in "
+                    + "the receiving or processing of a message. The exception will be propagated "
+                    + "to the JMS Client Runtime to ensure that the message delivery will be rolled back. "
+                    + "The exception was: {0}", e), e); 
+            } finally {
+                // Discard endpoint on any error
+                if (mResult.getShouldDiscardEndpoint()) {
+                    release(mEndpoint);
+                    mEndpoint = null;
+                }
             }
         } finally {
             if (mContextName != null) {

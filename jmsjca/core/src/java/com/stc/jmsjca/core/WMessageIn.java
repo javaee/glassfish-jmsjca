@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -30,7 +33,7 @@ import java.util.Enumeration;
  * method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMessageIn implements Message, Unwrappable {
     private Message mDelegate;
@@ -45,6 +48,10 @@ public class WMessageIn implements Message, Unwrappable {
     
     // Stateful redelivery
     private RedeliveryStateHandler mRedeliveryStateHandler;
+
+    private Activation mActivation;
+
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * Used to interface with the RedeliveryHandler
@@ -128,6 +135,9 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#setJMSReplyTo(javax.jms.Destination)
      */
     public void setJMSReplyTo(Destination dest) throws JMSException {
+        if (dest instanceof Unwrappable) {
+            dest = (Destination) ((Unwrappable) dest).getWrappedObject();
+        }
         mDelegate.setJMSReplyTo(dest);
     }
 
@@ -294,6 +304,8 @@ public class WMessageIn implements Message, Unwrappable {
             return new Integer(mBatchSize);
         } else if (mRedeliveryStateHandler != null && Delivery.REDELIVERYCOUNT.equalsIgnoreCase(name)) {
             return new Integer(mRedeliveryStateHandler.getRedeliveryCount());
+        } else if (Options.MessageProperties.MBEANSERVER.equals(name)) {
+            return mActivation.getRA().getMBeanServer();
         } else {
             return mDelegate.getObjectProperty(name);
         }
@@ -316,13 +328,16 @@ public class WMessageIn implements Message, Unwrappable {
     /**
      * @see javax.jms.Message#getStringProperty(java.lang.String)
      */
-    public String getStringProperty(String arg0) throws JMSException {
+    public String getStringProperty(String name) throws JMSException {
         String ret = null;
         if (mRedeliveryStateHandler != null) {
-            ret = mRedeliveryStateHandler.getProperty(arg0);
+            ret = mRedeliveryStateHandler.getProperty(name);
+        }
+        if (ret == null && Options.MessageProperties.MBEANNAME.equals(name)) {
+            ret = mActivation.getActivationSpec().getMBeanName();
         }
         if (ret == null) {
-            ret = mDelegate.getStringProperty(arg0);
+            ret = mDelegate.getStringProperty(name);
         }
         return ret;
     }
@@ -340,10 +355,10 @@ public class WMessageIn implements Message, Unwrappable {
     public void setBooleanProperty(String name, boolean value) throws JMSException {
         if (mBatchAndHua && (LEGACY_ISROLLBACKONLY.equalsIgnoreCase(name) || SETROLLBACKONLY.equalsIgnoreCase(name))) {
             if (!value) {
-                throw new JMSException("Value must be true");
+                throw Exc.jmsExc(LOCALE.x("E155: Illegal value: value must be true"));
             }
             if (mIsAckCalled) {
-                throw new JMSException("Cannot set isRollbackOnly after acknowledge() has been called.");
+                throw Exc.jmsExc(LOCALE.x("E156: Cannot set isRollbackOnly after acknowledge() has been called"));
             }
             mIsRollbackOnly = true;
         } else {
@@ -504,5 +519,14 @@ public class WMessageIn implements Message, Unwrappable {
      */
     public void setRedeliveryState(RedeliveryStateHandler redeliveryState) {
         mRedeliveryStateHandler = redeliveryState;
+    }
+    
+    /**
+     * Sets the activation associated with this message
+     * 
+     * @param a activation
+     */
+    public void setActivation(Activation a) {
+        mActivation = a;
     }
 }

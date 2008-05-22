@@ -20,6 +20,7 @@ import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Utility;
+import com.stc.jmsjca.util.XAssert;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -38,9 +39,11 @@ import javax.jms.TopicSession;
 import javax.resource.spi.UnavailableException;
 import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import java.lang.reflect.Method;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -52,7 +55,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -122,13 +125,14 @@ public abstract class Delivery {
      */
     protected boolean mHoldUntilAck;
 
-    private boolean mIsXA;
     private static final long MAX_CREATE_ENDPOINT_TIME = 20000;
     private static final long CREATE_ENDPOINT_RETRY_DELAY = 1000;
     private RedeliveryHandler mRedeliveryChecker;
-    private TxMgr mTxMgr;
+    private TransactionManager mTxMgr;
     private Object mTxMgrCacheLock = new Object();
     private boolean mTxFailureLoggedOnce;
+    private IdentityHashMap mThreadsCurrentlyInOnMessage = new IdentityHashMap();
+    
     
     private static final Localizer LOCALE = Localizer.get();
 
@@ -184,18 +188,20 @@ public abstract class Delivery {
                 mIsTopic = isTopic;
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
                 ConnectionFactory fact = o.createConnectionFactory(
-                    XConnectionRequestInfo.guessDomain(mActivation.isXA(), mIsTopic),
+                    XConnectionRequestInfo.guessDomain(mActivation.isCMT() && !mActivation.isXAEmulated(), mIsTopic),
                     mActivation.getRA(),
                     mActivation.getActivationSpec(),
                     null,
                     null);
                 mConn = o.createConnection(
                     fact,
-                    XConnectionRequestInfo.guessDomain(mActivation.isXA(), mIsTopic),
+                    XConnectionRequestInfo.guessDomain(mActivation.isCMT() && !mActivation.isXAEmulated(), mIsTopic),
                     mActivation.getActivationSpec(),
                     mActivation.getRA(),
-                    mActivation.getUserName() == null ? mActivation.getRA().getUserName() : mActivation.getUserName(),
-                    mActivation.getPassword() == null ? mActivation.getRA().getPassword() : mActivation.getPassword());
+                    mActivation.getUserName() == null 
+                    ? mActivation.getRA().getUserName() : mActivation.getUserName(),
+                    mActivation.getPassword() == null 
+                    ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
             }
             return mConn;
         }
@@ -206,10 +212,13 @@ public abstract class Delivery {
                 getConnection(isTopic);
             } else {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
-                mSession = o.createSession(getConnection(isTopic), mActivation.isXA(),
-                    mIsTopic ? TopicSession.class : QueueSession.class,
-                        mActivation.getRA(), mActivation.getActivationSpec(), true,
-                        javax.jms.Session.SESSION_TRANSACTED);
+                mSession = o.createSession(getConnection(isTopic)
+                    , mActivation.isCMT() && !mActivation.isXAEmulated()
+                    , mIsTopic ? TopicSession.class : QueueSession.class
+                    , mActivation.getRA()
+                    , mActivation.getActivationSpec()
+                    , true
+                    , javax.jms.Session.SESSION_TRANSACTED);
             }
             return mSession;
         }
@@ -223,7 +232,7 @@ public abstract class Delivery {
             } else {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
                 mDest = o.createDestination(getSession(isTopic),
-                    mActivation.isXA(), isTopic, mActivation.getActivationSpec(), null,
+                    mActivation.isCMT() && !mActivation.isXAEmulated(), isTopic, mActivation.getActivationSpec(), null,
                     mActivation.getRA(), destname);
                 mDestName = destname;
             }
@@ -234,8 +243,11 @@ public abstract class Delivery {
             getConnection(isTopic);
             if (mProducer == null) {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
-              mProducer = o.createMessageProducer(getSession(isTopic),
-              mActivation.isXA(), isTopic, getDestination(isTopic, destname), mActivation.getRA());
+                mProducer = o.createMessageProducer(getSession(isTopic),
+                    mActivation.isCMT() && !mActivation.isXAEmulated(), 
+                    isTopic, 
+                    getDestination(isTopic, destname), 
+                    mActivation.getRA());
             }
             return mProducer;
         }
@@ -349,10 +361,13 @@ public abstract class Delivery {
             
             // Enlist resource if necessary
             XAResource xa = null;
-            if (mActivation.isXA()) {
-                xa = mActivation.getObjectFactory().getXAResource(
-                    mActivation.isXA(), s);
-                getTxMgr().getTransactionManager().getTransaction().enlistResource(xa);
+            if (mActivation.isCMT()) {
+                if (mActivation.isXAEmulated()) {
+                    xa = new PseudoXAResource(s);
+                } else {
+                    xa = mActivation.getObjectFactory().getXAResource(true, s);
+                }
+                getTransaction(true).enlistResource(xa);
                 // Note: MUST delist lateron!
             }
             
@@ -362,7 +377,7 @@ public abstract class Delivery {
                 // Try to COPY the message
                 try {
                     Message newMsg = mActivation.getObjectFactory().copyMessage(m, s, 
-                        mActivation.isXA(), isTopic, mActivation.getRA());
+                        mActivation.isCMT() && !mActivation.isXAEmulated(), isTopic, mActivation.getRA());
                     
                     // Add diagnostics info to msg
                     RAJMSActivationSpec spec = mActivation.getActivationSpec();
@@ -431,7 +446,8 @@ public abstract class Delivery {
                             + "in the message''s properties, but this attempt was "
                             + "unsuccessful due to the following error: [{4}].", 
                             e.getMsgid(), Integer.toString(e.getNEncountered()), 
-                            (isTopic ? "topic" : "queue"), destinationName), copyException); 
+                            (isTopic ? "topic" : "queue"), destinationName, copyException)
+                            , copyException); 
                     }
                     copyException = null;
                 } catch (Exception ex) {
@@ -442,8 +458,7 @@ public abstract class Delivery {
             
             // Delist (MUST delist as not to currupt the state of the xaresource)
             if (xa != null) {
-                getTxMgr().getTransactionManager().getTransaction().delistResource(xa,
-                    XAResource.TMSUCCESS);
+                getTxMgr().getTransaction().delistResource(xa, XAResource.TMSUCCESS);
             } else {
                 x.setNeedsNonXACommit();
             }
@@ -465,12 +480,12 @@ public abstract class Delivery {
      *
      * @param a Activation
      * @param stats DeliveryStats
+     * @throws Exception on failure
      */
-    public Delivery(Activation a, DeliveryStats stats) {
+    public Delivery(Activation a, DeliveryStats stats) throws Exception {
         mActivation = a;
         mStats = stats;
         mMethod = mActivation.getOnMessageMethod();
-        mIsXA = mActivation.isXA();
         mRedeliveryChecker = new DeliveryActions(a.getActivationSpec(), mStats, 5000);
 
         // Batch
@@ -485,14 +500,19 @@ public abstract class Delivery {
         }
 
         // Get TxMgr
-        if ((mBatchSize > 1 || mHoldUntilAck) && isXA()) {
+        if (mActivation.isCMT()) {
+            Properties p = new Properties();
+            mActivation.getObjectFactory().getProperties(p, mActivation.getRA(), 
+                mActivation.getActivationSpec(), null, null);
+            String txMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
+            txMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, txMgrLocatorClass);
             try {
-                mTxMgr = getTxMgr();
+                Class c = Class.forName(txMgrLocatorClass, false, this.getClass().getClassLoader()); 
+                TxMgr txmgr = (TxMgr) c.newInstance();
+                txmgr.init(p);
+                mTxMgr = txmgr.getTransactionManager();
             } catch (Exception e) {
-                if (mHoldUntilAck) {
-                    throw new RuntimeException("Could not obtain TxMgr which is crucial for HUA mode: " + e, e);
-                }
-                sLog.warn(LOCALE.x("E057: TxMgr could not be obtained: {0}", e), e);
+                throw Exc.rsrcExc(LOCALE.x("E057: TxMgr could not be obtained: {0}", e), e);
             }
         }
     }
@@ -527,9 +547,8 @@ public abstract class Delivery {
                 long now = System.currentTimeMillis();
                 if (now - start > MAX_CREATE_ENDPOINT_TIME) {
                     // FAIL
-                    throw new Exception(
-                        "Failed to create endpoint... giving up. Last exception: " + ex1,
-                        ex1);
+                    throw Exc.rsrcExc(LOCALE.x("E120: Failed to create endpoint... "
+                        + "giving up. Last exception: {0}", ex1), ex1);
                 } else {
                     try {
                         Thread.sleep(CREATE_ENDPOINT_RETRY_DELAY);
@@ -558,36 +577,12 @@ public abstract class Delivery {
                 sLog.debug("Releasing endpoint");
             }
 
-            mep.release();
+            try {
+                mep.release();
+            } catch (RuntimeException e) {
+                sLog.warn(LOCALE.x("E197: Release of endpoint failed unexpectedly: {0}", e), e);
+            }
             mStats.removeMessageEndpoint();
-        }
-    }
-    
-    /**
-     * Wraps an exception thrown in BeforeDelivery
-     */
-    public static class BeforeDeliveryException extends RuntimeException {
-        /**
-         * Constructor
-         * 
-         * @param e Exception caught
-         */
-        public BeforeDeliveryException(Exception e) {
-            super("The application server threw an exception in beforeDelivery(): " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Wraps an exception thrown in AfterDelivery
-     */
-    public static class AfterDeliveryException extends RuntimeException {
-        /**
-         * Constructor
-         * 
-         * @param e Exception caught
-         */
-        public AfterDeliveryException(Exception e) {
-            super("The application server threw an exception in afterDelivery(): " + e.getMessage(), e);
         }
     }
     
@@ -622,7 +617,6 @@ public abstract class Delivery {
      */
     public static class DeliveryResults {
         private boolean mShouldDiscardEndpoint;
-        private boolean mShouldNotCallAfterDelivery;
         private boolean mBeforeDeliveryFailed;
         private boolean mAfterDeliveryFailed;
         private boolean mOnMessageFailed;
@@ -638,7 +632,6 @@ public abstract class Delivery {
          */
         public void reset() {
             mShouldDiscardEndpoint = false;
-            mShouldNotCallAfterDelivery = false;
             mBeforeDeliveryFailed = false;
             mAfterDeliveryFailed = false;
             mIsRollbackOnly = false;
@@ -756,22 +749,6 @@ public abstract class Delivery {
          */
         public void setShouldDiscardEndpoint(boolean shouldDiscardEndpoint) {
             mShouldDiscardEndpoint = shouldDiscardEndpoint;
-        }
-        /**
-         * Getter for shouldNotCallAfterDelivery
-         *
-         * @return boolean
-         */
-        public boolean getShouldNotCallAfterDelivery() {
-            return mShouldNotCallAfterDelivery;
-        }
-        /**
-         * Setter for shouldNotCallAfterDelivery
-         *
-         * @param shouldNotCallAfterDelivery booleanThe shouldNotCallAfterDelivery to set.
-         */
-        public void setShouldNotCallAfterDelivery(boolean shouldNotCallAfterDelivery) {
-            mShouldNotCallAfterDelivery = shouldNotCallAfterDelivery;
         }
 
         /**
@@ -891,25 +868,62 @@ public abstract class Delivery {
                 + "implements multiple interfaces."));
         }
         
+        ret.setActivation(mActivation);
+        
         return ret;
     }
 
+    /**
+     * Sets the tx (if any) to rollback only
+     * 
+     * @param result status object
+     * @param rethrow if true, will rethrow tx exceptions
+     * @throws Exception tx exceptions
+     */
+    protected void txSetRollbackOnly(DeliveryResults result, boolean rethrow) throws Exception {
+        result.setRollbackOnly(true);
+        if (mActivation.isCMT()) {
+            try {
+                getTransaction(true).setRollbackOnly();
+            } catch (Exception e) {
+                result.setShouldDiscardEndpoint(true);
+                if (rethrow) {
+                    throw e;
+                } else {
+                    sLog.error(LOCALE.x("E201: Failed to mark transaction for RollbackOnly: {0}", e), e);
+                }
+            }
+        }
+    }
     
     /**
      * Wraps the beforeDelivery() call
      * 
      * @param result state
      * @param target MEP
+     * @param rethrowSystemException throw instead of log system failures (tx mgr only)
+     * @throws Exception tx exceptions
      */
-    public void beforeDelivery(DeliveryResults result, MessageEndpoint target) {
-        if (mIsXA) {
+    public void beforeDelivery(DeliveryResults result, MessageEndpoint target, 
+        boolean rethrowSystemException) throws Exception {
+        if (mActivation.isCMT()) {
             try {
                 target.beforeDelivery(mMethod);
             } catch (Exception e) {
                 result.setBeforeDeliveryFailed(true);
                 result.setShouldDiscardEndpoint(true);
-                result.setShouldNotCallAfterDelivery(true);
                 result.setException(e);
+                result.setRollbackOnly(true);
+                try {
+                    if (rethrowSystemException) {
+                        throw e;
+                    } else {
+                        sLog.error(LOCALE.x("E198: Transaction initialization failed " 
+                            + "unexpectedly: {0}", e), e);
+                    }
+                } finally {
+                    txSetRollbackOnly(result, rethrowSystemException);
+                }
             }
         }
     }
@@ -921,33 +935,53 @@ public abstract class Delivery {
      * @param connectionForMove DLQ
      * @param target MEP
      * @param mdb wrapper
+     * @param rethrowSystemException throw instead of log system failures (tx mgr only)
+     * @throws Exception tx exceptions 
      */
     public void afterDelivery(DeliveryResults result, ConnectionForMove connectionForMove, 
-        MessageEndpoint target, Delivery.MDB mdb) {
+        MessageEndpoint target, Delivery.MDB mdb, boolean rethrowSystemException) throws Exception {
 
-        if (!mIsXA || result.getShouldNotCallAfterDelivery()) {
+        if (!mActivation.isCMT() || result.getBeforeDeliveryFailed()) {
             return;
         }
 
-        try {
-            if (!result.getOnMessageWasBypassed()) {
+        if (!result.getOnMessageWasBypassed()) {
+            try {
+                if (result.getIsRollbackOnly()) {
+                    getTransaction(true).setRollbackOnly();
+                }
                 target.afterDelivery();
-            } else {
+            } catch (Exception e) {
+                result.setAfterDeliveryFailed(true);
+                result.setShouldDiscardEndpoint(true);
+                result.setException(e);
+                if (rethrowSystemException) {
+                    throw e;
+                } else {
+                    sLog.error(LOCALE.x("E199: Transaction completion unexpectedly failed: {0}", e), e);
+                }
+            }
+        } else {
+            try {
                 // Weblogic does not allow afterDelivery() to be called without
                 // having called onMessage(). This is required when a message
                 // is sent to a DLQ. In that case, commit the transaction
                 // manually and mark the endpoint for release so that the
                 // container will not reuse it to avoid inconsistent states.
                 result.setShouldDiscardEndpoint(true);
-                Transaction tx = getTxMgr().getTransactionManager().getTransaction();
+                Transaction tx = getTransaction(true);
                 tx.delistResource(mdb.getXAResource(), XAResource.TMSUCCESS);
                 tx.commit();
+            } catch (Exception e) {
+                result.setAfterDeliveryFailed(true);
+                result.setShouldDiscardEndpoint(true);
+                result.setException(e);
+                if (rethrowSystemException) {
+                    throw e;
+                } else {
+                    sLog.error(LOCALE.x("E200: the transaction could not be committed: {0}", e), e);
+                }
             }
-
-        } catch (Exception e) {
-            result.setAfterDeliveryFailed(true);
-            result.setShouldDiscardEndpoint(true);
-            result.setException(e);
         }
     }
     
@@ -960,12 +994,11 @@ public abstract class Delivery {
      * @param session Session
      * @param connectionForMove DLQ
      * @param target MEP
-     * @param mdb wrapper
      */
     public void afterDeliveryNoXA(DeliveryResults result, javax.jms.Session session, 
-        ConnectionForMove connectionForMove, MessageEndpoint target, Delivery.MDB mdb) {
+        ConnectionForMove connectionForMove, MessageEndpoint target) {
 
-        if (isXA()) {
+        if (mActivation.isCMT()) {
             return;
         }
     
@@ -1014,9 +1047,11 @@ public abstract class Delivery {
      * can be used to move a message
      * @param target MessageEndpoint
      * @param m Message
+     * @param rethrowSystemExceptions throw instead of log system failures (tx mgr only)
+     * @throws Exception rollback exceptions
      */
     public void deliverToEndpoint(DeliveryResults result, ConnectionForMove connectionForMove, MessageEndpoint target,
-        javax.jms.Message m) {
+        javax.jms.Message m, boolean rethrowSystemExceptions) throws Exception {
         if (sLog.isDebugEnabled()) {
             sLog.debug("Delivering message to endpoint");
         }
@@ -1024,6 +1059,7 @@ public abstract class Delivery {
         // Stats
         mStats.aboutToDeliverMessage();
         
+        boolean mustSetRollback = false;
         try {
             if (mActivation.shouldWrapAlways()) {
                 m = wrapMsg(m);
@@ -1034,18 +1070,23 @@ public abstract class Delivery {
                 result.setOnMessageWasBypassed(true);
             } else {
                 try {
+                    registerThreadAsInOnMessage(true);
                     result.setOnMessageWasCalled(true);
                     ((javax.jms.MessageListener) target).onMessage(m);
                     result.setOnMessageSucceeded(true);
                 } catch (RuntimeException ex) {
+                    Exc.fixup(ex);
                     sLog.warn(LOCALE.x("E031: The entity the message was sent to for "
                         + "processing, threw an exception. The message will be "
                         + "rolled back. Exception: [{0}]", ex), ex);
                     result.setOnMessageFailed(true);
-                    result.setRollbackOnly(true);
                     result.setException(ex);
                     result.setShouldDiscardEndpoint(true);
                     mRedeliveryChecker.rememberException(ex, m);
+                    result.setRollbackOnly(true);
+                    mustSetRollback = true;
+                } finally {
+                    registerThreadAsInOnMessage(false);
                 }
             }
         } catch (Exception ex) {
@@ -1055,6 +1096,32 @@ public abstract class Delivery {
             // Stats
             mStats.messageDelivered();
         }
+        
+        if (mustSetRollback) { 
+            txSetRollbackOnly(result, rethrowSystemExceptions);
+        }
+    }
+    
+    private void registerThreadAsInOnMessage(boolean register) {
+        synchronized (mThreadsCurrentlyInOnMessage) {
+            if (register) {
+                Object verify = mThreadsCurrentlyInOnMessage.put(Thread.currentThread(), "");
+                XAssert.xassert(verify == null);
+            } else {
+                Object verify = mThreadsCurrentlyInOnMessage.remove(Thread.currentThread());
+                XAssert.xassert(verify != null);
+            }
+        }
+    }
+    
+    /**
+     * @return true if this method is called from onMessage in an MDB belonging to 
+     * this Delivery
+     */
+    public boolean isThisCalledFromOnMessage() {
+        synchronized (mThreadsCurrentlyInOnMessage) {
+            return mThreadsCurrentlyInOnMessage.containsKey(Thread.currentThread());
+        }        
     }
     
     /**
@@ -1089,15 +1156,6 @@ public abstract class Delivery {
     }
 
     /**
-     * isXA
-     *
-     * @return boolean
-     */
-    public final boolean isXA() {
-        return mIsXA;
-    }
-    
-    /**
      * The actual max number of endpoints being used 
      * 
      * @return int
@@ -1110,50 +1168,31 @@ public abstract class Delivery {
      * @return tx manager, or null if not accessible (e.g. unknown container)
      * @throws Exception on failure
      */
-    public TxMgr getTxMgr() throws Exception {
-        synchronized (mTxMgrCacheLock) {
-            if (mTxMgr == null) {
-                Properties p = new Properties();
-                mActivation.getObjectFactory().getProperties(p, mActivation.getRA(), 
-                    mActivation.getActivationSpec(), null, null);
-                String mTxMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
-                mTxMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, mTxMgrLocatorClass);
-                try {
-                    Class c = Class.forName(mTxMgrLocatorClass, false, this.getClass().getClassLoader()); 
-                    TxMgr txmgr = (TxMgr) c.newInstance();
-                    txmgr.init(p);
-                    mTxMgr = txmgr;
-                } catch (Exception e) {
-                    sLog.warn(LOCALE.x("E088: Transaction manager locator cannot be initialized: {0}", e), e);
-                }
-            }
-            return mTxMgr;
-        }
+    public TransactionManager getTxMgr() throws Exception {
+        return mTxMgr;
     }
 
     /**
      * Returns the current transaction
      * 
-     * @param mustSucceed if true, will throw an exception if the tx object cannot be accessed
+     * @param rethrowSystemExceptions throw instead of log
      * @return tx
      */
-    protected Transaction getTransaction(boolean mustSucceed) {
-        if (mTxMgr != null) {
-            try {
-                return mTxMgr.getTransactionManager().getTransaction();
-            } catch (Exception e) {
-                if (mustSucceed) {
-                    throw new RuntimeException("Failed to obtain handle to transaction: " + e, e);
-                }
-                synchronized (mTxMgrCacheLock) {
-                    if (!mTxFailureLoggedOnce) {
-                        mTxFailureLoggedOnce = true;
-                        sLog.error(LOCALE.x("E062: Failed to obtain handle to transaction: {0}", e), e);
-                    }
+    protected Transaction getTransaction(boolean rethrowSystemExceptions) {
+        Transaction tx = null;
+        try {
+            tx = mTxMgr.getTransaction();
+        } catch (Exception e) {
+            if (rethrowSystemExceptions) {
+                throw Exc.rtexc(LOCALE.x("E062: Failed to obtain handle to transaction: {0}", e), e);
+            }
+            synchronized (mTxMgrCacheLock) {
+                if (!mTxFailureLoggedOnce) {
+                    mTxFailureLoggedOnce = true;
+                    sLog.error(LOCALE.x("E062: Failed to obtain handle to transaction: {0}", e), e);
                 }
             }
         }
-        return null;
+        return tx;
     }
-    
 }

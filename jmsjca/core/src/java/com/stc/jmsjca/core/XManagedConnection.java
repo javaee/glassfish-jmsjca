@@ -56,7 +56,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -355,13 +355,17 @@ public class XManagedConnection implements ManagedConnection {
      */
     public Object getConnection(Subject subject,
         ConnectionRequestInfo connectionRequestInfo) throws ResourceException {
+        if (getManagedConnectionFactory().getObjFactory().isInvalid(this)) {
+            throw Exc.rsrcExc(LOCALE.x("E194: Invalid Connection "));
+        }
 
         // Check credentials
         PasswordCredential pc = mManagedConnectionFactory.getPasswordCredential(subject);
         if (pc != null && 
             (!Str.isEqual(pc.getUserName(), getUserid()) 
                 || !Str.isEqual(new String(pc.getPassword()), getPassword()))) {
-            throw new javax.resource.spi.SecurityException("Invalid subject " + subject);
+            throw new javax.resource.spi.SecurityException(LOCALE.x("E164: Invalid subject {0}"
+                , subject).toString());
         }
 
         // Create a new handle
@@ -405,8 +409,8 @@ public class XManagedConnection implements ManagedConnection {
      */
     public void disassociateConnection(WSession w) throws ResourceException {
         if (!mHandles.remove(w)) {
-            throw new ResourceException("Handle " + w
-                + " is not known in this managed connection");
+            throw Exc.rsrcExc(LOCALE.x("E165: Handle {0}"
+                + " is not known in this managed connection", w));
         }
     }
 
@@ -587,7 +591,7 @@ public class XManagedConnection implements ManagedConnection {
                     listeners[i].connectionErrorOccurred(event);
                     break;
                 default:
-                    throw new IllegalArgumentException(Str.msg("Illegal eventType: {0}",
+                    throw Exc.illarg(LOCALE.x("E167: Illegal eventType: {0}",
                         Integer.toString(type)));
             }
         }
@@ -609,7 +613,7 @@ public class XManagedConnection implements ManagedConnection {
      */
     public JSession getJSession() {
         if (mJSession == null) {
-            throw new RuntimeException("Cannot obtain JSession: mSession is null");
+            throw Exc.rtexc(LOCALE.x("E166: Cannot obtain JSession: mSession is null"));
         }
         return mJSession;
     }

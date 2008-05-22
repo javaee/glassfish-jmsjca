@@ -34,7 +34,7 @@ import javax.transaction.xa.XAResource;
  * container and hence does not use XA.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class SessionConnection {
 //    private static Logger sLog = Logger.getLogger(SessionConnection.class);
@@ -140,4 +140,13 @@ public abstract class SessionConnection {
      * @throws JMSException propagated
      */
     public abstract Destination createDestination(AdminDestination dest) throws JMSException;
+    
+    /**
+     * Converts optionally from a genericra destination to an admin destination
+     * 
+     * @param d destination to inspect
+     * @return admin destination or same destination
+     * @throws JMSException on conversion failure
+     */
+    public abstract Destination checkGeneric(Destination d) throws JMSException;
 }

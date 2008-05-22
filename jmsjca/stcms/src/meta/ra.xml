@@ -64,11 +64,6 @@
                     <config-property-type>java.lang.String</config-property-type>
                 </config-property>
                 <config-property>
-                    <config-property-name>ProducerPooling</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>true</config-property-value>
-                </config-property>
-                <config-property>
                     <config-property-name>Options</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
                 </config-property>
@@ -98,11 +93,6 @@
                     <config-property-type>java.lang.String</config-property-type>
                 </config-property>
                 <config-property>
-                    <config-property-name>ProducerPooling</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>true</config-property-value>
-                </config-property>
-                <config-property>
                     <config-property-name>IdleTimeout</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
                     <config-property-value>30000</config-property-value>
@@ -130,11 +120,6 @@
                 <config-property>
                     <config-property-name>Password</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
-                </config-property>
-                <config-property>
-                    <config-property-name>ProducerPooling</config-property-name>
-                    <config-property-type>java.lang.String</config-property-type>
-                    <config-property-value>true</config-property-value>
                 </config-property>
                 <config-property>
                     <config-property-name>IdleTimeout</config-property-name>

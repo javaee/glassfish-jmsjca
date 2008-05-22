@@ -44,7 +44,7 @@ import java.util.Set;
  * exception if that is the desired behavior.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class Wrapper implements InvocationHandler {
     private static Logger sLog = Logger.getLogger(Wrapper.class);
@@ -182,7 +182,7 @@ public abstract class Wrapper implements InvocationHandler {
         if (method.getName().equals("close")) {
             // Ignore duplicate close
         } else {
-            throw new javax.jms.IllegalStateException(Str.msg("This {0} is closed",
+            throw Exc.illstate(LOCALE.x("E153: This {0} is closed",
                 getItfClass().getName()));
         }
     }

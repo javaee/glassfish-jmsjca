@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
-<project default="compile" basedir="." name="jmsjca">
+<project default="compile" basedir="." name="stcms">
     <description>
     </description>
+    <import file="build-common.xml" />
 
     <!--
   Conventions:
@@ -16,6 +17,7 @@
 
 -->
     <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
     <!--===========================================================================
     Initializes variables etc
@@ -32,7 +34,7 @@
         <property file="${stc.root.dir}/stc.properties" />
 
         <property file="build.properties" />
-        <property file="${env.STC_ROOT}/RTS/build.properties" />
+        <property file="build-RTS.properties" />
         <property file="build-${jcaid}.properties" />
         <property file="build-xxx.properties" />
 
@@ -109,6 +111,12 @@
         <property name="sar.ed" value="true" />
     </target>
 
+    <target name="copy-runtime-image" depends="init">
+        <copy file="${stc.api.dir}/com.stc.jms.stcjms.jar" todir="${jmsjca.runtime-image.dir}" failonerror="false" />
+        <copy file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" todir="${jmsjca.runtime-image.dir}" failonerror="false" />
+        <copy file="${stc.lib.dir}/com.stc.jmsmx.stcms.jar" todir="${jmsjca.runtime-image.dir}" failonerror="false" />
+    </target>
+
     <!--===========================================================================
     Compiles the source code and produces a jar file
 -->
@@ -134,7 +142,7 @@
 
         <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
         <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
-        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" />
+        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" prefixU="ra${jcaid}-" />
         <copy todir="${jmsjca.xxx.rar.classes.dir}">
             <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
         </copy>
@@ -192,9 +200,8 @@
         <mkdir dir="${jmsjca.xxx.test.dir}"/>
 
         <!-- FIX THIS: JBOSS SHOULD NOT NEED A DIFFERENT ejb-jar.xml FILE -->
-        <if>
-            <equals arg1="${testcontainer.id}" arg2="rts" />
-            <then>
+        <switch value="${testcontainer.id}" >
+        <case value="rts" >
                 <zip destfile="${jmsjca.xxx.ejb.jar.path}">
                     <fileset dir="${jmsjca.xxx.test.classes.dir}">
                         <include name="com/stc/jmsjca/test/core/**.*" />
@@ -205,21 +212,18 @@
                     <zipfileset prefix="META-INF" file="core/test/src/meta/weblogic-ejb-jar.xml" />
                     <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF"  />
                 </zip>
-            </then>
-            <elseif>
-                <equals arg1="${testcontainer.id}" arg2="jboss" />
-                <then>
-                    <jar destfile="${jmsjca.xxx.ejb.jar.path}">
+         </case>
+         <case value="jboss" >
+             <zip destfile="${jmsjca.xxx.ejb.jar.path}">
                         <fileset dir="${jmsjca.xxx.test.classes.dir}">
                             <include name="com/stc/jmsjca/test/core/**.*" />
                             <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
                         </fileset>
                         <zipfileset prefix="META-INF" file="jboss/test/src/meta/ejb-jar.xml" />
                         <zipfileset prefix="META-INF" file="stcms/test/src/meta/jboss.xml" />
-                    </jar>
-                </then>
-            </elseif>
-            <else>
+             </zip>
+   	</case>     
+        <case value="wl" >
                 <zip destfile="${jmsjca.xxx.ejb.jar.path}">
                     <fileset dir="${jmsjca.xxx.test.classes.dir}">
                         <include name="com/stc/jmsjca/test/core/**.*" />
@@ -230,8 +234,32 @@
                     <zipfileset prefix="META-INF" file="core/test/src/meta/weblogic-ejb-jar.xml" />
                     <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF"  />
                 </zip>
-            </else>
-        </if>
+        </case>
+        <case value="was" >
+            <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                </fileset>
+                <zipfileset fullpath="META-INF/ejb-jar.xml" file="core/test/src/meta/ejb-jar-ibm.xml" />
+                <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
+                <zipfileset prefix="META-INF" file="core/test/src/meta/ibm_ejbext.properties" />
+                <zipfileset prefix="META-INF" file="core/test/src/meta/ibm-ejb-jar-bnd.xmi" />     
+                <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF"  />
+            </zip>                
+        </case>                  
+        <default>
+            <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                </fileset>
+                <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
+                <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
+                <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF"  />
+            </zip>
+        </default>
+        </switch>
 
         <!-- Generate manifests for embedded RARs -->
         <!-- When outside of RTS -->
@@ -244,6 +272,9 @@
         <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />
 
         <!-- make embedded rar -->
+        <if>
+            <equals arg1="${testcontainer.id}" arg2="wl" />
+        <then>
         <zip destfile="${jmsjca.xxx.test.rar.path}" >
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
             <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml" />
@@ -253,9 +284,23 @@
         <zip destfile="${jmsjca.xxx.test.rar1.path}" >
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
             <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml" />
-            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
             <zipfileset fullpath="META-INF/weblogic-ra.xml" file="core/test/src/meta/weblogic-ra1.xml" />
+            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
         </zip>
+	</then>
+	<else>
+            <zip destfile="${jmsjca.xxx.test.rar.path}" >
+            	<zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            	<zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml" />
+            	<zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft.path}"  />
+            </zip>
+            <zip destfile="${jmsjca.xxx.test.rar1.path}" >
+            	<zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            	<zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml" />
+            	<zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
+            </zip>	
+	</else>
+	</if>
 
         <if>
             <equals arg1="${testcontainer.id}" arg2="rts" />
@@ -268,6 +313,29 @@
                     <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
                 </zip>
             </then>
+            
+            <elseif>
+	     <equals arg1="${testcontainer.id}" arg2="was" />
+             <then>
+               <!-- mk ear OUTSIDE of RTS -->
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset fullpath="META-INF/application.xml" file="core/test/src/meta/application-ibm.xml" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ibm-application-bnd.xml" />
+
+                    <!-- When outside of RTS -->
+                    <zipfileset file="${jmsjca.core.jar.path}" />
+                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
+                    <zipfileset file="${stc.api.dir}/com.stc.jms.stcjms.jar" />
+                    <zipfileset file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" />
+                    <zipfileset file="${stc.lib.dir}/com.stc.jmsmx.stcms.jar" />
+                    <zipfileset file="${stc.api.dir}/com.stc.jmsmx.core.jar" />
+                </zip>             
+             </then>  
+	    </elseif>
+	     	
             <else>
                 <!-- mk ear OUTSIDE of RTS -->
                 <zip destfile="${jmsjca.xxx.ear.path}.1">

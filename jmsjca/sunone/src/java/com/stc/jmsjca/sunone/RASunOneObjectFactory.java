@@ -28,6 +28,8 @@ import com.stc.jmsjca.util.Logger;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import java.lang.reflect.Method;
 import java.util.Enumeration;
@@ -40,7 +42,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -51,22 +53,22 @@ java.io.Serializable {
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
     public int adjustDeliveryMode(int mode, boolean xa) {
+        //return super.adjustDeliveryMode(mode, xa);
+        // Sun JMQ 3.6, 3.7 and 3.7 UR1 which JCAPS 5.1.x support have some problem with 
+        // serial mode, basically serial mode is asynchronous messaging delivery mode, 
+        // the session delivers a message to messagelistener's onMessage. But it is not 
+        // clear that if tx starts before or after a messages is deliveried to onMessage method.
+        // Based on JCA 1.5, the JCA expects tx starts after a messages is deliveried to onMessage.
+        // Because of this un-clearness, sync mode is used instead serial mode in JCAPS 5.1.x.  
+        // JCAPS 6 supports AS 9.1 and Sun JMQ 4.1, the problem could be gone. A stress test will 
+        // be applied in this case. If there is a problem, can work with Sun JMQ team to fix in a corect way. 
         int newMode = mode;
         if (mode == RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
             newMode = RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC;
         }
-
-//            if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
-//            newMode = RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC;
-//            sLog.warn("Current delivery mode ["
-//                + RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mode]
-//                + "] not supported; switching to ["
-//                + RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[newMode]
-//                + "]");
-//        }
-        return newMode;
-        }
-
+        return newMode;        
+    }
+    
     /**
      * Creates a provider specific UrlParser
      * 
@@ -77,6 +79,42 @@ java.io.Serializable {
         return new SunOneUrlParser(s);
     }
     
+    private String getInternalKey(String hostOrUsername) {
+        if (hostOrUsername != null 
+            && hostOrUsername.startsWith("(") 
+            && hostOrUsername.endsWith(")") 
+            && hostOrUsername.length() > 2) {
+            String key = hostOrUsername.substring(1, hostOrUsername.length() - 1);
+            return key;
+        }
+        return null;
+    }
+    
+    private static class ConnectionValues {
+        String host;
+        String port;
+        String username;
+        String password;
+    }
+
+    private ConnectionValues getConnectionValues(String key) throws Exception {
+        Class c = Class.forName("com.sun.enterprise.admin.common.MBeanServerFactory");
+        Method m = c.getMethod("getMBeanServer", new Class[] {});
+        MBeanServer mBeanServer = (MBeanServer) m.invoke(null, new Object[0]);
+        ObjectName objName = new ObjectName("com.sun.appserv:type=jms-host,name=" 
+            + key + ",config=server-config,category=config");
+        
+        ConnectionValues ret = new ConnectionValues();
+        
+        ret.host = (String) mBeanServer.getAttribute(objName, "host");   
+        ret.port = (String) mBeanServer.getAttribute(objName, "port");
+        ret.password = (String) mBeanServer.getAttribute(objName, "admin-user-name");
+        ret.username = (String) mBeanServer.getAttribute(objName, "admin-password");
+        
+        return ret;
+    }
+
+
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
      * 
@@ -87,13 +125,60 @@ java.io.Serializable {
      */
     public boolean validateAndAdjustURL(ConnectionUrl aurl) throws JMSException {
         SunOneUrlParser urlParser = (SunOneUrlParser) aurl;
-        return urlParser.validate();
+        urlParser.validate();
+        
+        boolean hasChanged = false;
+        
+        // Adjust for (host) notation
+        SunOneConnectionUrl[] urls = urlParser.getConnectionUrls();
+        for (int i = 0; i < urls.length; i++) {
+            SunOneConnectionUrl url = urls[i];
+            if (url.getProtocol().equals(SunOneUrlParser.PROT_MQ)) {
+                String host = url.getHost();
+                String key = getInternalKey(host);
+                if (key != null) {
+                    ConnectionValues v;
+                    try {
+                        v = getConnectionValues(key);
+                    } catch (Exception e) {
+                        throw Exc.jmsExc(LOCALE.x("E307: Could not obtain connection info " 
+                            + "for {0} (from [{1}]): {2}", key, url, e));
+                    }
+                    url.setHost(v.host);
+                    url.setPort(Integer.parseInt(v.port));
+                    hasChanged = true;
+                }
+            }
+        }
+        
+        return hasChanged;
     }
     
-    public interface BasicConnectionFactory {
-        void setProperty(String name, String value);
-    }
-    
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createConnection(java.lang.Object, int, 
+     * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter, 
+     * java.lang.String, java.lang.String)
+     */
+    public Connection createConnection(Object fact, int domain,
+        RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra, String username,
+        String password) throws JMSException {
+        
+        String key = getInternalKey(username);
+        if (key != null) {
+            ConnectionValues v;
+            try {
+                v = getConnectionValues(key);
+            } catch (Exception e) {
+                throw Exc.jmsExc(LOCALE.x("E307: Could not obtain connection info " 
+                    + "for {0} (from [{1}]): {2}", key, username, e));
+            }
+            username = v.username;
+            password = v.password;
+        }
+        
+        return super.createConnection(fact, domain, activationSpec, ra, username, password);
+    }    
+
     /**
      * createConnectionFactory
      * 
@@ -137,10 +222,10 @@ java.io.Serializable {
                 basicConnectionFactory = Class.forName("com.sun.messaging.XAConnectionFactory").newInstance();
                 break;
             default:
-                throw new JMSException("Logic fault: invalid domain " + domain);
+                throw Exc.jmsExc(LOCALE.x("E304: Logic fault: invalid domain {0}", Integer.toString(domain)));
             }
         } catch (Exception e) {
-            throw Exc.jmsExc(LOCALE.x("E600: Could not load or instantiate connection factory class: {0}", e), e);
+            throw Exc.jmsExc(LOCALE.x("E300: Could not load or instantiate connection factory class: {0}", e), e);
         }
         
         urlParser.getQueryProperties(p);
@@ -160,7 +245,7 @@ java.io.Serializable {
 //        b.setProperty("imqAddressList", urlParser.getSunOneUrlSet());
 //        b.setProperty("imqConnectionFlowLimitEnabled", "true");
         } catch (Exception e) {
-            throw Exc.jmsExc(LOCALE.x("E601: Failed to configure connection factory: {0}", e), e);
+            throw Exc.jmsExc(LOCALE.x("E301: Failed to configure connection factory: {0}", e), e);
         } 
         
 
@@ -238,7 +323,7 @@ java.io.Serializable {
                 if (newClientId.equals(currentClientId)) {
                     // ok: already set
                 } else {
-                    sLog.warn(LOCALE.x("E603: ClientID is already set to [{0}]; "   
+                    sLog.warn(LOCALE.x("E303: ClientID is already set to [{0}]; "   
                         + "cannot set to [{1}] as required in "
                         + "activationspec [{3}]", currentClientId, newClientId, spec)); 
                 }
@@ -265,9 +350,9 @@ java.io.Serializable {
         if (username == null) {
             username = ra.getUserName();
         }
-        String password = spec == null ? null : spec.getPassword();
+        String password = spec == null ? null : spec.getClearTextPassword();
         if (password == null) {
-            password = ra.getPassword();
+            password = ra.getClearTextPassword();
         }
         
         // Configure properties to send to MBean
@@ -289,7 +374,7 @@ java.io.Serializable {
             method.invoke(mbean, args);
             ret = mbean;
         } catch (Exception e) {
-            throw Exc.jmsExc(LOCALE.x("E602: Error instantiating or configuring MBean for "
+            throw Exc.jmsExc(LOCALE.x("E302: Error instantiating or configuring MBean for "
                 + "external SJS MQ server management: {0}", e), e);
         }
         

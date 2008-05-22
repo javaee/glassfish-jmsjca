@@ -31,7 +31,7 @@ import java.util.Properties;
  * connection, and through that control over message delivery to the MDB.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class ActivationMBean extends CommonMBean implements EmManagementInterface {
     //private static Logger sLog = Logger.getLogger(ActivationMBean.class);
@@ -352,26 +352,6 @@ public class ActivationMBean extends CommonMBean implements EmManagementInterfac
         mActivation.stop();
     }
     
-    /**
-     * Status
-     */
-    public static final String DISCONNECTED = "Down";
-
-    /**
-     * Status
-     */
-    public static final String CONNECTED = "Up";
-
-    /**
-     * Status
-     */
-    public static final String CONNECTING = "Connecting";
-
-    /**
-     * Status
-     */
-    public static final String DISCONNECTING = "Disconnecting";
-
     /**
      * @see com.stc.jmsjca.core.EmManagementInterface#getStatus()
      */

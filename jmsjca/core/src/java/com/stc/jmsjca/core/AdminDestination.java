@@ -16,19 +16,39 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
+import javax.jms.JMSException;
+
 
 /**
  * Base class for administrative destinations. These are administrative objects that 
  * describe queues and topics. 
  *
  * @author Frank Kieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public abstract class AdminDestination implements javax.jms.Destination, java.io.Serializable {
+    private static final Localizer LOCALE = Localizer.get();
+
     /**
      * Gets the name of the destination
      * 
      * @return name of the destination
      */
     public abstract String getName();
+    
+    /**
+     * @return non-null name
+     * @throws JMSException on configuration failure
+     */
+    public String retrieveCheckedName() throws JMSException {
+        String ret = getName();
+        if (ret == null || ret.length() == 0) {
+            throw Exc.jmsExc(LOCALE.x("E202: The administrative object used as a destination "
+                + " is not properly configured: the Name-property is not set."));
+        }
+        return ret;
+    }
 }

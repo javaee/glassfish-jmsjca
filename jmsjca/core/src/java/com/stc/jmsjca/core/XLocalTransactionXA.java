@@ -26,7 +26,7 @@ import javax.transaction.xa.XAResource;
  * A Local Transaction implementation that uses an XA session underneath.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class XLocalTransactionXA implements javax.resource.spi.LocalTransaction {
     private static Logger sLog = Logger.getLogger(XLocalTransactionXA.class);
@@ -69,14 +69,14 @@ public class XLocalTransactionXA implements javax.resource.spi.LocalTransaction 
      */
     public void commit() throws ResourceException {
         if (mXid == null) {
-            throw new ResourceException("E080: Cannot call commit() before calling begin()");
+            throw Exc.rsrcExc(LOCALE.x("E080: Cannot call commit() before calling begin()"));
         }
 
         try {
             mManagedConnection.getXAResource().end(mXid, XAResource.TMSUCCESS);
             mManagedConnection.getXAResource().commit(mXid, true);
         } catch (Exception ex) {
-            throw Exc.rsrcExc(LOCALE.x("E081: XAResource failed on commit(): {0}", ex), ex);
+            throw Exc.rsrcExc(LOCALE.x("E083: XAResource failed on commit(): {0}", ex), ex);
         }
     }
 

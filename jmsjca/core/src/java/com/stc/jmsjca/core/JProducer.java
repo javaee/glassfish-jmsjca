@@ -17,6 +17,7 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.NoProxyWrapper;
 
@@ -32,7 +33,7 @@ import javax.jms.TopicPublisher;
 * to the JMS Producer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class JProducer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JProducer.class);
@@ -84,7 +85,7 @@ public class JProducer extends NoProxyWrapper {
         } else if (getItfClass() == javax.jms.QueueSender.class) {
             setWrapper(new WQueueSender(this, (QueueSender) mDelegate));
         } else {
-            throw new RuntimeException("Unknown class " + getItfClass());
+            throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", getItfClass()));
         }
     }
 

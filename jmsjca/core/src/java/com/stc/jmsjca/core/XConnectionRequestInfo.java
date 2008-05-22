@@ -16,13 +16,15 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Str;
 
 /**
  * <p>Describes how to create a JMS connection</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequestInfo {
     private Class mConnectionClass;
@@ -33,6 +35,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
     private boolean mTransacted;
     private int mAcknowledgeMode;
     private String mOverrideUrl;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -288,7 +291,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
         }
 
         if (i == DOMAIN_UNKNOWN) {
-            throw new RuntimeException("Unknown domain " + mSessionClass);
+            throw Exc.rtexc(LOCALE.x("E133Unknown domain {0}", mSessionClass));
         }
 
         return i;

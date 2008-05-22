@@ -39,7 +39,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class QueueJndiEar1 extends QueueEndToEnd {
 
@@ -61,6 +61,7 @@ public class QueueJndiEar1 extends QueueEndToEnd {
                 "connectionfactories/xatopicconnectionfactory");
         p.setProperty(RAJNDIResourceAdapter.UNIFIEDCF,
                 "connectionfactories/xaconnectionfactory");
+        p.setProperty("com.stc.jms.autocommitxa", "true");
 
         // Update first RA
         StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)

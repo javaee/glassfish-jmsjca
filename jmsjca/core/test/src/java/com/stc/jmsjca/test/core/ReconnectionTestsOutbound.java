@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.util.UrlParser;
 
 /**
@@ -25,7 +26,7 @@ import com.stc.jmsjca.util.UrlParser;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class ReconnectionTestsOutbound extends EndToEndBase {
     /**
@@ -273,7 +274,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
 
                 Outbound out = (Outbound) dd.new ResourceAdapter(RAXML)
                 .createConnector(Outbound.class);
-                out.setOptions("JMSJCA.NoXA=true\nJMSJCA.IgnoreTx=false\n");
+                out.setOptions(Options.FORCE_BMT + "=true\nJMSJCA.IgnoreTx=false\n");
             }
         });
     }
@@ -298,7 +299,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
 
                 Outbound out = (Outbound) dd.new ResourceAdapter(RAXML)
                 .createConnector(Outbound.class);
-                out.setOptions("JMSJCA.NoXA=true\nJMSJCA.IgnoreTx=false\n");
+                out.setOptions(Options.FORCE_BMT + "=true\nJMSJCA.IgnoreTx=false\n");
             }
         });
     }

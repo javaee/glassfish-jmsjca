@@ -16,6 +16,9 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
+
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -31,11 +34,12 @@ import java.util.Properties;
  * ManagedConnection will have one instance of this class and will reuse it.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class TxMgr {
     private TxMgrAdapter mTxMgrAdapter;
     private static TransactionManager sUnitTestTxMgr;
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * Initializes this object to avoid a parameterized constructor
@@ -106,7 +110,7 @@ public class TxMgr {
         if (txm != null) {
             return txm.getTransactionManager();
         } else {
-            throw new Exception("Could not find transaction manager adapter");
+            throw Exc.exc(LOCALE.x("E152: Could not find transaction manager adapter"));
         }
     }
 
