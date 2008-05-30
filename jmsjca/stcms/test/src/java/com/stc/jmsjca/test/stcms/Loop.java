@@ -34,7 +34,7 @@ import com.stc.jmsjca.core.Options;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Loop extends StcmsEndToEnd {
     public void testLoop1() throws Throwable {

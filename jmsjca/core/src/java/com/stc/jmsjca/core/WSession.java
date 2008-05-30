@@ -45,9 +45,9 @@ import javax.jms.TopicSubscriber;
  * calls to the JSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
-public class WSession implements Session {
+public class WSession implements IWSession {
     private static final Localizer LOCALE = Localizer.get();
 
     /**
@@ -711,5 +711,12 @@ public class WSession implements Session {
             mMgr.exceptionOccurred(e);
             throw e;
         }
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.IWSession#getReference()
+     */
+    public WSession getReference() {
+        return this;
     }
 }

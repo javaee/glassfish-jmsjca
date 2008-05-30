@@ -24,7 +24,7 @@ import javax.jms.TemporaryTopic;
  * application code.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WTemporaryTopic implements TemporaryTopic, Unwrappable, LimitationJConnection {
     private TemporaryTopic mDelegate;

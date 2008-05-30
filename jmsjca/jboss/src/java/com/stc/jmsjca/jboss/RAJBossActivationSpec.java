@@ -21,7 +21,7 @@ import com.stc.jmsjca.core.RAJMSActivationSpec;
 /**
  * Encapsulates the configuration of a MessageEndpoint.
  *
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * @author misc
  */
 public class RAJBossActivationSpec extends RAJMSActivationSpec {

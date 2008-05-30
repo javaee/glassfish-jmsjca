@@ -30,7 +30,7 @@ import java.util.Properties;
  * Tests FIFO mode concurrency in stcms
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class FifoEar1 extends StcmsEndToEnd {
     

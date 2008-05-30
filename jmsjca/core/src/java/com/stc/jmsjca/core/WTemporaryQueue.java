@@ -24,7 +24,7 @@ import javax.jms.TemporaryQueue;
  * application code.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WTemporaryQueue implements TemporaryQueue, Unwrappable, LimitationJConnection {
     private TemporaryQueue mDelegate;

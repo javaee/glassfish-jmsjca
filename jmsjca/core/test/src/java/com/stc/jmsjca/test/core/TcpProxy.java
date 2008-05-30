@@ -32,7 +32,7 @@ import java.util.Random;
  * Duplicated from stcms
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class TcpProxy {
     // private static Logger sLog = Logger.getLogger(TcpProxy.class);

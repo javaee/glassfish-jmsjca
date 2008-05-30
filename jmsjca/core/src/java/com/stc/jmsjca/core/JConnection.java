@@ -50,7 +50,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);
@@ -98,7 +98,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      * @throws JMSException failure
      * @return Session
      */
-    private WSession createSessionByApplication(Class sessionClass, boolean transacted,
+    private Session createSessionByApplication(Class sessionClass, boolean transacted,
         int acknowledgeMode) throws JMSException {
         int orgAckmode = acknowledgeMode;
 
@@ -119,7 +119,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
             }
         }
 
-        WSession w = null;
+        IWSession w = null;
         try {
             // Get password if not overridden in createConnection(string,string)
             String[] useridpassword = mManagedConnectionFactory.
@@ -128,13 +128,14 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
             XConnectionRequestInfo descr = new XConnectionRequestInfo(mConnectionClass,
                 sessionClass, useridpassword[0], useridpassword[1], useridpassword[2],
                 mClientID, transacted, acknowledgeMode);
-            w = (WSession) mConnectionManager.
+            Object obj = mConnectionManager.
                 allocateConnection(mManagedConnectionFactory, descr);
-            w.setConnection(this);
-            w.getJSession().setSpecifiedAcknowledgeMode(orgAckmode);
+            w = (IWSession) obj;
+            w.getReference().setConnection(this);
+            w.getReference().getJSession().setSpecifiedAcknowledgeMode(orgAckmode);
             if (mStarted) {
                 // Exception may happen here for some JMS servers if they are disconnected
-                w.getJSession().start();
+                w.getReference().getJSession().start();
             }
             mSessions.add(w);
 
@@ -252,7 +253,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     public void close() throws JMSException {
         // Close all sessions (application level-close)
         while (!mSessions.isEmpty()) {
-            WSession s = (WSession) mSessions.get(0);
+            Session s = (Session) mSessions.get(0);
             s.close();
         }
         
@@ -282,7 +283,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public QueueSession createQueueSession(boolean transacted, int acknowledgeMode)
         throws JMSException {
-        return (WQueueSession) createSessionByApplication(javax.jms.QueueSession.class,
+        return (QueueSession) createSessionByApplication(javax.jms.QueueSession.class,
             transacted, acknowledgeMode);
     }
 
@@ -296,7 +297,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public TopicSession createTopicSession(boolean transacted, int acknowledgeMode)
         throws JMSException {
-        return (WTopicSession) createSessionByApplication(javax.jms.TopicSession.class,
+        return (TopicSession) createSessionByApplication(javax.jms.TopicSession.class,
             transacted, acknowledgeMode);
     }
 
@@ -310,7 +311,7 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      */
     public Session createSession(boolean transacted, int acknowledgeMode)
         throws JMSException {
-        return (WSession) createSessionByApplication(javax.jms.Session.class, transacted,
+        return (Session) createSessionByApplication(javax.jms.Session.class, transacted,
             acknowledgeMode);
     }
 
@@ -340,8 +341,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
         }
         mClientID = clientID;
         for (Iterator it = mSessions.iterator(); it.hasNext();/*-*/) {
-            WSession s = (WSession) it.next();
-            JSession j = s.getJSession();
+            IWSession s = (IWSession) it.next();
+            JSession j = s.getReference().getJSession();
             j.setClientID(clientID);
         }
     }
@@ -355,12 +356,12 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     public ConnectionMetaData getMetaData() throws JMSException {
         ConnectionMetaData ret;
         if (!mSessions.isEmpty()) {
-            WSession s = (WSession) mSessions.get(0);
-            ret = s.getJSession().getConnectionMetaData();
+            IWSession s = (IWSession) mSessions.get(0);
+            ret = s.getReference().getJSession().getConnectionMetaData();
         } else {
-            WSession s = (WSession) createSessionByApplication(javax.jms.QueueSession.class, true,
+            IWSession s = (IWSession) createSessionByApplication(javax.jms.QueueSession.class, true,
                 Session.SESSION_TRANSACTED);
-            ret = s.getJSession().getConnectionMetaData();
+            ret = s.getReference().getJSession().getConnectionMetaData();
             s.close();
         }
 
@@ -395,8 +396,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     public void start() throws JMSException {
         mStarted = true;
         for (Iterator iter = mSessions.iterator(); iter.hasNext();/*-*/) {
-            WSession s = (WSession) iter.next();
-            s.getJSession().start();
+            IWSession s = (IWSession) iter.next();
+            s.getReference().getJSession().start();
         }
     }
 
@@ -408,8 +409,8 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
     public void stop() throws JMSException {
         mStarted = false;
         for (Iterator iter = mSessions.iterator(); iter.hasNext();/*-*/) {
-            WSession s = (WSession) iter.next();
-            s.getJSession().stop();
+            IWSession s = (IWSession) iter.next();
+            s.getReference().getJSession().stop();
         }
     }
 
@@ -480,8 +481,14 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      *
      * @param s session
      */
-    public void notifyWSessionClosedByApplication(WSession s) {
-        mSessions.remove(s);
+    public void notifyWSessionClosedByApplication(Object s) {
+    	for(Iterator iter = mSessions.iterator(); iter.hasNext();){
+    		if(((IWSession)iter.next()).getReference() == s){
+    			iter.remove();
+    			break;
+    		}
+    	}
+        //mSessions.remove(s);
     }
 
     /**

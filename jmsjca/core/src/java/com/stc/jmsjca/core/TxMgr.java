@@ -34,7 +34,7 @@ import java.util.Properties;
  * ManagedConnection will have one instance of this class and will reuse it.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class TxMgr {
     private TxMgrAdapter mTxMgrAdapter;

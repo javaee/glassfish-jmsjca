@@ -33,7 +33,7 @@ import java.util.Map;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JmxTest extends StcmsEndToEnd {
 

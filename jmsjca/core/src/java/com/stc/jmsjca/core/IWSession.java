@@ -14,27 +14,18 @@
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
-package com.stc.jmsjca.wl;
+package com.stc.jmsjca.core;
 
-import com.stc.jmsjca.core.RAJMSActivationSpec;
+import javax.jms.Session;
 
 /**
- * Encapsulates the configuration of a MessageEndpoint.
- *
- * @version $Revision: 1.7 $
- * @author misc
+ * This interface is introduced to make JMSJCA work on the appservers who uses creates a proxy
+ * or wrapper around the resources of a resource adapters. OC4J is one such application server
+ * 
+ * @author Vivek Chaudhary
+ * @version $Revision: 1.1 $
  */
-public class RAWLActivationSpec extends RAJMSActivationSpec {
-
-    /**
-     * isValidDestinationName
-     * Can be overridden if there are special limitations on the destination
-     * names in Wave.
-     *
-     * @param name String
-     * @return boolean
-     */
-    public boolean isValidDestinationName(String name) {
-        return !empty(name);
-    }
+public interface IWSession extends Session {
+    public WSession getReference();
+    
 }

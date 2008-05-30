@@ -38,7 +38,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     

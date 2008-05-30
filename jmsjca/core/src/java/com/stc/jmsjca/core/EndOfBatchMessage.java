@@ -30,7 +30,7 @@ import java.util.Enumeration;
  * Signals the end of a batch of messages
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class EndOfBatchMessage implements Message {
     private static final Localizer LOCALE = Localizer.get();

@@ -54,7 +54,7 @@ import junit.framework.TestCase;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Perf2 extends TestCase {
     final int N = 100000;

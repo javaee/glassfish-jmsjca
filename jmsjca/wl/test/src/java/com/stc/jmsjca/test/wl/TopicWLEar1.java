@@ -33,7 +33,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class TopicWLEar1 extends TopicEndToEnd {
     /**

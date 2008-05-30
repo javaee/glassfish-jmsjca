@@ -37,7 +37,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJBossObjectFactory.class);

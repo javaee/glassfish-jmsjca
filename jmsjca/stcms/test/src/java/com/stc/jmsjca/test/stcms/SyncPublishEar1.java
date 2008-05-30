@@ -27,7 +27,7 @@ import java.util.Properties;
  * Tests the sync mode
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SyncPublishEar1 extends PublishEar1 {
 
