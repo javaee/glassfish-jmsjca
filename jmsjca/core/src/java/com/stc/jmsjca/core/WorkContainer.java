@@ -44,7 +44,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -285,6 +285,11 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         }
         SC sc = new SC();
         
+        Transaction tx = null;
+        if (mDelivery.mActivation.isCMT()) {
+            tx = mDelivery.getTransaction(true);
+        }
+        
         // Deliver messages
         for (int i = 0, n = mMsgs.size(); i < n; i++) {
             Message message = (Message) mMsgs.get(i);
@@ -314,6 +319,13 @@ public class WorkContainer implements javax.resource.spi.work.Work,
             sc.waitForAck(mResult.getNOnMessageWasCalled());
         }
         
+        // If the transaction was moved to a different thread, take it back
+        if (!mResult.getBeforeDeliveryFailed() && mDelivery.mActivation.isCMT()) {
+            if (mDelivery.mHoldUntilAck && mDelivery.getTransaction(true) == null && tx != null) {
+                mDelivery.getTxMgr().resume(tx);
+            }
+        }
+        
         if (sLog.isDebugEnabled()) {
             sLog.debug("WorkContainer.deliver() -- end");
         }
@@ -341,7 +353,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         private int mAcksExpected;
         private int mAcksReceived;
         private boolean mIsRollbackOnly;
-        private Transaction mTx;
+//        private Transaction mTx;
         private Semaphore mSemaphore = new Semaphore(0);
 
         public synchronized void ack(boolean isRollbackOnly, Message m) throws JMSException {
@@ -357,9 +369,9 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         }
         
         public void waitForAck(int acksExpected) {
-            if (mDelivery.mActivation.isCMT()) {
-                mTx = mDelivery.getTransaction(true);
-            }
+//            if (mDelivery.mActivation.isCMT()) {
+//                mTx = mDelivery.getTransaction(true);
+//            }
 
             synchronized (this) {
                 mAcksExpected = acksExpected;
@@ -379,20 +391,20 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 mResult.setRollbackOnly(true);
             }
 
-            // If the transaction was moved to a different thread, take it back
-            try {
-                if (!mResult.getBeforeDeliveryFailed() && mDelivery.mActivation.isCMT()) {
-                    if (mDelivery.mHoldUntilAck && mDelivery.getTransaction(true) == null) {
-                        mDelivery.getTxMgr().resume(mTx);
-                    }
-
-                    if (mDelivery.mHoldUntilAck && mIsRollbackOnly) {
-                        mDelivery.getTransaction(true).setRollbackOnly();
-                    }
-                }
-            } catch (Exception e) {
-                sLog.error(LOCALE.x("E100: Could not restore transaction: {0}", e), e);
-            }
+//            // If the transaction was moved to a different thread, take it back
+//            try {
+//                if (!mResult.getBeforeDeliveryFailed() && mDelivery.mActivation.isCMT()) {
+//                    if (mDelivery.mHoldUntilAck && mDelivery.getTransaction(true) == null) {
+//                        mDelivery.getTxMgr().resume(mTx);
+//                    }
+//
+//                    if (mDelivery.mHoldUntilAck && mIsRollbackOnly) {
+//                        mDelivery.getTransaction(true).setRollbackOnly();
+//                    }
+//                }
+//            } catch (Exception e) {
+//                sLog.error(LOCALE.x("E100: Could not restore transaction: {0}", e), e);
+//            }
         }
     }
 }

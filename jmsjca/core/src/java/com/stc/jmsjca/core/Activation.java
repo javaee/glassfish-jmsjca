@@ -74,7 +74,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -216,6 +216,7 @@ public class Activation extends ActivationBase {
                 mIsCMT = !forceBMT;
             }
             
+            mIsXAEmulated = Utility.getSystemProperty(Options.NOXA, Utility.isTrue(p.getProperty(Options.NOXA), false));
             // Extract options for redelivery handling
             mRedeliveryRedirect = Utility.isTrue(p.getProperty(Options.In.OPTION_REDIRECT), false);
             mWrapAlways = "1".equals(p.getProperty(Options.In.OPTION_REDELIVERYWRAP, "1"));

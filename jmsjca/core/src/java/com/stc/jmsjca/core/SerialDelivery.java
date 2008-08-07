@@ -33,7 +33,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -163,6 +163,14 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mEndpoint = null;
         }
 
+        try {
+            if (mSession != null) {
+                mSession.close();
+            }
+        } catch (Exception ex) {
+            sLog.warn(LOCALE.x("E087: Error while closing session: {0}", ex), ex);
+        }
+        
         try {
             if (mConnection != null) {
                 mConnection.close();

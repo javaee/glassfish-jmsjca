@@ -55,7 +55,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -164,6 +164,14 @@ public abstract class Delivery {
          * Closes any allocated resources.
          */
         public void destroy() {
+            if (mSession != null) {
+                try {
+                    mSession.close();
+                } catch (JMSException ignore) {
+                    // ignore
+                }
+                mSession = null;
+            }
             if (mConn != null) {
                 try {
                     mConn.close();
@@ -171,12 +179,11 @@ public abstract class Delivery {
                     // ignore
                 }
                 mConn = null;
-                mSession = null;
+            }
                 mDest = null;
                 mDestName = null;
                 mProducer = null;
             }
-        }
         
         private Connection getConnection(boolean isTopic) throws JMSException {
             if (mConn != null) {
@@ -399,7 +406,9 @@ public abstract class Delivery {
                     } catch (JMSException ignore) {
                         // ignore
                     }
-                    newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, correlationId);
+                    if(correlationId != null){
+                        newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, correlationId);
+                    }
                     
                     if (spec.getClientId() != null) {
                         newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CLIENTID, spec.getClientId());

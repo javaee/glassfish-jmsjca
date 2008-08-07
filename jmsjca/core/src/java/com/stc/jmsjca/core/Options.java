@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public interface Options {
     /**
@@ -84,6 +84,12 @@ public interface Options {
          * Specifies an override selector
          */
         String OPTION_SELECTOR = "JMSJCA.selector";
+        
+        /**
+         * The receive time out used in SyncWorkers receive, to consume messages.
+         *  
+         */
+        String RECEIVE_TIMEOUT = "JMSJCA.receivetimeout";
     }
     
     /**

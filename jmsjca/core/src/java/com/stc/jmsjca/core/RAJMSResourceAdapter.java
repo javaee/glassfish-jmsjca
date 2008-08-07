@@ -59,12 +59,14 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
-    private static final long RETRY_INTERVAL_MS = 1000 * 3; // changed to 3 second to give ConfigMBean more time to load
-    private static final int RETRY_COUNT = 10 * 6; // increase retry count as well
+    //cr 6675833 - improved project deloyment time on AIX box when ldap message server url lookup is used in the project environment
+    private static final long RETRY_INTERVAL_MS = 1000; //1000 * 3; 
+    //cr 6675833 - improved project deloyment time on AIX box when ldap message server url lookup is used in the project environment
+    private static final int RETRY_COUNT = 0; //10 * 6; 
     private String mConnectionURL;
     private String mUserName;
     private String mPassword;

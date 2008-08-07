@@ -42,7 +42,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -108,8 +108,8 @@ java.io.Serializable {
         
         ret.host = (String) mBeanServer.getAttribute(objName, "host");   
         ret.port = (String) mBeanServer.getAttribute(objName, "port");
-        ret.password = (String) mBeanServer.getAttribute(objName, "admin-user-name");
-        ret.username = (String) mBeanServer.getAttribute(objName, "admin-password");
+        ret.password = (String) mBeanServer.getAttribute(objName, "admin-password");
+        ret.username = (String) mBeanServer.getAttribute(objName, "admin-user-name");
         
         return ret;
     }

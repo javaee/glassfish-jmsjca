@@ -34,6 +34,7 @@ import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * This delivery class is used for those JMS servers that do not support
@@ -100,7 +101,7 @@ public class SyncDelivery extends Delivery {
     /**
      * receive-timeout
      */
-    public static final int TIMEOUT = 3000;
+    private int TIMEOUT = 10000; // will be overridden in constructor
     /**
      * batch will be "truncated" if no messages were received for x milliseconds
      */
@@ -127,6 +128,13 @@ public class SyncDelivery extends Delivery {
      */
     public SyncDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
+        try{
+            Properties p = new Properties();
+            a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(),null, null);
+            String receivetimeout = p.getProperty(Options.In.RECEIVE_TIMEOUT);
+            TIMEOUT = Integer.parseInt(receivetimeout);
+        }catch(Exception ignore){
+        }
         
         if (a.getActivationSpec().getDeliveryConcurrencyMode() == 
             RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
@@ -141,6 +149,7 @@ public class SyncDelivery extends Delivery {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("number of endpoints specified to be " + mNThreads);
+            sLog.debug("RECEIVE TIMEOUT of endpoints specified to be " + TIMEOUT);
         }
     }
 
@@ -521,6 +530,14 @@ public class SyncDelivery extends Delivery {
          * Closes the allocated resources. Must be called after the thread has ended.
          */
         private void close() {
+            if (mSess != null) {
+                try {
+                    mSess.close();
+                } catch (JMSException e) {
+                    sLog.warn(LOCALE.x("E061: Non-critical failure to close a message consumer: {0}", e), e);
+                }
+                mSess = null;
+            }
             if (mCons != null) {
                 try {
                     mCons.close();

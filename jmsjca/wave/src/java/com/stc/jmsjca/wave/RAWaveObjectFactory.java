@@ -44,7 +44,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -159,7 +159,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @return boolean true if the coonnection is invalid
      */
     public boolean isInvalid(XManagedConnection con) {
-        boolean isInvalid = false;
+        boolean isInvalid = true;
         try {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("isInvalid");
