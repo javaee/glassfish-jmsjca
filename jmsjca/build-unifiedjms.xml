@@ -169,6 +169,13 @@
             <zipfileset prefix="META-INF" file="${jmsjca.maven.work.dir}/unifiedjms-mft/MANIFEST.MF" />
         </zip>
 
+        <zip destfile="${jmsjca.maven.artefacts.dir}/rars/sun-jms-adapter.rar" >
+            <fileset dir="${jmsjca.artefacts.dir}">
+                <include name="com.stc.jmsjca.core.jar" />
+            </fileset>
+            <fileset file="${jmsjca.xxx.rar.jar.path}"/>
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+        </zip>
         <!-- ===== JAVA.NET REPOSITORY ===== -->
         
         <taskdef resource="maven-repository-importer.properties">
@@ -185,6 +192,10 @@
                  jar="${jmsjca.maven.artefacts.dir}/rars/raunifiedjms.rar"  
                  pom="buildtools/pom/raunifiedjms.pom" 
                  srczip="${jmsjca.maven.artefacts.dir}/java-sources/jmsjca-${jmsjca.maven.version}.zip" 
+             />
+            <artifact 
+                 jar="${jmsjca.maven.artefacts.dir}/rars/sun-jms-adapter.rar"  
+                 pom="buildtools/pom/sun-jms-adapter.pom" 
              />
              <!-- INDIVIDUAL JARS -->
             <artifact 

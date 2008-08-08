@@ -23,9 +23,15 @@ import javax.jms.Session;
  * or wrapper around the resources of a resource adapters. OC4J is one such application server
  * 
  * @author Vivek Chaudhary
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public interface IWSession extends Session {
+    
+    /**
+     * Returns the associated session
+     * 
+     * @return WSession
+     */
     public WSession getReference();
     
 }

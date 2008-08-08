@@ -21,6 +21,7 @@ import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Semaphore;
+import com.stc.jmsjca.util.Utility;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -101,7 +102,7 @@ public class SyncDelivery extends Delivery {
     /**
      * receive-timeout
      */
-    private int TIMEOUT = 10000; // will be overridden in constructor
+    private int mReceiveTimeout = 10000; // will be overridden in constructor
     /**
      * batch will be "truncated" if no messages were received for x milliseconds
      */
@@ -128,13 +129,9 @@ public class SyncDelivery extends Delivery {
      */
     public SyncDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
-        try{
-            Properties p = new Properties();
-            a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(),null, null);
-            String receivetimeout = p.getProperty(Options.In.RECEIVE_TIMEOUT);
-            TIMEOUT = Integer.parseInt(receivetimeout);
-        }catch(Exception ignore){
-        }
+        Properties p = new Properties();
+        a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(),null, null);
+        mReceiveTimeout = Utility.getIntProperty(p, Options.In.RECEIVE_TIMEOUT, mReceiveTimeout);
         
         if (a.getActivationSpec().getDeliveryConcurrencyMode() == 
             RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
@@ -149,7 +146,7 @@ public class SyncDelivery extends Delivery {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("number of endpoints specified to be " + mNThreads);
-            sLog.debug("RECEIVE TIMEOUT of endpoints specified to be " + TIMEOUT);
+            sLog.debug("RECEIVE TIMEOUT of endpoints specified to be " + mReceiveTimeout);
         }
     }
 
@@ -578,7 +575,7 @@ public class SyncDelivery extends Delivery {
                 tx = getTransaction(true);
             }
             
-            Message m = mCons.receive(TIMEOUT);
+            Message m = mCons.receive(mReceiveTimeout);
             if (m != null) {
                 if (mHoldUntilAck) {
                     m = wrapMsg(m).setBatchSize(mBatchSize, coord, -1);
@@ -612,7 +609,7 @@ public class SyncDelivery extends Delivery {
             Transaction tx = getTransaction(mHoldUntilAck);
 
             for (int i = 0; i < mBatchSize; i++) {
-                Message m = mCons.receive(i == 0 ? TIMEOUT : TIMEOUTBATCH);                
+                Message m = mCons.receive(i == 0 ? mReceiveTimeout : TIMEOUTBATCH);                
                 if (m == null) {
                     break;
                 } else {
@@ -670,7 +667,7 @@ public class SyncDelivery extends Delivery {
 
             // Read and deliver batch
             for (int i = 0; i < mBatchSize; i++) {
-                Message m = mCons.receive(i == 0 ? TIMEOUT : TIMEOUTBATCH);
+                Message m = mCons.receive(i == 0 ? mReceiveTimeout : TIMEOUTBATCH);
                 if (m == null) {
                     break;
                 } else {
@@ -719,7 +716,7 @@ public class SyncDelivery extends Delivery {
             // Transacted mode
             
             // Receive
-            Message m = mCons.receive(TIMEOUT);
+            Message m = mCons.receive(mReceiveTimeout);
             
             if (m != null) {
                 // Optionally wrap for ack() call
