@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1332,7 +1332,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         }
     }
     
-    private void doTestDlq(boolean xa, boolean cc) throws Throwable {
+    private void doTestDlq(boolean xa, boolean cc, boolean longdelay) throws Throwable {
         EmbeddedDescriptor dd = getDD();
         QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
             EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
@@ -1345,8 +1345,10 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         
         Passthrough p = createPassthrough(mServerProperties);
 
+        long delay = longdelay ? 6000 : 1;
+        
         // queue will be removed by topic in TestMessageBean
-        String handling = "4:1;5:move(queue:" + p.getTopic2Name() + ")";
+        String handling = "4:" + delay + ";5:move(queue:" + p.getTopic2Name() + ")";
         
         // Test both ways of setting the redelivery handling
         StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
@@ -1370,8 +1372,12 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         
         Container c = createContainer();
         try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
             c.redeployModule(mTestEar.getAbsolutePath());
-            p.setNMessagesToSend(100);
+            p.setNMessagesToSend(longdelay ? 3 : 100);
             p.passFromQ1ToT2();
             
             QueueSource q1 = (QueueSource) p.get(p.getQueue1Name());
@@ -1465,7 +1471,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             }
             
             // Send Map msg
-            {
+            if (!longdelay) {
                 MapMessage m1 = q1.getSession().createMapMessage();
                 m1.setBoolean("b1", true);
                 m1.setBytes("bs", new byte[] { 2, 3});
@@ -1483,7 +1489,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             }
             
             // Send Stream msg
-            {
+            if (!longdelay) {
                 StreamMessage m1 = q1.getSession().createStreamMessage();
                 m1.writeBoolean(true);
                 m1.writeBytes(new byte[] { 2, 3});
@@ -1511,19 +1517,23 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
 
     public void testDlqMoveSerialXA() throws Throwable {
-        doTestDlq(true, false);
+        doTestDlq(true, false, false);
     }
 
     public void testDlqMoveCCXA() throws Throwable {
-        doTestDlq(true, true);
+        doTestDlq(true, true, false);
+    }
+
+    public void testDlqMoveCCXALong() throws Throwable {
+        doTestDlq(true, true, true);
     }
 
     public void testDlqMoveSerialBMT() throws Throwable {
-        doTestDlq(false, false);
+        doTestDlq(false, false, false);
     }
 
     public void testDlqMoveCCBMT() throws Throwable {
-        doTestDlq(false, true);
+        doTestDlq(false, true, false);
     }
     
     public void testDlqUndeploy() throws Throwable {

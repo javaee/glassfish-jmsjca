@@ -193,6 +193,18 @@ public class SyncDelivery extends Delivery {
                 mActivation.isTopic(), 
                 mActivation.getActivationSpec(), 
                 mActivation.getRA());
+            javax.jms.Session testSession = o.createSession(
+                mConnection,
+                mActivation.isCMT() && !mActivation.isXAEmulated(),
+                getSessionClass(),
+                mActivation.getRA(),
+                mActivation.getActivationSpec(),
+                true,
+                javax.jms.Session.SESSION_TRANSACTED);
+            createDLQDest(testSession);
+            testSession.close();
+
+
             mContextName = LocalizedString.valueOf(getActivation().getActivationSpec().getContextName()); 
             mConnection.start();
             

@@ -44,7 +44,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -592,8 +592,10 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
                 method.invoke(waveMBean, args);
                 ret = waveMBean;
             } catch (Exception e) {
-                throw Exc.jmsExc(LOCALE.x("E904: Error instantiating or configuring MBean for "
-                    + "external JMS Grid daemon management: {0}", e), e);
+                sLog.info(LOCALE.x("E904: Error instantiating or configuring MBean for "
+                    + "external JMS Grid daemon management: {0}", e));
+//                throw Exc.jmsExc(LOCALE.x("E904: Error instantiating or configuring MBean for "
+//                    + "external JMS Grid daemon management: {0}", e), e);
             }
         }
         

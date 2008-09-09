@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction;
+import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -55,7 +57,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -337,27 +339,37 @@ public abstract class Delivery {
             super(spec, stats, lookbackSize);
         }
 
-        protected void delayMessageDelivery(Message m, Encounter e, long delay) {
+        protected void delayMessageDelivery(Message m, Encounter e, long delay
+            , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             if (delay == 0) {
                 return;
             }
-            if (delay % 1000 == 0) {
-                sLog.info(LOCALE.x("E025: Message with msgid=[{0}] was seen {1}"
-                    + " times. Message delivery will be delayed for {2} ms.", 
-                    e.getMsgid(), Integer.toString(e.getNEncountered()), new Long(delay)));
+            if (logmsg != null) {
+                sLog.info(logmsg);
             }
             mActivation.sleepAndMonitorStatus(delay);
         }
 
-        protected void deleteMessage(Message m, Encounter e) {
+        protected void longDelayMessageDelivery(Message m, Encounter e, long delay
+            , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+            if (logmsg != null) {
+                sLog.info(logmsg);
+            }
+            Cookie c = (Cookie) cookie;
+            c.getResults().setRollbackOnly(true);
+            mActivation.sleepAndMonitorStatus(delay);
+        }
+
+        protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             sLog.info(LOCALE.x("E026: Message with msgid=[{0}] was seen {1} times. It "
                 + "will be acknowledged without being delivered.", 
                 e.getMsgid(), Integer.toString(e.getNEncountered())));
         }
 
         protected void move(Message m, Encounter e, boolean isTopic, 
-            String destinationName, Object cookie) throws Exception {
-            ConnectionForMove x = (ConnectionForMove) cookie;
+            String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
+            
+            ConnectionForMove x = ((Cookie) cookie).getConnectionForMove();
             
             if (x.isBusy()) {
                 x.destroy();
@@ -374,7 +386,7 @@ public abstract class Delivery {
                 } else {
                     xa = mActivation.getObjectFactory().getXAResource(true, s);
                 }
-                getTransaction(true).enlistResource(xa);
+                getTransactionNotNull().enlistResource(xa);
                 // Note: MUST delist lateron!
             }
             
@@ -594,6 +606,35 @@ public abstract class Delivery {
             mStats.removeMessageEndpoint();
         }
     }
+    
+    /**
+     * Creates a DLQ destination if appropriate. This can be used for testing the 
+     * redelivery string
+     * 
+     * @param sess Session
+     * @throws JMSException on error
+     */
+    protected void createDLQDest(javax.jms.Session sess) throws JMSException {
+        ActionInstruction[] a = RedeliveryHandler.parse(mActivation.getActivationSpec().getRedeliveryHandling(), 
+            mActivation.getActivationSpec().getDestination(), 
+            mActivation.getActivationSpec().getDestinationType());
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] instanceof RedeliveryHandler.Move) {
+                RedeliveryHandler.Move m = (RedeliveryHandler.Move) a[i];
+
+                // Test if the destination can be created
+                mActivation.getObjectFactory().createDestination(
+                    sess,
+                    mActivation.isCMT() && !mActivation.isXAEmulated(),
+                    m.isTopic(),
+                    mActivation.getActivationSpec(),
+                    null,
+                    mActivation.getRA(),
+                    m.getDestinationName());
+            }
+        }
+    }
+
     
     /**
      * Encapsulation of an endpoint
@@ -893,7 +934,7 @@ public abstract class Delivery {
         result.setRollbackOnly(true);
         if (mActivation.isCMT()) {
             try {
-                getTransaction(true).setRollbackOnly();
+                getTransactionNotNull().setRollbackOnly();
             } catch (Exception e) {
                 result.setShouldDiscardEndpoint(true);
                 if (rethrow) {
@@ -957,7 +998,7 @@ public abstract class Delivery {
         if (!result.getOnMessageWasBypassed()) {
             try {
                 if (result.getIsRollbackOnly()) {
-                    getTransaction(true).setRollbackOnly();
+                    getTransactionNotNull().setRollbackOnly();
                 }
                 target.afterDelivery();
             } catch (Exception e) {
@@ -978,9 +1019,13 @@ public abstract class Delivery {
                 // manually and mark the endpoint for release so that the
                 // container will not reuse it to avoid inconsistent states.
                 result.setShouldDiscardEndpoint(true);
-                Transaction tx = getTransaction(true);
+                Transaction tx = getTransactionNotNull();
                 tx.delistResource(mdb.getXAResource(), XAResource.TMSUCCESS);
+                if (result.getIsRollbackOnly()) {
+                    tx.rollback();
+                } else {
                 tx.commit();
+                }
             } catch (Exception e) {
                 result.setAfterDeliveryFailed(true);
                 result.setShouldDiscardEndpoint(true);
@@ -1046,6 +1091,33 @@ public abstract class Delivery {
         }
     }
 
+    private static class Cookie extends RedeliveryHandler.BaseCookie {
+        private DeliveryResults mResults;
+        private ConnectionForMove mConnectionForMove;
+        
+        public Cookie(DeliveryResults results, ConnectionForMove connectionForMove) {
+            mResults = results;
+            mConnectionForMove = connectionForMove;
+        }
+        /**
+         * Getter for results
+         *
+         * @return DeliveryResults
+         */
+        public final DeliveryResults getResults() {
+            return mResults;
+        }
+        /**
+         * Getter for connectionForMove
+         *
+         * @return ConnectionForMove
+         */
+        public final ConnectionForMove getConnectionForMove() {
+            return mConnectionForMove;
+        }
+        
+    }
+
     /**
      * Delivers the message to the specified MessageEndpoint; can be called both from CC
      * and serial delivery. In the case of CC, this is called by a worker thread. If an
@@ -1073,7 +1145,7 @@ public abstract class Delivery {
             if (mActivation.shouldWrapAlways()) {
                 m = wrapMsg(m);
             }
-            boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(connectionForMove, m);
+            boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(new Cookie(result, connectionForMove), m);
             
             if (!shouldDeliver) {
                 result.setOnMessageWasBypassed(true);
@@ -1181,6 +1253,20 @@ public abstract class Delivery {
         return mTxMgr;
     }
 
+    /**
+     * Returns the current transaction
+     * 
+     * @return tx
+     */
+    protected Transaction getTransactionNotNull() {
+        Transaction ret = getTransaction(true);
+        if (ret == null) {
+            throw Exc.rtexc(LOCALE.x("E203: A transaction context was expected, but there"
+                + " is no transaction associated with the current thread."));
+        }
+        return ret;
+    }
+        
     /**
      * Returns the current transaction
      * 

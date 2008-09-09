@@ -44,7 +44,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -229,7 +229,8 @@ public class WorkContainer implements javax.resource.spi.work.Work,
             }
         } catch (Throwable e) {
             Exception ex = e instanceof Exception ? (Exception) e : new Exception(e);
-            sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}", e), e);
+            sLog.warn(LOCALE.x("E064: Unexpected exception encountered while executing a JMS CC-session: {0}. " 
+                + "Associated exception: {1}", e, mResult.getException()), e);
             mDelivery.mActivation.distress(ex);
         } finally {
             setState(STATE_IDLE);

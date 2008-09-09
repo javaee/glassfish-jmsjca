@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -150,7 +151,7 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
@@ -159,30 +160,46 @@ public abstract class RedeliveryHandler {
     private HashMap mOldMsgs;
     private HashMap mNewMsgs;
     private boolean mLoggedOnce;
-    private Action[] mActions;
+    private final ActionInstruction[] mImmutableActions;
+    private final ExecutableAction[] mExecutables;
     private String mActionStr;
     private RAJMSActivationSpec mActivationSpec;
 
     private static final Localizer LOCALE = Localizer.get();
     
     /**
-     * A baseclass of all actions that could happen in response to a a repeated 
-     * redelivered message
+     * Allows information to be passed from the concrete implementation of the 
+     * RedeliveryHandler to the concrete implementations of the actions
+     * 
+     * @author fkieviet
      */
-    public abstract static class Action {
-        private int mAt;
+    public static class BaseCookie {
+    }
+    
+    /**
+     * A baseclass of all actions that could happen in response to a a repeated 
+     * redelivered message.
+     *  
+     * There are two parts to an instruction: one that holds the immutable data as 
+     * specified by the user. The other is what can be executed, and which may be 
+     * stateful. The ActionInstruction is the former. An ActionInstruction is immutable
+     * and is shared between all messages being redelivered.
+     * 
+     */
+    public abstract static class ActionInstruction {
+        private final int mAt;
         
         /**
          * Constructor
          * 
          * @param at at which encounter to invoke
          */
-        public Action(int at) {
+        public ActionInstruction(int at) {
             if (at <= 0) {
                 throw Exc.rtexc(LOCALE.x("E111: Index {0} should be > 0", Integer.toString(at)));
             }
-            if (at > 5000) {
-                throw Exc.rtexc(LOCALE.x("E112: Index {0} should be < 5000", Integer.toString(at)));
+            if (at > 50000000) {
+                throw Exc.rtexc(LOCALE.x("E112: Index {0} should be < 50000000", Integer.toString(at)));
             }
             mAt = at;
         }
@@ -213,6 +230,21 @@ public abstract class RedeliveryHandler {
         }
         
         /**
+         * @return an instance that can be executed
+         */
+        public abstract ExecutableAction getInstance();
+    }
+    
+    /**
+     * There are two parts to an instruction: one that holds the immutable data as 
+     * specified by the user. The other is what can be executed, and which may be 
+     * stateful, which means that each instance of a redelivery has its own private 
+     * copy of the executable instance. The ExecutableAction is the second group.
+     * 
+     * @author fkieviet
+     */
+    public interface ExecutableAction {
+        /**
          * Indicates if this action has determined if the message should be delivered
          * to the endpoint, or should be acknowledged without delivering.
          * 
@@ -224,13 +256,23 @@ public abstract class RedeliveryHandler {
          * @throws Exception on failure
          */
         public abstract boolean shouldDeliver(RedeliveryHandler owner, Message m, 
-            Encounter e, Object cookie) throws Exception;
+            Encounter e, BaseCookie cookie) throws Exception;
+        
+        /**
+         * @return true if the action cursor should NOT advance to the next action
+         */
+        public boolean shouldExecuteAgain();
+        
+        /**
+         * @return the instruction that is tied to this (has created this) objet
+         */
+        public ActionInstruction getInstruction();
     }
     
     /**
      * No action; always at the beginning
      */
-    public static class VoidAction extends Action {
+    public static class VoidAction extends ActionInstruction implements ExecutableAction {
         /**
          * Constructor
          */
@@ -246,22 +288,43 @@ public abstract class RedeliveryHandler {
         }
 
         /**
-         * @see com.stc.jmsjca.core.RedeliveryHandler.Action#shouldDeliver(
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#shouldDeliver(
          * com.stc.jmsjca.core.RedeliveryHandler, javax.jms.Message, 
          * com.stc.jmsjca.core.RedeliveryHandler.Encounter, 
          * com.stc.jmsjca.core.RedeliveryHandler.MessageMover)
          */
         public boolean shouldDeliver(RedeliveryHandler owner, Message m, Encounter e, 
-            Object cookie) throws Exception {
+            RedeliveryHandler.BaseCookie cookie) throws Exception {
             // Do nothing
             return true;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
+         */
+        public ExecutableAction getInstance() {
+            return this;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#shouldExecuteAgain()
+         */
+        public boolean shouldExecuteAgain() {
+            return false;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#getInstruction()
+         */
+        public ActionInstruction getInstruction() {
+            return this;
         }
     }
 
     /**
      * A delay action
      */
-    public static class Delay extends Action {
+    public static class Delay extends ActionInstruction implements ExecutableAction {
         /**
          * How to recognize a delay
          */
@@ -270,8 +333,8 @@ public abstract class RedeliveryHandler {
          * Compiled regex pattern
          */
         public static Pattern sPattern = Pattern.compile(PATTERN);
-        private long mDelay;
-        private static long MAX = 5000;
+        private final long mDelay;
+        private static final long MAX = 5000;
         
         /**
          * Constructor
@@ -305,22 +368,179 @@ public abstract class RedeliveryHandler {
         }
 
         /**
-         * @see com.stc.jmsjca.core.RedeliveryHandler.Action#shouldDeliver(
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#shouldDeliver(
          * com.stc.jmsjca.core.RedeliveryHandler, javax.jms.Message, 
          * com.stc.jmsjca.core.RedeliveryHandler.Encounter, 
          * com.stc.jmsjca.core.RedeliveryHandler.MessageMover)
          */
         public boolean shouldDeliver(RedeliveryHandler owner, Message m, Encounter e, 
-            Object cookie) throws Exception {
-            owner.delayMessageDelivery(m, e, mDelay);
+            BaseCookie cookie) throws Exception {
+            
+            LocalizedString logmsg = null;
+            if (mDelay % 1000 == 0) {
+                logmsg = LOCALE.x("E025: Message with msgid=[{0}] was seen {1}"
+                    + " times. Message delivery will be delayed for {2} ms.", 
+                    e.getMsgid(), Integer.toString(e.getNEncountered()), Long.toString(mDelay));
+            }
+
+            owner.delayMessageDelivery(m, e, mDelay, logmsg, cookie);
             return true;
         }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
+         */
+        public ExecutableAction getInstance() {
+            return this;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#shouldExecuteAgain()
+         */
+        public boolean shouldExecuteAgain() {
+            return false;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#getInstruction()
+         */
+        public ActionInstruction getInstruction() {
+            return this;
+        }
+    }
+
+    /**
+     * A delay action
+     */
+    public static class LongDelay extends ActionInstruction {
+        private long mDelay;
+        
+        /**
+         * Constructor
+         * 
+         * @param at when
+         * @param delay how long (ms)
+         * @throws Exception on invalid arguments
+         */
+        public LongDelay(int at, long delay) throws Exception {
+            super(at);
+            mDelay = delay;
+        }
+        
+        /**
+         * @return delay time in ms
+         */
+        public long getHowLong() {
+            return mDelay;
+        }
+        
+        /**
+         * @see java.lang.Object#toString()
+         */
+        public String toString() {
+            return "At " + getAt() + ": long delay for " + mDelay + " ms";
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
+         */
+        public ExecutableAction getInstance() {
+            return new LongDelayExecutable(this);
+        }
+    }
+    
+    /**
+     * A delay that exceeds the acceptable max to keep a thread tied and a transaction
+     * open (5000 ms, see source).
+     * 
+     * A long delay is split up in chunks of no longer than this limit. This object is
+     * stateful.
+     * 
+     * @author fkieviet
+     */
+    public static class LongDelayExecutable implements ExecutableAction {
+        private final LongDelay mInstruction;
+        private long mLeftToSleep;
+        private long mStartTime;
+        private boolean mIsDone;
+
+        /**
+         * @param instr the object that created this executable
+         */
+        public LongDelayExecutable(LongDelay instr) {
+            mInstruction = instr;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#getInstruction()
+         */
+        public ActionInstruction getInstruction() {
+            return mInstruction;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#shouldDeliver(
+         * com.stc.jmsjca.core.RedeliveryHandler, javax.jms.Message, 
+         * com.stc.jmsjca.core.RedeliveryHandler.Encounter, 
+         * com.stc.jmsjca.core.RedeliveryHandler.MessageMover)
+         */
+        public boolean shouldDeliver(RedeliveryHandler owner, Message m, Encounter e, 
+            BaseCookie cookie) throws Exception {
+            LocalizedString logmsg = null;
+            
+            if (mStartTime == 0) {
+                // First time that this is invoked...
+                mStartTime = System.currentTimeMillis();
+                mLeftToSleep = mInstruction.getHowLong();
+                mIsDone = false;
+                if (mInstruction.getHowLong() % 1000 == 0) {
+                    logmsg = LOCALE.x("E025: Message with msgid=[{0}] was seen {1}"
+                        + " times. Message delivery will be delayed for {2} ms.", 
+                        e.getMsgid(), Integer.toString(e.getNEncountered())
+                        , Long.toString(mInstruction.getHowLong()));
+                }
+            }
+            
+            long toSleep = Math.min(mLeftToSleep, Delay.MAX);
+            mLeftToSleep -= toSleep;
+            
+            long now = System.currentTimeMillis();
+            long target = mStartTime + mInstruction.getHowLong();
+
+            if (mLeftToSleep == 0 || (now + toSleep) > target) {
+                if ((now + toSleep) > target) {
+                    toSleep = Math.max(0, target - now);
+                }
+                mStartTime = 0;
+                owner.delayMessageDelivery(m, e, toSleep, null, cookie);
+                mIsDone = true;
+                return true;
+            } else {
+               owner.longDelayMessageDelivery(m, e, toSleep, logmsg, cookie);
+               return false;
+            }
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#shouldExecuteAgain()
+         */
+        public boolean shouldExecuteAgain() {
+            return !mIsDone;
+        }
+        
+        /**
+         * @see java.lang.Object#toString()
+         */
+        public String toString() {
+            return mInstruction  + "; isdone=" + mIsDone + "; left=" + mLeftToSleep;
+        }
+
     }
     
     /**
      * Moves a msg to a different queue or topic
      */
-    public static class Move extends Action {
+    public static class Move extends ActionInstruction implements ExecutableAction {
         /**
          * How to recognize a delay
          */
@@ -339,8 +559,8 @@ public abstract class RedeliveryHandler {
          */
         public static Pattern sArgPattern = Pattern.compile(ARGPATTERN);
         
-        private String mType; // either javax.jms.Queue or javax.jms.Topic
-        private String mName;
+        private final String mType; // either javax.jms.Queue or javax.jms.Topic
+        private final String mName;
         
         /**
          * @param at when to invoke
@@ -402,14 +622,35 @@ public abstract class RedeliveryHandler {
         }
 
         /**
-         * @see com.stc.jmsjca.core.RedeliveryHandler.Action#shouldDeliver(
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#shouldDeliver(
          * com.stc.jmsjca.core.RedeliveryHandler, javax.jms.Message, 
          * com.stc.jmsjca.core.RedeliveryHandler.Encounter, 
          * com.stc.jmsjca.core.RedeliveryHandler.MessageMover)
          */
         public boolean shouldDeliver(RedeliveryHandler owner, Message m, Encounter e, 
-            Object cookie) throws Exception {
+            BaseCookie cookie) throws Exception {
             owner.move(m, e, isTopic(), getDestinationName(), cookie);
+            return false;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
+         */
+        public ExecutableAction getInstance() {
+            return this;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#getInstruction()
+         */
+        public ActionInstruction getInstruction() {
+            return this;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#shouldExecuteAgain()
+         */
+        public boolean shouldExecuteAgain() {
             return false;
         }
     }
@@ -417,7 +658,7 @@ public abstract class RedeliveryHandler {
     /**
      * Deletes a msg
      */
-    public static class Delete extends Action {
+    public static class Delete extends ActionInstruction implements ExecutableAction {
         /**
          * How to recognize a delete
          */
@@ -445,14 +686,35 @@ public abstract class RedeliveryHandler {
         }
 
         /**
-         * @see com.stc.jmsjca.util.RepeatedRedeliveryActionParser.Action#process(
+         * @see com.stc.jmsjca.util.RepeatedRedeliveryActionParser.ActionInstruction#process(
          * com.stc.jmsjca.core.RedeliveryHandler.MessageMover, javax.jms.Message, 
          * com.stc.jmsjca.core.RedeliveryHandler.Encounter)
          */
         public boolean shouldDeliver(RedeliveryHandler owner, Message m, Encounter e, 
-            Object cookie) throws Exception {
-            owner.deleteMessage(m, e);
+            BaseCookie cookie) throws Exception {
+            owner.deleteMessage(m, e, cookie);
             return false;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
+         */
+        public ExecutableAction getInstance() {
+            return this;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#shouldExecuteAgain()
+         */
+        public boolean shouldExecuteAgain() {
+            return false;
+        }
+
+        /**
+         * @see com.stc.jmsjca.core.RedeliveryHandler.ExecutableAction#getInstruction()
+         */
+        public ActionInstruction getInstruction() {
+            return this;
         }
     }
 
@@ -478,7 +740,7 @@ public abstract class RedeliveryHandler {
      * @throws Exception on failure
      */
     protected abstract void move(Message m, Encounter e, boolean isTopic,
-        String destinationName, Object cookie) throws Exception;
+        String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception;
     
     /**
      * Gives the MDB the option to shut down the connector
@@ -497,14 +759,14 @@ public abstract class RedeliveryHandler {
      * @return array of actions
      * @throws JMSException upon parsing failure
      */
-    public static Action[] parse(String s, String destName, String destType) throws JMSException {
+    public static ActionInstruction[] parse(String s, String destName, String destType) throws JMSException {
         if (s.trim().length() == 0) {
-            return new Action[] {new VoidAction() };
+            return new ActionInstruction[] {new VoidAction() };
         }
         
         // Split the string in different actions
         String[] actions = s.split("\\s*;\\s*");
-        Action[] ret = new Action[actions.length];
+        ActionInstruction[] ret = new ActionInstruction[actions.length];
         
         // Go over all actions and try to parse each action
         int lastAt = 0;
@@ -522,7 +784,12 @@ public abstract class RedeliveryHandler {
                 if (m.matches()) {
                     String at = m.group(1);
                     String delay = m.group(2);
-                    ret[i] = new Delay(Integer.parseInt(at), Long.parseLong(delay));
+                    long delayl = Long.parseLong(delay);
+                    if (delayl <= Delay.MAX || delayl == Integer.MAX_VALUE) {
+                        ret[i] = new Delay(Integer.parseInt(at), delayl);
+                    } else {
+                        ret[i] = new LongDelay(Integer.parseInt(at), delayl);
+                    }
                     lastAt = ret[i].checkLast(lastAt);
                     if (sLog.isDebugEnabled()) {
                         sLog.debug(ret[i]);
@@ -563,7 +830,18 @@ public abstract class RedeliveryHandler {
                         throw Exc.jmsExc(LOCALE.x("E103: Move command should be last command"));
                     }
                     
+                    // Destination name substitution
+                    if (name.indexOf('$') >= 0) {
+                        if (!destName.startsWith(Options.LOCAL_JNDI_LOOKUP)) {
+                            // dlq_$ with Queue1 should become dql_Queue1
                     name = name.replaceAll("\\$", destName);
+                        } else {
+                            // dlq_$ with lookup://a/b/c should become lookup://a/b/dlq_c
+                            String preDestName =  destName.substring(0, destName.lastIndexOf("/") + 1);
+                            String postDestName = destName.substring(preDestName.length());
+                            name = preDestName + name.replaceAll("\\$", postDestName);
+                        }
+                    }                    
                     
                     ret[i] = new Move(Integer.parseInt(at), type, name, destType);
                     lastAt = ret[i].checkLast(lastAt);
@@ -593,8 +871,9 @@ public abstract class RedeliveryHandler {
         private int mActionCursor;
         private String mMsgid;
         private Map mStatefulRedeliveryProperties;
-        private Action[] mEncActions;
+        private ExecutableAction[] mEncActions;
         private String mEncActionString;
+        private boolean mEncActionsHaveChanged;
         
         /**
          * Constructor 
@@ -603,7 +882,7 @@ public abstract class RedeliveryHandler {
          * @param actions actions to perform upon redelivery
          * @param actionString for readback: actions to perform on redelivery
          */
-        public Encounter(String msgid, Action[] actions, String actionString) {
+        public Encounter(String msgid, ExecutableAction[] actions, String actionString) {
             mMsgid = msgid;
             mEncActions = actions;
             mEncActionString = actionString;
@@ -659,7 +938,7 @@ public abstract class RedeliveryHandler {
         /**
          * @return Actions
          */
-        public Action[] getEncActions() {
+        public ExecutableAction[] getEncActions() {
             return mEncActions;
         }
 
@@ -679,8 +958,9 @@ public abstract class RedeliveryHandler {
          * @param s actions in the form of a string for readback
          * @param newcursor index into array where the next action should take place
          */
-        public void setNewActions(Action[] a, String s, int newcursor) {
+        public void setNewActions(ExecutableAction[] a, String s, int newcursor) {
             mEncActions = a;
+            mEncActionsHaveChanged = true;
             mEncActionString = s;
             setActionCursor(newcursor);
         }
@@ -702,15 +982,29 @@ public abstract class RedeliveryHandler {
         mNewMsgs = new HashMap(mLookbackSize);
         
         // Setup actions
-        Action[] actions = new Action[0];
+        ActionInstruction[] actions = new ActionInstruction[0];
         try {
             actions = parse(spec.getRedeliveryHandling(), 
                 spec.getDestination(), spec.getDestinationType());
         } catch (Exception e) {
             sLog.warn(LOCALE.x("E050: Unexpected exception parsing of redelivery actions: {0}", e), e);
         }
-        mActions = sanitizeActions(actions);
+        mImmutableActions = sanitizeActions(actions);
         mActionStr = spec.getRedeliveryHandling();
+        
+        // Try to create a reusable executable array. Reusable means that the executable 
+        // array is the same as the non-executable array. If they are not the same,
+        // we have stateful actions and we need to create a new array for each encounter
+        ExecutableAction[] execuables = new ExecutableAction[mImmutableActions.length];
+        boolean areThereMutableActions = false;
+        for (int i = 0; i < execuables.length; i++) {
+            execuables[i] = mImmutableActions[i].getInstance();
+            if (execuables[i] != mImmutableActions[i]) {
+                areThereMutableActions = true;
+                break;
+            }
+        }
+        mExecutables = areThereMutableActions ? null : execuables;
     }
     
     /**
@@ -720,14 +1014,14 @@ public abstract class RedeliveryHandler {
      * @param actions actions to cleanup
      * @return valid action array
      */
-    private static Action[] sanitizeActions(Action[] actions) {
-        Action[] ret;
+    private static ActionInstruction[] sanitizeActions(ActionInstruction[] actions) {
+        ActionInstruction[] ret;
         // Ensure that there is an action with index = 1: there are ALWAYS actions, and
         // the first action (i.e. with index = 1) ALWAYS exists.
         if (actions.length == 0) {
-            ret = new Action[] {new VoidAction() };
+            ret = new ActionInstruction[] {new VoidAction() };
         } else if (actions[0].getAt() != 1) {
-            ret = new Action[actions.length + 1];
+            ret = new ActionInstruction[actions.length + 1];
             ret[0] = new VoidAction();
             for (int i = 0; i < actions.length; i++) {
                 ret[i + 1] = actions[i];
@@ -861,8 +1155,9 @@ public abstract class RedeliveryHandler {
         }
     }
     
-    private void setActions(String s, Encounter enc) throws JMSException {
-        Action[] a = parse(s, mActivationSpec.getDestination(), mActivationSpec.getDestinationType());
+    private void setActions(String redeliveryString, Encounter enc) throws JMSException {
+        ActionInstruction[] a = parse(redeliveryString, 
+            mActivationSpec.getDestination(), mActivationSpec.getDestinationType());
         a = sanitizeActions(a);
         
         // Calculate action cursor
@@ -876,8 +1171,13 @@ public abstract class RedeliveryHandler {
             }
         }
 
+        ExecutableAction[] execs = new ExecutableAction[a.length];
+        for (int i = 0; i < execs.length; i++) {
+            execs[i] = a[i].getInstance();
+        }
+
         // Update
-        enc.setNewActions(a, s, newcursor);
+        enc.setNewActions(execs, redeliveryString, newcursor);
     }
     
     /**
@@ -889,7 +1189,7 @@ public abstract class RedeliveryHandler {
      * @return true if the message should be delivered to the endpoint; false if the
      * message just should be acknowledged.
      */
-    public boolean shouldDeliver(Object cookie, Message m) {
+    public boolean shouldDeliver(RedeliveryHandler.BaseCookie cookie, Message m) {
         WMessageIn wmsg = null;
         if (m instanceof WMessageIn) {
             wmsg = (WMessageIn) m;
@@ -939,9 +1239,6 @@ public abstract class RedeliveryHandler {
             wmsg.setRedeliveryState(new ActiveRedeliveryState(enc));
         }
        
-        // Bump up counter
-        enc.encounteredAgain();
-        
         if (m instanceof Unwrappable) {
             m = (Message) ((Unwrappable) m).getWrappedObject();
         }
@@ -989,7 +1286,18 @@ public abstract class RedeliveryHandler {
             enc = (Encounter) mOldMsgs.get(msgid);
             if (enc == null) {
                 // First encounter
-                enc = new Encounter(msgid, mActions, mActionStr);
+
+                // Assemble actions array; a new one MUST be created if there are any 
+                // stateful actions such as LongDelay
+                ExecutableAction[] actions = mExecutables;
+                if (mExecutables == null) {
+                    actions = new ExecutableAction[mImmutableActions.length];
+                    for (int i = 0; i < mImmutableActions.length; i++) {
+                        actions[i] = mImmutableActions[i].getInstance();
+                    }
+                }
+
+                enc = new Encounter(msgid, actions, mActionStr);
                 if (redelivered) {
                     mStats.msgRedeliveredFirstTime();
                 }
@@ -1008,7 +1316,7 @@ public abstract class RedeliveryHandler {
         return enc;
     }
     
-    private boolean shouldDeliver(Object cookie, Encounter enc, Message m) {
+    private boolean shouldDeliver(BaseCookie cookie, Encounter enc, Message m) {
         // Preconditions:
         // - ienc indicates the number of times this msg was seen before, i.e. 1 on the 
         //   first redelivery
@@ -1016,19 +1324,26 @@ public abstract class RedeliveryHandler {
         // Post condition: 
         // - cursor points to action to undertake on next encounter
         // - actions[cursor].getAt() == ienc
-        int ienc = enc.getNEncountered();
         int cursor = enc.getActionCursor();
         
         // Action to execute:
-        Action action = enc.mEncActions[cursor];
+        ExecutableAction action = enc.mEncActions[cursor];
+        
+        // Next action if appropriate and if possible
+        if (!action.shouldExecuteAgain() || enc.mEncActionsHaveChanged) {
+            // Bump up counter
+            enc.encounteredAgain();
+            int ienc = enc.getNEncountered();
+            enc.mEncActionsHaveChanged = false;
         
         // Move to next action? E.g. nextaction.at = 11, ienc = 11
         if (cursor < (enc.mEncActions.length - 1)) {
-            Action next = enc.mEncActions[cursor + 1];
-            if (next.getAt() == ienc) {
+                ExecutableAction next = enc.mEncActions[cursor + 1];
+                if (next.getInstruction().getAt() == ienc) {
                 enc.setActionCursor(cursor + 1);
                 action = next;
             }
+        }
         }
         
         try {
@@ -1048,8 +1363,26 @@ public abstract class RedeliveryHandler {
      * @param m message
      * @param e encounter
      * @param delay how long to delay
+     * @param logmsg message to log
+     * @param cookie allows for information to flow from the concrete implementation 
+     *   of the RedeliveryHandler to the concrete Actions
      */
-    protected abstract void delayMessageDelivery(Message m, Encounter e, long delay);
+    protected abstract void delayMessageDelivery(Message m, Encounter e, long delay
+    , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie);
+
+    /**
+     * Made abstract to enhance testability; to be implemented by the user of this
+     * class; will be called whenever a message delivery should be delayed
+     * 
+     * @param m message
+     * @param e encounter
+     * @param delay how long to delay
+     * @param logmsg Message to be logged
+     * @param cookie allows for information to flow from the concrete implementation 
+     *   of the RedeliveryHandler to the concrete Actions
+     */
+    protected abstract void longDelayMessageDelivery(Message m, Encounter e, long delay
+    , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie);
 
     /**
      * Made abstract to enhance testability; will be called when a message should be
@@ -1057,7 +1390,9 @@ public abstract class RedeliveryHandler {
      * 
      * @param m message
      * @param e encounter
+     * @param cookie allows for information to flow from the concrete implementation 
+     *   of the RedeliveryHandler to the concrete Actions
      */
-    protected abstract void deleteMessage(Message m, Encounter e);
+    protected abstract void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie);
 
 }

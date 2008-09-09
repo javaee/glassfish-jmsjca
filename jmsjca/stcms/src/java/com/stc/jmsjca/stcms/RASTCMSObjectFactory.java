@@ -40,7 +40,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -420,8 +420,10 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
                 method.invoke(stcmsMBean, args);
                 ret = stcmsMBean;
             } catch (Exception e) {
-                throw Exc.jmsExc(LOCALIZER.x("E302: Error instantiating or configuring MBean for "
-                    + "external JMS server management: {0}", e), e);
+                sLog.info(LOCALIZER.x("E302: Error instantiating or configuring MBean for "
+                    + "external JMS server management: {0}", e));
+//                throw Exc.jmsExc(LOCALIZER.x("E302: Error instantiating or configuring MBean for "
+//                    + "external JMS server management: {0}", e), e);
             }
         }
 

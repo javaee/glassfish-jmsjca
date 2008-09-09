@@ -40,7 +40,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -261,17 +261,20 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         ConnectionFactory cf = null;
     
         // Obtain URL
-        String urlStr = resourceAdapter.getConnectionURL();
-        if (activationSpec != null && !Str.empty(activationSpec.getConnectionURL())) {
-            urlStr = activationSpec.getConnectionURL();
+        String urlstr = overrideUrl;
+        if (urlstr == null && resourceAdapter != null && !Str.empty(resourceAdapter.getConnectionURL())) {
+            urlstr = resourceAdapter.getConnectionURL();
         }
-        if (fact != null && !Str.empty(fact.getConnectionURL())) {
-            urlStr = fact.getConnectionURL();
+        if (urlstr == null && activationSpec != null && !Str.empty(activationSpec.getConnectionURL())) {
+        	urlstr = activationSpec.getConnectionURL();
+        }
+        if (urlstr == null && fact != null && !Str.empty(fact.getConnectionURL())) {
+        	urlstr = fact.getConnectionURL();
         }
 
         // need to ensure that this URL isn't an indirect reference, i.e.
         // actually an LDAP URL where the real value is bound
-        String realUrl = resourceAdapter.lookUpLDAP(urlStr);
+        String realUrl = resourceAdapter.lookUpLDAP(urlstr);
         
         String clientId = DEFAULT_CLIENTID;
         if (activationSpec != null && !Str.empty(activationSpec.getClientId())) {

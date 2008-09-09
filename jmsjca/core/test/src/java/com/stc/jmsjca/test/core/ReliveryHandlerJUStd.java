@@ -21,8 +21,9 @@ import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RedeliveryHandler;
 import com.stc.jmsjca.core.WMessageIn;
-import com.stc.jmsjca.core.RedeliveryHandler.Action;
+import com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction;
 import com.stc.jmsjca.core.RedeliveryHandler.Move;
+import com.stc.jmsjca.localization.LocalizedString;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -49,7 +50,7 @@ public class ReliveryHandlerJUStd extends TestCase {
         boolean valid = RedeliveryHandler.checkValid(actions);
         assertTrue(valid);
         
-        Action[] a = RedeliveryHandler.parse(actions, "void", Queue.class.getName());
+        ActionInstruction[] a = RedeliveryHandler.parse(actions, "void", Queue.class.getName());
         assertTrue(a != null);
         assertTrue(a.length > 0);
         assertTrue(a[0].getAt() == 1);
@@ -92,7 +93,7 @@ public class ReliveryHandlerJUStd extends TestCase {
         Matcher m = p.matcher("(queue)");
         assertTrue(m.matches());
         
-        Action[] actions =   
+        ActionInstruction[] actions =   
             RedeliveryHandler.parse("1:10; 2: 20 ; 3:500; 5: 500; 600: move(queue:dlq($))", "myQueue", Queue.class.getName());
         assertTrue(actions.length == 5);
         assertTrue(actions[0].getAt() == 1);
@@ -104,6 +105,57 @@ public class ReliveryHandlerJUStd extends TestCase {
         assertTrue(actions[4] instanceof Move);
         Move move = (Move) actions[4];
         assertTrue(move.getDestinationName().equals("dlq(myQueue)"));
+        assertTrue(move.isQueue());
+        assertTrue(!move.isTopic());
+    }
+
+    public void testLookup() throws Throwable {
+        ActionInstruction[] actions =   
+            RedeliveryHandler.parse("1:10; 2: 20 ; 3:500; 5: 500; 50000000: move(queue:dlq($))", "lookup://jms/myQueue", Queue.class.getName());
+        assertTrue(actions.length == 5);
+        assertTrue(actions[0].getAt() == 1);
+        assertTrue(actions[1].getAt() == 2);
+        assertTrue(actions[2].getAt() == 3);
+        assertTrue(actions[3].getAt() == 5);
+        assertTrue(actions[4].getAt() == 50000000);
+        
+        assertTrue(actions[4] instanceof Move);
+        Move move = (Move) actions[4];
+        assertTrue(move.getDestinationName().equals("lookup://jms/dlq(myQueue)"));
+        assertTrue(move.isQueue());
+        assertTrue(!move.isTopic());
+    }
+
+    public void testLookup2() throws Throwable {
+        ActionInstruction[] actions =   
+            RedeliveryHandler.parse("1:10; 2: 20 ; 3:500; 5: 500; 600: move(queue:dlq($))", "lookup://myQueue", Queue.class.getName());
+        assertTrue(actions.length == 5);
+        assertTrue(actions[0].getAt() == 1);
+        assertTrue(actions[1].getAt() == 2);
+        assertTrue(actions[2].getAt() == 3);
+        assertTrue(actions[3].getAt() == 5);
+        assertTrue(actions[4].getAt() == 600);
+        
+        assertTrue(actions[4] instanceof Move);
+        Move move = (Move) actions[4];
+        assertTrue(move.getDestinationName().equals("lookup://dlq(myQueue)"));
+        assertTrue(move.isQueue());
+        assertTrue(!move.isTopic());
+    }
+
+    public void testLookup3() throws Throwable {
+        ActionInstruction[] actions =   
+            RedeliveryHandler.parse("1:10; 2: 20 ; 3:500; 5: 500; 600: move(queue:dlq($-$))", "lookup://myQueue", Queue.class.getName());
+        assertTrue(actions.length == 5);
+        assertTrue(actions[0].getAt() == 1);
+        assertTrue(actions[1].getAt() == 2);
+        assertTrue(actions[2].getAt() == 3);
+        assertTrue(actions[3].getAt() == 5);
+        assertTrue(actions[4].getAt() == 600);
+        
+        assertTrue(actions[4] instanceof Move);
+        Move move = (Move) actions[4];
+        assertTrue(move.getDestinationName().equals("lookup://dlq(myQueue-myQueue)"));
         assertTrue(move.isQueue());
         assertTrue(!move.isTopic());
     }
@@ -244,14 +296,18 @@ public class ReliveryHandlerJUStd extends TestCase {
         // 1*10 + 4*15 + 5*30 = 215
         final long[] delay = new long[1];
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
-            protected void delayMessageDelivery(Message m, Encounter e, long howLong) {
+            protected void delayMessageDelivery(Message m, Encounter e, long howLong
+                , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 delay[0] += howLong;
             }
 
-            protected void deleteMessage(Message m, Encounter e) {
+            protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             }
 
-            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, Object cookie) throws Exception {
+            protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
+            }
+
+            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
             }
 
             protected void stopConnector(String s) {
@@ -288,6 +344,121 @@ public class ReliveryHandlerJUStd extends TestCase {
         assertTrue(delay[0] == 220);
     }
 
+    public void testLong1() throws Throwable {
+        RAJMSActivationSpec act = new Spec();
+        act.setRedeliveryHandling("5:10; 6:10000; 10:30; 15:move(queue:a)");
+        act.setDestinationType(Queue.class.getName());
+        // 0 0 0 0 10 10000 10000 10000 10000 30 30 30 30 30 30 M
+        // 1*10 + 4*10000 + 5*30 = 40160
+        String expected = "10 5000Long 5000 5000Long 5000 5000Long 5000 5000Long 5000 30 30 30 30 30 ";
+        
+        final StringBuffer observed = new StringBuffer();
+        
+        RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            protected void delayMessageDelivery(Message m, Encounter e, long howLong
+                , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+                observed.append(howLong).append(" ");
+            }
+
+            protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+                observed.append(howLong).append("Long ");
+            }
+
+            protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
+            }
+
+            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
+            }
+
+            protected void stopConnector(String s) {
+            }
+        };
+
+        // Check survival of 1
+        Msg m = new Msg("1x");
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        assertTrue(expected.equals(observed.toString()));
+        
+        // Evict msg
+        m = new Msg("2x");
+        observed.delete(0, observed.length());
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        assertTrue(expected.equals(observed.toString()));
+        
+        // Check msg was evicted
+        m = new Msg("1x");
+        observed.delete(0, observed.length());
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        assertTrue(expected.equals(observed.toString()));
+    }
+
+    public void testLong2() throws Throwable {
+        RAJMSActivationSpec act = new Spec();
+        act.setRedeliveryHandling("5:10; 6:6000; 10:30; 15:move(queue:a)");
+        act.setDestinationType(Queue.class.getName());
+        // 0 0 0 0 10 90000 90000 90000 90000 30 30 30 30 30 30 M
+        String expected = "10 5000Long 1000 5000Long 1000 5000Long 1000 5000Long 1000 30 30 30 30 30 ";
+        
+        final StringBuffer observed = new StringBuffer();
+        
+        RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            protected void delayMessageDelivery(Message m, Encounter e, long howLong
+                , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+                observed.append(howLong).append(" ");
+            }
+
+            protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+                observed.append(howLong).append("Long ");
+            }
+
+            protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
+            }
+
+            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
+            }
+
+            protected void stopConnector(String s) {
+            }
+        };
+
+        // Check survival of 1
+        Msg m = new Msg("1x");
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        System.out.println(expected);
+        System.out.println(observed);
+        assertTrue(expected.equals(observed.toString()));
+        
+        // Evict msg
+        m = new Msg("2x");
+        observed.delete(0, observed.length());
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        assertTrue(expected.equals(observed.toString()));
+        
+        // Check msg was evicted
+        m = new Msg("1x");
+        observed.delete(0, observed.length());
+        for (int i = 0; i < 50; i++) {
+            c.shouldDeliver(null, m);
+            c.shouldDeliver(null, new Msg("void " + i));
+        }
+        assertTrue(expected.equals(observed.toString()));
+    }
+
     public void testChangeActionsInMidFlight() throws Throwable {
         RAJMSActivationSpec act = new Spec();
         act.setRedeliveryHandling("5:10; 6:15; 10:30; 15:move(queue:a)");
@@ -299,13 +470,16 @@ public class ReliveryHandlerJUStd extends TestCase {
         final long[] movedat = new long[1];
         final boolean[] shutdown = new boolean[1];
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
-            protected void delayMessageDelivery(Message m, Encounter e, long howLong) {
+            protected void delayMessageDelivery(Message m, Encounter e, long howLong
+                , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 delay[0] += howLong;
             }
-            protected void deleteMessage(Message m, Encounter e) {
+            protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
+            }
+            protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             }
 
-            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, Object cookie) throws Exception {
+            protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
                 if (movedat[0] == 0) {
                     movedat[0] = e.getNEncountered();
                 }

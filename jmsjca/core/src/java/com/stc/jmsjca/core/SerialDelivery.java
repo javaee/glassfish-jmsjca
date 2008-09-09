@@ -33,7 +33,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -99,6 +99,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
             mActivation.getActivationSpec(),
             true,
             javax.jms.Session.SESSION_TRANSACTED);
+        createDLQDest(mSession);
         javax.jms.Destination dest = mObjFactory.createDestination(
             mSession,
             mActivation.isCMT() && !mActivation.isXAEmulated(),
