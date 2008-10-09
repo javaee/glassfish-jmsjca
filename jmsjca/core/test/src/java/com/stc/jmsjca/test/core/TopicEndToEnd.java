@@ -43,7 +43,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     /**
@@ -648,6 +648,100 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             Container.safeClose(c);
             Passthrough.safeClose(p);
             conn.close();
+        }
+    }
+
+    public void testDistributedSubscriberStandardFailoverCC() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("cc");
+    }
+    
+    public void testDistributedSubscriberStandardFailoverSerial() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("serial");
+    }
+    
+    public void testDistributedSubscriberStandardFailoverSync() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("sync");
+    }
+    
+    /**
+     * Tests failover scenarios for durable subscribers: creates an external durable
+     * subscriber and deploys. The connection should fail and should retry automatically.
+     * After a while, the external subscriber is closed, and the activation should
+     * succeed. 
+     * 
+     * @param mode concurrency
+     * @throws Throwable
+     */
+    public void doTestDistributedSubscriberStandardFailover(String mode) throws Throwable {
+        Passthrough p = createPassthrough(mServerProperties);
+               
+        EmbeddedDescriptor dd = getDD();
+        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        spec.setContextName("j-testTTXAXA");
+        spec.setDestination(p.getTopic1Name());
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode(mode);
+        spec.setSubscriptionDurability("Durable");
+        String subscriptionName = p.getDurableTopic1Name();
+        spec.setSubscriptionName(subscriptionName);
+        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        spec.setClientId(clientID);
+
+        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
+        .createConnector(StcmsConnector.class);
+        String url = x.getConnectionURL();
+        x.setConnectionURL(url + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB + "=1");
+
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        TopicConnection conn = null;
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            // Create a durable subscriber
+            TopicConnectionFactory f = p.createTopicConnectionFactory();
+            conn = f.createTopicConnection(p.getUserid(), p.getPassword());
+            if (clientID != null && clientID.length() != 0) {
+                conn.setClientID(clientID);
+            }
+            TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
+            Topic t = sess.createTopic(p.getTopic1Name());
+            sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+     
+            p.drainQ2();
+          
+            
+            int iters = isFastTest() ? 1 : 2;
+            for (int i = 0; i < iters; i++) {
+                p.setBatchId(310 + i);
+                
+                c.redeployModule(mTestEar.getAbsolutePath());
+                
+                // Send messages; cannot be received yet
+                p.sendToT1();
+                
+                // Wait for reconnections
+                Thread.sleep(10000);
+                p.assertQ2Empty();
+                
+                // Now enable reconnection
+                conn.close();
+                
+                // Readback
+                p.readFromQ2(); 
+                
+                c.undeploy(mTestEarName);
+                //p.removeDurableSubscriber(clientID, Passthrough.T1,subscriptionName);
+            }
+            
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+            Passthrough.safeClose(conn);
         }
     }
 

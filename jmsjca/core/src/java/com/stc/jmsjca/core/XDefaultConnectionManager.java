@@ -37,6 +37,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -160,12 +161,12 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
     private ConnectionEventListener mConnectionEventListener;
-    private Map mAll = new IdentityHashMap();  // key: managedconnection, value=ConnectionState
+    private Map mAll = Collections.synchronizedMap(new IdentityHashMap());  // key: managedconnection, value=ConnectionState
     // Keeps track of connections created and about to be created.
     // May not be equal to mAll.size() while a connection is being created
     private int mCurrentPoolsize; 
@@ -176,8 +177,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
     // of threads that are waiting so that the semaphore can be released by the proper
     // amount.
     private int mWaiters;
-    private Map mIdle = new IdentityHashMap();  // key: managedconnection, value=null
-    private Map mIdleEnlisted = new IdentityHashMap(); // key=Transaction, value=Set of managedconnection
+    private Map mIdle = Collections.synchronizedMap(new IdentityHashMap());  // key: managedconnection, value=null
+    private Map mIdleEnlisted = Collections.synchronizedMap(new IdentityHashMap()); // key=Transaction, value=Set of managedconnection
     private Subject mTestSubject; // for testing purposes
     private XManagedConnectionFactory mFact;
     private int mMaxSize = 32;
@@ -634,9 +635,11 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
 
     private class TxDeferredRelease implements Synchronization {
         private ManagedConnection mMC;
+        private Transaction mTx;
 
         public TxDeferredRelease(ManagedConnection mc, Transaction tx) {
             mMC = mc;
+            mTx = tx;
         }
 
         /**
@@ -652,6 +655,13 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 } else {
                     mIdle.put(mMC, null);
                     mSemaphore.release();
+                }
+                Set candidates = (Set) mIdleEnlisted.get(mTx);
+                if(candidates != null){
+                    candidates.remove(mMC);
+                    if (candidates.isEmpty()) {
+                        mIdleEnlisted.remove(mTx);
+                    }
                 }
             }
             

@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -74,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -88,6 +89,8 @@ public class Activation extends ActivationBase {
     private boolean mIsXAEmulated;
     private boolean mIsTopic;
     private boolean mIsDurable;
+    private boolean mMinimalReconnectLogging;
+    private boolean mMinimalReconnectLoggingDurSub;
     private ActivationMBean mActivationMBean;
     private ObjectName mServerMgtMBeanName;
     private int mDeliveryMode;
@@ -224,6 +227,9 @@ public class Activation extends ActivationBase {
                 , mSpec.getRedeliveryHandling());
             RedeliveryHandler.parse(redeliveryHandling, mSpec.getDestination(), mSpec.getDestinationType());
             mSpec.setRedeliveryHandling(redeliveryHandling);
+            mMinimalReconnectLogging = "1".equals(p.getProperty(Options.In.OPTION_MINIMAL_RECONNECT_LOGGING, "0"));
+            mMinimalReconnectLoggingDurSub = "1".equals(p.getProperty(
+                Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB, "0"));
             
             mIsTopic = RAJMSActivationSpec.TOPIC.equals(mSpec.getDestinationType());
             mIsDurable = RAJMSActivationSpec.DURABLE.equals(
@@ -531,6 +537,7 @@ public class Activation extends ActivationBase {
                     setState(CONNECTED);
                     break;
                 } catch (Exception e) {
+                    mDelivery.deactivate();
                     mDelivery = null;
                     int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
                     logDeliveryInitiationException(attempt + 1, dt, e);
@@ -566,10 +573,34 @@ public class Activation extends ActivationBase {
      * @param e exception
      */
     protected void logDeliveryInitiationException(int attemptPlusOne, int dt, Exception e) {
+        if (!mMinimalReconnectLogging && !mMinimalReconnectLoggingDurSub) {
         sLog.warn(LOCALE.x("E016: [{0}]: message delivery initiation failed " +
             "(attempt #{1}); will retry in {2} seconds. " +
             "The error was: {3}", 
             getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), e), e);
+        } else {
+            if (attemptPlusOne > 1) {
+                // Ignore repeated errors
+            } else {
+                Throwable ex = e instanceof Exc.ConsumerCreationException ? e.getCause() : e;
+                if (e instanceof Exc.ConsumerCreationException && mMinimalReconnectLoggingDurSub) {
+                    sLog.info(LOCALE.x("E204: [{0}]: message delivery could not be initiated due to " +
+                        "a failure to create the subscriber. Assuming that this deployment is on a node in " + 
+                        "a cluster, there is likely another cluster node already receiving messages from " +
+                        "this subscriber. The subscriber creation attempt will be retried " +
+                        "periodically to detect when the active subscriber disconnects. " +
+                        "Subsequent unsuccessful attempts " +
+                        "to subscribe will not be logged. The subscriber could not created because of the " +
+                        "following error: {3}", 
+                        getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), ex), ex);
+                } else {
+                    sLog.error(LOCALE.x("E205: [{0}]: message delivery could not be initiated but will " +
+                        "be retried periodically. Subsequent unsuccessful attempts " +
+                        "will not be logged. The error was: {3}", 
+                        getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), ex), ex);
+                }
+            }
+        }
     }
 
     /**

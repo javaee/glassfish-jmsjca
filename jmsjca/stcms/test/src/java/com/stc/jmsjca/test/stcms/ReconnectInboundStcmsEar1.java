@@ -26,7 +26,7 @@ import java.util.Properties;
  * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class ReconnectInboundStcmsEar1 extends ReconnectionTestsInbound {
     
@@ -59,5 +59,14 @@ public class ReconnectInboundStcmsEar1 extends ReconnectionTestsInbound {
      */
     public String createConnectionUrl(String server, int port) {
         return "stcms://" + server + ":" + port;
+    }
+
+    /**
+     * Provides a hook to plug in provider specific client IDs
+     * 
+     * @return clientId
+     */
+    public String getClientId(String proposedClientId) {
+        return "";
     }
 }

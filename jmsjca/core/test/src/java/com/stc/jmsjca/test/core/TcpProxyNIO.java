@@ -54,6 +54,7 @@ public class TcpProxyNIO implements Runnable {
     private String mRelayServer;
     private int mRelayPort;
     private int mNPassThroughsCreated;
+    private int mNPipes;
     private Receptor mReceptor;
     private Map mChannelToPipes = new IdentityHashMap();
     private Selector selector;
@@ -139,6 +140,9 @@ public class TcpProxyNIO implements Runnable {
         public String name;
         
         public PipeEnd(String name) {
+            synchronized (mCountSync) {
+                ++mNPipes;
+            }
             buf = ByteBuffer.allocateDirect(BUFFER_SIZE);
             buf.clear();
             buf.flip();
@@ -170,6 +174,9 @@ public class TcpProxyNIO implements Runnable {
         }
 
         public void close() throws IOException {
+            synchronized (mCountSync) {
+                --mNPipes;
+            }
             mChannelToPipes.remove(channel);
             try {
                 channel.close();
@@ -630,6 +637,15 @@ public class TcpProxyNIO implements Runnable {
     public int getConnectionsCreated() {
         synchronized (mCountSync) {
             return mNPassThroughsCreated;
+        }
+    }
+
+    /**
+     * @return number of connections open
+     */
+    public int getConnectionsOpen() {
+        synchronized (mCountSync) {
+            return mNPipes / 2;
         }
     }
 

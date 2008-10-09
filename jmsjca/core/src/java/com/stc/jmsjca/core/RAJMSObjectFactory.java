@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -616,6 +616,7 @@ public abstract class RAJMSObjectFactory {
         boolean isTopic, boolean isDurable, RAJMSActivationSpec activationSpec,
         RAJMSResourceAdapter ra, Destination dest, String subscriptionName,
         String selector, ServerSessionPool pool, int batchsize) throws JMSException {
+        try {
         if (isXA) {
             if (isTopic) {
                 if (isDurable) {
@@ -640,6 +641,9 @@ public abstract class RAJMSObjectFactory {
             } else {
                 return ((QueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
             }
+        }
+        } catch (JMSException ex) {
+            throw new Exc.ConsumerCreationException(ex);
         }
     }
 

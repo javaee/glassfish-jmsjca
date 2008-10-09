@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public interface Options {
     /**
@@ -90,6 +90,16 @@ public interface Options {
          *  
          */
         String RECEIVE_TIMEOUT = "JMSJCA.receivetimeout";
+
+        /**
+         * Prints only one error message for a durable subscriber error
+         */
+        String OPTION_MINIMAL_RECONNECT_LOGGING = "JMSJCA.minimalreconnectlogging";
+
+        /**
+         * Prints only one error message for a durable subscriber error
+         */
+        String OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB = "JMSJCA.minimalreconnectloggingds";
     }
     
     /**

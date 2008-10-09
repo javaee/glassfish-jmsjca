@@ -18,14 +18,21 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.util.UrlParser;
+
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicSession;
 
 /**
  * Tests reconnection scenarios. Works only with a server that has
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
     /**
@@ -191,10 +198,116 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
     }
 
     /**
+     * Provides a hook to plug in provider specific client IDs
+     * 
+     * @return clientId
+     */
+    public abstract String getClientId(String proposedClientId);
+
+    public void testDistributedSubscriberStandardFailoverCC() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("cc");
+    }
+    
+    public void testDistributedSubscriberStandardFailoverSerial() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("serial");
+    }
+    
+    public void testDistributedSubscriberStandardFailoverSync() throws Throwable {
+        doTestDistributedSubscriberStandardFailover("sync");
+    }
+    
+    /**
+     * Tests failover scenarios for durable subscribers: creates an external durable
+     * subscriber and deploys. The connection should fail and should retry automatically.
+     * After a while, the external subscriber is closed, and the activation should
+     * succeed. 
+     * 
+     * @param mode concurrency
+     * @throws Throwable
+     */
+    public void doTestDistributedSubscriberStandardFailover(String mode) throws Throwable {
+        // Setup proxy
+        UrlParser realUrl = new UrlParser(getConnectionUrl());
+        TcpProxyNIO proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
+        String proxyUrl = createConnectionUrl("localhost", proxy.getPort());
+
+        Passthrough p = createPassthrough(mServerProperties);
+               
+        EmbeddedDescriptor dd = getDD();
+        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        spec.setContextName("j-testTTXAXA");
+        spec.setDestination(p.getTopic1Name());
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode(mode);
+        spec.setSubscriptionDurability("Durable");
+        String subscriptionName = p.getDurableTopic1Name();
+        spec.setSubscriptionName(subscriptionName);
+        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        spec.setClientId(clientID);
+
+        spec.setConnectionURL(proxyUrl + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB 
+            + "=1&com.stc.jms.socketpooling=FALSE");
+
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        TopicConnection conn = null;
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            // Create a durable subscriber
+            TopicConnectionFactory f = p.createTopicConnectionFactory();
+            conn = f.createTopicConnection(p.getUserid(), p.getPassword());
+            if (clientID != null && clientID.length() != 0) {
+                conn.setClientID(clientID);
+            }
+            TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
+            Topic t = sess.createTopic(p.getTopic1Name());
+            sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+     
+            p.drainQ2();
+            
+            int iters = isFastTest() ? 1 : 2;
+            for (int i = 0; i < iters; i++) {
+                p.setBatchId(710 + i);
+                
+                c.redeployModule(mTestEar.getAbsolutePath());
+                
+                // Send messages; cannot be received yet
+                p.sendToT1();
+                
+                // Wait for reconnections
+                Thread.sleep(10000);
+                assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() >= 0);
+                assertTrue("c-con=" + proxy.getConnectionsCreated(), proxy.getConnectionsCreated() > 3);
+                p.assertQ2Empty();
+                
+                // Now enable reconnection
+                conn.close();
+                
+                // Readback
+                p.readFromQ2(); 
+                
+                c.undeploy(mTestEarName);
+                
+                assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() == 0);
+            }
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+            Passthrough.safeClose(conn);
+            proxy.close();
+        }
+    }
+
+    /**
      * Template method that takes a template class to run the tests
      * 
      * The template method is assumed to senda number of messages from Q1 to Q2 
-     * while disrupting the connection. The outbound connections are led through 
+     * while disrupting the connection. The inbound connections are led through 
      * a proxy. The test template can interrupt this proxy at strategic points.
      * Connections should be re-established and no connections should leak.
      * 

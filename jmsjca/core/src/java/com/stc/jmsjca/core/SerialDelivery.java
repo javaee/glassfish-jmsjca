@@ -33,7 +33,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -180,7 +180,9 @@ public class SerialDelivery extends Delivery implements MessageListener,
             sLog.warn(LOCALE.x("E055: Unexpected exception closing JMS connection: {0}", ex), ex);
         }
         
-        mMessageMoveConnection.destroy();
+        if (mMessageMoveConnection != null) {
+            mMessageMoveConnection.destroy();
+        }
 
         if (sLog.isDebugEnabled()) {
             sLog.debug("SerialDelivery.deactivate() -- complete");
