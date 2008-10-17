@@ -18,6 +18,8 @@ package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
 import com.stc.jmsjca.test.core.TcpProxyNIO;
@@ -38,9 +40,15 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
-public class SpecialFeaturesEar1 extends StcmsEndToEnd {
+public class SpecialFeaturesEar1 extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
     
     private String getConnectionURL(String suffix) {
         if (getContainerID().equals("rts")) {
@@ -63,12 +71,12 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSsl() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(getConnectionURL(""));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-testQQXAXA");
         spec.setConcurrencyMode("serial");
 
@@ -98,13 +106,13 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSslTrustAllAuth() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(
             getConnectionURL("?com.stc.jms.ssl.authenticationmode=TrustAll"));
         
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-testQQXAXA");
 
         dd.update();
@@ -133,13 +141,13 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSslServerAuthPW_RTS_ONLY() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(
             getConnectionURL("?com.stc.jms.ssl.authenticationmode=Authenticate"));
         
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-testQQXAXA");
 
         dd.update();
@@ -168,13 +176,13 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSslServerAuth_RTS_ONLY() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(
             getConnectionURL("?com.stc.jms.ssl.authenticationmode=Authenticate"));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-testQQXAXA");
 
         dd.update();
@@ -203,13 +211,13 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSpecialUrl_RTS_ONLY() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(
             getConnectionURL("?com.stc.jms.ssl.authenticationmode=Authenticate"));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-sendTo2SpecialUrl");
         spec.setConcurrencyMode("cc");
 
@@ -242,13 +250,13 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
     public void testContainerManagedSpecialUrl2_RTS_ONLY() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL(
             getConnectionURL("?com.stc.jms.ssl.authenticationmode=Authenticate"));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-sendTo2SpecialUrl");
         spec.setConcurrencyMode("cc");
 
@@ -285,11 +293,11 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty("host"), 
             Integer.parseInt(mServerProperties.getProperty("stcms.instance.port")));
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-sendTo2SpecialUrl");
         spec.setConcurrencyMode("cc");
 
@@ -377,8 +385,8 @@ public class SpecialFeaturesEar1 extends StcmsEndToEnd {
         dd.findElementByText(EJBDD, "cc").setText("cc");
         dd.findElementByText(EJBDD, "testQQXAXA").setText("sleepABit");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testconcurrency");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-            .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+            .createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         if (local) {

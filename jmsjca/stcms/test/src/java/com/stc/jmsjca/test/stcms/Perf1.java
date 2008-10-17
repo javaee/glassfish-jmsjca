@@ -18,7 +18,11 @@ package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
+
 import org.jdom.Element;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
@@ -35,9 +39,15 @@ import javax.naming.InitialContext;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
-public class Perf1 extends StcmsEndToEnd {
+public class Perf1 extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 
     /**
      * Empty onMessage

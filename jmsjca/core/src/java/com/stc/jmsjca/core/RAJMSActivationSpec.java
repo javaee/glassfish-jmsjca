@@ -29,7 +29,7 @@ import javax.resource.spi.InvalidPropertyException;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
@@ -757,13 +757,22 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     }
     
     /**
+     * Sets the number of messages that should be delivered to the MDB in one transaction
+     * 
+     * @param size int
+     */
+    public void setBatchSize(Integer size) {
+        mBatchSize = size.intValue();
+    }
+    
+    /**
      * Returns the number of messages that should be delivered to the MDB in one 
      * transaction
      * 
      * @return int
      */
-    public int getBatchSize() {
-        return mBatchSize;
+    public Integer getBatchSize() {
+        return new Integer(mBatchSize);
     }
     
     /**

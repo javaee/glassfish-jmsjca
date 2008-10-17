@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.stcms453;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -28,37 +25,13 @@ import java.util.Properties;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Publish453Ear1 extends TopicEndToEnd {
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("stcms453://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("stcms453://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        return dd;
-    }
-
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public String getClientId(String proposedClientId) {
-        return "";
-    }
-
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#createPassthrough(java.util.Properties)
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new Stcms453Passthrough(serverProperties);
+    public JMSProvider getJMSProvider() {
+        return new Stcms453Provider();
     }
 }

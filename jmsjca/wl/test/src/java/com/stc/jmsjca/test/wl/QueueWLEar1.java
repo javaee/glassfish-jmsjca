@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.wl;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -33,39 +30,13 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class QueueWLEar1 extends QueueEndToEnd {
-
     /**
-     * When running in Eclipse, allows to interrupt the test before any other tests are run.
-     * REMOVE THIS
-     * 
-     * @throws InterruptedException
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public void testDummy() throws InterruptedException {
-        Thread.sleep(10000);
-    }
-
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
-     */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWLJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWLJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        return dd;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WLPassthrough(new Properties());
+    public JMSProvider getJMSProvider() {
+        return new WLProvider();
     }
 }

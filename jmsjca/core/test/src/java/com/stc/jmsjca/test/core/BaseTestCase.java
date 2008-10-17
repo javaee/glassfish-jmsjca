@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
@@ -26,10 +27,15 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class BaseTestCase extends TestCase {
     private List mAsyncErrors = new ArrayList();
+    
+    public interface JMSTestEnv {
+        String getContainerID();
+        Properties getJmsServerProperties();
+    }
     
     public BaseTestCase() {
         

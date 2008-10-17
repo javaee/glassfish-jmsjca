@@ -16,34 +16,31 @@
 
 package com.stc.jmsjca.test.stcms;
 
+import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.stcms.RASTCMSResourceAdapter;
 import com.stc.jmsjca.stcms.RASTCMSResourceAdapterSync;
-import com.stc.jmsjca.test.core.Passthrough;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
+import com.stc.jmsjca.test.core.BaseTestCase;
+import com.stc.jmsjca.test.core.JMSProvider;
 
 /**
  * Excercises the same tests using Sync mode
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SyncSendEar1 extends SendEar1 {
 
     /**
-     * Enforces the use of sync instead of any other delivery mode
-     * 
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd.findElementByText(RAXML, RASTCMSResourceAdapter.class.getName()).setText(
-            RASTCMSResourceAdapterSync.class.getName());
-        return dd;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider() {
+            public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, BaseTestCase.JMSTestEnv test) throws Exception {
+            super.changeDD(dd, test);
+            dd.findElementByText(RAXML, RASTCMSResourceAdapter.class.getName()).setText(
+                RASTCMSResourceAdapterSync.class.getName());
+            return dd;
+            }
+        };
     }
 }

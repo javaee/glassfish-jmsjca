@@ -16,12 +16,9 @@
 
 package com.stc.jmsjca.test.wmq;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.io.File;
-import java.util.Properties;
+import com.stc.jmsjca.test.wl.WLProvider;
 
 /**
  * Required:
@@ -35,68 +32,9 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author   jmsjca team
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class BasicWMQTopicEar1 extends TopicEndToEnd {
-    
-    /**
-     * When running in Eclipse, allows to interrupt the test before any other tests are run.
-     * REMOVE THIS
-     * 
-     * @throws InterruptedException if fails
-     */
-    public void testDummy() throws InterruptedException {
-        Thread.sleep(1000);
-    }
-
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * @param proposedClientId String
-     * @return String 
-     */
-    public String getClientId(String proposedClientId) {
-        return proposedClientId;
-    }
-
-    /**
-     * Called before the test
-     * This code is duplicated between each passthrough test unfortunately
-     * 
-     * @throws Exception if fails
-     */
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(10));
-        mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(10));
-
-        // Update the original EAR file
-        File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wmq");
-
-        // Update first RA
-        EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, tempfile);
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
-
-        // Update second RA
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
-
-        // Commit
-        dd.update();
-        mTestEarOrg = tempfile;
-    }
-
-    /**
-     * @param serverProperties Properties
-     * @return Passthrough
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WMQPassthrough(serverProperties);
-    }
-    
     /**
      * Topic to queue
      * XA on in, XA on out
@@ -162,5 +100,11 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
      */
     public void xtestDurableTopicToTopicCC() throws Throwable {
     }
-    
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new WLProvider();
+    }
 }

@@ -16,12 +16,8 @@
 
 package com.stc.jmsjca.test.wmq;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.io.File;
-import java.util.Properties;
 
 /**
  * Required:
@@ -35,7 +31,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author  cye
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class BasicWMQQueueEar1 extends QueueEndToEnd {
 
@@ -49,44 +45,6 @@ public class BasicWMQQueueEar1 extends QueueEndToEnd {
         Thread.sleep(1000);
     }
 
-    /**
-     * Called before the test
-     * This code is duplicated between each passthrough test unfortunately
-     * @throws Exception if fails
-     */
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(10));
-        mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(10));
-        
-        // Update the original EAR file
-        File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wmq");
-
-        // Update first RA
-        EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, tempfile);
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
-
-        // Update second RA
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
-
-        // Commit
-        dd.update();
-        mTestEarOrg = tempfile;
-    }
-
-    /**
-     * @param serverProperties Properties
-     * @return Passthrough
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WMQPassthrough(serverProperties);
-    }
-        
     public void xtestContainerManaged() throws Throwable {        
     }
     
@@ -142,5 +100,12 @@ public class BasicWMQQueueEar1 extends QueueEndToEnd {
     }
     
     public void testExceptionBMTSerial2() throws Throwable {
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new WMQProvider();
     }
 }

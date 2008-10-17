@@ -32,25 +32,9 @@ import javax.jms.TopicSession;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
-    /**
-     * Returns the JMS server's connection URL
-     * 
-     * @return
-     */
-    public abstract String getConnectionUrl();
-    
-    /**
-     * Composes a connection URL based on server and port
-     * 
-     * @param server
-     * @param port
-     * @return
-     */
-    public abstract String createConnectionUrl(String server, int port);
-
     // To test:
     // Connection failure in running application (CC, serial, sync)
     // Connection failure upon deployment (CC, serial, sync)
@@ -67,7 +51,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         public XTestInbound(String deliveryMode) {
             mDeliveryMode = deliveryMode;
         }
-        public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+        public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
             spec.setConcurrencyMode(mDeliveryMode);
         }
 
@@ -197,13 +181,6 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         }        
     }
 
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public abstract String getClientId(String proposedClientId);
-
     public void testDistributedSubscriberStandardFailoverCC() throws Throwable {
         doTestDistributedSubscriberStandardFailover("cc");
     }
@@ -227,14 +204,14 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
      */
     public void doTestDistributedSubscriberStandardFailover(String mode) throws Throwable {
         // Setup proxy
-        UrlParser realUrl = new UrlParser(getConnectionUrl());
+        UrlParser realUrl = new UrlParser(getJMSProvider().getConnectionUrl(this));
         TcpProxyNIO proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
-        String proxyUrl = createConnectionUrl("localhost", proxy.getPort());
+        String proxyUrl = getJMSProvider().createConnectionUrl("localhost", proxy.getPort());
 
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -242,7 +219,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
 
         spec.setConnectionURL(proxyUrl + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB 
@@ -282,7 +259,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
                 // Wait for reconnections
                 Thread.sleep(10000);
                 assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() >= 0);
-                assertTrue("c-con=" + proxy.getConnectionsCreated(), proxy.getConnectionsCreated() > 3);
+                assertTrue("c-con=" + proxy.getConnectionsCreated(), proxy.getConnectionsCreated() >= 3);
                 p.assertQ2Empty();
                 
                 // Now enable reconnection
@@ -306,7 +283,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
     /**
      * Template method that takes a template class to run the tests
      * 
-     * The template method is assumed to senda number of messages from Q1 to Q2 
+     * The template method is assumed to send a number of messages from Q1 to Q2 
      * while disrupting the connection. The inbound connections are led through 
      * a proxy. The test template can interrupt this proxy at strategic points.
      * Connections should be re-established and no connections should leak.
@@ -315,15 +292,15 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
      */
     public void doReconnectTest(XTestInbound t) throws Throwable {
         // Setup proxy
-        UrlParser realUrl = new UrlParser(getConnectionUrl());
+        UrlParser realUrl = new UrlParser(getJMSProvider().getConnectionUrl(this));
         TcpProxyNIO proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
         
         EmbeddedDescriptor dd = getDD();
 
         // Proxy url
-        String proxyUrl = createConnectionUrl("localhost", proxy.getPort());
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        String proxyUrl = getJMSProvider().createConnectionUrl("localhost", proxy.getPort());
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConnectionURL(proxyUrl);
         spec.setConcurrencyMode("serial");
 

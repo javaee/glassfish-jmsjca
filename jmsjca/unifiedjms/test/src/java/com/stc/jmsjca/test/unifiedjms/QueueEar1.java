@@ -19,14 +19,13 @@ package com.stc.jmsjca.test.unifiedjms;
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -39,29 +38,10 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class QueueEar1 extends EndToEndBase {
     
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        String url = "stcms://" + getJmsServerProperties().getProperty("host") + ":"
-        + getJmsServerProperties().getProperty("stcms.instance.port");
-        
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(url);
-        
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-        .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(url);
-        return dd;
-    }
-    
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
-    }
-
     /**
      * Queue to queue XA on in, XA on out CC-mode
      * 
@@ -109,10 +89,10 @@ public class QueueEar1 extends EndToEndBase {
 
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setConnectionURL("lookup://" + FACTURL);
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-testQQXAXA");
         spec.setConcurrencyMode("serial");
         
@@ -140,5 +120,11 @@ public class QueueEar1 extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }
-    
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 }

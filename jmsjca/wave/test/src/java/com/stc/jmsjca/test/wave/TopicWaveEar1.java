@@ -16,12 +16,8 @@
 
 package com.stc.jmsjca.test.wave;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.io.File;
-import java.util.Properties;
 
 /**
  * Required:
@@ -34,60 +30,14 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class TopicWaveEar1 extends TopicEndToEnd {
     /**
-     * When running in Eclipse, allows to interrupt the test before any other tests are run.
-     * REMOVE THIS
-     * 
-     * @throws InterruptedException
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public void xtestDummy() throws InterruptedException {
-        Thread.sleep(10000);
+    public JMSProvider getJMSProvider() {
+        return new WaveProvider();
     }
 
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public String getClientId(String proposedClientId) {
-        return proposedClientId;
-    }
-
-    /**
-     * Called before the test
-     * This code is duplicated between each passthrough test unfortunately
-     */
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(1));
-
-        // To speed up testsing, change number of send messages
-        // mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(100));
-
-        // Update the original EAR file
-        File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wave");
-
-        // Update first RA
-        EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, tempfile);
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
-
-        // Update second RA
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
-
-        // Commit
-        dd.update();
-        mTestEarOrg = tempfile;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WavePassthrough(serverProperties);
-    }
 }

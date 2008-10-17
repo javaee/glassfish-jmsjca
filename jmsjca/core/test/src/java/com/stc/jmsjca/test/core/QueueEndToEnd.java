@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -275,8 +275,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("sendTo2UsingUnified");
         dd.findElementByText(RAXML1, "XATransaction").setText("LocalTransaction");
         dd.findElementByText(EJBDD, "XContextName").setText("sendTo2UsingUnified");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-            .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+            .createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         dd.update();
@@ -928,8 +928,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "cc").setText(ccmode);
         dd.findElementByText(EJBDD, "testQQXAXA").setText("rollbackCMT");
         dd.findElementByText(EJBDD, "XContextName").setText("rollbackCMT");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         cc.setOptions(cc.getOptions() + "\r\n" + Options.NOXA + "=true");
         dd.update();
 
@@ -1136,7 +1136,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             String dest) throws JMSException {
 
             mConn = fact.createQueueConnection(userid, password);
-            mSess = mConn.createQueueSession(true, 0);
+            mSess = mConn.createQueueSession(true, Session.SESSION_TRANSACTED);
             Queue dest1 = mSess.createQueue(dest);
 //            Queue voiddest = mSess.createQueue("voidqueue");
             QueueReceiver sub = mSess.createReceiver(dest1);
@@ -1219,8 +1219,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
     public void dotest0(String[] methodnames) throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode("serial");
 
         dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -1265,33 +1265,28 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
     
     public void testRequestReply0() throws Throwable {
-        dotest0(new String[] { "requestReply0", "requestReply1", "requestReply2",
-            "requestReplyN1", "requestReplyN2", "requestReplyN3" });
+        dotest0(new String[] {"requestReply0"});
     }
-
-//    public void testRequestReply0() throws Throwable {
-//        dotest0(new String[] {"requestReply0"});
-//    }
-//    
-//    public void testRequestReply1() throws Throwable {
-//        dotest0(new String[] {"requestReply1"});
-//    }
-//    
-//    public void testRequestReply2() throws Throwable {
-//        dotest0(new String[] {"requestReply2"});
-//    }
-//    
-//    public void testRequestReplyN1() throws Throwable {
-//        dotest0(new String[] {"requestReplyN1"});
-//    }
-//    
-//    public void testRequestReplyN2() throws Throwable {
-//        dotest0(new String[] {"requestReplyN2"});
-//    }
-//    
-//    public void testRequestReplyN3() throws Throwable {
-//        dotest0(new String[] {"requestReplyN3"});
-//    }
+    
+    public void testRequestReply1() throws Throwable {
+        dotest0(new String[] {"requestReply1"});
+    }
+    
+    public void testRequestReply2() throws Throwable {
+        dotest0(new String[] {"requestReply2"});
+    }
+    
+    public void testRequestReplyN1() throws Throwable {
+        dotest0(new String[] {"requestReplyN1"});
+    }
+    
+    public void testRequestReplyN2() throws Throwable {
+        dotest0(new String[] {"requestReplyN2"});
+    }
+    
+    public void testRequestReplyN3() throws Throwable {
+        dotest0(new String[] {"requestReplyN3"});
+    }
     
     // To test:
     // BMT
@@ -1306,8 +1301,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
     public void testA() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode("serial");
 
         dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -1334,8 +1329,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
     private void doTestDlq(boolean xa, boolean cc, boolean longdelay) throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode(cc ? "cc" : "serial");
         
         if (!xa) {
@@ -1351,8 +1346,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         String handling = "4:" + delay + ";5:move(queue:" + p.getTopic2Name() + ")";
         
         // Test both ways of setting the redelivery handling
-        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
         if (cc) {
             spec.setRedeliveryHandling(handling);
@@ -1538,8 +1533,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
     public void testDlqUndeploy() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode("cc");
         
         spec.setRedeliveryHandling("5:" + Integer.MAX_VALUE);
@@ -1591,8 +1586,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
     public void testDlqDelete() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode("cc");
         
         spec.setRedeliveryHandling("1:delete");
@@ -1653,8 +1648,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("Q2XAAndQ3NoTrans");
         dd.findElementByText(EJBDD, "XContextName").setText("Q2XAAndQ3NoTrans");
         dd.findElementByText(RAXML1, "XATransaction").setText("NoTransaction");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML1)
+        .createConnector(ConnectorConfig.class);
         cc.setOptions(cc.getOptions() + "\r\n" + Options.FORCE_BMT + "=true\r\nJMSJCA.IgnoreTx=false");
         dd.update();
 
@@ -1694,8 +1689,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testNoXATransacted");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXATransacted");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
         if (url.indexOf('?') < 0) {
             url += "?";
@@ -1740,8 +1735,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testNoXATransacted");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXATransacted");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
         if (url.indexOf('?') < 0) {
             url += "?";
@@ -1783,8 +1778,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testReplyToIsNotWrapped");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXATransacted");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
         if (url.indexOf('?') < 0) {
             url += "?";
@@ -1834,8 +1829,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testNoXANonTransacted");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testNoXANonTransacted");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
         if (url.indexOf('?') < 0) {
             url += "?";
@@ -2035,8 +2030,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
         }
         
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode(concMode);        
         spec.setBatchSize(Integer.toString(batchsize));
         spec.setHoldUntilAck(holdUntilAck);

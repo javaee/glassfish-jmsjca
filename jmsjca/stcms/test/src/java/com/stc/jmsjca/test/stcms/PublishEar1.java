@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.stcms;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -33,30 +30,13 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class PublishEar1 extends TopicEndToEnd {
-
-    public void testDummy() {
-        
-    }
-    
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = SendEar1.getDDstcms(dd, this);
-        return dd;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
-    }
-
     /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public String getClientId(String proposedClientId) {
-        return "";
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
     }
 }

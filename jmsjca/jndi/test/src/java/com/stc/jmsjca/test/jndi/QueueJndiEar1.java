@@ -16,17 +16,8 @@
 
 package com.stc.jmsjca.test.jndi;
 
-import com.stc.jms.jndispi.InitialContextFactory;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
-import com.stc.jmsjca.test.core.EndToEndBase;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.util.Str;
-
-import javax.naming.Context;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -39,57 +30,18 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class QueueJndiEar1 extends QueueEndToEnd {
 
-    public static EmbeddedDescriptor getDDjndi(EmbeddedDescriptor dd, EndToEndBase test) throws Exception {
-        // Set JNDI properties
-        Properties p = new Properties();
-        p.setProperty(Context.INITIAL_CONTEXT_FACTORY,
-                InitialContextFactory.class.getName());
-        p.setProperty(Context.PROVIDER_URL, "stcms://"
-                + test.getJmsServerProperties().getProperty("host") + ":"
-                + test.getJmsServerProperties().getProperty("stcms.instance.port"));
-        p.setProperty(Context.SECURITY_PRINCIPAL, test.getJmsServerProperties()
-                .getProperty("admin.user"));
-        p.setProperty(Context.SECURITY_CREDENTIALS, test.getJmsServerProperties()
-                .getProperty("admin.password"));
-        p.setProperty(RAJNDIResourceAdapter.QUEUECF,
-                "connectionfactories/xaqueueconnectionfactory");
-        p.setProperty(RAJNDIResourceAdapter.TOPICCF,
-                "connectionfactories/xatopicconnectionfactory");
-        p.setProperty(RAJNDIResourceAdapter.UNIFIEDCF,
-                "connectionfactories/xaconnectionfactory");
-        p.setProperty("com.stc.jms.autocommitxa", "true");
-
-        // Update first RA
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL("jndi://");
-        cc.setOptions(Str.serializeProperties(p));
-
-        // Update second RA
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL("jndi://");
-        cc.setOptions(Str.serializeProperties(p));
-
-        return dd;
-        
-    }
-
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = QueueJndiEar1.getDDjndi(dd, this);
-        return dd;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new JndiPassthrough(serverProperties);
-    }
-    
     public void disabled_testNoTransaction() {
         
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new JndiProvider();
     }
 }

@@ -39,9 +39,9 @@ import junit.framework.TestResult;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
-public abstract class EndToEndBase extends BaseTestCase {
+public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     /**
      * Properties of the JMS server
      */
@@ -56,12 +56,12 @@ public abstract class EndToEndBase extends BaseTestCase {
     protected File mTestEarOrg;
     protected String mTestEarName;
 
-    protected final static String RAXML = "ratest.rar#/META-INF/ra.xml";
-    protected final static String RAXML1 = "ratest1.rar#/META-INF/ra.xml";
-    protected final static String EJBDD = "mdbtest.jar#/META-INF/ejb-jar.xml";
-    protected final static String MBEAN = "com.stc.jmsjca:name=ActivationMBean,type=ActivationMBean";
-    protected final static String RAMMBEAN = "com.stc.jmsjca:name=RAMBean,type=RAMBean";
-    protected final static String RAMMBEAN2 = "com.stc.jmsjca:name=RAMBean2,type=RAMBean2";
+    public final static String RAXML = "ratest.rar#/META-INF/ra.xml";
+    public final static String RAXML1 = "ratest1.rar#/META-INF/ra.xml";
+    public final static String EJBDD = "mdbtest.jar#/META-INF/ejb-jar.xml";
+    public final static String MBEAN = "com.stc.jmsjca:name=ActivationMBean,type=ActivationMBean";
+    public final static String RAMMBEAN = "com.stc.jmsjca:name=RAMBean,type=RAMBean";
+    public final static String RAMMBEAN2 = "com.stc.jmsjca:name=RAMBean2,type=RAMBean2";
 
     public final static String RTS_ID = "rts";
     public final static String RTS_ALT_ID = "bare-rts";
@@ -75,7 +75,7 @@ public abstract class EndToEndBase extends BaseTestCase {
     /**
      * Represents the STCMS activation spec
      */
-    public interface StcmsActivation {
+    public interface ActivationConfig {
         public void setConcurrencyMode(String m);
         public void setContextName(String m);
         public void setDestination(String v);
@@ -107,7 +107,8 @@ public abstract class EndToEndBase extends BaseTestCase {
             super.run(result);
         }
     }
-
+    
+    public abstract JMSProvider getJMSProvider();
     
     /**
      * Loads the deployment descriptors after modification; derived classes can override
@@ -116,17 +117,20 @@ public abstract class EndToEndBase extends BaseTestCase {
      * @return
      * @throws Exception
      */
-    public EmbeddedDescriptor getDD() throws Exception {
+    final public EmbeddedDescriptor getDD() throws Exception {
         EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(Str.pwencode(mServerProperties.getProperty("admin.password")));
         cc.setMBeanObjectName(RAMMBEAN);
 
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
+        cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML1).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setMBeanObjectName(RAMMBEAN2);
+        
+        // Apply JMS Provider specific changes
+        getJMSProvider().changeDD(dd, this);
 
         return dd;
     }
@@ -237,7 +241,9 @@ public abstract class EndToEndBase extends BaseTestCase {
         }
     }
 
-    public abstract Passthrough createPassthrough(Properties serverProperties);
+    public final Passthrough createPassthrough(Properties serverProperties) {
+        return getJMSProvider().createPassthrough(serverProperties);
+    }
 
     /**
      * Tool function: ensures that the specified stream is closed
@@ -320,7 +326,7 @@ public abstract class EndToEndBase extends BaseTestCase {
     /**
      * Represents relevant properties of the STCMS connector in ra.xml
      */
-    public interface StcmsConnector {
+    public interface ConnectorConfig {
         void setUserName(String u) throws Exception;
         void setPassword(String p) throws Exception;
         void setConnectionURL(String u) throws Exception;

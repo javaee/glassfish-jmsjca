@@ -18,6 +18,8 @@ package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -41,9 +43,15 @@ import java.util.Map;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
-public class SubjectForwardingJUStd extends StcmsEndToEnd {
+public class SubjectForwardingJUStd extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 
     /**
      * A test principal
@@ -223,7 +231,7 @@ public class SubjectForwardingJUStd extends StcmsEndToEnd {
             public Object run() throws Exception {
                 EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
                 dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
-                StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+                ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
                 cc.setUserName(mServerProperties.getProperty("admin.user"));
                 cc.setPassword(mServerProperties.getProperty("admin.password"));
                 

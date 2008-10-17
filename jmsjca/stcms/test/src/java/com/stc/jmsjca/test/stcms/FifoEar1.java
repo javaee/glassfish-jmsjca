@@ -19,6 +19,8 @@ package com.stc.jmsjca.test.stcms;
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import java.util.HashMap;
@@ -30,9 +32,15 @@ import java.util.Properties;
  * Tests FIFO mode concurrency in stcms
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
-public class FifoEar1 extends StcmsEndToEnd {
+public class FifoEar1 extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
     
     /**
      * MBean interface to properties configuration
@@ -225,8 +233,8 @@ public class FifoEar1 extends StcmsEndToEnd {
     private void protectedConcurrentTest(String methodname, int nMDBs, boolean testconc, int nmsgs) throws Throwable {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "testQQXAXA").setText(methodname);
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD,
-        "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
+        "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("ProtConc" + methodname);
         spec.setDestination(PROTCONC);
         spec.setConnectionURL("stcms://?" + Options.In.OPTION_CONCURRENCYMODE + "=sync");
@@ -268,8 +276,8 @@ public class FifoEar1 extends StcmsEndToEnd {
     private void fullySerializedTest(String methodname, int nmsgs) throws Throwable {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "testQQXAXA").setText(methodname);
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD,
-        "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
+        "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("ProtConc" + methodname);
         spec.setDestination(PROTFULLSER);
         dd.update();

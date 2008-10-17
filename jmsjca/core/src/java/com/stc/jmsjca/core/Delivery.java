@@ -57,7 +57,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -185,7 +185,7 @@ public abstract class Delivery {
                 mDest = null;
                 mDestName = null;
                 mProducer = null;
-            }
+        }
         
         private Connection getConnection(boolean isTopic) throws JMSException {
             if (mConn != null) {
@@ -338,7 +338,7 @@ public abstract class Delivery {
         public DeliveryActions(RAJMSActivationSpec spec, DeliveryStats stats, int lookbackSize) {
             super(spec, stats, lookbackSize);
         }
-
+        
         protected void delayMessageDelivery(Message m, Encounter e, long delay
             , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             if (delay == 0) {
@@ -418,7 +418,7 @@ public abstract class Delivery {
                     } catch (JMSException ignore) {
                         // ignore
                     }
-                    if(correlationId != null){
+                    if (correlationId != null) {
                         newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, correlationId);
                     }
                     
@@ -510,7 +510,7 @@ public abstract class Delivery {
         mRedeliveryChecker = new DeliveryActions(a.getActivationSpec(), mStats, 5000);
 
         // Batch
-        mBatchSize = a.getActivationSpec().getBatchSize();
+        mBatchSize = a.getActivationSpec().getBatchSize() == null ? 0 : a.getActivationSpec().getBatchSize().intValue();
         
         // HUA mode
         String huaMode = a.getActivationSpec().getHoldUntilAck();
@@ -1024,7 +1024,7 @@ public abstract class Delivery {
                 if (result.getIsRollbackOnly()) {
                     tx.rollback();
                 } else {
-                tx.commit();
+                    tx.commit();
                 }
             } catch (Exception e) {
                 result.setAfterDeliveryFailed(true);
@@ -1090,7 +1090,7 @@ public abstract class Delivery {
             }
         }
     }
-
+    
     private static class Cookie extends RedeliveryHandler.BaseCookie {
         private DeliveryResults mResults;
         private ConnectionForMove mConnectionForMove;

@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.jndi;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -33,26 +30,14 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class TopicJndiEar1 extends TopicEndToEnd {
 
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = QueueJndiEar1.getDDjndi(dd, this);
-        return dd;
-    }
-
     /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public String getClientId(String proposedClientId) {
-        return "";
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new JndiPassthrough(serverProperties);
+    public JMSProvider getJMSProvider() {
+        return new JndiProvider();
     }
 }

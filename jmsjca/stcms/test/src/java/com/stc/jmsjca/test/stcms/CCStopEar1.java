@@ -20,6 +20,8 @@ import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.EmManagementInterface;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.stcms.SpecialFeaturesEar1.JmsMgt;
 
@@ -29,10 +31,17 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
-public class CCStopEar1 extends StcmsEndToEnd {
+public class CCStopEar1 extends EndToEndBase {
     
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
+
     private int getQueueStatsNMsgs(JmsMgt jmsmgt, String queuename) throws Exception {
         long t0 = System.currentTimeMillis();
         List queueprops = jmsmgt.getQueuesWithHeaders(0);
@@ -152,8 +161,8 @@ public class CCStopEar1 extends StcmsEndToEnd {
         dd.findElementByText(EJBDD, "XContextName").setText("j-testmbean");
         dd.findElementByText(EJBDD, "testQQXAXA").setText(methodname);
 
-        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
         url = url + "?" + Options.In.OPTION_REDELIVERYWRAP + "=1";
         x.setConnectionURL(url);

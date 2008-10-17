@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.stcms453;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -39,25 +36,9 @@ import java.util.Properties;
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Send453Ear1 extends QueueEndToEnd {
-    
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
-     */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("stcms453://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("stcms453://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        return dd;
-    }
-
     /**
      * Test OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testBeanManaged()
@@ -200,13 +181,6 @@ public class Send453Ear1 extends QueueEndToEnd {
     }
     
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#createPassthrough(java.util.Properties)
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new Stcms453Passthrough(serverProperties);
-    }
-    
-    /**
      * Queue browser is not implemented
      */
     public void disabled_testUndeployWhenAppProcessingMessagesCC() throws Throwable {
@@ -218,16 +192,18 @@ public class Send453Ear1 extends QueueEndToEnd {
     public void disabled_testUndeployWhenAppProcessingMessagesSerial() throws Throwable {
     }
     
+    /**
+     * Problem: calling tempdest.delete() on a deleted destination should throw an 
+     * exception. It doesn't. Disabled "requestReplyN2", "requestReplyN3".
+     */
+    public void skip_testRequestReplyN2() throws Throwable {
+    }
     
     /**
      * Problem: calling tempdest.delete() on a deleted destination should throw an 
      * exception. It doesn't. Disabled "requestReplyN2", "requestReplyN3".
-     * 
-     * @see com.stc.jmsjca.test.core.QueueEndToEnd#testRequestReply0()
      */
-    public void testRequestReply0() throws Throwable {
-        dotest0(new String[] { "requestReply0", "requestReply1", "requestReply2",
-            "requestReplyN1" });
+    public void skip_testRequestReplyN3() throws Throwable {
     }
 
     /**
@@ -243,5 +219,12 @@ public class Send453Ear1 extends QueueEndToEnd {
      */
     public void disabled_testNoTransaction() {
         
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new Stcms453Provider();
     }
 }

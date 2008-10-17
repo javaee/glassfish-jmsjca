@@ -43,16 +43,9 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public abstract String getClientId(String proposedClientId);
-
     public void waitUntilRunning(Container c) throws Exception {
         ActivationMBean mbean = (ActivationMBean) c.getMBeanProxy(MBEAN,
             ActivationMBean.class);
@@ -87,8 +80,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     public void testNonDurableTopicToQueueSerial() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD,
-                "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
+                "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setConcurrencyMode("serial");
         spec.setDestination("Topic1");
@@ -130,8 +123,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      */
     public void testNonDurableTopicToQueueCC() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
-                EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
+                EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination("Topic1");
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -174,7 +167,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -182,7 +175,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
         dd.update();
 
@@ -238,8 +231,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     public void testDurableTopicToQueueCC() throws Throwable {
         Passthrough p = createPassthrough(mServerProperties);
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -247,7 +240,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(p.getDurableTopic1Name());
-        String clientId = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientId);
         dd.update();
  
@@ -301,7 +294,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     public void testDurableTopicToTopicSerial() throws Throwable {
         EmbeddedDescriptor dd = getDD();
         Passthrough p = createPassthrough(mServerProperties);
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -309,7 +302,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(subscriptionName);
-        String clientId = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientId);
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testTTXAXA");
         dd.update();
@@ -365,7 +358,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     public void testDurableTopicToTopicCC() throws Throwable {
         EmbeddedDescriptor dd = getDD();
         Passthrough p = createPassthrough(mServerProperties);
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -373,7 +366,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(p.getDurableTopic1Name());
-        String clientId = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientId);
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testTTXAXA");
         dd.update();
@@ -426,8 +419,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      */
     public void xtestTopicNonDurableSerial() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD,
-                "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
+                "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setConcurrencyMode("serial");
         spec.setDestination("Topic1");
@@ -467,8 +460,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      */
     public void xtestTopicNonDurableCC() throws Throwable {
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
-                EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
+                EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination("Topic1");
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -537,7 +530,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
             dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
         }
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -547,7 +540,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionName(Options.Subname.PREFIX + "?"
             + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
             + Options.Subname.DISTRIBUTION_TYPE + "=1");
-        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
 
         dd.update();
@@ -596,7 +589,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -607,7 +600,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
             + Options.Subname.DISTRIBUTION_TYPE + "=1&"
             + Options.Subname.QUEUENAME + "=" + p.getQueue1Name());
-        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
         dd.update();
 
@@ -676,7 +669,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -684,11 +677,11 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientID);
 
-        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
         x.setConnectionURL(url + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB + "=1");
 
@@ -702,6 +695,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
+            p.removeDurableSubscriber(clientID, p.getTopic1Name(), p.getDurableTopic1Name());
+
             // Create a durable subscriber
             TopicConnectionFactory f = p.createTopicConnectionFactory();
             conn = f.createTopicConnection(p.getUserid(), p.getPassword());
@@ -769,8 +764,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
     protected void dotestDT2QCCSelectorSubstitution(String ccmode) throws Throwable {
         Passthrough p = createPassthrough(mServerProperties);
         EmbeddedDescriptor dd = getDD();
-        StcmsActivation spec = (StcmsActivation) dd.new ActivationConfig(
-            EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
+            EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
@@ -779,12 +774,12 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setSubscriptionDurability("Durable");
         final String subscriptionName = p.getDurableTopic1Name();
         spec.setSubscriptionName(subscriptionName);
-        String clientId = getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
         spec.setClientId(clientId);
         spec.setMessageSelector("a = 1");
         
-        StcmsConnector x = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-        .createConnector(StcmsConnector.class);
+        ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+        .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
         url = url + "?" + Options.In.OPTION_SELECTOR + "=" 
         + URLEncoder.encode("(sub = '${" + Options.Selector.SUB_NAME + "}')  ${andselector}", "UTF-8");

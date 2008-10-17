@@ -16,12 +16,8 @@
 
 package com.stc.jmsjca.test.wave;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-
-import java.io.File;
-import java.util.Properties;
 
 /**
  * Required:
@@ -34,21 +30,11 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet, cye
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class QueueWaveEar1 extends QueueEndToEnd {
 
     String testContainerId = null;
-    
-    /**
-     * When running in Eclipse, allows to interrupt the test before any other tests are run.
-     * REMOVE THIS
-     * 
-     * @throws InterruptedException
-     */
-    public void testDummy() throws InterruptedException {
-        Thread.sleep(10);
-    }
     
     /**
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#getMaxConcurrency()
@@ -56,39 +42,6 @@ public class QueueWaveEar1 extends QueueEndToEnd {
     protected int getMaxConcurrency() {
         // set to the value of maxQueuePresend 
         return 10;
-    }
-    
-    /**
-     * Called before the test
-     * This code is duplicated between each passthrough test unfortunately
-     */
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mServerProperties.setProperty("jmsjca.test.commitsize", Integer.toString(1));
-
-        // To speed up testsing, change number of send messages
-        // mServerProperties.setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(100));
-        
-        testContainerId = System.getProperty("test.container.id");
-      
-        // Update the original EAR file
-        File tempfile = new File(mTestEarOrg.getAbsolutePath() + ".wave");
-
-        // Update first RA
-        EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, tempfile);
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
-
-        // Update second RA
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
-
-        // Commit
-        dd.update();
-        mTestEarOrg = tempfile;
     }
     
     
@@ -122,10 +75,6 @@ public class QueueWaveEar1 extends QueueEndToEnd {
     public void skip_testBatchXAHUARBCC() throws Throwable {
     }
 
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WavePassthrough(serverProperties);
-    }
-    
     public void testBatchXACC() throws Throwable {
         if (testContainerId == null || !testContainerId.equals("wl")) {
             super.testBatchXACC();
@@ -206,5 +155,13 @@ public class QueueWaveEar1 extends QueueEndToEnd {
         // The reason is that XAsession is created outside of TX, it is not associated any
         // with and enlisted to any global transaction manager, it is not assocated with any
         // ejb. That behavior is different glassfish.        
+    }
+
+
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new WaveProvider();
     }
 }

@@ -17,6 +17,7 @@
 package com.stc.jmsjca.test.wl;
 
 import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.wl.RAWLObjectFactory;
 
@@ -40,7 +41,6 @@ import javax.naming.NamingException;
 
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.Map.Entry;
 
 /**
@@ -204,7 +204,10 @@ public class TestWLJUStd extends EndToEndBase {
         }
     }
 
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new WLPassthrough(new Properties());
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new WLProvider();
     }
 }

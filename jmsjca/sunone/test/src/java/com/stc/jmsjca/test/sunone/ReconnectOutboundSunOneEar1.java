@@ -14,7 +14,7 @@
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
-package com.stc.jmsjca.test.stcms;
+package com.stc.jmsjca.test.sunone;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
@@ -28,15 +28,15 @@ import com.stc.jmsjca.test.core.TcpProxyNIO;
  * Tests STCMS reconnects on outbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.1 $
  */
-public class ReconnectOutboundStcmsEar1 extends ReconnectionTestsOutbound {
+public class ReconnectOutboundSunOneEar1 extends ReconnectionTestsOutbound {
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
     public JMSProvider getJMSProvider() {
-        return new StcmsProvider();
+        return new SunOneProvider();
     }
 
     /**

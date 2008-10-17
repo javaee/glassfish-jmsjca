@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.sunone;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -33,34 +30,9 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class QueueSunOneEar1 extends QueueEndToEnd {
-
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
-     */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-        return dd;
-    }
-
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#createPassthrough(java.util.Properties)
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties);
-        sunOnePassthrough.setCommitSize(1);
-        return sunOnePassthrough;
-    }
-    
     /**
      * JMQ does not adhere to this:
      * tempdest = s.createTempQueue();
@@ -71,19 +43,38 @@ public class QueueSunOneEar1 extends QueueEndToEnd {
     }
 
     /**
+     * JMQ's Receive buffer makes this test invalid
+     * @throws Throwable
+     */
+    public void skip_testRequestReply0() throws Throwable {
+    }
+
+    /**
      * JMQ does not adhere to this:
      * tempdest = s.createTempQueue();
      * tempdest.delete();
      * tempdest.delete(); <-- does not throw
-     * 
-     * Disabled: N2 and N3
      */
-    public void testRequestReply0() throws Throwable {
-        dotest0(new String[] { "requestReply0", "requestReply1", "requestReply2",
-            "requestReplyN1"  });
+    public void skip_testRequestReplyN2() throws Throwable {
+    }
+    
+    /**
+     * JMQ does not adhere to this:
+     * tempdest = s.createTempQueue();
+     * tempdest.delete();
+     * tempdest.delete(); <-- does not throw
+     */
+    public void skip_testRequestReplyN3() throws Throwable {
     }
 
-// Following tests need looking into:    
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new SunOneProvider();
+    }
+
+    // Following tests need looking into:    
 //        public void skip_testNoTransaction() throws Throwable {
 //        }
 //        public void skip_testNoXATransacted() throws Throwable {

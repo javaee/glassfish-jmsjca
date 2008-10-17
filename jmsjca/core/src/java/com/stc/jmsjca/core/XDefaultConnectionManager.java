@@ -161,24 +161,34 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
     private ConnectionEventListener mConnectionEventListener;
-    private Map mAll = Collections.synchronizedMap(new IdentityHashMap());  // key: managedconnection, value=ConnectionState
+    
+    // key: managedconnection, value=ConnectionState
+    private Map mAll = Collections.synchronizedMap(new IdentityHashMap());  
+    
     // Keeps track of connections created and about to be created.
     // May not be equal to mAll.size() while a connection is being created
     private int mCurrentPoolsize; 
+    
     // Keeps track of available connections, either in the idle pool or wrt connections not created
     // Does not include connections in the tx-idle pool
     private Semaphore mSemaphore;
+    
     // The semaphore does not have a release-all method; consequently we're keeping track
     // of threads that are waiting so that the semaphore can be released by the proper
     // amount.
     private int mWaiters;
-    private Map mIdle = Collections.synchronizedMap(new IdentityHashMap());  // key: managedconnection, value=null
-    private Map mIdleEnlisted = Collections.synchronizedMap(new IdentityHashMap()); // key=Transaction, value=Set of managedconnection
+
+    // key: managedconnection, value=null
+    private Map mIdle = Collections.synchronizedMap(new IdentityHashMap());  
+
+    // key=Transaction, value=Set of managedconnection
+    private Map mIdleEnlisted = Collections.synchronizedMap(new IdentityHashMap()); 
+    
     private Subject mTestSubject; // for testing purposes
     private XManagedConnectionFactory mFact;
     private int mMaxSize = 32;
@@ -657,7 +667,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                     mSemaphore.release();
                 }
                 Set candidates = (Set) mIdleEnlisted.get(mTx);
-                if(candidates != null){
+                if (candidates != null) {
                     candidates.remove(mMC);
                     if (candidates.isEmpty()) {
                         mIdleEnlisted.remove(mTx);

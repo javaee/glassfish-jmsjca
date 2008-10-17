@@ -17,12 +17,8 @@
 package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.EndToEndBase;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -35,35 +31,17 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SendEar1 extends QueueEndToEnd {
     
-    public static EmbeddedDescriptor getDDstcms(EmbeddedDescriptor dd, EndToEndBase test) throws Exception {
-        // The ra.xml does not contain a URL by default, which is fine in the case
-        // the tests are running within RTS.
-        if (!test.getContainerID().equals("rts")) {
-            String url = "stcms://" + test.getJmsServerProperties().getProperty("host") + ":"
-                + test.getJmsServerProperties().getProperty("stcms.instance.port");
 
-            StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-                .createConnector(StcmsConnector.class);
-            cc.setConnectionURL(url);
-
-            cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-                .createConnector(StcmsConnector.class);
-            cc.setConnectionURL(url);
-        }
-        return dd;
-        
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
     }
-
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = SendEar1.getDDstcms(dd, this);
-        return dd;
-    }
-    
     
     public void testDummy() throws Throwable {
         Thread.sleep(2000);
@@ -77,10 +55,6 @@ public class SendEar1 extends QueueEndToEnd {
         } finally {
             Container.safeClose(c);
         }
-    }
-    
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
     }
     
 //    public void skip_testContainerManaged() throws Throwable {}

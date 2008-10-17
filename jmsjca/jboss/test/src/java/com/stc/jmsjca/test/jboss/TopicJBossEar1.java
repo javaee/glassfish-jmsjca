@@ -16,11 +16,8 @@
 
 package com.stc.jmsjca.test.jboss;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -34,39 +31,13 @@ import java.util.Properties;
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TopicJBossEar1 extends TopicEndToEnd {
-        
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestJBossJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestJBossJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        return dd;
-    }
-    
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new JBossPassthrough(new Properties());
-    }
-
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public String getClientId(String proposedClientId) {
-        return proposedClientId;
+    public JMSProvider getJMSProvider() {
+        return new JBossProvider();
     }
 }

@@ -222,8 +222,6 @@ public class GlassFishContainer extends Container {
             */
         }
         
-        System.gc();
-        
         startModule(getModuleName(absolutePath));
     }
     
@@ -231,20 +229,29 @@ public class GlassFishContainer extends Container {
         // list available module
         TargetModuleID moduleId = null;
         
-        TargetModuleID[] earList = dm.getAvailableModules(ModuleType.EAR, targetList);
+        // Wait until module shows up as a deployed module
         boolean fail = true;
-        for (int i = 0; i < earList.length; i++) {
-            if (earList[i].getModuleID().equals(moduleName)) {
-                fail = false;
-                moduleId = earList[i];
+        for (int iTry = 0; iTry < 30; iTry++) {
+            TargetModuleID[] earList = dm.getAvailableModules(ModuleType.EAR, targetList);
+            for (int i = 0; i < earList.length; i++) {
+                if (earList[i].getModuleID().equals(moduleName)) {
+                    fail = false;
+                    moduleId = earList[i];
+                    break;
+                }
+            }
+            if (fail) {
+                Thread.sleep(1000);
+            } else {
                 break;
             }
         }
+
         if (fail) {
-            throw new Exception ("Test failed, cannot list deployed Ear file");
+            throw new Exception ("Deployed module did not show up in the list of deployed modules");
         }
         
-        //start module
+        // start module
         synchronized (this) {
             ProgressObject pObject = dm.start(new TargetModuleID[]{moduleId});
             pObject.addProgressListener(new DeploymentListener(this));
@@ -261,19 +268,26 @@ public class GlassFishContainer extends Container {
         }
         
         // list running module
-        earList = dm.getRunningModules(ModuleType.EAR, targetList);
-        fail = true;
-        for (int i = 0; i < earList.length; i++) {
-            if (earList[i].getModuleID().equals(moduleName)) {
-                moduleId = earList[i];
-                fail = false;
+        for (int iTry = 0; iTry < 30; iTry++) {
+            TargetModuleID[] earList = dm.getRunningModules(ModuleType.EAR, targetList);
+            fail = true;
+            for (int i = 0; i < earList.length; i++) {
+                if (earList[i].getModuleID().equals(moduleName)) {
+                    moduleId = earList[i];
+                    fail = false;
+                    break;
+                }
+            }
+            if (fail) {
+                Thread.sleep(1000);
+            } else {
                 break;
             }
         }
         if (fail) {
-            throw new Exception ("Test failed, cannot list running Ear file");
+            throw new Exception ("Deployed and started module did not show up in the list of running modules");
         }
-        
+
     }
     
     private void stopModule(String moduleName) throws Exception {
@@ -413,10 +427,10 @@ public class GlassFishContainer extends Container {
         
         public void handleProgressEvent(ProgressEvent event) {
             DeploymentStatus status = event.getDeploymentStatus();
-            TargetModuleID moduleID = event.getTargetModuleID();
+//            TargetModuleID moduleID = event.getTargetModuleID();
             
-            System.out.println("moduleID = " + ((moduleID == null)?null:moduleID.getModuleID()) 
-                + ", command = " + status.getCommand() + ", status = " + status.getMessage());
+//            System.out.println("moduleID = " + ((moduleID == null)?null:moduleID.getModuleID()) 
+//                + ", command = " + status.getCommand() + ", status = " + status.getMessage());
             
             if (status.isCompleted() || status.isFailed()) {
                 synchronized (obj) {

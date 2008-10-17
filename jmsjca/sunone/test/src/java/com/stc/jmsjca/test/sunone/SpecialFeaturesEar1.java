@@ -19,6 +19,7 @@ package com.stc.jmsjca.test.sunone;
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
 import com.stc.jmsjca.test.core.TcpProxyNIO;
@@ -39,33 +40,16 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author misc
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SpecialFeaturesEar1 extends EndToEndBase {
     
-   /**
-    * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
-    */
-   public EmbeddedDescriptor getDD() throws Exception {
-       EmbeddedDescriptor dd = super.getDD();
-
-       StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-       cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-       cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-       cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
-
-       return dd;
-   }
-
-   /**
-    * @see com.stc.jmsjca.test.core.EndToEndBase#createPassthrough(java.util.Properties)
-    */
-   public Passthrough createPassthrough(Properties serverProperties) {
-       SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties);
-       sunOnePassthrough.setCommitSize(1);
-       return sunOnePassthrough;
-   }
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new SunOneProvider();
+    }
    
     public interface JmsMgt {
         List getQueues() throws Exception;
@@ -121,8 +105,8 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
         dd.findElementByText(EJBDD, "cc").setText("cc");
         dd.findElementByText(EJBDD, "testQQXAXA").setText("sleepABit");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testconcurrency");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-            .createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+            .createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
 
@@ -216,12 +200,12 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
     public void testContainerManagedSpecialUrl2_RTS_ONLY() throws Throwable {
         EmbeddedDescriptor dd = getDD();
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd.new ActivationConfig(EJBDD,"mdbtest").createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-sendTo2SpecialUrl");
         spec.setConcurrencyMode("cc");
         spec.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));

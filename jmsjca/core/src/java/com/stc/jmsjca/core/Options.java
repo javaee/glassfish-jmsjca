@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public interface Options {
     /**
@@ -226,7 +226,7 @@ public interface Options {
          * For stateful redelivery: the user can set these properties if prefixed with 
          * these value
          */
-        String USER_ROLLBACK_DATA_PREFIX = "JMS_Sun_JMSJCA_UserRollbackData.";
+        String USER_ROLLBACK_DATA_PREFIX = "JMS_Sun_JMSJCA_UserRollbackData";
 
         /**
          * Property name for copying messages to DLQ

@@ -17,10 +17,12 @@
 package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
-import com.stc.jmsjca.test.core.Passthrough;
-import com.stc.jmsjca.test.core.TopicEndToEnd;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
+import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.TopicEndToEnd;
 
 /**
  * Required:
@@ -34,9 +36,16 @@ import com.stc.jmsjca.core.Options;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
-public class Loop extends StcmsEndToEnd {
+public class Loop extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
+
     public void testLoop1() throws Throwable {
         String url = System.getProperty("loop.url", "");
         if (url.equals("mock")) {
@@ -99,10 +108,10 @@ public class Loop extends StcmsEndToEnd {
         dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testQQXAXALoop");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setConnectionURL("stcms://localhost:9999?com.stc.jms.mock=true");
 
-        StcmsActivation a = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig a = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         a.setConcurrencyMode(System.getProperty("loop.concurrency", "serial"));
         a.setEndpointPoolMaxSize(System.getProperty("loop.endpoints", "10"));
         a.setConnectionURL("stcms://localhost:9999?com.stc.jms.mock=true");
@@ -120,11 +129,11 @@ public class Loop extends StcmsEndToEnd {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testQQXAXALoop");
         dd.findElementByText(RAXML, "XATransaction").setText("NoTransaction");
 
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setConnectionURL("stcms://localhost:2222?com.stc.jms.mock=true");
         cc.setOptions(Options.FORCE_BMT + "=true\r\nJMSJCA.IgnoreTx=false");
 
-        StcmsActivation a = (StcmsActivation) dd.new ActivationConfig(EJBDD, "mdbtest").createActivation(StcmsActivation.class);
+        ActivationConfig a = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         a.setConcurrencyMode(System.getProperty("loop.concurrency", "serial"));
         a.setEndpointPoolMaxSize(System.getProperty("loop.endpoints", "10"));
         a.setConnectionURL("stcms://localhost:9999?com.stc.jms.mock=true");
@@ -146,7 +155,7 @@ public class Loop extends StcmsEndToEnd {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testQQXAXALoop");
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         cc.setUserName(mServerProperties.getProperty("admin.user"));
         cc.setPassword(mServerProperties.getProperty("admin.password"));
         String url = System.getProperty("loop.url", null);

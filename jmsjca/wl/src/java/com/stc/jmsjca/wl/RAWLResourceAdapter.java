@@ -21,15 +21,10 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * @author misc
  */
 public class RAWLResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
-    
-    /**
-     * Property name of connection factory jndi name
-     */
-    public static final String PROP_XACF = "xacf";
     
     /**
      * Property name of jndi name prefix 

@@ -130,7 +130,7 @@ public class SyncDelivery extends Delivery {
     public SyncDelivery(Activation a, DeliveryStats stats) throws Exception {
         super(a, stats);
         Properties p = new Properties();
-        a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(),null, null);
+        a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(), null, null);
         mReceiveTimeout = Utility.getIntProperty(p, Options.In.RECEIVE_TIMEOUT, mReceiveTimeout);
         
         if (a.getActivationSpec().getDeliveryConcurrencyMode() == 
@@ -190,9 +190,9 @@ public class SyncDelivery extends Delivery {
                 mActivation.getPassword() == null 
                 ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
             o.setClientID(mConnection, 
-                mActivation.isTopic(), 
-                mActivation.getActivationSpec(), 
-                mActivation.getRA());
+                    mActivation.isTopic(), 
+                    mActivation.getActivationSpec(), 
+                    mActivation.getRA());
             javax.jms.Session testSession = o.createSession(
                 mConnection,
                 mActivation.isCMT() && !mActivation.isXAEmulated(),
@@ -610,6 +610,16 @@ public class SyncDelivery extends Delivery {
                 }
             }
             
+            // GlassFish logs a RollBack exception when afterDelivery() is called
+            // after undeployment has begun. To prevent this from happening most of
+            // the time (there is a timing issue that will prevent this from being
+            // guaranteed to work), avoid calling afterDevelivery() if the connector
+            // is stopped.
+            if (m == null && isStopped()) {
+                result.setOnMessageWasBypassed(true);
+                result.setRollbackOnly(true);
+            }
+
             afterDelivery(result, mMessageMoveConnection, mEndpoint, mMDB, true);
         }
         
@@ -667,6 +677,16 @@ public class SyncDelivery extends Delivery {
                 txSetRollbackOnly(lastResult, true);
             }
             
+            // GlassFish logs a RollBack exception when afterDelivery() is called
+            // after undeployment has begun. To prevent this from happening most of
+            // the time (there is a timing issue that will prevent this from being
+            // guaranteed to work), avoid calling afterDevelivery() if the connector
+            // is stopped.
+            if (coord.getNMsgsDelivered() == 0 && isStopped()) {
+                lastResult.setOnMessageWasBypassed(true);
+                lastResult.setRollbackOnly(true);
+            }
+
             // End transaction
             afterDelivery(lastResult, mMessageMoveConnection, mEndpoint, mMDB, true);
         }

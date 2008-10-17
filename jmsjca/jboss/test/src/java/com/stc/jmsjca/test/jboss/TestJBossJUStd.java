@@ -18,7 +18,7 @@ package com.stc.jmsjca.test.jboss;
 
 import com.stc.jmsjca.core.XXid;
 import com.stc.jmsjca.test.core.EndToEndBase;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Queue;
@@ -41,7 +41,6 @@ import javax.transaction.xa.Xid;
 
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.Properties;
 
 /**
  * <code>
@@ -57,22 +56,12 @@ public class TestJBossJUStd extends EndToEndBase {
     public final static String FACT = "UIL2XAConnectionFactory";
     
 
-//    /**
-//     * Constructor
-//     */
-//    public TestWLJUStd() {
-//        this(null);
-//    }
-//
-//    /**
-//     * Constructor
-//     *
-//     * @param name junit test name
-//     */
-//    public TestWLJUStd(String name) {
-//        super(name);
-//    }
-//
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new JBossProvider();
+    }
     
     public static String getJNDIUrl() {
         String url = System.getProperty("jboss.url");
@@ -147,9 +136,4 @@ public class TestJBossJUStd extends EndToEndBase {
         
         qcon.start();
     }
-    
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new JBossPassthrough(new Properties());
-    }
-
 }

@@ -14,28 +14,23 @@
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
-package com.stc.jmsjca.test.stcms;
+package com.stc.jmsjca.test.sunone;
 
-import com.stc.jmsjca.test.core.EndToEndBase;
-import com.stc.jmsjca.test.core.Passthrough;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
+import com.stc.jmsjca.test.core.JMSProvider;
+import com.stc.jmsjca.test.core.ReconnectionTestsInbound;
 
 /**
+ * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.1 $
  */
-public class StcmsEndToEnd extends EndToEndBase {
-
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = SendEar1.getDDstcms(dd, this);
-        return dd;
-    }
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
+public class ReconnectInboundSunOneEar1 extends ReconnectionTestsInbound {
+    
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new SunOneProvider();
     }
 }

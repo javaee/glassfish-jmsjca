@@ -43,7 +43,7 @@ import java.util.Map;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class EmbeddedDescriptor {
     private Archive mArchive;
@@ -202,7 +202,7 @@ public class EmbeddedDescriptor {
     /**
      * Represents an activation configuration
      */
-    public class ActivationConfig {
+    public class ActivationSpec {
         private Element mRoot;
         private Map mValues;  // key=name (String); value=value (Element)
 
@@ -214,7 +214,7 @@ public class EmbeddedDescriptor {
          * @param ejbname
          * @throws Exception
          */
-        public ActivationConfig(String ddpath, String ejbname) throws Exception {
+        public ActivationSpec(String ddpath, String ejbname) throws Exception {
             // Find ejbname
             Element bean = null;
             Document doc = getDocument(ddpath);

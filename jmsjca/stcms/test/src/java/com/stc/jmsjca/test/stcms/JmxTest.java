@@ -17,8 +17,11 @@
 package com.stc.jmsjca.test.stcms;
 
 import com.stc.jmsjca.container.Container;
+import com.stc.jmsjca.test.core.EndToEndBase;
+import com.stc.jmsjca.test.core.JMSProvider;
 
 import javax.management.Attribute;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,9 +36,15 @@ import java.util.Map;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
-public class JmxTest extends StcmsEndToEnd {
+public class JmxTest extends EndToEndBase {
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 
     String DOMAIN1 = "com.sun.appserv:";
     String DOMAIN2 = "ias:";

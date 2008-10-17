@@ -26,25 +26,9 @@ import com.stc.jmsjca.util.UrlParser;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class ReconnectionTestsOutbound extends EndToEndBase {
-    /**
-     * Returns the JMS server's connection URL
-     * 
-     * @return
-     */
-    public abstract String getConnectionUrl();
-    
-    /**
-     * Composes a connection URL based on server and port
-     * 
-     * @param server
-     * @param port
-     * @return
-     */
-    public abstract String createConnectionUrl(String server, int port);
-
     /**
      * Nothing
      */
@@ -58,7 +42,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      * @author fkieviet
      */
     public abstract class XTest0 {
-        public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+        public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
         }
 
         public abstract String getOnMessageMethod();
@@ -131,27 +115,27 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void doReconnectTest(XTestExhaustion t) throws Throwable {
         // Setup proxy
-        UrlParser realUrl = new UrlParser(getConnectionUrl());
+        UrlParser realUrl = new UrlParser(getJMSProvider().getConnectionUrl(this));
         TcpProxyNIO proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
         
         EmbeddedDescriptor dd = getDD();
 
         // Proxy url
-        String proxyUrl = createConnectionUrl("localhost", proxy.getPort());
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML)
-            .createConnector(StcmsConnector.class);
+        String proxyUrl = getJMSProvider().createConnectionUrl("localhost", proxy.getPort());
+        ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
+            .createConnector(ConnectorConfig.class);
         cc.setConnectionURL(proxyUrl);
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1)
-            .createConnector(StcmsConnector.class);
+        cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML1)
+            .createConnector(ConnectorConfig.class);
         cc.setConnectionURL(proxyUrl);
 
         // Other DD changes
         dd.findElementByText(EJBDD, "testQQXAXA").setText(t.getOnMessageMethod());
         dd.findElementByText(EJBDD, "XContextName").setText(t.getOnMessageMethod());
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd
-        .new ActivationConfig(EJBDD,"mdbtest")
-        .createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd
+        .new ActivationSpec(EJBDD,"mdbtest")
+        .createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConnectionURL(realUrl.toString());
         spec.setConcurrencyMode("serial");
         
@@ -203,7 +187,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutLeakXABMT() throws Throwable {
         doReconnectTest(new XTestExhaustion() {
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
                 dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
             }
@@ -230,7 +214,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutXA";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
             }
         });
@@ -248,7 +232,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutXA";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
             }
         });
@@ -268,7 +252,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutNoTx";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("NoTransaction");
 
@@ -293,7 +277,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutNoTx";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("NoTransaction");
 
@@ -318,7 +302,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutLocalTxBMTLateEnlistment";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -341,7 +325,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutLocalTxBMTEarlyEnlistment";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -363,7 +347,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutLocalTxBMTLateEnlistment";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -386,7 +370,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
                 return "reconnectOutLocalTxBMTEarlyEnlistment";
             }
             
-            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.StcmsActivation spec) throws Exception {
+            public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
@@ -415,9 +399,9 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
         dd.findElementByText(EJBDD, "testQQXAXA").setText("reconnectOutAlwaysInvalid");
         dd.findElementByText(EJBDD, "XContextName").setText("reconnectOutAlwaysInvalid");
 
-        QueueEndToEnd.StcmsActivation spec = (QueueEndToEnd.StcmsActivation) dd
-        .new ActivationConfig(EJBDD,"mdbtest")
-        .createActivation(QueueEndToEnd.StcmsActivation.class);
+        QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd
+        .new ActivationSpec(EJBDD,"mdbtest")
+        .createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setConcurrencyMode("serial");
         
         dd.update();

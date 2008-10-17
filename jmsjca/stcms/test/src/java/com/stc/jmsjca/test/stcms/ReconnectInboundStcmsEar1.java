@@ -16,57 +16,21 @@
 
 package com.stc.jmsjca.test.stcms;
 
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.ReconnectionTestsInbound;
-
-import java.util.Properties;
 
 /**
  * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class ReconnectInboundStcmsEar1 extends ReconnectionTestsInbound {
     
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        dd = SendEar1.getDDstcms(dd, this);
-        return dd;
-    }
-    
-    /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#createPassthrough(java.util.Properties)
-     */
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
-    }
-    
-    /**
-     * @see com.stc.jmsjca.test.core.ReconnectionTestsOutbound#getConnectionUrl()
-     */
-    public String getConnectionUrl() {
-        return createConnectionUrl(mServerProperties.getProperty("host"), 
-            Integer.parseInt(mServerProperties.getProperty("stcms.instance.port")));
-    }
-    
-    /**
-     * @see com.stc.jmsjca.test.core.ReconnectionTestsOutbound#createConnectionUrl(java.lang.String, int)
-     */
-    public String createConnectionUrl(String server, int port) {
-        return "stcms://" + server + ":" + port;
-    }
-
-    /**
-     * Provides a hook to plug in provider specific client IDs
-     * 
-     * @return clientId
-     */
-    public String getClientId(String proposedClientId) {
-        return "";
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
     }
 }

@@ -16,13 +16,8 @@
 
 package com.stc.jmsjca.test.jboss;
 
-import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
-import com.stc.jmsjca.test.jboss.JBossPassthrough;
-import com.stc.jmsjca.test.jboss.TestJBossJUStd;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
-
-import java.util.Properties;
 
 /**
  * Required:
@@ -35,31 +30,16 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author cye
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 
 public class QueueJBossEar1 extends QueueEndToEnd {
-    
+
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getDD()
+     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
-    public EmbeddedDescriptor getDD() throws Exception {
-        EmbeddedDescriptor dd = super.getDD();
-        StcmsConnector cc = (StcmsConnector) dd.new ResourceAdapter(RAXML).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestJBossJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        cc = (StcmsConnector) dd.new ResourceAdapter(RAXML1).createConnector(StcmsConnector.class);
-        cc.setConnectionURL(TestJBossJUStd.getConnectionUrl());
-        cc.setUserName("");
-        cc.setPassword("");
-
-        return dd;
+    public JMSProvider getJMSProvider() {
+        return new JBossProvider();
     }
-    
-
-    public Passthrough createPassthrough(Properties serverProperties) {
-        return new JBossPassthrough(new Properties());
-    }
+   
 }
