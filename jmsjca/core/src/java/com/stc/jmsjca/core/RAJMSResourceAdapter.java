@@ -44,6 +44,8 @@ import javax.resource.spi.ResourceAdapterInternalException;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.transaction.xa.XAResource;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -59,7 +61,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -358,46 +360,54 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     sLog.debug("Found in JNDI using [" + name + "]: " + o);
                 }
                 
-                // Cast
-                if (!(o instanceof JConnectionFactory)) {
-                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
-                        + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
-                        , url, o.getClass().getName()));
-                }
-                JConnectionFactory fact = (JConnectionFactory) o;
-                XManagedConnectionFactory mcf = fact.getMCF();
-                
                 String _url = null;
                 String _userid = null;
                 String _pw = null;
                 Properties options = new Properties();
-                
-                
-                // Merge properties from RA
-                if (fact.getRA() != this) {
-                    if (!Str.empty(fact.getRA().getConnectionURL())) {
-                        _url = fact.getRA().getConnectionURL();
+                {
+                    if(!isInstanceOf(o.getClass(), JConnectionFactory.class.getName())){
+                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                        + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
+                        , url, o.getClass().getName()));
+                }
+                    // Merge properties from RA
+                    Object ra = invokeMethod(o, "getRA");
+                    Object mcf = invokeMethod(o, "getMCF");
+                    String temp;
+                    if (ra != this) {
+                        temp = (String)invokeMethod(ra, "getConnectionURL");
+                        if (!Str.empty((temp))) {
+                            _url = temp;
+                        }
+                        temp = (String)invokeMethod(ra, "getUserName");
+                        if (!Str.empty(temp)) {
+                            _userid = temp;
+                        }
+                        temp = (String)invokeMethod(ra, "getClearTextPassword");
+                        if (!Str.empty(temp)) {
+                            _pw = temp;
+                        }
+                        temp = (String)invokeMethod(ra, "getOptions");
+                        Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
                     }
-                    if (!Str.empty(fact.getRA().getUserName())) {
-                        _userid = fact.getRA().getUserName();
+                    
+                    // Merge properties from MCF
+                    temp = (String)invokeMethod(mcf, "getConnectionURL");
+                    if (!Str.empty(temp)) {
+                        _url = temp;
                     }
-                    if (!Str.empty(fact.getRA().getClearTextPassword())) {
-                        _pw = fact.getRA().getClearTextPassword();
+                    temp = (String)invokeMethod(mcf, "getUserName");
+                    if (!Str.empty(temp)) {
+                        _userid = temp;
                     }
-                    Str.deserializeProperties(Str.parseProperties(Options.SEP, fact.getRA().getOptions()), options);
+                    temp = (String)invokeMethod(mcf, "getClearTextPassword");
+                    if (!Str.empty(temp)) {
+                        _pw = temp;
+                    }
+                    temp = (String)invokeMethod(mcf, "getOptions");
+                    Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
                 }
                 
-                // Merge properties from MCF
-                if (!Str.empty(mcf.getConnectionURL())) {
-                    _url = mcf.getConnectionURL();
-                }
-                if (!Str.empty(mcf.getUserName())) {
-                    _userid = mcf.getUserName();
-                }
-                if (!Str.empty(mcf.getClearTextPassword())) {
-                    _pw = mcf.getClearTextPassword();
-                }
-                Str.deserializeProperties(Str.parseProperties(Options.SEP, mcf.getOptions()), options);
                 
                 // Merge properties into spec. URL: always
                 if (_url == null) {
@@ -436,6 +446,33 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         return changed;
     }
     
+    private Object invokeMethod(Object o, String method) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException{
+        Method m = o.getClass().getMethod(method, new Class[0]);
+        return m.invoke(o, new Object[0]);
+    }
+    
+    private boolean isInstanceOf(Class c, String actualClassName){
+        if(c == null)
+            return false;
+
+        if(c.getName().equals(actualClassName)){
+            return true;
+        }
+        boolean result = isInstanceOf(c.getSuperclass(),actualClassName);
+        if(result)
+            return true;
+
+        Class[] interfaces = c.getInterfaces();
+        if(interfaces == null)
+            return false;
+        
+        for(int i=0; i<interfaces.length; ++i){
+            result = isInstanceOf(interfaces[i], actualClassName);
+            if(result)
+                return true;
+        }
+        return false;
+    }
     /**
      * Checks for a java.util.Properties object in JNDI and if found, overrides the 
      * configuration of the RA with the one in the Properties object.
