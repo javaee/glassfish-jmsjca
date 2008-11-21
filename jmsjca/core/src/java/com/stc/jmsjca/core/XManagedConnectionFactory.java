@@ -52,7 +52,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -304,7 +304,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
             password = getRAJMSResourceAdapter().getClearTextPassword();
         }
         
-        return new String[] {userid, password};
+        return new String[] {userid, Str.pwdecode(password)};
     }
 
     /**
@@ -572,7 +572,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
             }
         }
         
-        return new String[] {userid, password, url };
+        return new String[] {userid, Str.pwdecode(password), url };
     }
 
     /**

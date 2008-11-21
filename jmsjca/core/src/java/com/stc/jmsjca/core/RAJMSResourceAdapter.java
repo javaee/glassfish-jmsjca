@@ -61,7 +61,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -135,6 +135,15 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         overrideRAConfigFromJNDI();
         
         try {
+            // Adjust Connection properties from the jndi resource in case of
+            // url=lookup://
+            boolean adjusted = adjustActivationSpec(); 
+            if (adjusted) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Activation spec configuration afer adjustment is: ["
+                        + dumpConfiguration() + "]");
+                }
+            }
             // Create MBean
             if (!Str.empty(getMBeanObjectName())) {
                 RAJMSObjectFactory fact = createObjectFactory(getConnectionURL());
@@ -365,46 +374,46 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 String _pw = null;
                 Properties options = new Properties();
                 {
-                    if(!isInstanceOf(o.getClass(), JConnectionFactory.class.getName())){
-                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
-                        + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
-                        , url, o.getClass().getName()));
-                }
+                    if (!isInstanceOf(o.getClass(), JConnectionFactory.class.getName())) {
+                        throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                            + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
+                            , url, o.getClass().getName()));
+                    }
                     // Merge properties from RA
                     Object ra = invokeMethod(o, "getRA");
                     Object mcf = invokeMethod(o, "getMCF");
                     String temp;
                     if (ra != this) {
-                        temp = (String)invokeMethod(ra, "getConnectionURL");
+                        temp = (String) invokeMethod(ra, "getConnectionURL");
                         if (!Str.empty((temp))) {
                             _url = temp;
                         }
-                        temp = (String)invokeMethod(ra, "getUserName");
+                        temp = (String) invokeMethod(ra, "getUserName");
                         if (!Str.empty(temp)) {
                             _userid = temp;
                         }
-                        temp = (String)invokeMethod(ra, "getClearTextPassword");
+                        temp = (String) invokeMethod(ra, "getClearTextPassword");
                         if (!Str.empty(temp)) {
                             _pw = temp;
                         }
-                        temp = (String)invokeMethod(ra, "getOptions");
+                        temp = (String) invokeMethod(ra, "getOptions");
                         Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
                     }
                     
                     // Merge properties from MCF
-                    temp = (String)invokeMethod(mcf, "getConnectionURL");
+                    temp = (String) invokeMethod(mcf, "getConnectionURL");
                     if (!Str.empty(temp)) {
                         _url = temp;
                     }
-                    temp = (String)invokeMethod(mcf, "getUserName");
+                    temp = (String) invokeMethod(mcf, "getUserName");
                     if (!Str.empty(temp)) {
                         _userid = temp;
                     }
-                    temp = (String)invokeMethod(mcf, "getClearTextPassword");
+                    temp = (String) invokeMethod(mcf, "getClearTextPassword");
                     if (!Str.empty(temp)) {
                         _pw = temp;
                     }
-                    temp = (String)invokeMethod(mcf, "getOptions");
+                    temp = (String) invokeMethod(mcf, "getOptions");
                     Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
                 }
                 
@@ -446,33 +455,146 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         return changed;
     }
     
-    private Object invokeMethod(Object o, String method) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException{
+    /**
+     * Changes the connection properties with values from an MCF and/or its RA.
+     * This will only happen if the ConnectionURL of the spec denotes a JNDI name of an
+     * MCF (lookup://).
+     * @return true if the spec was changed
+     * @throws ResourceException propagated
+     */
+    private boolean adjustActivationSpec() throws ResourceException {
+        boolean changed = false;
+        String url = getConnectionURL();
+        
+        if (!Str.empty(url) && url.startsWith(Options.LOCAL_JNDI_LOOKUP)) {
+            Context ctx = null;
+            String name = url.substring(Options.LOCAL_JNDI_LOOKUP.length()); 
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Lookup in JNDI: " + name);
+            }
+            try {
+                // Lookup object
+                ctx = new InitialContext();
+                Object o = ctx.lookup(name);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Found in JNDI using [" + name + "]: " + o);
+                }
+                
+                String _url = null;
+                String _userid = null;
+                String _pw = null;
+                Properties options = new Properties();
+                {
+                    if (!isInstanceOf(o.getClass(), JConnectionFactory.class.getName())) {
+                        throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                            + "but the object bound to ''{1}'' is of type ''{2}''", JConnectionFactory.class.getName()
+                            , url, o.getClass().getName()));
+                    }
+                    // Merge properties from RA
+                    Object ra = invokeMethod(o, "getRA");
+                    Object mcf = invokeMethod(o, "getMCF");
+                    String temp;
+                    if (ra != this) {
+                        temp = (String) invokeMethod(ra, "getConnectionURL");
+                        if (!Str.empty((temp))) {
+                            _url = temp;
+                        }
+                        temp = (String) invokeMethod(ra, "getUserName");
+                        if (!Str.empty(temp)) {
+                            _userid = temp;
+                        }
+                        temp = (String) invokeMethod(ra, "getClearTextPassword");
+                        if (!Str.empty(temp)) {
+                            _pw = temp;
+                        }
+                        temp = (String) invokeMethod(ra, "getOptions");
+                        Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
+                    }
+                    
+                    // Merge properties from MCF
+                    temp = (String) invokeMethod(mcf, "getConnectionURL");
+                    if (!Str.empty(temp)) {
+                        _url = temp;
+                    }
+                    temp = (String) invokeMethod(mcf, "getUserName");
+                    if (!Str.empty(temp)) {
+                        _userid = temp;
+                    }
+                    temp = (String) invokeMethod(mcf, "getClearTextPassword");
+                    if (!Str.empty(temp)) {
+                        _pw = temp;
+                    }
+                    temp = (String) invokeMethod(mcf, "getOptions");
+                    Str.deserializeProperties(Str.parseProperties(Options.SEP, temp), options);
+                }
+                
+                
+                // Merge properties into spec. URL: always
+                if (_url == null) {
+                    throw Exc.jmsExc(LOCALE.x("E192: A URL is not specified in the connection " 
+                        + "pool or its resource adapter instance"));
+                }
+                setConnectionURL(_url);
+
+                // username/pw if not set
+                 setUserName(_userid);
+                 setPassword(_pw);
+                
+                // Options: inherit from mcf but allow overrides in spec; 
+                // No need to bother with mark because the options will not be serialized to a single line
+                Str.deserializeProperties(getOptions(), options);
+                setOptions(Str.serializeProperties(options));
+
+                changed = true;
+            } catch (Exception e) {
+                throw Exc.rsrcExc(LOCALE.x("E096: Failed to lookup [{0}] in [{1}]: {2}", name, url, e), e);
+            } finally {
+                if (ctx != null) {
+                    try {
+                        ctx.close();
+                    } catch (Exception ignore) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        
+        return changed;
+    }
+    
+    private Object invokeMethod(Object o, String method) throws SecurityException, NoSuchMethodException
+    , IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Method m = o.getClass().getMethod(method, new Class[0]);
         return m.invoke(o, new Object[0]);
     }
     
-    private boolean isInstanceOf(Class c, String actualClassName){
-        if(c == null)
+    private boolean isInstanceOf(Class c, String actualClassName) {
+        if (c == null) {
             return false;
+        }
 
-        if(c.getName().equals(actualClassName)){
+        if (c.getName().equals(actualClassName)) {
             return true;
         }
-        boolean result = isInstanceOf(c.getSuperclass(),actualClassName);
-        if(result)
+        boolean result = isInstanceOf(c.getSuperclass(), actualClassName);
+        if (result) {
             return true;
+        }
 
         Class[] interfaces = c.getInterfaces();
-        if(interfaces == null)
+        if (interfaces == null) { 
             return false;
-        
-        for(int i=0; i<interfaces.length; ++i){
+        }
+
+        for (int i = 0; i < interfaces.length; ++i) {
             result = isInstanceOf(interfaces[i], actualClassName);
-            if(result)
+            if (result) {
                 return true;
+            }
         }
         return false;
     }
+    
     /**
      * Checks for a java.util.Properties object in JNDI and if found, overrides the 
      * configuration of the RA with the one in the Properties object.

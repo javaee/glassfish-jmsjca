@@ -56,7 +56,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -363,7 +363,7 @@ public class XManagedConnection implements ManagedConnection {
         PasswordCredential pc = mManagedConnectionFactory.getPasswordCredential(subject);
         if (pc != null && 
             (!Str.isEqual(pc.getUserName(), getUserid()) 
-                || !Str.isEqual(new String(pc.getPassword()), getPassword()))) {
+                || !Str.isEqual(Str.pwdecode(new String(pc.getPassword())), Str.pwdecode(getPassword())))) {
             throw new javax.resource.spi.SecurityException(LOCALE.x("E164: Invalid subject {0}"
                 , subject).toString());
         }
