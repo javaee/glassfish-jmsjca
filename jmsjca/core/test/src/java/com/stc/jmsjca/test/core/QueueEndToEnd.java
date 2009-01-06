@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1343,7 +1343,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         long delay = longdelay ? 6000 : 1;
         
         // queue will be removed by topic in TestMessageBean
-        String handling = "4:" + delay + ";5:move(queue:" + p.getTopic2Name() + ")";
+        String handling = "4:" + delay + ";5:move(" + (xa ? "topic" : "queue") + ":" + p.getTopic2Name() + ")";
         
         // Test both ways of setting the redelivery handling
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)

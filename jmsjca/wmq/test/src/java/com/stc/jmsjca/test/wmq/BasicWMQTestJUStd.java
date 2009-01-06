@@ -524,7 +524,6 @@ public class BasicWMQTestJUStd extends TestCase {
             conn.start();
 
             if (!verifyConnectionPool(0, "testqueue1")) {                
-                sess.close();                
                 assertTrue(false);
             }
             

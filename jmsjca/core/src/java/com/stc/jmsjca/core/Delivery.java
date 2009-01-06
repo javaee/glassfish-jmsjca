@@ -57,7 +57,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -611,10 +611,11 @@ public abstract class Delivery {
      * Creates a DLQ destination if appropriate. This can be used for testing the 
      * redelivery string
      * 
-     * @param sess Session
      * @throws JMSException on error
      */
-    protected void createDLQDest(javax.jms.Session sess) throws JMSException {
+    protected void createDLQDest() throws JMSException {
+        RAJMSObjectFactory o = mActivation.getObjectFactory();
+        
         ActionInstruction[] a = RedeliveryHandler.parse(mActivation.getActivationSpec().getRedeliveryHandling(), 
             mActivation.getActivationSpec().getDestination(), 
             mActivation.getActivationSpec().getDestinationType());
@@ -622,15 +623,63 @@ public abstract class Delivery {
             if (a[i] instanceof RedeliveryHandler.Move) {
                 RedeliveryHandler.Move m = (RedeliveryHandler.Move) a[i];
 
-                // Test if the destination can be created
-                mActivation.getObjectFactory().createDestination(
-                    sess,
-                    mActivation.isCMT() && !mActivation.isXAEmulated(),
-                    m.isTopic(),
-                    mActivation.getActivationSpec(),
-                    null,
-                    mActivation.getRA(),
-                    m.getDestinationName());
+                // Try to create the destination
+                final boolean isTopic = m.isTopic();
+                final boolean isXa = mActivation.isCMT() && !mActivation.isXAEmulated();
+                final int domain = XConnectionRequestInfo.guessDomain(isXa, isTopic);
+                javax.jms.Connection connection = null;
+                javax.jms.Session session = null;
+
+                try {
+                    javax.jms.ConnectionFactory fact = o.createConnectionFactory(
+                        domain,
+                        mActivation.getRA(),
+                        mActivation.getActivationSpec(),
+                        null,
+                        null);
+                    connection = o.createConnection(
+                        fact,
+                        domain,
+                        mActivation.getActivationSpec(),
+                        mActivation.getRA(),
+                        (mActivation.getUserName() == null 
+                            ? mActivation.getRA().getUserName() : mActivation.getUserName()),
+                        (mActivation.getPassword() == null 
+                            ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword()));
+                    session = o.createSession(
+                        connection,
+                        isXa,
+                        (isTopic ? TopicSession.class : QueueSession.class),
+                        mActivation.getRA(),
+                        mActivation.getActivationSpec(),
+                        true,
+                        javax.jms.Session.SESSION_TRANSACTED);
+                    o.createDestination(
+                        session,
+                        isXa,
+                        isTopic,
+                        mActivation.getActivationSpec(),
+                        null,
+                        mActivation.getRA(),
+                        m.getDestinationName());
+                } finally {
+                    try {
+                        if (session != null) {
+                            session.close();
+                        }
+                    } catch (Exception ex) {
+                        sLog.warn(LOCALE.x("E087: Error while closing session: {0}", ex), ex);
+                    }
+                    
+                    try {
+                        if (connection != null) {
+                            connection.close();
+                        }
+                    } catch (Exception ex) {
+                        sLog.warn(LOCALE.x("E055: Unexpected exception closing JMS connection: {0}", ex), ex);
+                    }
+                    
+                }
             }
         }
     }

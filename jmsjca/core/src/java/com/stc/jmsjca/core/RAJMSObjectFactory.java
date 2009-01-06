@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -418,9 +418,18 @@ public abstract class RAJMSObjectFactory {
             }
             if (isXA) {
                 if (isTopic) {
-                    ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
+                    // Patch: topic/queue session confusion
+                    if (sess instanceof XATopicSession) {
+                        ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
+                    } else {
+                        ret = sess.createTopic(destName);
+                    }
                 } else {
-                    ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
+                    if (sess instanceof XAQueueSession) {
+                        ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
+                    } else {
+                        ret = sess.createQueue(destName);
+                    }
                 }
             } else {
                 if (isTopic) {
@@ -617,36 +626,36 @@ public abstract class RAJMSObjectFactory {
         RAJMSResourceAdapter ra, Destination dest, String subscriptionName,
         String selector, ServerSessionPool pool, int batchsize) throws JMSException {
         try {
-        if (isXA) {
-            if (isTopic) {
-                if (isDurable) {
-                    return ((XATopicConnection) conn).createDurableConnectionConsumer((Topic)
+            if (isXA) {
+                if (isTopic) {
+                    if (isDurable) {
+                        return ((XAConnection) conn).createDurableConnectionConsumer((Topic)
                             dest, subscriptionName, selector, pool, batchsize);
-                } else {
-                    return ((XATopicConnection) conn).createConnectionConsumer((Topic)
+                    } else {
+                        return ((XAConnection) conn).createConnectionConsumer((Topic)
                             dest, selector, pool, batchsize);
-                }
-            } else {
-                return ((XAQueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
-            }
-        } else {
-            if (isTopic) {
-                if (isDurable) {
-                    return ((TopicConnection) conn).createDurableConnectionConsumer((Topic)
-                            dest, subscriptionName, selector, pool, batchsize);                    
+                    }
                 } else {
-                    return ((TopicConnection) conn).createConnectionConsumer((Topic)
-                            dest, selector, pool, batchsize);                    
+                    return ((XAConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
                 }
             } else {
-                return ((QueueConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
+                if (isTopic) {
+                    if (isDurable) {
+                        return ((Connection) conn).createDurableConnectionConsumer((Topic)
+                            dest, subscriptionName, selector, pool, batchsize);                    
+                    } else {
+                        return ((Connection) conn).createConnectionConsumer((Topic)
+                            dest, selector, pool, batchsize);                    
+                    }
+                } else {
+                    return ((Connection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
+                }
             }
-        }
         } catch (JMSException ex) {
             throw new Exc.ConsumerCreationException(ex);
         }
     }
-
+    
     /**
      * Gets the XAResource out of a Session; returns null if the specified XA flag is
      * false.
