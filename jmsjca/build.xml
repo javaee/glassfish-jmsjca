@@ -59,14 +59,6 @@ Relevant properties to set:
     >
     </target>
 
-    <target
-        name="clover"
-    />
-
-    <target
-        name="clover-report"
-    />
-
 
 <!--===========================================================================
     Global initializations (used to be in a separate target, but this no longer
@@ -112,10 +104,6 @@ Relevant properties to set:
         <fileset file="${wl.install.lib.path}/wlclient.jar" />
         <fileset file="${wl.install.lib.path}/wljmsclient.jar" />            
         <fileset file="${wl.install.lib.path}/wljmxclient.jar" />            
-        <!-- use JDK 1.5 instead	                
-        <fileset file="${stc.api.dir}/jmxremote.jar" />
-        <fileset file="${stc.api.dir}/jmxremote_optional.jar" /> 
-        -->               
         <fileset file="${stc.api.dir}/j2ee.jar" />                   
         <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
     </path>
@@ -146,7 +134,19 @@ Relevant properties to set:
     Initializes variables etc
     (Made obsolete by the global initalization of properties above)
 -->
+    <target name="init-apis" unless="apis-init.ed">
+        <mkdir dir="${stc.api.dir}" />
+        <get 
+            src="https://maven-repository.dev.java.net/repository/javaee/jars/javaee-api-5.jar" 
+            dest="${stc.api.dir}/j2ee.jar" 
+            verbose="true" 
+            usetimestamp="true"
+        />
+    </target>
+    
     <target name="init" unless="init.ed">
+        <available property="apis-init.ed" file="${stc.api.dir}/j2ee.jar" />
+        <antcall target="init-apis" />
         <property name="init.ed" value="true" />
     </target>
 
@@ -194,7 +194,7 @@ Relevant properties to set:
 <!--===========================================================================
     Creates the sar file
 -->
-    <target name="sar" depends="rar">
+    <target name="sar" depends="rar,urar">
         <!-- Copy core jar into is/lib directory -->
         <copy file="${jmsjca.core.jar.path}"    todir="${install.inclusions.dir}/all/is/lib" />
 
@@ -222,7 +222,7 @@ Relevant properties to set:
     
     <target name="copy-runtime-image" if="stc.runtime.dir">
         <!-- 5.2 runtime -->
-    		<mkdir dir="${jmsjca.runtime-image.dir}" />
+    	<mkdir dir="${jmsjca.runtime-image.dir}" />
         <copy file="${stc.api.dir}/com.stc.jmsmx.core.jar" todir="${jmsjca.runtime-image.dir}" failonerror="false" />
         <foreach list="${jcaids}" target="call-copy-runtime-image" param="jcaid" />
     </target>
@@ -257,10 +257,6 @@ Relevant properties to set:
         depends="init"
         unless="compile-core.ed"
     >
-        <available file="${stc.api.dir}/j2ee.jar" property="jmsjca.j2ee.present" />
-        <fail unless="jmsjca.j2ee.present" message="${stc.api.dir}/j2ee.jar is missing; set $${stc.api.dir} to directory containing this jar" />
-        <mkdir dir="${stc.lib.dir}" />
-        
         <path id="jmsjca.core.classpath">
             <fileset file="${stc.api.dir}/j2ee.jar" />
         </path>
@@ -303,6 +299,10 @@ Relevant properties to set:
             <fileset dir="${jmsjca.core.classes.dir}">
             </fileset>
         </jar>
+        
+        <!-- copy jar file -->
+        <mkdir dir="${jmsjca.jars.dir}" />
+        <copy file="${jmsjca.core.jar.path}" todir="${jmsjca.jars.dir}" />
 
         <property name="compilecore.ed" value="true" />
     </target>
@@ -350,14 +350,34 @@ Relevant properties to set:
         <fail unless="jcaid" message="missing parm jcaid" />
         <ant
             antfile="build-${jcaid}.xml"
-            target="compile"
+            target="compilejar"
             inheritall="false"
         >
             <property name="jcaid" value="${jcaid}" />
         </ant>
     </target>
 
-<!--===========================================================================
+    <!--===========================================================================
+        Compiles the source code and produces the unified rar file
+    -->
+        <target
+            name="urar"
+            depends="compile"
+            description="Generates the unified rar"
+            unless="urar.ed"
+        >
+            <ant
+                antfile="build-unifiedjms.xml"
+                target="urar"
+                inheritall="false"
+            >
+                <property name="jcaid" value="unifiedjms" />
+            </ant>
+            <property name="urar.ed" value="true" />
+        </target>
+        
+    
+    <!--===========================================================================
     DEV-ONLY: Start server etc.
 -->
     <target
@@ -756,21 +776,6 @@ Relevant properties to set:
                 <pathelement location="${jmsjca.core.jar.path}" />
             </classpath>
         </java>
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: replace-headers: changes SeeBeyond headers to CDDL
--->	
-    <target
-        name="xy"
-        description="DEV: updates copyright headers"
-    >
-        <get 
-            src="https://maven-repository.dev.java.net/nonav/repository/javax.resource/jars/connector-api-1.5.jar" 
-            dest="jca.jar" 
-            verbose="true" 
-            usetimestamp="true" 
-        />
     </target>
 
 <!--===========================================================================

@@ -1,10 +1,118 @@
 <?xml version="1.0"?>
-<project default="install" basedir="." name="jmsjca-common">
+<project default="" basedir="." name="jmsjca-common">
+    <property environment="env" />
+    <property file="${stc.root.dir}/stc.properties" />
+    <pathconvert property="stc.root.dir" targetOS="unix">
+        <path>
+            <pathelement path="${env.STC_ROOT}"/>
+        </path>
+    </pathconvert>
+    <property file="${env.STC_ROOT}/stc.properties" />
+    <property file="${stc.root.dir}/stc.properties" />
 
+    <property file="build.properties" />
+    <property file="build-RTS.properties" />
+    <property file="build-${jcaid}.properties" />
+    <property file="build-xxx.properties" />
+
+    <!-- To compile -->
+    <path id="jmsjca.xxx.classpath">
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+        <fileset file="${jmsjca.core.jar.path}" />
+    </path>
+
+
+    
+    <!--===========================================================================
+    To be overridden
+    -->
+    <target name="init" unless="init.ed">
+    </target>
+    
+    <!--===========================================================================
+    To be overridden by UNIFIED only
+    -->
+    <target name="urar" unless="init.ed">
+    </target>
+    
+    <!--===========================================================================
+        Creates the rar file
+    -->
+        <target name="rar">
+        </target>
+
+    <!--===========================================================================
+        Creates the sar file
+    -->
+        <target name="sar" depends="rar">
+        </target>
+
+    <!--===========================================================================
+        Clean
+    -->
+        <target name="clean" depends="init">
+            <echo message="deleting ${jmsjca.xxx.module.dir}" />
+            <delete dir="${jmsjca.xxx.module.dir}" />
+            <delete dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
+            <delete file="${install.inclusions.dir}/all/extras/${jmsjca.xxx.rar.rar.path}" />
+            <delete dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
+        </target>
+
+    <!--===========================================================================
+    Compiles the source code and produces a jar file
+    -->
+    <target
+        name="compilejar"
+        depends="init"
+        description="Compiles the source base"
+        unless="compilejar.ed"
+    >
+        <!-- compile -->
+        <mkdir dir="${jmsjca.xxx.rar.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.xxx.rar.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="${jcaid}/src/java" />
+            <classpath refid="jmsjca.xxx.classpath"/>
+        </javac>
+
+        <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
+        <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
+        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" prefixU="ra${jcaid}-" />
+        <copy todir="${jmsjca.xxx.rar.classes.dir}">
+            <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
+        </copy>
+
+        <!-- mk jar -->
+        <jar destfile="${jmsjca.xxx.rar.jar.path}">
+            <fileset dir="${jmsjca.xxx.rar.classes.dir}">
+                <include name="com/stc/jmsjca/${jcaid}/**.*" />
+            </fileset>
+        </jar>
+        
+        <!-- copy jar file -->
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.jars.dir}" />
+
+        <property name="compilejar.ed" value="true" />
+    </target>
+    
+    
 <!--===========================================================================
     Empty place holder for RARs that do not contribute anything to the 
     runtime image
 -->
     <target name="copy-runtime-image">
+    </target>
+    
+<!--===========================================================================
+    Empty place holder for RARs that do not contribute anything to the 
+    runtime image
+-->
+    <target name="rar2">
     </target>
 </project>

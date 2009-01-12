@@ -1,47 +1,13 @@
 <?xml version="1.0"?>
-<project default="compile" basedir="." name="unifiedjms">
-    <description>
-    </description>
+<project default="" basedir="." name="unifiedjms">
     <import file="build-common.xml" />
-
-<!--
-  Conventions:
-  xx.dir = directory
-  xx.filepath = absolute filename
-  xx.filename = filename only
-
-  This is the build file for stcms. It's targets will be called from
-  other build files. It is assumed that the following properties are
-  set:
-  - jcaid
-
--->
+    <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
+    <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
 <!--===========================================================================
     Initializes variables etc
 -->
     <target name="init" unless="init.ed">
-        <property environment="env" />
-        <property file="${stc.root.dir}/stc.properties" />
-        <pathconvert property="stc.root.dir" targetOS="unix">
-            <path>
-                <pathelement path="${env.STC_ROOT}"/>
-            </path>
-        </pathconvert>
-        <property file="${env.STC_ROOT}/stc.properties" />
-        <property file="${stc.root.dir}/stc.properties" />
-
-        <property file="build.properties" />
-        <property file="build-RTS.properties" />
-        <property file="build-${jcaid}.properties" />
-        <property file="build-xxx.properties" />
-
-        <!-- To compile -->
-        <path id="jmsjca.xxx.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-            <fileset file="${jmsjca.core.jar.path}" />
-        </path>
-
         <!-- To compile/run unit tests -->
         <path id="jmsjca.test.classpath">
             <path refid="container.classpath"/>
@@ -49,7 +15,6 @@
             <fileset file="${jmsjca.core.jar.path}" />
             <fileset file="${jmsjca.xxx.rar.jar.path}" />
             <pathelement location="${jmsjca.container.classes.dir}" />
-<!--            <fileset dir="${jmsjca.module.dir}/rastcms/testclasses" />-->
             <fileset file="${stc.api.dir}/com.stc.jms.stcjms.jar" />
             <fileset file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" />
         </path>
@@ -58,20 +23,9 @@
     </target>
 
 <!--===========================================================================
-    Clean
--->
-    <target name="clean" depends="init">
-        <echo message="deleting ${jmsjca.xxx.module.dir}" />
-        <delete dir="${jmsjca.xxx.module.dir}" />
-        <delete dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-        <delete file="${install.inclusions.dir}/all/extras/${jmsjca.xxx.rar.rar.path}" />
-        <delete dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-    </target>
-
-<!--===========================================================================
     Creates the rar file
 -->
-    <target name="rar" depends="compile" unless="rar.ed">
+    <target name="rar" depends="init" unless="rar.ed">
         <!-- This will modify domain.xml on installation -->
         <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
         <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
@@ -94,18 +48,31 @@
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
         </zip>
 
-        <!-- mk sun-jms-adapter.rar -->
-        <zip destfile="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" >
-            <!-- Include all jars -->
-            <fileset dir="${jmsjca.artefacts.dir}">
-                <include name="com.stc.jmsjca.core.jar" />
-            </fileset>
-            <fileset file="${jmsjca.xxx.rar.jar.path}"/>
-            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-        </zip>
-
         <property name="rar.ed" value="true" />
     </target>
+
+<!--===========================================================================
+    Creates the common rar file
+-->
+        <target name="urar" unless="urar.ed" depends="init">
+            <!-- mk sun-jms-adapter.rar -->
+            <zip destfile="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" >
+                <!-- Include all jars -->
+<!-- This is how it is supposed to be TODO                
+                <fileset dir="${jmsjca.jars.dir}">
+                    <include name="*.jar" />
+                </fileset>
+                <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+-->
+                <fileset dir="${jmsjca.jars.dir}">
+                    <include name="com.stc.jmsjca.core.jar" />
+                </fileset>
+                <fileset file="${jmsjca.xxx.rar.jar.path}"/>
+                <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            </zip>
+
+            <property name="urar.ed" value="true" />
+        </target>
 
 <!--===========================================================================
     Creates the sar file
@@ -123,13 +90,84 @@
     </target>
     
     <target name="copy-runtime-image" depends="init">
-    		<copy file="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" todir="${jmsjca.runtime-image.dir}" />
-    		<copy file="${jcaid}/src/scripts/server-init.xml" todir="${jmsjca.runtime-image.dir}" />
-    		<copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-image.dir}" />
-    		<mkdir dir="${jmsjca.runtime-doc.dir}"/>
-    		<copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-doc.dir}" />
+        <copy file="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" todir="${jmsjca.runtime-image.dir}" />
+        <copy file="${jcaid}/src/scripts/server-init.xml" todir="${jmsjca.runtime-image.dir}" />
+        <copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-image.dir}" />
+        <mkdir dir="${jmsjca.runtime-doc.dir}"/>
+        <copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-doc.dir}" />
     </target>
         
+    <!--===========================================================================
+    Compiles the source code and produces a jar file
+        The only extra thing: adds all classes to the jar. This is wrong. Remove it.
+TODO
+    -->
+    <target
+        name="compilejar"
+        depends="init"
+        description="Compiles the source base"
+        unless="compilejar.ed"
+    >
+        <!-- compile -->
+        <mkdir dir="${jmsjca.xxx.rar.classes.dir}"/>
+        <javac
+            fork="stc.jdk13.fork"
+            destdir="${jmsjca.xxx.rar.classes.dir}"
+            debug="true"
+            deprecation="${stc.java.deprecation}"
+            target="1.4"
+            source="1.4"
+        >
+            <src path="${jcaid}/src/java" />
+            <classpath refid="jmsjca.xxx.classpath"/>
+        </javac>
+
+        <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
+        <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
+        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" prefixU="ra${jcaid}-" />
+        <copy todir="${jmsjca.xxx.rar.classes.dir}">
+            <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
+        </copy>
+
+        <!-- mk jar -->
+        <jar destfile="${jmsjca.xxx.rar.jar.path}">
+            <fileset dir="${jmsjca.xxx.rar.classes.dir}">
+                <include name="com/stc/jmsjca/${jcaid}/**.*" />
+            </fileset>
+
+            <!-- OTHER JARS -->
+            <fileset dir="${jmsjca.module.dir}/rajboss/classes">
+                <include name="com/stc/jmsjca/jboss/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rajndi/classes">
+                <include name="com/stc/jmsjca/jndi/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rastcms/classes">
+                <include name="com/stc/jmsjca/stcms/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rastcms453/classes">
+                <include name="com/stc/jmsjca/stcms453/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rasunone/classes">
+                <include name="com/stc/jmsjca/sunone/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawave/classes">
+                <include name="com/stc/jmsjca/wave/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawl/classes">
+                <include name="com/stc/jmsjca/wl/**.*" />
+            </fileset>
+            <fileset dir="${jmsjca.module.dir}/rawmq/classes">
+                <include name="com/stc/jmsjca/wmq/**.*" />
+            </fileset>
+        </jar>
+        
+        <!-- copy jar file -->
+        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.jars.dir}" />
+
+        <property name="compilejar.ed" value="true" />
+    </target>
+
 <!--===========================================================================
     Copies the relevant files to the Maven staging area for the Maven repository
 -->
@@ -242,80 +280,11 @@
     </target>
 
 <!--===========================================================================
-    Compiles the source code and produces a jar file
--->
-    <target
-        name="compile"
-        depends="init"
-        description="Compiles the source base"
-        unless="compile.ed"
-    >
-        <!-- compile -->
-        <mkdir dir="${jmsjca.xxx.rar.classes.dir}"/>
-        <javac
-            fork="stc.jdk13.fork"
-            destdir="${jmsjca.xxx.rar.classes.dir}"
-            debug="true"
-            deprecation="${stc.java.deprecation}"
-            target="1.4"
-            source="1.4"
-        >
-            <src path="${jcaid}/src/java" />
-            <classpath refid="jmsjca.xxx.classpath"/>
-        </javac>
-
-        <!-- Before jar, update i18n properties file in src directory and copy it to the jar -->
-        <taskdef name="i18n" classname="com.stc.i18ntools.TextExtractor" classpath="${jmsjca.build-tools.classes.dir}"/>
-        <i18n dir="${jmsjca.xxx.rar.classes.dir}" file="${jcaid}/src/java/com/stc/jmsjca/${jcaid}/msgs.properties" prefixU="ra${jcaid}-" />
-        <copy todir="${jmsjca.xxx.rar.classes.dir}">
-            <fileset dir="${jcaid}/src/java" excludes="**/*.java"/>
-        </copy>
-
-        <!-- mk jar -->
-        <jar destfile="${jmsjca.xxx.rar.jar.path}">
-            <fileset dir="${jmsjca.xxx.rar.classes.dir}">
-                <include name="com/stc/jmsjca/${jcaid}/**.*" />
-            </fileset>
-
-            <!-- OTHER JARS -->
-            <fileset dir="${jmsjca.module.dir}/rajboss/classes">
-                <include name="com/stc/jmsjca/jboss/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rajndi/classes">
-                <include name="com/stc/jmsjca/jndi/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rastcms/classes">
-                <include name="com/stc/jmsjca/stcms/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rastcms453/classes">
-                <include name="com/stc/jmsjca/stcms453/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rasunone/classes">
-                <include name="com/stc/jmsjca/sunone/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rawave/classes">
-                <include name="com/stc/jmsjca/wave/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rawl/classes">
-                <include name="com/stc/jmsjca/wl/**.*" />
-            </fileset>
-            <fileset dir="${jmsjca.module.dir}/rawmq/classes">
-                <include name="com/stc/jmsjca/wmq/**.*" />
-            </fileset>
-        </jar>
-        
-        <!-- Defer making RAR until SAR task -->
-
-        <property name="compile.ed" value="true" />
-    </target>
-
-
-<!--===========================================================================
     DEV-ONLY: compile-test
 -->
     <target
         name="compile-test"
-        depends="init, compile"
+        depends="init"
         description=""
         unless="compile-test.ed"
     >
