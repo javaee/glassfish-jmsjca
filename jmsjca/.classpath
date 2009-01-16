@@ -22,34 +22,12 @@
 	<classpathentry kind="src" path="wmq/test/src/java"/>
 	<classpathentry kind="src" path="sunone/src/java"/>
 	<classpathentry kind="src" path="sunone/test/src/java"/>
-	<classpathentry kind="lib" path="build-api/j2ee.jar"/>
-	<classpathentry kind="lib" path="core/test/lib/jdom.jar"/>
-	<classpathentry kind="lib" path="jndi/test/lib/fscontext.jar"/>
-	<classpathentry kind="lib" path="jndi/test/lib/providerutil.jar"/>
-	<classpathentry kind="lib" path="stcms453/lib/stcjms_453.jar"/>
-	<classpathentry kind="lib" path="wmq/lib/com.ibm.mq.jar"/>
-	<classpathentry kind="lib" path="wmq/lib/com.ibm.mqetclient.jar"/>
-	<classpathentry kind="lib" path="wmq/lib/com.ibm.mqjms.jar"/>
-	<classpathentry kind="lib" path="wmq/lib/dhbcore.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="build-lib/com.stc.rts.deployimpl.jar"/>
-	<classpathentry kind="lib" path="build-api/com.stc.jms.stcjms.jar" sourcepath="/stcms/jmsprov/src/java"/>
-	<classpathentry kind="lib" path="build-api/com.stc.jms.stcqueueviewer.jar" sourcepath="/stcms/queueviewer/src/java"/>
-	<classpathentry kind="lib" path="junit/junit.jar"/>
-	<classpathentry kind="lib" path="wl/lib/wlclient.jar"/>
-	<classpathentry kind="lib" path="wl/lib/wljmsclient.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jboss-client.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jbossmq-client.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jnp-client.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jbossall-client.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jboss-jmx.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jboss-system.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/jmx-invoker-adaptor-client.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/xercesImpl.jar"/>
-	<classpathentry kind="lib" path="jboss/lib/xml-apis.jar"/>
-	<classpathentry kind="lib" path="stcms453/lib/stcqueueviewer_453.jar"/>
-	<classpathentry kind="lib" path="sunone/lib/imqjmsra.jar"/>
-	<classpathentry kind="lib" path="build-api/com.stc.wave.wave.jar"/>
 	<classpathentry kind="lib" path="build-ant/lib/ant.jar"/>
+	<classpathentry kind="lib" path="ext/j2ee.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjcaExternaDependencies"/>
+	<classpathentry kind="lib" path="ext/jdom.jar"/>
 	<classpathentry kind="output" path="out"/>
 </classpath>
