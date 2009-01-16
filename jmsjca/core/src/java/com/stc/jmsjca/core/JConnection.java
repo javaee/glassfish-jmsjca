@@ -50,7 +50,7 @@ import java.util.List;
  * connection. A managed connection represents a Session object.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class JConnection extends NoProxyWrapper implements QueueConnection, TopicConnection, Connection {
     private static Logger sLog = Logger.getLogger(JConnection.class);
@@ -482,12 +482,12 @@ public class JConnection extends NoProxyWrapper implements QueueConnection, Topi
      * @param s session
      */
     public void notifyWSessionClosedByApplication(Object s) {
-    	for(Iterator iter = mSessions.iterator(); iter.hasNext();){
-    		if(((IWSession)iter.next()).getReference() == s){
-    			iter.remove();
-    			break;
-    		}
-    	}
+        for (Iterator iter = mSessions.iterator(); iter.hasNext();) {
+            if (((IWSession) iter.next()).getReference() == s) {
+                iter.remove();
+                break;
+            }
+        }
     }
 
     /**

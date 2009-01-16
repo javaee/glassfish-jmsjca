@@ -40,7 +40,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -266,10 +266,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             urlstr = resourceAdapter.getConnectionURL();
         }
         if (urlstr == null && activationSpec != null && !Str.empty(activationSpec.getConnectionURL())) {
-        	urlstr = activationSpec.getConnectionURL();
+            urlstr = activationSpec.getConnectionURL();
         }
         if (urlstr == null && fact != null && !Str.empty(fact.getConnectionURL())) {
-        	urlstr = fact.getConnectionURL();
+            urlstr = fact.getConnectionURL();
         }
 
         // need to ensure that this URL isn't an indirect reference, i.e.
