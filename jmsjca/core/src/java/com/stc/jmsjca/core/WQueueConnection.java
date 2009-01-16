@@ -30,7 +30,7 @@ import javax.jms.ServerSessionPool;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WQueueConnection extends WConnection implements QueueConnection {
 
@@ -66,9 +66,13 @@ public class WQueueConnection extends WConnection implements QueueConnection {
      * @param serverSessionPool ServerSessionPool
      * @param int3 int
      * @return ConnectionConsumer
+     * @throws JMSException always
      */
     public ConnectionConsumer createConnectionConsumer(Queue queue, String string,
-        ServerSessionPool serverSessionPool, int int3) {
-        return createConnectionConsumer(queue, string, serverSessionPool, int3);
+        ServerSessionPool serverSessionPool, int int3) throws JMSException {
+        if (mMgr == null) {
+            invokeOnClosed();
+        }
+        return mMgr.createConnectionConsumer(queue, string, serverSessionPool, int3);
     }
 }
