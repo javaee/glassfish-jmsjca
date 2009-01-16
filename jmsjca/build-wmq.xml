@@ -38,37 +38,8 @@
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
         </zip>
         
-        <!-- This will modify domain.xml on installation -->     
-        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-
-        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
-        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-
-        <!-- Copy to extras -->
-        <mkdir dir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jcaid}/src/userdoc/ra${jcaid}-readme.html" todir="${install.inclusions.dir}/all/extras" />
-        
-        <!-- Copy jars for upload into Repository (third party app servers) -->
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
-
-        <!-- Copy client jars and mgt jars -->
-        <!-- Client jars are provided by the end user -->
-
         <property name="rar.ed" value="true" />
     </target>
-
-<!--===========================================================================
-    Creates the sar file
--->
-    <target name="sar" depends="rar" unless="sar.ed">
-
-        <property name="sar.ed" value="true" />
-    </target>
-
 
 <!--===========================================================================
     DEV-ONLY: compile-test
@@ -239,30 +210,4 @@
         </junit>
     </target>
 
-<!--===========================================================================
-    DEV-ONLY: Patches the server specified by "lh"
--->
-    <target
-        name="patch-core"
-        depends="sar"
-        if="lh"
-    >
-       <!-- Provider jar -->
-       <copy
-           file="${jmsjca.xxx.rar.jar.path}"
-           todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-        <unzip
-            src="${jmsjca.xxx.rar.jar.path}"
-            dest="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-            
-        <!-- ra.xml -->
-        <copy
-            file="${jcaid}/src/meta/ra.xml"
-            todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}/META-INF"
-        />
-
-        <!-- client jar -->
-    </target>
 </project>

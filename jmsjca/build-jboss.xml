@@ -32,23 +32,6 @@
             <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
         </zip>
 
-        <!-- This will modify domain.xml on installation -->
-        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-
-        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
-        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-
-        <!-- Copy to extras -->
-        <mkdir dir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jcaid}/src/userdoc/ra${jcaid}-readme.html" todir="${install.inclusions.dir}/all/extras" />
-
-        <!-- Copy jars for upload into Repository (third party app servers) -->
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
-
         <property name="rar.ed" value="true" />
     </target>
 
@@ -141,51 +124,6 @@
     </target>
 
 <!--===========================================================================
-    DEV-ONLY: install-jms-jars: jms provider client jars
--->
-    <target
-        name="install-jms-jars"
-        depends="init"
-        if="lh"
-    >
-       <!-- provider jars -->
-       <copy todir="${lh}/logicalhost/is/lib" >
-        <fileset dir="${jcaid}/lib" >
-            <include name="jbossall-client.jar" />
-            <include name="jboss-client.jar" />
-            <include name="jbossmq-client.jar" />
-            <include name="jnp-client.jar" />
-        </fileset>
-       </copy>                
-       <echo message="intalled jbossall-client.jar" />
-       <echo message="intalled jboss-client.jar" />
-       <echo message="intalled jbossmq-client.jar.jar" />
-       <echo message="intalled jnp-client.jar.jar" />       
-       
-    </target>
-
-    <target
-        name="uninstall-jms-jars"
-        depends="init"
-        if="lh"
-    >
-       <!-- Remove provider jars -->
-       <delete>
-        <fileset dir="${lh}/logicalhost/is/lib" >
-            <include name="jbossall-client.jar" />
-            <include name="jboss-client.jar" />
-            <include name="jbossmq-client.jar" />
-            <include name="jnp-client.jar" />
-        </fileset>
-       </delete>                
-       <echo message="unintalled jbossall-client.jar" />
-       <echo message="unintalled jboss-client.jar" />
-       <echo message="unintalled jbossmq-client.jar.jar" />
-       <echo message="unintalled jnp-client.jar.jar" />       
-       
-    </target>
-
-<!--===========================================================================
     DEV-ONLY: run-test: executes the tests
 -->
     <target
@@ -219,30 +157,5 @@
                 <formatter type="xml"/>
             </batchtest>
         </junit>
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: Patches the server specified by "lh"
--->
-    <target
-        name="patch-core"
-        depends="sar"
-        if="lh"
-    >
-       <!-- Provider jar -->
-       <copy
-           file="${jmsjca.xxx.rar.jar.path}"
-           todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-        <unzip
-            src="${jmsjca.xxx.rar.jar.path}"
-            dest="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-            
-        <!-- ra.xml -->
-        <copy
-            file="${jcaid}/src/meta/ra.xml"
-            todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}/META-INF"
-        />
     </target>
 </project>

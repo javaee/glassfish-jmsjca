@@ -1,62 +1,41 @@
 <?xml version="1.0"?>
 <project default="" basedir="." name="jmsjca-common">
-    <property environment="env" />
-    <property file="${stc.root.dir}/stc.properties" />
-    <pathconvert property="stc.root.dir" targetOS="unix">
-        <path>
-            <pathelement path="${env.STC_ROOT}"/>
-        </path>
-    </pathconvert>
-    <property file="${env.STC_ROOT}/stc.properties" />
-    <property file="${stc.root.dir}/stc.properties" />
 
+    <!-- While reading this properties file, it will substitute xxx for ${jcaid} -->
     <property file="build.properties" />
-    <property file="build-RTS.properties" />
-    <property file="build-${jcaid}.properties" />
-    <property file="build-xxx.properties" />
-
+    <property file="${jmsjca.properties.path}" />
+    
     <!-- To compile -->
     <path id="jmsjca.xxx.classpath">
         <fileset file="${stc.api.dir}/j2ee.jar" />
         <fileset file="${jmsjca.core.jar.path}" />
     </path>
 
-
-    
     <!--===========================================================================
     To be overridden
     -->
     <target name="init" unless="init.ed">
     </target>
-    
+
     <!--===========================================================================
     To be overridden by UNIFIED only
     -->
     <target name="urar" unless="init.ed">
     </target>
-    
+
     <!--===========================================================================
         Creates the rar file
     -->
-        <target name="rar">
-        </target>
-
-    <!--===========================================================================
-        Creates the sar file
-    -->
-        <target name="sar" depends="rar">
-        </target>
+    <target name="rar">
+    </target>
 
     <!--===========================================================================
         Clean
     -->
-        <target name="clean" depends="init">
-            <echo message="deleting ${jmsjca.xxx.module.dir}" />
-            <delete dir="${jmsjca.xxx.module.dir}" />
-            <delete dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-            <delete file="${install.inclusions.dir}/all/extras/${jmsjca.xxx.rar.rar.path}" />
-            <delete dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-        </target>
+    <target name="clean" depends="init">
+        <echo message="deleting ${jmsjca.xxx.module.dir}" />
+        <delete dir="${jmsjca.xxx.module.dir}" />
+    </target>
 
     <!--===========================================================================
     Compiles the source code and produces a jar file
@@ -64,7 +43,6 @@
     <target
         name="compilejar"
         depends="init"
-        description="Compiles the source base"
         unless="compilejar.ed"
     >
         <!-- compile -->
@@ -94,25 +72,222 @@
                 <include name="com/stc/jmsjca/${jcaid}/**.*" />
             </fileset>
         </jar>
-        
+
         <!-- copy jar file -->
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.jars.dir}" />
 
         <property name="compilejar.ed" value="true" />
     </target>
-    
-    
+
 <!--===========================================================================
-    Empty place holder for RARs that do not contribute anything to the 
-    runtime image
+    DEV-ONLY: compile-test
 -->
-    <target name="copy-runtime-image">
+    <target
+        name="compile-test2"
+        depends="init"
+        unless="compile-test.ed"
+    >
+        <!-- compile test code -->
+        <mkdir dir="${jmsjca.xxx.test.classes.dir}"/>
+        <javac fork="stc.jdk13.fork"
+               destdir="${jmsjca.xxx.test.classes.dir}"
+               debug="true"
+               deprecation="${stc.java.deprecation}"
+               target="1.4"
+               source="1.4"
+        >
+            <src path="core/test/src/java" />
+            <src path="${jcaid}/test/src/java" />
+
+            <classpath refid="jmsjca.xxx.classpath"/>
+            <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
+            <classpath>
+                <pathelement path="${jmsjca.xxx.rar.jar.path}"/>
+                <pathelement path="${jmsjca.container.classes.dir}"/>
+                <fileset file="${stc.lib.dir}/jdom.jar" />
+            </classpath>
+            <classpath refid="jmsjca.${jcaid}.clientjars.path" />
+        </javac>
+
+        <!-- copy resources -->
+        <copy todir="${jmsjca.xxx.test.classes.dir}">
+            <fileset dir="core/test/src/java" excludes="**/*.java"/>
+            <fileset dir="${jcaid}/test/src/java" excludes="**/*.java"/>
+        </copy>
+
+        <!-- ejb -->
+        <mkdir dir="${jmsjca.xxx.test.dir}"/>
+
+        <!-- Pack EJB    XXX TODO: SHOULD IDENTICAL FOR ALL CONTAINERS -->
+        <switch value="${testcontainer.id}">
+            <case value="rts">
+                <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                    <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                    </fileset>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/weblogic-ejb-jar.xml" />
+                    <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF" />
+                </zip>
+            </case>
+            <case value="jboss">
+                <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                    <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                    </fileset>
+                    <zipfileset prefix="META-INF" file="jboss/test/src/meta/ejb-jar.xml"/>
+                    <zipfileset prefix="META-INF" file="stcms/test/src/meta/jboss.xml"/>
+                </zip>
+            </case>
+            <case value="wl">
+                <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                    <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                    </fileset>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml"/>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml"/>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/weblogic-ejb-jar.xml"/>
+                    <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF"/>
+                </zip>
+            </case>
+            <case value="was">
+                <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                    <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                    </fileset>
+                    <zipfileset fullpath="META-INF/ejb-jar.xml" file="core/test/src/meta/ejb-jar-ibm.xml"/>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml"/>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ibm_ejbext.properties" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ibm-ejb-jar-bnd.xmi" />
+                    <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF" />
+                </zip>
+            </case>
+            <default>
+                <zip destfile="${jmsjca.xxx.ejb.jar.path}">
+                    <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                        <include name="com/stc/jmsjca/test/core/**.*" />
+                        <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
+                    </fileset>
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
+                    <zipfileset fullpath="META-INF/MANIFEST.MF" file="core/test/src/meta/MANIFEST.MF" />
+                </zip>
+            </default>
+        </switch>
+
+        <!-- Generate manifests for embedded RARs -->
+        <manifest file="${jmsjca.xxx.test.mft.path}">
+            <attribute 
+                name="Class-Path" 
+                value="${jmsjca.core.jar.name} ${jmsjca.xxx.jar.name}"
+            />
+        </manifest>
+        <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />
+
+        <!-- make embedded rar -->
+        <zip destfile="${jmsjca.xxx.test.rar.path}">
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml" />
+            <zipfileset prefix="META-INF" file="core/test/src/meta/weblogic-ra.xml"/>
+            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft.path}"/>
+        </zip>
+
+        <!-- make second embedded rar -->
+        <zip destfile="${jmsjca.xxx.test.rar1.path}">
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+            <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ra.xml"/>
+            <zipfileset fullpath="META-INF/weblogic-ra.xml" file="core/test/src/meta/weblogic-ra1.xml"/>
+            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"/>
+        </zip>
+
+        <!-- Zip up EAR file   XXX TODO: SHOULD BE THE SAME FOR ALL CONTAINERS -->
+        <switch value="${testcontainer.id}">
+            <case value="rts">
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
+                </zip>
+            </case>
+            <case value="was">
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset fullpath="META-INF/application.xml" file="core/test/src/meta/application-ibm.xml" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/ibm-application-bnd.xml" />
+                    <zipfileset file="${jmsjca.core.jar.path}" />
+                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
+                </zip>
+            </case>
+            <default>
+                <zip destfile="${jmsjca.xxx.ear.path}.1">
+                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
+                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
+                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
+                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
+                    <zipfileset file="${jmsjca.core.jar.path}" />
+                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
+                </zip>
+            </default>
+        </switch>
+        <property name="compile-test.ed" value="true" />
     </target>
-    
+
 <!--===========================================================================
-    Empty place holder for RARs that do not contribute anything to the 
-    runtime image
+    DEV-ONLY: run-test: executes the tests
 -->
-    <target name="rar2">
+    <target name="run-test2" depends="init">
+        <echo message="test ear                  : ${jmsjca.xxx.ear.path}" />
+        <echo message="jms impl                  : ${jcaid}" />
+        <echo message="test container            : ${jmsjca.container.id}" />
+        <echo message="test container properties : ${jmsjca.properties.path}" />
+        <echo message="test jms server properties: ${jmsjca.properties.path}" />
+        <echo message="results in                : ${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
+
+        <delete dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
+        <mkdir dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
+
+        <junit
+            printsummary="on"
+            haltonerror="off"
+            haltonfailure="off"
+        >
+            <jvmarg value="${junit.jvm.options}"/>
+            <sysproperty key="test.container.id" value="${jmsjca.container.id}"/>
+            <sysproperty key="test.server.properties" value="${jmsjca.properties.path}"/>
+            <sysproperty key="test.container.properties" value="${jmsjca.properties.path}"/>
+            <sysproperty key="test.ear.path" value="${jmsjca.xxx.ear.path}"/>
+
+            <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
+            <classpath>
+                <fileset file="${jmsjca.core.jar.path}" />
+                <pathelement path="${jmsjca.xxx.rar.jar.path}"/>
+                <pathelement path="${jmsjca.container.classes.dir}"/>
+                <fileset file="${stc.lib.dir}/jdom.jar" />
+                <fileset file="${jmsjca.filejndi.jar.path-fscontext.jar}" />
+                <fileset file="${jmsjca.filejndi.jar.path-providerutil.jar}" />
+            </classpath>
+            <classpath refid="jmsjca.${jcaid}.clientjars.path" />
+            <classpath path="${jmsjca.xxx.test.classes.dir}" />
+            
+            <batchtest
+                haltonfailure="no"
+                haltonerror="no"
+                todir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"
+            >
+                <fileset dir="${jmsjca.xxx.test.classes.dir}">
+                    <include name="**/${jmsjca.ear1.pattern}JUStd.class"/>
+                    <include name="**/${jmsjca.ear1.pattern}Ear1.class"/>
+                </fileset>
+                <formatter type="xml"/>
+            </batchtest>
+        </junit>
     </target>
 </project>

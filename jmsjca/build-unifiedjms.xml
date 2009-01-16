@@ -26,15 +26,6 @@
     Creates the rar file
 -->
     <target name="rar" depends="init" unless="rar.ed">
-        <!-- This will modify domain.xml on installation -->
-        <mkdir dir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/scripts/init.xml" todir="${install.additions.dir}/all/${jmsjca.xxx.name}" />
-
-        <!-- This will copy the provider jar and ra.xml to the correct place in the RTS zip file -->
-        <mkdir dir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}" />
-        <copy file="${jcaid}/src/meta/ra.xml"   todir="${install.inclusions.dir}/all/is/lib/install/applications/${jmsjca.xxx.name}/META-INF" />
-
         <mkdir dir="${jmsjca.artefacts.dir}" />
         
         <!-- mk rar -->
@@ -74,29 +65,6 @@
             <property name="urar.ed" value="true" />
         </target>
 
-<!--===========================================================================
-    Creates the sar file
--->
-    <target name="sar" depends="rar" unless="sar.ed">
-        <!-- Copy to extras -->
-        <mkdir dir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jmsjca.xxx.rar.rar.path}" todir="${install.inclusions.dir}/all/extras" />
-        <copy file="${jcaid}/src/userdoc/ra${jcaid}-readme.html" todir="${install.inclusions.dir}/all/extras" />
-
-        <!-- Copy jars for upload into Repository (third party app servers) -->
-        <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.artefacts.dir}" />
-        
-        <property name="sar.ed" value="true" />
-    </target>
-    
-    <target name="copy-runtime-image" depends="init">
-        <copy file="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" todir="${jmsjca.runtime-image.dir}" />
-        <copy file="${jcaid}/src/scripts/server-init.xml" todir="${jmsjca.runtime-image.dir}" />
-        <copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-image.dir}" />
-        <mkdir dir="${jmsjca.runtime-doc.dir}"/>
-        <copy file="${jcaid}/src/userdoc/sun-jms-adapter-readme.html" todir="${jmsjca.runtime-doc.dir}" />
-    </target>
-        
     <!--===========================================================================
     Compiles the source code and produces a jar file
         The only extra thing: adds all classes to the jar. This is wrong. Remove it.
@@ -426,28 +394,4 @@ TODO
         </junit>
     </target>
 
-<!--===========================================================================
-    DEV-ONLY: Patches the server specified by "lh"
--->
-    <target
-        name="patch-core"
-        depends="sar"
-        if="lh"
-    >
-        <!-- Provider jar -->
-        <copy
-            file="${jmsjca.xxx.rar.jar.path}"
-            todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-        <unzip
-            src="${jmsjca.xxx.rar.jar.path}"
-            dest="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}"
-        />
-            
-        <!-- ra.xml -->
-        <copy
-            file="${jcaid}/src/meta/ra.xml"
-            todir="${lh}/logicalhost/is/lib/install/applications/${jmsjca.xxx.name}/META-INF"
-        />
-    </target>
 </project>
