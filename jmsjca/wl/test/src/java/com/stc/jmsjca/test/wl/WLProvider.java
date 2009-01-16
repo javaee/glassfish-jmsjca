@@ -36,15 +36,19 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class WLProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wl.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.wl.port";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.wl.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.wl.password";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new WLPassthrough(serverProperties);
+        return new WLPassthrough(serverProperties, this);
     }
 
     /**
@@ -73,5 +77,28 @@ public class WLProvider extends JMSProvider {
         cc.setPassword("");
 
         return dd;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
+     */
+    public String getConnectionUrl(JMSTestEnv test) {
+        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

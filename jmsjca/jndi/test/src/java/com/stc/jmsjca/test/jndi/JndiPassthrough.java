@@ -20,6 +20,7 @@ import com.stc.jms.client.STCQueueConnectionFactory;
 import com.stc.jms.client.STCTopicConnectionFactory;
 import com.stc.jms.queueviewer.Server;
 import com.stc.jms.queueviewer.SubscriberInfo;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import javax.jms.JMSException;
@@ -33,14 +34,14 @@ import java.util.Vector;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JndiPassthrough extends Passthrough {
     private Properties mServerProperties;
     private Server mServer;
 
-    public JndiPassthrough(Properties server) {
-        super(server);
+    public JndiPassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
         mServerProperties = server;
     }
 
@@ -49,11 +50,11 @@ public class JndiPassthrough extends Passthrough {
             mServer = new Server();
 
             int port = Integer.parseInt(mServerProperties.getProperty(
-                    "stcms.instance.port", null));
+                    JndiProvider.PROPNAME_PORT, null));
 
-            mServer.connect(mServerProperties.getProperty("host"), port,
-                    mServerProperties.getProperty("admin.user"),
-                    mServerProperties.getProperty("admin.password"));
+            mServer.connect(JndiProvider.PROPNAME_HOST, port,
+                    mServerProperties.getProperty(JndiProvider.PROPNAME_USERID),
+                    mServerProperties.getProperty(JndiProvider.PROPNAME_PASSWORD));
         }
         return mServer;
     }
@@ -89,9 +90,9 @@ public class JndiPassthrough extends Passthrough {
      */
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
-                "stcms.instance.port", null));
+                JndiProvider.PROPNAME_PORT, null));
         return new STCTopicConnectionFactory(mServerProperties.
-                getProperty("host"), port);
+                getProperty(JndiProvider.PROPNAME_HOST), port);
     }
 
     /**
@@ -99,8 +100,8 @@ public class JndiPassthrough extends Passthrough {
      */
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
-                "stcms.instance.port", null));
+            JndiProvider.PROPNAME_PORT, null));
         return new STCQueueConnectionFactory(mServerProperties.
-                getProperty("host"), port);
+                getProperty(JndiProvider.PROPNAME_HOST), port);
     }
 }

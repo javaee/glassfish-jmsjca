@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -73,19 +73,27 @@ public abstract class Passthrough {
     private String mTopic1Name = "Topic1";
     private String mTopic2Name = "Topic2";
     private String mTopic1DurableName = "T1SUB";
+    private JMSProvider mProvider;
     
     /**
      * @return UserId
      */
     public String getUserid() {
-        return mServerProperties.getProperty("admin.user");
+        return getJMSProvider().getUserName(mServerProperties);
     }
     
     /**
      * @return password
      */
     public String getPassword() {
-        return mServerProperties.getProperty("admin.password");            
+        return getJMSProvider().getPassword(mServerProperties);            
+    }
+
+    /**
+     * @return associated provider
+     */
+    public JMSProvider getJMSProvider() {
+        return mProvider;
     }
 
     /**
@@ -93,8 +101,9 @@ public abstract class Passthrough {
      * 
      * @param server configuration
      */
-    public Passthrough(Properties server) {
+    public Passthrough(Properties server, JMSProvider provider) {
         mServerProperties = server;
+        mProvider = provider;
         mCommitSize = Integer.parseInt(server.getProperty("jmsjca.test.commitsize",
             Integer.toString(mCommitSize)));
         mNMsgsToSend = Integer.parseInt(server.getProperty("jmsjca.test.mNMsgsToSend",

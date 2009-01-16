@@ -43,7 +43,7 @@ import java.util.Map;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class SubjectForwardingJUStd extends EndToEndBase {
     /**
@@ -107,10 +107,10 @@ public class SubjectForwardingJUStd extends EndToEndBase {
         Subject.doAs(s, new PrivilegedExceptionAction() {
             public Object run() throws Exception {
                 Map m = getEcho();
-                assertTrue(m.get(Name1).equals(mServerProperties.get("admin.user")));
+                assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
-                assertTrue(m.get(String1).equals(mServerProperties.get("admin.user") + " (realm=file) on behalf of Lilly (realm=xyzrealm)"));
+                assertTrue(m.get(String1).equals(getJMSProvider().getUserName(mServerProperties) + " (realm=file) on behalf of Lilly (realm=xyzrealm)"));
 
                 assertTrue(m.get(Name2).equals("Lilly"));
                 assertTrue(m.get(Realm2).equals("xyzrealm"));
@@ -132,10 +132,10 @@ public class SubjectForwardingJUStd extends EndToEndBase {
         Subject.doAs(s, new PrivilegedExceptionAction() {
             public Object run() throws Exception {
                 Map m = getEcho();
-                assertTrue(m.get(Name1).equals(mServerProperties.get("admin.user")));
+                assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
-                assertTrue(m.get(String1).equals(mServerProperties.get("admin.user") + " (realm=file) on behalf of Lilly (realm=xyzrealm)"));
+                assertTrue(m.get(String1).equals(getJMSProvider().getUserName(mServerProperties) + " (realm=file) on behalf of Lilly (realm=xyzrealm)"));
 
                 assertTrue(m.get(Name2).equals("Lilly"));
                 assertTrue(m.get(Realm2).equals("xyzrealm"));
@@ -159,11 +159,11 @@ public class SubjectForwardingJUStd extends EndToEndBase {
         Subject.doAs(s, new PrivilegedExceptionAction() {
             public Object run() throws Exception {
                 Map m = getEcho();
-                assertTrue(m.get(Name1).equals(mServerProperties.get("admin.user")));
+                assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
                 System.out.println("X: " + m.get(String1));
-                assertTrue(m.get(String1).equals(mServerProperties.get("admin.user") + " (realm=file) on behalf of Lilly"));
+                assertTrue(m.get(String1).equals(getJMSProvider().getUserName(mServerProperties) + " (realm=file) on behalf of Lilly"));
 
                 assertTrue(m.get(Name2).equals("Lilly"));
                 assertTrue(m.get(Realm2) == null);
@@ -183,10 +183,10 @@ public class SubjectForwardingJUStd extends EndToEndBase {
      */
     public void testNoSubj_RTS_ONLY() throws Throwable {
         Map m = getEcho();
-	    assertTrue(m.get(Name1).equals(mServerProperties.get("admin.user")));
+	    assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
 	    assertTrue(m.get(Realm1).equals("file"));
 	    assertTrue(m.get(Roles1).equals(""));
-	    assertTrue(m.get(String1).equals(mServerProperties.get("admin.user") + " (realm=file)"));
+	    assertTrue(m.get(String1).equals(getJMSProvider().getUserName(mServerProperties) + " (realm=file)"));
 
 	    assertTrue(m.get(Name2) == null);
 	    assertTrue(m.get(Realm2) == null);
@@ -232,12 +232,12 @@ public class SubjectForwardingJUStd extends EndToEndBase {
                 EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
                 dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
                 ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
-                cc.setUserName(mServerProperties.getProperty("admin.user"));
-                cc.setPassword(mServerProperties.getProperty("admin.password"));
+                cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+                cc.setPassword(getJMSProvider().getPassword(mServerProperties));
                 
                 if (!getContainerID().equals("rts")) {
-                    String url = "stcms://" + getJmsServerProperties().getProperty("host") + ":"
-                        + getJmsServerProperties().getProperty("stcms.instance.port");
+                    String url = "stcms://" + getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_HOST) + ":"
+                        + getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_PORT);
                     cc.setConnectionURL(url);
                 }
                 

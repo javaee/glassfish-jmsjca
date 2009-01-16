@@ -47,6 +47,10 @@ import java.util.Properties;
  *
  */
 public class GlassFishContainer extends Container {
+    public static final String PROP_HOST = "jmsjca.glassfish.host";
+    public static final String PROP_PORT = "jmsjca.glassfish.adminport";
+    public static final String PROP_USERID = "jmsjca.glassfish.userid";
+    public static final String PROP_PASSWORD = "jmsjca.glassfish.password";
 
     public static final String ID = "glassfish";
     
@@ -66,10 +70,10 @@ public class GlassFishContainer extends Container {
      * @see com.stc.jmsjca.container.Container#setProperties(java.util.Properties)
      */
     public void setProperties(Properties p) throws Exception {
-        String host = p.getProperty("host");
-        String port = p.getProperty("admin.port");
-        String user = p.getProperty("admin.user");
-        String password = p.getProperty("admin.password");
+        String host = p.getProperty(PROP_HOST);
+        String port = p.getProperty(PROP_PORT);
+        String user = p.getProperty(PROP_USERID);
+        String password = p.getProperty(PROP_PASSWORD);
         
         String uri = "deployer:Sun:S1AS::" + host + ":" + port;
         

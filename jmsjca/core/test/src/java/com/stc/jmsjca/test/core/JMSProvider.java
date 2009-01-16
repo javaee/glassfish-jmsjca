@@ -42,13 +42,19 @@ public abstract class JMSProvider {
      * @param test env
      * @return URL
      */
-    public String getConnectionUrl(BaseTestCase.JMSTestEnv test) {
-        String host = test.getJmsServerProperties().getProperty("host");
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty("stcms.instance.port"));
-        return createConnectionUrl(host, port);
-    }
+    public abstract String getConnectionUrl(BaseTestCase.JMSTestEnv test);
     
     public String createConnectionUrl(String host, int port) {
         throw new IllegalStateException("Not implemented in " + this);
     }
+
+    /**
+     * Returns the password from the properties set
+     */
+    public abstract String getPassword(Properties serverProperties);
+
+    /**
+     * Returns the username from the properties set
+     */
+    public abstract String getUserName(Properties serverProperties);
 }

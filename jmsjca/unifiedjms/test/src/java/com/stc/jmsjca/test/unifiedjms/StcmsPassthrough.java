@@ -20,6 +20,7 @@ import com.stc.jms.client.STCQueueConnectionFactory;
 import com.stc.jms.client.STCTopicConnectionFactory;
 import com.stc.jms.queueviewer.Server;
 import com.stc.jms.queueviewer.SubscriberInfo;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import javax.jms.JMSException;
@@ -33,25 +34,25 @@ import java.util.Vector;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class StcmsPassthrough extends Passthrough {
     private Properties mServerProperties;
     private Server mServer;
 
-    public StcmsPassthrough(Properties server) {
-        super(server);
+    public StcmsPassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
         mServerProperties = server;
     }
     
     public static int getPort(Properties serverProperties) {
         int port = Integer.parseInt(serverProperties.getProperty(
-            "stcms.instance.port", null));
+            StcmsProvider.PROPNAME_PORT, null));
         return port;
     }
     
     public static String getHost(Properties serverProperties) {
-        return serverProperties.getProperty("host");        
+        return serverProperties.getProperty(StcmsProvider.PROPNAME_HOST);        
     }
 
     public Server getServer() throws Exception {
@@ -61,8 +62,8 @@ public class StcmsPassthrough extends Passthrough {
             int port = getPort(mServerProperties);
 
             mServer.connect(getHost(mServerProperties), port,
-                    mServerProperties.getProperty("admin.user"),
-                    mServerProperties.getProperty("admin.password"));
+                getJMSProvider().getUserName(mServerProperties),
+                getJMSProvider().getPassword(mServerProperties));
         }
         return mServer;
     }
@@ -91,9 +92,9 @@ public class StcmsPassthrough extends Passthrough {
      */
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
-                "stcms.instance.port", null));
+            StcmsProvider.PROPNAME_PORT, null));
         return new STCTopicConnectionFactory(mServerProperties.
-                getProperty("host"), port);
+                getProperty(StcmsProvider.PROPNAME_HOST), port);
     }
 
     /**
@@ -101,9 +102,9 @@ public class StcmsPassthrough extends Passthrough {
      */
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
-                "stcms.instance.port", null));
+            StcmsProvider.PROPNAME_PORT, null));
         return new STCQueueConnectionFactory(mServerProperties.
-                getProperty("host"), port);
+                getProperty(StcmsProvider.PROPNAME_HOST), port);
     }
 
     public boolean isDurableSubscriberPresent(String topic, String subname) throws Exception {

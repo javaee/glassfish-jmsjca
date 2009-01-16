@@ -55,7 +55,7 @@ import java.util.List;
  * ${workspace_loc:e-jmsjca/build}
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -277,8 +277,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         dd.findElementByText(EJBDD, "XContextName").setText("sendTo2UsingUnified");
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
             .createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(getJMSProvider().getPassword(mServerProperties));
         dd.update();
 
         // Deploy

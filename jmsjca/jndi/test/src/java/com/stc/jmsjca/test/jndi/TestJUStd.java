@@ -27,7 +27,9 @@ import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
+import com.stc.jmsjca.test.stcms.StcmsProvider;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -53,7 +55,12 @@ import java.util.Properties;
  * @version 1.0
  */
 public class TestJUStd extends XTestBase {
-//    private static Logger sLog = Logger.getLogger(TestJUStd.class);
+    /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 
     /**
      * Constructor
@@ -127,10 +134,8 @@ public class TestJUStd extends XTestBase {
     protected Properties getConnectionProperties() {
         Properties ret = new Properties();
 
-        ret.put(STCJMS.ProtocolMgr.Host, mServerProperties.
-            getProperty("host"));
-        ret.put(STCJMS.ProtocolMgr.Port, mServerProperties.getProperty(
-            "stcms.instance.port"));
+        ret.put(STCJMS.ProtocolMgr.Host, mServerProperties.getProperty(JndiProvider.PROPNAME_HOST));
+        ret.put(STCJMS.ProtocolMgr.Port, mServerProperties.getProperty(JndiProvider.PROPNAME_PORT));
 
         ret.setProperty(STCJMS.SessionOptions.autoCommitXA, "true");
 
@@ -243,8 +248,8 @@ public class TestJUStd extends XTestBase {
         
         RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
         ra.setConnectionURL("jndi://");
-        String host = mServerProperties.getProperty("host");
-        String port = mServerProperties.getProperty("stcms.instance.port");
+        String host = mServerProperties.getProperty(JndiProvider.PROPNAME_HOST);
+        String port = mServerProperties.getProperty(JndiProvider.PROPNAME_PORT);
         
         
         ra.setOptions(
@@ -279,8 +284,8 @@ public class TestJUStd extends XTestBase {
         
         RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
         ra.setConnectionURL("jndi://");
-        String host = mServerProperties.getProperty("host");
-        String port = mServerProperties.getProperty("stcms.instance.port");
+        String host = mServerProperties.getProperty(JndiProvider.PROPNAME_HOST);
+        String port = mServerProperties.getProperty(JndiProvider.PROPNAME_PORT);
         
         String sep = "!";
         
@@ -312,8 +317,8 @@ public class TestJUStd extends XTestBase {
         
         RAJNDIResourceAdapter ra = new RAJNDIResourceAdapter();
         ra.setConnectionURL("jndi://");
-        String host = mServerProperties.getProperty("host");
-        String port = mServerProperties.getProperty("stcms.instance.port");
+        String host = mServerProperties.getProperty(JndiProvider.PROPNAME_HOST);
+        String port = mServerProperties.getProperty(JndiProvider.PROPNAME_PORT);
         
         
         ra.setOptions(

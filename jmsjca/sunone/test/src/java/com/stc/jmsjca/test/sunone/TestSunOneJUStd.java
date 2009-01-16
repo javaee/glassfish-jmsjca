@@ -26,6 +26,7 @@ import com.stc.jmsjca.sunone.RASunOneObjectFactory;
 import com.stc.jmsjca.sunone.RASunOneResourceAdapter;
 import com.stc.jmsjca.sunone.SunOneConnectionUrl;
 import com.stc.jmsjca.sunone.SunOneUrlParser;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Semaphore;
 
@@ -98,6 +99,13 @@ public class TestSunOneJUStd extends XTestBase {
     Logger sLog = Logger.getLogger(TestSunOneJUStd.class.getName());
 
     /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new SunOneProvider();
+    }
+
+    /**
      * Constructor
      */
     public TestSunOneJUStd() {
@@ -114,8 +122,8 @@ public class TestSunOneJUStd extends XTestBase {
     }
     
 	public String getConnectionUrl() {
-        return "mq://" + mServerProperties.getProperty("host") + ":"
-            + mServerProperties.getProperty("stcms.instance.port");
+        return "mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST) + ":"
+            + mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT);
     }
 
     private String getProviderClass() {

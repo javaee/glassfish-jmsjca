@@ -21,6 +21,7 @@ import com.stc.jmsjca.test.core.BaseTestCase;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
 
 import java.util.Properties;
@@ -28,9 +29,14 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class StcmsProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.stcms.port";
+    public static final String PROPNAME_SSLPORT = "jmsjca.jmsimpl.stcms.sslport";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.stcms.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.stcms.password";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider
@@ -43,8 +49,8 @@ public class StcmsProvider extends JMSProvider {
         // the tests are running within RTS.
         if (!test.getContainerID().equals("rts")) {
             String url = "stcms://"
-                + test.getJmsServerProperties().getProperty("host") + ":"
-                + test.getJmsServerProperties().getProperty("stcms.instance.port");
+                + test.getJmsServerProperties().getProperty(PROPNAME_HOST) + ":"
+                + test.getJmsServerProperties().getProperty(PROPNAME_PORT);
 
             ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
                 .createConnector(ConnectorConfig.class);
@@ -71,7 +77,7 @@ public class StcmsProvider extends JMSProvider {
      * #createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
+        return new StcmsPassthrough(serverProperties, this);
     }
 
     /**
@@ -79,5 +85,28 @@ public class StcmsProvider extends JMSProvider {
      */
     public String createConnectionUrl(String host, int port) {
         return "stcms://" + host + ":" + port;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
+     */
+    public String getConnectionUrl(JMSTestEnv test) {
+        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.jboss;
 
 import com.stc.jmsjca.jboss.RAJBossObjectFactory;
 import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.util.Exc;
 
@@ -33,12 +34,12 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class JBossPassthrough extends Passthrough {
 
-    public JBossPassthrough(Properties server) {
-        super(server);
+    public JBossPassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
     }
 
     /**

@@ -28,9 +28,13 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class StcmsProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.unified.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.unified.port";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.unified.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.unified.password";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider
@@ -38,8 +42,8 @@ public class StcmsProvider extends JMSProvider {
      */
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
-        String url = "stcms://" + test.getJmsServerProperties().getProperty("host") + ":"
-        + test.getJmsServerProperties().getProperty("stcms.instance.port");
+        String url = "stcms://" + test.getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_HOST) + ":"
+        + test.getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_PORT);
         
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
         .createConnector(ConnectorConfig.class);
@@ -65,7 +69,7 @@ public class StcmsProvider extends JMSProvider {
      * #createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new StcmsPassthrough(serverProperties);
+        return new StcmsPassthrough(serverProperties, this);
     }
 
     /**
@@ -73,8 +77,22 @@ public class StcmsProvider extends JMSProvider {
      * #getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
     public String getConnectionUrl(JMSTestEnv test) {
-        String server = test.getJmsServerProperties().getProperty("host");
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty("stcms.instance.port"));
+        String server = test.getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(StcmsProvider.PROPNAME_PORT));
         return "stcms://" + server + ":" + port;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

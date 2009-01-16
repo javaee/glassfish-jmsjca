@@ -41,12 +41,12 @@ import java.util.Properties;
  * @author sbyn
  */
 public class WLContainer extends Container {
-    private static final String PASSWORD_PROP = "admin.password";
-    private static final String USERNAME_PROP = "admin.user";
-    private static final String HOST_PROP = "admin.host";
-    private static final String PORT_PROP = "admin.port";
-    private static final String HTTPPORT_PROP = "http.port";
-    private static final String SERVER_NAME = "server.name";
+    private static final String PASSWORD_PROP = "jmsjca.wl.password";
+    private static final String USERNAME_PROP = "jmsjca.wl.userid";
+    private static final String HOST_PROP = "jmsjca.wl.host";
+    private static final String PORT_PROP = "jmsjca.wl.adminport";
+    private static final String HTTPPORT_PROP = "jmsjca.wl.httpport";
+    private static final String SERVER_NAME = "jmsjca.wl.servername";
     
     private static final String DeployerClass = "weblogic.deploy.api.tools.deployer.Deployer";
     private MBeanServerConnection mConnection;

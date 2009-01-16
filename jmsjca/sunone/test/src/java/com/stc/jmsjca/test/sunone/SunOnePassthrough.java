@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.sunone;
 
 
 import com.stc.jmsjca.sunone.SunOneUrlParser;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import javax.jms.JMSException;
@@ -32,24 +33,24 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SunOnePassthrough extends Passthrough {
     private Properties mServerProperties;
 
-    public SunOnePassthrough(Properties server) {
-        super(server);
+    public SunOnePassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
         mServerProperties = server;
     }
     
     public static int getPort(Properties serverProperties) {
         int port = Integer.parseInt(serverProperties.getProperty(
-            "stcms.instance.port", null));
+            SunOneProvider.PROPNAME_PORT, null));
         return port;
     }
     
     public static String getHost(Properties serverProperties) {
-        return serverProperties.getProperty("host");        
+        return serverProperties.getProperty(SunOneProvider.PROPNAME_HOST);        
     }
 
     private String getConnectionUrl() {

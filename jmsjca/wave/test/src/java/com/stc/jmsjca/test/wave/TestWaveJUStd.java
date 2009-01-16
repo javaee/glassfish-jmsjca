@@ -26,6 +26,7 @@ import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.UrlParser;
@@ -87,7 +88,14 @@ public class TestWaveJUStd extends XTestBase {
         super(name);
     }
     
-	public static String getConnectionUrl() {
+    /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new WaveProvider();
+    }
+
+    public static String getConnectionUrl() {
 		String url = System.getProperty("wave.url");
 		if (url == null) {
 			throw new RuntimeException("Failed to set wave.url system property");

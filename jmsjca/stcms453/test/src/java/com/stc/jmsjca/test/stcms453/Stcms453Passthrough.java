@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.stcms453;
 
 import com.seebeyond.jms.client.STCQueueConnectionFactory;
 import com.seebeyond.jms.client.STCTopicConnectionFactory;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import queueviewer.Server;
@@ -34,14 +35,14 @@ import java.util.Vector;
 /**
 *
 * @author fkieviet
-* @version $Revision: 1.4 $
+* @version $Revision: 1.5 $
 */
 public class Stcms453Passthrough extends Passthrough {
    private Properties mServerProperties;
    private Server mServer;
 
-   public Stcms453Passthrough(Properties server) {
-       super(server);
+   public Stcms453Passthrough(Properties server, JMSProvider provider) {
+       super(server, provider);
        mServerProperties = server;
    }
 
@@ -50,9 +51,9 @@ public class Stcms453Passthrough extends Passthrough {
            mServer = new Server();
 
            int port = Integer.parseInt(mServerProperties.getProperty(
-                   "stcms.instance.port", null));
+                   Stcms453Provider.PROPNAME_PORT, null));
 
-           mServer.connect(mServerProperties.getProperty("host"), port);
+           mServer.connect(mServerProperties.getProperty(Stcms453Provider.PROPNAME_HOST), port);
        }
        return mServer;
    }
@@ -88,9 +89,9 @@ public class Stcms453Passthrough extends Passthrough {
     */
    public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
        int port = Integer.parseInt(mServerProperties.getProperty(
-               "stcms.instance.port", null));
+           Stcms453Provider.PROPNAME_PORT, null));
        return new STCTopicConnectionFactory(mServerProperties.
-               getProperty("host"), port);
+               getProperty(Stcms453Provider.PROPNAME_HOST), port);
    }
 
    /**
@@ -98,8 +99,8 @@ public class Stcms453Passthrough extends Passthrough {
     */
    public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
        int port = Integer.parseInt(mServerProperties.getProperty(
-               "stcms.instance.port", null));
+           Stcms453Provider.PROPNAME_PORT, null));
        return new STCQueueConnectionFactory(mServerProperties.
-               getProperty("host"), port);
+               getProperty(Stcms453Provider.PROPNAME_HOST), port);
    }
 }

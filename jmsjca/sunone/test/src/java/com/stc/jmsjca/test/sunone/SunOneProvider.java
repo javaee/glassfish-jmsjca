@@ -29,9 +29,13 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class SunOneProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.sunone.port";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.sunone.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.sunone.password";
 
     /**
      * @param dd
@@ -42,10 +46,10 @@ public class SunOneProvider extends JMSProvider {
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty("host") + ":" + test.getJmsServerProperties().getProperty("stcms.instance.port"));
+        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
 
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty("host") + ":" + test.getJmsServerProperties().getProperty("stcms.instance.port"));
+        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
 
         return dd;
     }
@@ -64,7 +68,7 @@ public class SunOneProvider extends JMSProvider {
      * @return
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties);
+        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties, this);
         sunOnePassthrough.setCommitSize(1);
         return sunOnePassthrough;
     }
@@ -74,5 +78,28 @@ public class SunOneProvider extends JMSProvider {
      */
     public String createConnectionUrl(String host, int port) {
         return "mq://" + host + ":" + port;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
+     */
+    public String getConnectionUrl(JMSTestEnv test) {
+        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.wmq;
 
 import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.mq.jms.MQTopicConnectionFactory;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.wmq.WMQConnectionUrl;
 
@@ -33,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author  cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMQPassthrough extends Passthrough {
 
@@ -43,8 +44,8 @@ public class WMQPassthrough extends Passthrough {
     /**
      * @param server Properties
      */
-    public WMQPassthrough(Properties server) {
-        super(server);
+    public WMQPassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
     }
     
     /**

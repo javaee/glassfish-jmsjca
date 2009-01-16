@@ -146,12 +146,17 @@ abstract public class XTestBase extends BaseTestCase {
             p.load(in);
             mServerProperties = p;
 
-            USERID = mServerProperties.getProperty("admin.user");
-            PASSWORD = mServerProperties.getProperty("admin.password");
+            USERID = getJMSProvider().getUserName(mServerProperties);
+            PASSWORD = getJMSProvider().getPassword(mServerProperties);
         } finally {
             safeClose(in);
         }
     }
+
+    /**
+     * @return the JMS implementation specific factory object
+     */
+    public abstract JMSProvider getJMSProvider();
 
     /**
      * Tool function: ensures that the specified stream is closed

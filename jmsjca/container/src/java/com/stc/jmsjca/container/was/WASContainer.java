@@ -38,6 +38,12 @@ import com.stc.jmsjca.container.Container;
  * @author cye
  */
 public class WASContainer extends Container {
+    public static final String PROP_HOST = "jmsjca.was.host";
+    public static final String PROP_PORT = "jmsjca.was.adminport";
+    public static final String PROP_USERID = "jmsjca.was.userid";
+    public static final String PROP_PASSWORD = "jmsjca.was.password";
+    public static final String PROP_INSTALL_ROOT = "jmsjca.was.install.dir";
+
     /**
      * Identifies this type of container 
      */
@@ -62,11 +68,11 @@ public class WASContainer extends Container {
      * @see com.stc.jmsjca.container.Container#setProperties(java.util.Properties)
      */
     public void setProperties(Properties p) throws Exception {
-        String host = p.getProperty("admin.host");
-        String port = p.getProperty("admin.port");
-        String user = p.getProperty("admin.user");
-        String password = p.getProperty("admin.password");
-        String root = p.getProperty("was.install.root");
+        String host = p.getProperty(PROP_HOST);
+        String port = p.getProperty(PROP_PORT);
+        String user = p.getProperty(PROP_USERID);
+        String password = p.getProperty(PROP_PASSWORD);
+        String root = p.getProperty(PROP_INSTALL_ROOT);
         System.setProperty("was.install.root", root);
 		
         String uri = "deployer:WebSphere:" + host + ":" + port;

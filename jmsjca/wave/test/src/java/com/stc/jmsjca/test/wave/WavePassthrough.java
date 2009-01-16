@@ -19,6 +19,7 @@ package com.stc.jmsjca.test.wave;
 import com.spirit.wave.WaveProfile;
 import com.spirit.wave.jms.WaveQueueConnectionFactory;
 import com.spirit.wave.jms.WaveTopicConnectionFactory;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 
 import javax.jms.JMSException;
@@ -33,12 +34,12 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WavePassthrough extends Passthrough {
 
-    public WavePassthrough(Properties server) {
-        super(server);
+    public WavePassthrough(Properties server, JMSProvider provider) {
+        super(server, provider);
     }
     
     private String getConnectionUrl() {

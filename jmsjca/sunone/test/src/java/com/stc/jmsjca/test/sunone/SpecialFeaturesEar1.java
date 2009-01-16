@@ -40,7 +40,7 @@ import java.util.Properties;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author misc
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SpecialFeaturesEar1 extends EndToEndBase {
     
@@ -97,8 +97,8 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
      */
     public void dotestMgt(boolean local) throws Throwable {
         // Setup proxy
-        TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty("host"), 
-            Integer.parseInt(mServerProperties.getProperty("stcms.instance.port")));
+        TcpProxyNIO proxy = new TcpProxyNIO(mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST), 
+            Integer.parseInt(mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT)));
         
         // Modify DDs
         EmbeddedDescriptor dd = getDD();
@@ -107,8 +107,8 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
         dd.findElementByText(EJBDD, "XContextName").setText("j-testconcurrency");
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
             .createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         InetAddress localh = InetAddress.getLocalHost();
         cc.setConnectionURL("mq://" + localh.getHostAddress() + ":" + proxy.getPort());
@@ -201,16 +201,16 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
         EmbeddedDescriptor dd = getDD();
 
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
-        cc.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(getJMSProvider().getPassword(mServerProperties));
+        cc.setConnectionURL("mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST) + ":" + mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT));
 
         QueueEndToEnd.ActivationConfig spec = (QueueEndToEnd.ActivationConfig) dd.new ActivationSpec(EJBDD,"mdbtest").createActivation(QueueEndToEnd.ActivationConfig.class);
         spec.setContextName("j-sendTo2SpecialUrl");
         spec.setConcurrencyMode("cc");
-        spec.setConnectionURL("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+        spec.setConnectionURL("mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST) + ":" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST));
 
-        dd.findElementByText(EJBDD, "--special--url--").setText("mq://" + mServerProperties.getProperty("host") + ":" + mServerProperties.getProperty("stcms.instance.port"));
+        dd.findElementByText(EJBDD, "--special--url--").setText("mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST) + ":" + mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT));
         dd.findElementByText(EJBDD, "testQQXAXA").setText("sendTo2SpecialUrlMix");
 
         dd.update();

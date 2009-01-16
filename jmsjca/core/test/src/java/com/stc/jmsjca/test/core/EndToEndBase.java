@@ -39,7 +39,7 @@ import junit.framework.TestResult;
  * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     /**
@@ -108,6 +108,9 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         }
     }
     
+    /**
+     * @return the JMS implementation specific factory object
+     */
     public abstract JMSProvider getJMSProvider();
     
     /**
@@ -120,13 +123,13 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     final public EmbeddedDescriptor getDD() throws Exception {
         EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(Str.pwencode(mServerProperties.getProperty("admin.password")));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(Str.pwencode(getJMSProvider().getPassword(mServerProperties)));
         cc.setMBeanObjectName(RAMMBEAN);
 
         cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML1).createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(getJMSProvider().getPassword(mServerProperties));
         cc.setMBeanObjectName(RAMMBEAN2);
         
         // Apply JMS Provider specific changes

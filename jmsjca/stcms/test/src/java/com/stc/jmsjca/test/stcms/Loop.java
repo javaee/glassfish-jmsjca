@@ -36,7 +36,7 @@ import com.stc.jmsjca.test.core.TopicEndToEnd;
  *     ${workspace_loc:e-jmsjca/build}/..
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class Loop extends EndToEndBase {
     /**
@@ -156,8 +156,8 @@ public class Loop extends EndToEndBase {
         dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testQQXAXALoop");
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
-        cc.setUserName(mServerProperties.getProperty("admin.user"));
-        cc.setPassword(mServerProperties.getProperty("admin.password"));
+        cc.setUserName(getJMSProvider().getUserName(mServerProperties));
+        cc.setPassword(getJMSProvider().getPassword(mServerProperties));
         String url = System.getProperty("loop.url", null);
         if (url != null) {
             System.out.println("Setting url to " + url);

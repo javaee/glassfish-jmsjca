@@ -33,9 +33,13 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class JndiProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jndi.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.jndi.port";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.jndi.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.jndi.password";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider
@@ -48,12 +52,12 @@ public class JndiProvider extends JMSProvider {
         p.setProperty(Context.INITIAL_CONTEXT_FACTORY,
                 InitialContextFactory.class.getName());
         p.setProperty(Context.PROVIDER_URL, "stcms://"
-                + test.getJmsServerProperties().getProperty("host") + ":"
-                + test.getJmsServerProperties().getProperty("stcms.instance.port"));
+                + test.getJmsServerProperties().getProperty(JndiProvider.PROPNAME_HOST) + ":"
+                + test.getJmsServerProperties().getProperty(JndiProvider.PROPNAME_PORT));
         p.setProperty(Context.SECURITY_PRINCIPAL, test.getJmsServerProperties()
-                .getProperty("admin.user"));
+                .getProperty(JndiProvider.PROPNAME_USERID));
         p.setProperty(Context.SECURITY_CREDENTIALS, test.getJmsServerProperties()
-                .getProperty("admin.password"));
+                .getProperty(JndiProvider.PROPNAME_PASSWORD));
         p.setProperty(RAJNDIResourceAdapter.QUEUECF,
                 "connectionfactories/xaqueueconnectionfactory");
         p.setProperty(RAJNDIResourceAdapter.TOPICCF,
@@ -90,6 +94,29 @@ public class JndiProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new JndiPassthrough(serverProperties);
+        return new JndiPassthrough(serverProperties, this);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
+     */
+    public String getConnectionUrl(JMSTestEnv test) {
+        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

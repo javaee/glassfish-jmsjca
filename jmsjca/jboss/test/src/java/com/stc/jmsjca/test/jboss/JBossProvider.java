@@ -28,9 +28,13 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class JBossProvider extends JMSProvider {
+    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jboss.host";
+    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.jboss.port";
+    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.jboss.userid";
+    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.jboss.password";
 
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
     throws Exception {
@@ -51,7 +55,7 @@ public class JBossProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new JBossPassthrough(serverProperties);
+        return new JBossPassthrough(serverProperties, this);
     }
 
     /**
@@ -61,5 +65,28 @@ public class JBossProvider extends JMSProvider {
      */
     public String getClientId(String proposedClientId) {
         return proposedClientId;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
+     */
+    public String getConnectionUrl(JMSTestEnv test) {
+        String host = test.getJmsServerProperties().getProperty(JBossProvider.PROPNAME_HOST);
+        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(JBossProvider.PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
+     */
+    public String getPassword(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_PASSWORD);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
+     */
+    public String getUserName(Properties serverProperties) {
+        return serverProperties.getProperty(PROPNAME_USERID);
     }
 }

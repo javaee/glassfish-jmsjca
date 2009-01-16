@@ -38,6 +38,7 @@ import com.stc.jmsjca.jcacontainer.XWorkManager;
 import com.stc.jmsjca.stcms.RASTCMSActivationSpec;
 import com.stc.jmsjca.stcms.RASTCMSObjectFactory;
 import com.stc.jmsjca.stcms.RASTCMSResourceAdapter;
+import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Str;
@@ -128,7 +129,12 @@ import java.util.Map.Entry;
  * @version 1.0
  */
 public class BaseJUStd extends XTestBase {
-//    private static Logger sLog = Logger.getLogger(BaseJUStd.class);
+    /**
+     * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
+     */
+    public JMSProvider getJMSProvider() {
+        return new StcmsProvider();
+    }
 
     /**
      * Constructor
@@ -203,18 +209,18 @@ public class BaseJUStd extends XTestBase {
      */
     protected String getConnectionURL() {
         System.setProperty(RASTCMSObjectFactory.PORTPROP,
-            mServerProperties.getProperty("stcms.instance.port"));
+            mServerProperties.getProperty(StcmsProvider.PROPNAME_PORT));
         System.setProperty(RASTCMSObjectFactory.PORTSSLPROP,
-                mServerProperties.getProperty("stcms.instance.ssl.port"));
-        return "stcms://" + mServerProperties.getProperty("host");
+                mServerProperties.getProperty(StcmsProvider.PROPNAME_SSLPORT));
+        return "stcms://" + mServerProperties.getProperty(StcmsProvider.PROPNAME_HOST);
     }
 
     /**
      * @return host and port in URL form
      */
     protected String getFullConnectionUrl() {
-        return assembleConnectionUrl(mServerProperties.getProperty("host"), Integer
-            .parseInt(mServerProperties.getProperty("stcms.instance.port")));
+        return assembleConnectionUrl(mServerProperties.getProperty(StcmsProvider.PROPNAME_HOST), Integer
+            .parseInt(mServerProperties.getProperty(StcmsProvider.PROPNAME_PORT)));
     }
 
     /**
@@ -232,7 +238,7 @@ public class BaseJUStd extends XTestBase {
      * @return URL
      */
     protected String getConnectionURL2() {
-        return "stcmss://" + mServerProperties.getProperty("host");
+        return "stcmss://" + StcmsProvider.PROPNAME_HOST;
     }
 
     public void init(boolean producerPooling) throws Throwable {
@@ -412,20 +418,20 @@ public class BaseJUStd extends XTestBase {
         // Spec1
         RASTCMSActivationSpec spec1 = new RASTCMSActivationSpec();
         spec1.setConnectionURL(getConnectionURL());
-        spec1.setUserName(mServerProperties.getProperty("admin.user"));
-        spec1.setPassword(mServerProperties.getProperty("admin.password"));
+        spec1.setUserName(StcmsProvider.PROPNAME_USERID);
+        spec1.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         // Spec2 is identical
         RASTCMSActivationSpec spec2 = new RASTCMSActivationSpec();
         spec2.setConnectionURL(getConnectionURL());
-        spec2.setUserName(mServerProperties.getProperty("admin.user"));
-        spec2.setPassword(mServerProperties.getProperty("admin.password"));
+        spec2.setUserName(StcmsProvider.PROPNAME_USERID);
+        spec2.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         // Spec3 uses different URL
         RASTCMSActivationSpec spec3 = new RASTCMSActivationSpec();
         spec3.setConnectionURL(getConnectionURL2());
-        spec3.setUserName(mServerProperties.getProperty("admin.user"));
-        spec3.setPassword(mServerProperties.getProperty("admin.password"));
+        spec3.setUserName(StcmsProvider.PROPNAME_USERID);
+        spec3.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         ActivationSpec[] specs = new ActivationSpec[] {
             spec1,
@@ -1883,7 +1889,7 @@ public class BaseJUStd extends XTestBase {
      * @throws Throwable
      */
     public void testHUATxTakenAway() throws Throwable {
-        Passthrough p = new StcmsPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
@@ -1957,7 +1963,7 @@ public class BaseJUStd extends XTestBase {
      * @throws Throwable
      */
     public void testHUABatchXA() throws Throwable {
-        Passthrough p = new StcmsPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
@@ -2026,7 +2032,7 @@ public class BaseJUStd extends XTestBase {
      * @throws Throwable
      */
     public void testHUABatchDlqXA() throws Throwable {
-        Passthrough p = new StcmsPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
@@ -2107,7 +2113,7 @@ public class BaseJUStd extends XTestBase {
      * @throws Throwable
      */
     public void testDlqXA() throws Throwable {
-        Passthrough p = new StcmsPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
@@ -2159,7 +2165,7 @@ public class BaseJUStd extends XTestBase {
      * @throws Throwable
      */
     public void testHUABatchDlq() throws Throwable {
-        Passthrough p = new StcmsPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
