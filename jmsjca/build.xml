@@ -356,6 +356,8 @@
 *** Specify the property $${jmsjca.properties.path} to specify the location 
 *** of the file.
         </fail>
+        <copy file="sample-jmsjca.properties" tofile="${user.home}/jmsjca.properties" />
+        <echo message="Now edit ${user.home}/jmsjca.properties" />
     </target>
 
 <!--===========================================================================
