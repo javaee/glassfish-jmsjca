@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class JBossProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jboss.host";
@@ -88,5 +88,12 @@ public class JBossProvider extends JMSProvider {
      */
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
+     */
+    public String getProviderID() {
+        return "jboss";
     }
 }

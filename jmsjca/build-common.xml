@@ -260,10 +260,8 @@
             haltonfailure="off"
         >
             <jvmarg value="${junit.jvm.options}"/>
-            <sysproperty key="test.container.id" value="${jmsjca.container.id}"/>
-            <sysproperty key="test.server.properties" value="${jmsjca.properties.path}"/>
-            <sysproperty key="test.container.properties" value="${jmsjca.properties.path}"/>
-            <sysproperty key="test.ear.path" value="${jmsjca.xxx.ear.path}"/>
+            <sysproperty key="jmsjca.container.id" value="${jmsjca.container.id}"/>
+            <sysproperty key="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
 
             <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
             <classpath>
@@ -276,6 +274,7 @@
             </classpath>
             <classpath refid="jmsjca.${jcaid}.clientjars.path" />
             <classpath path="${jmsjca.xxx.test.classes.dir}" />
+            <classpath path="${jmsjca.module.dir}" />
             
             <batchtest
                 haltonfailure="no"

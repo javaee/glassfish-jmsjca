@@ -65,7 +65,6 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -130,27 +129,11 @@ import java.util.logging.Logger;
 abstract public class XTestBase extends BaseTestCase {
     private static Logger sLog = Logger.getLogger(XTestBase.class.getName());
 
-    protected Properties mServerProperties;
 
     public void setUp() throws Exception {
-        String propfile = System.getProperty("test.server.properties", null);
-
-        if (propfile == null) {
-            throw new Exception("Property test.server.properties not defined");
-        }
-
-        InputStream in = null;
-        try {
-            Properties p = new Properties();
-            in = new FileInputStream(propfile);
-            p.load(in);
-            mServerProperties = p;
-
-            USERID = getJMSProvider().getUserName(mServerProperties);
-            PASSWORD = getJMSProvider().getPassword(mServerProperties);
-        } finally {
-            safeClose(in);
-        }
+        super.setUp();
+        USERID = getJMSProvider().getUserName(mServerProperties);
+        PASSWORD = getJMSProvider().getPassword(mServerProperties);
     }
 
     /**

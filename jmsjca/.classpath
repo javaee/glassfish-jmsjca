@@ -23,11 +23,20 @@
 	<classpathentry kind="src" path="sunone/src/java"/>
 	<classpathentry kind="src" path="sunone/test/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="build-lib/com.stc.rts.deployimpl.jar"/>
-	<classpathentry kind="lib" path="build-ant/lib/ant.jar"/>
-	<classpathentry kind="lib" path="ext/j2ee.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjcaExternaDependencies"/>
 	<classpathentry kind="lib" path="ext/jdom.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-ant"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-glassfish"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-sunone"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjcaExternaDependencies"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-stcms"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-stcms453"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-jmsmx"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-was"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wave"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-jboss"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-rts"/>
+	<classpathentry kind="lib" path="ext/j2ee.jar"/>
+	<classpathentry kind="lib" path="build/jmsjca"/>
 	<classpathentry kind="output" path="out"/>
 </classpath>

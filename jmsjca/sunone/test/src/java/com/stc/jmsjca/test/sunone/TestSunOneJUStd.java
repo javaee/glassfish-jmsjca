@@ -85,11 +85,6 @@ import java.util.logging.Logger;
  *
  * For Eclipese, if the above properties are used, the current directory needs to set 
  * to ${workspace_loc:e-jmsjca/build}
--Dtest.server.properties=s:/jmq.properties
--Dtest.container.properties=../../R1/logicalhost/testsettings.properties
--Dtest.ear.path=rasunone/test/ratest-test.ear 
--Dtest.container.id=rts 
--Dsunone.url=TCP://localhost:7676
  * 
  *
  * @author 
@@ -122,8 +117,8 @@ public class TestSunOneJUStd extends XTestBase {
     }
     
 	public String getConnectionUrl() {
-        return "mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST) + ":"
-            + mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT);
+        return "mq://" + mServerProperties.getProperty(SunOneProvider.PROPNAME_HOST, "<sunone host not set>") + ":"
+            + mServerProperties.getProperty(SunOneProvider.PROPNAME_PORT, "<sunone port not set>");
     }
 
     private String getProviderClass() {

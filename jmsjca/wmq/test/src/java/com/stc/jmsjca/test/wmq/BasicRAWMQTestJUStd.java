@@ -48,13 +48,6 @@ import java.util.Properties;
 /**
  * <code>
  * Unit tests
- *  To run, in addition to the standard properties, e.g. for Eclipse
- *  -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rajndi/test/ratest-test.ear
- *  the connectionURL(s) needs to be set as well, e.g.:
- *  -Dwmq.url=wmq:://hostname:5558
- *
- * For Eclipese, if the above properties are used, the current directory needs to set 
- * to ${workspace_loc:e-jmsjca/build}
  *
  * @author cye
  * @version 1.0
@@ -130,14 +123,9 @@ public class BasicRAWMQTestJUStd extends TestCase {
      * @return String
      */
     public String getConnectionURL1() {
-        String url = System.getProperty("wmq.url", "wmq://" + HOSTNAME + ":" + PORT + 
+        return "wmq://" + HOSTNAME + ":" + PORT + 
                                          "?QueueManager=" + QUEUE_MANAGER + 
-                                         "&TransportType=" + "JMSC_MQJMS_TP_CLIENT_MQ_TCPIP");
-        
-        if (url == null) {
-           throw new RuntimeException("Failed to set wmq.url system property");
-        }
-        return url;
+                                         "&TransportType=" + "JMSC_MQJMS_TP_CLIENT_MQ_TCPIP";
     }
 
     /**
@@ -145,12 +133,7 @@ public class BasicRAWMQTestJUStd extends TestCase {
      * @return String
      */
     public String getConnectionURL2() {
-        String url = System.getProperty("wmq.url", "wmq://" + HOSTNAME + ":" + PORT +
-                                        "?QueueManager=" + QUEUE_MANAGER);
-        if (url == null) {
-           throw new RuntimeException("Failed to set wmq.url system property");
-        }
-        return url;
+        return "wmq://" + HOSTNAME + ":" + PORT + "?QueueManager=" + QUEUE_MANAGER;
     }
 
     /**

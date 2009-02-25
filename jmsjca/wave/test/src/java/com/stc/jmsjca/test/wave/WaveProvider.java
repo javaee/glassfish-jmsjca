@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class WaveProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wave.host";
@@ -47,12 +47,12 @@ public class WaveProvider extends JMSProvider {
 
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
+        cc.setConnectionURL(getConnectionUrl(test.getJmsServerProperties()));
 
         // Update second RA
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(TestWaveJUStd.getConnectionUrl());
+        cc.setConnectionURL(getConnectionUrl(test.getJmsServerProperties()));
 
         // Commit
         dd.update();
@@ -80,9 +80,7 @@ public class WaveProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
     public String getConnectionUrl(JMSTestEnv test) {
-        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
-        return createConnectionUrl(host, port);
+        return getConnectionUrl(test.getJmsServerProperties());
     }
 
     /**
@@ -97,5 +95,18 @@ public class WaveProvider extends JMSProvider {
      */
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
+    }
+
+    public String getConnectionUrl(Properties serverProperties) {
+        String host = serverProperties.getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(serverProperties.getProperty(PROPNAME_PORT));
+        return createConnectionUrl(host, port);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
+     */
+    public String getProviderID() {
+        return "wave";
     }
 }

@@ -20,17 +20,12 @@ import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
 
 /**
- * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
- *
  * Example for Eclipse:
- *     -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rastcms/test/rastcms-test.ear
  * with working directory
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class QueueJndiEar1 extends QueueEndToEnd {
 

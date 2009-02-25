@@ -33,17 +33,13 @@ import javax.jms.TopicSession;
 import java.net.URLEncoder;
 
 /**
- * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
  *
  * Example for Eclipse:
- *     -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rastcms/test/rastcms-test.ear
  * with working directory
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {

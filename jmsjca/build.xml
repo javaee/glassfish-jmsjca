@@ -1,6 +1,36 @@
 <?xml version="1.0"?>
 <project default="install" basedir="." name="jmsjca">
-    <description>
+<description>
+    To build JMSJCA:
+    ================
+    No external dependencies are required. Just run the default task, and the 
+    rar will be created in the build directory.
+    
+
+    To test JMSJCA:
+    ===============
+    Tests for JMSJCA depend on (a) container classes and (b) JMS provider
+    classes. For both (a) and (b), external jars need to be specified.
+    These jars are not available on the Internet, and must come from 
+    proprietary and machine dependent installations.
+    The locations of these jars are specified in a single file: 
+    jmsjca.properties. This file resides by default in the user home 
+    directory (this can be overridden).
+    
+    First time use: use 
+        ant init-config-file
+    to create the jmsjca.properties file. Next, edit this file with a 
+    text editor to specify the correct jar locations. Note that *only* the 
+    jars and locations need to be specified of the container and JMS provider
+    being used.
+    
+    To run tests, execute three targets:
+    (a) the container (glassfish, wl, was, ...)
+    (b) the jms provider (stcms, sunone, wl, wmq, ...)
+    (c) the test target (test)
+    Example:
+        ant glassfish sunone test
+    
 </description>
     
 <!--===========================================================================
@@ -235,7 +265,6 @@
 -->
     <target name="urar"
             depends="compile"
-            description="Generates the unified rar"
             unless="urar.ed"
     >
         <ant antfile="build-unifiedjms.xml" target="urar" inheritall="false">
@@ -316,7 +345,7 @@
         </fail>
     </target>
     
-    <target name="init-config-file">
+    <target name="init-config-file" description="Creates jmsjca.properties for you to edit">
         <available property="jmsjca.properties.path.exists"
                    file="${jmsjca.properties.path}"
         />
@@ -330,11 +359,15 @@
     </target>
 
 <!--===========================================================================
-    Compiles a specific container
+    Compiles the tests for a specific JMS implementation
 -->    
     <target name="compile-a-jmsimpl-test" depends="" >
         <fail unless="jmsjca.jmsimpl.id" >$${jmsjca.jmsimpl.id} needs to be specified: call a jmsimpl target first</fail>
         <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
+        
+        <echo file="${jmsjca.module.dir}/${jmsjca.marker.filename}">
+            This file should be in the classpath so that the tests can find the ear files
+        </echo>
 
         <ant antfile="build-${jmsjca.jmsimpl.id}.xml"
              target="compile-test2"
@@ -353,6 +386,15 @@
 -->
     <target name="stcms" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="stcms" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
+    <target name="sunone" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="sunone" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>

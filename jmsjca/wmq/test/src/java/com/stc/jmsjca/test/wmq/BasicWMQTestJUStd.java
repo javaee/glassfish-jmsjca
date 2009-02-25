@@ -65,15 +65,6 @@ import junit.framework.TestCase;
 
 
 /**
- * <code>
- * Unit tests
- *  To run, in addition to the standard properties, e.g. for Eclipse
- *  -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rajndi/test/ratest-test.ear
- *  the connectionURL(s) needs to be set as well, e.g.:
- *  -Dwmq.url=wmq:://hostname:5558
- *
- * For Eclipese, if the above properties are used, the current directory needs to set 
- * to ${workspace_loc:e-jmsjca/build}
  *
  * @author cye
  * @version 1.0
@@ -246,17 +237,17 @@ public class BasicWMQTestJUStd extends TestCase {
         return BasicWMQTestJUStd.class.getName() + sTime++;
     }
     
-    /**
-     * 
-     * @return String
-     */
-    public String getConnectionUrl() {
-        String url = System.getProperty("wmq.url", "wmq://" + HOSTNAME + ":" + PORT);
-        if (url == null) {
-           throw new RuntimeException("Failed to set wmq.url system property");
-        }
-        return url;
-    }
+//    /**
+//     * 
+//     * @return String
+//     */
+//    public String getConnectionUrl() {
+//        String url = System.getProperty("wmq.url", "wmq://" + HOSTNAME + ":" + PORT);
+//        if (url == null) {
+//           throw new RuntimeException("Failed to set wmq.url system property");
+//        }
+//        return url;
+//    }
 
     private String getProviderClass() {
         return "com.sun.jndi.fscontext.RefFSContextFactory";

@@ -17,41 +17,23 @@
 package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
+import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
-import com.stc.jmsjca.container.EmbeddedDescriptor;
 
 import org.jdom.Namespace;
 
-import javax.jms.Connection;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.URL;
 import java.util.Properties;
 
 import junit.framework.TestResult;
 
 /**
- * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
- *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
-    /**
-     * Properties of the JMS server
-     */
-    protected Properties mServerProperties;
-
-    /**
-     * Properties of the Container
-     */
-    protected Properties mContainerProperties;
-    
     protected File mTestEar;
     protected File mTestEarOrg;
     protected String mTestEarName;
@@ -70,6 +52,8 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     public final static String WL_ID = "wl";
     public final static String WAS_ID = "was";
     public final static String JBOSS_ID = "jboss";
+    
+    public final static String JMSMX = "jmsmx";
 
     
     /**
@@ -91,7 +75,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         public void setMessageSelector(String s);
     }
     
-    public static String CONTAINERID = "test.container.id";
+    public static String CONTAINERID = "jmsjca.container.id";
     
     /**
      * Runs the test case except if a similarly named method prefixed with
@@ -149,9 +133,9 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         if (mContainerID == null) {
             String containerid = System.getProperty(CONTAINERID, null);
             if (containerid == null) {
+                containerid = GLASSFISH_ID;
                 Logger.getLogger(this.getClass()).warnNoloc(
-                    "System property [" + CONTAINERID + "] is not set; reverting to rts");
-                containerid = RTS_ID;
+                    "System property [" + CONTAINERID + "] is not set; reverting to \"" + containerid + "\"");
             }
             mContainerID = containerid;
         }
@@ -159,7 +143,20 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     }
     
     /**
-     * Creates a container based on the system property test.container.id
+     * Returns a container specific property
+     * 
+     * @param name name of the property
+     * @param default_ default value
+     * @return container property
+     * @throws Exception 
+     */
+    public int getContainerProperty(String name, int default_) throws Exception {
+        return Integer.parseInt(getServerProperties().getProperty("jmsjca." 
+            + getContainerID() + "." + name, "" + default_));
+    }
+    
+    /**
+     * Creates a container based on the system property jmsjca. container. id
      * 
      * @return container
      */
@@ -186,7 +183,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         }
         
         Container container = (Container) clz.newInstance();
-        container.setProperties(mContainerProperties);
+        container.setProperties(mServerProperties);
         
         return container;
     }
@@ -214,73 +211,8 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         String getJMSServerType() throws Exception;
     }
 
-    /**
-     * Tool function: ensures that the specified stream is closed
-     *
-     * @param stream to close; maybe null
-     */
-    public static void safeClose(InputStream stream) {
-        if (stream != null) {
-            try {
-                stream.close();
-            } catch (Exception ex) {
-                // ignore
-            }
-        }
-    }
-
-    /**
-     * Tool function: ensures that the specified stream is closed
-     *
-     * @param stream to close; maybe null
-     */
-    public static void safeClose(Connection c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (Exception ex) {
-                // ignore
-            }
-        }
-    }
-
     public final Passthrough createPassthrough(Properties serverProperties) {
         return getJMSProvider().createPassthrough(serverProperties);
-    }
-
-    /**
-     * Tool function: ensures that the specified stream is closed
-     *
-     * @param stream to close; maybe null
-     */
-    public static void safeClose(OutputStream stream) {
-        if (stream != null) {
-            try {
-                stream.close();
-            } catch (Exception ex) {
-                // ignore
-            }
-        }
-    }
-    
-    private Properties load(String systemPropertiesPropertyName) throws Exception {
-        // The JMS server properties
-        String propfile = System.getProperty(systemPropertiesPropertyName, null);
-
-        if (propfile == null) {
-            throw new Exception("Property [" + systemPropertiesPropertyName + "] not defined");
-        }
-
-        // Load test.server.properties
-        InputStream in = null;
-        try {
-            Properties p = new Properties();
-            in = new FileInputStream(propfile);
-            p.load(in);
-            return p;
-        } finally {
-            safeClose(in);
-        }
     }
     
     /**
@@ -289,39 +221,26 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
      * @throws Exception
      */
     public void setUp() throws Exception {
-        // JMS Server properties
-        final String jmsPropName = "test.server.properties";
-        mServerProperties = load(jmsPropName);
+        super.setUp();
         
-        // Container properties
-        final String containerPropName = "test.container.properties"; 
-        if (System.getProperty(containerPropName) == null) {
-            Logger.getLogger(this.getClass()).warnNoloc(
-                "System property [" + containerPropName + "] is not set; reverting to ["
-                    + jmsPropName + "]");
-            mContainerProperties = mServerProperties;
-        } else {
-            mContainerProperties = load("test.container.properties");
+        // Get marker file, and from there the root directory
+        URL markerURL = this.getClass().getClassLoader().getResource("rootmarker");
+        if (markerURL == null) {
+            throw new Exception("Ensure that the build directory is in the classpath. " +
+            		"This directory should contain the file 'rootmarker'. " +
+            		"This directory is used to locate the EAR files.");
         }
+        File marker = new File(markerURL.getPath());
+        File root = marker.getParentFile();
+        String module = getJMSProvider().getProviderID();
+        mTestEar = new File(root, "ra" + module + "/test/ratest-test.ear"); 
+        mTestEarName = Container.getModuleName(mTestEar.getName());
+        mTestEarOrg = new File(mTestEar.getAbsolutePath() + ".1");
         
-        // Set test constants wrt EAR file
-        String testear = System.getProperty("test.ear.path", null);
-        if (testear == null) {
-            throw new Exception("test.ear.path not defined");
+        if (!mTestEarOrg.exists()) {
+            throw new Exception("EAR file " + mTestEarOrg.getAbsolutePath() + " does not " +
+            		"exist. Run the Ant script to generate the EAR file.");
         }
-        
-        String containerid = getContainerID();
-        
-        if (JBOSS_ID.equals(containerid)) {
-            mTestEar = new File(testear);
-            mTestEarName = mTestEar.getAbsolutePath();
-            mTestEarOrg = new File(mTestEar.getAbsolutePath() + ".1");
-        } else {
-            mTestEar = new File(testear);
-            mTestEarName = Container.getModuleName(mTestEar.getName());
-            mTestEarOrg = new File(mTestEar.getAbsolutePath() + ".1");            
-        }
-        
     }
 
     public static Namespace J2EENS = Namespace.getNamespace("http://java.sun.com/xml/ns/j2ee");

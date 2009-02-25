@@ -35,11 +35,9 @@ import javax.naming.InitialContext;
 
 /**
  * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Perf1 extends EndToEndBase {
     /**

@@ -30,19 +30,17 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
- *
- * Example for Eclipse:
- *     -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rastcms/test/rastcms-test.ear
- * with working directory
- *     ${workspace_loc:e-jmsjca/build}/..
- *
- * @author misc
- * @version $Revision: 1.8 $
+ * @author fkieviet
+ * @version $Revision: 1.9 $
  */
 public class SpecialFeaturesEar1 extends EndToEndBase {
+    
+    /**
+     * @see com.stc.jmsjca.test.core.EndToEndBase#setUp()
+     */
+    public void setUp() throws Exception {
+        super.setUp();
+    }
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
@@ -228,12 +226,16 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }
-
+    
     /**
      * Tests the MBean functionality wrt jms server mgt
      * 
      * @throws Throwable
      */
+    public boolean shouldRun_testMgtRemote() throws Exception {
+        return getContainerProperty(JMSMX, 1) == 1; 
+    }
+
     public void testMgtRemote() throws Throwable {
         dotestMgt(false);
     }

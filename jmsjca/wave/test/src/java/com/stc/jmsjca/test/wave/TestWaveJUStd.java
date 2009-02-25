@@ -59,13 +59,6 @@ import java.util.Properties;
  * <code>
  * Unit tests
 *  See Base
-*  To run, in addition to the standard properties, e.g. for Eclipse
-*  -Dtest.server.properties=../../R1/logicalhost/testsettings.properties -Dtest.ear.path=rajndi/test/ratest-test.ear
-*  the connectionURL(s) needs to be set as well, e.g.:
-*  -Dwave.url=wave://blue:50607
- *
- * For Eclipese, if the above properties are used, the current directory needs to set 
- * to ${workspace_loc:e-jmsjca/build}
  *
  * @author 
  * @version 1.0
@@ -93,14 +86,6 @@ public class TestWaveJUStd extends XTestBase {
      */
     public JMSProvider getJMSProvider() {
         return new WaveProvider();
-    }
-
-    public static String getConnectionUrl() {
-		String url = System.getProperty("wave.url");
-		if (url == null) {
-			throw new RuntimeException("Failed to set wave.url system property");
-		}
-        return url;
     }
 
     private String getProviderClass() {
@@ -189,6 +174,10 @@ public class TestWaveJUStd extends XTestBase {
             ConnectionFactory f = (ConnectionFactory) x.createConnectionFactory();
             ctx.rebind(appjndiUnified, f);
         }
+    }
+
+    private String getConnectionUrl() {
+        return ((WaveProvider) getJMSProvider()).getConnectionUrl(mServerProperties);
     }
 
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {

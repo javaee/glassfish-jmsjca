@@ -119,11 +119,6 @@ import java.util.Map.Entry;
  * See Base
  * 
  * Eclipse usage: set working directory to ${workspace_loc:jmsjca/build} and arguments:
- * 
--Dtest.server.properties=../../R1/logicalhost/testsettings.properties
--Dtest.ear.path=rastcms/test/ratest-test.ear 
--Dtest.container.id=rts 
--DXXXXtest.container.properties=s:\sjsas.properties
  *
  * @author Frank Kieviet
  * @version 1.0
@@ -238,7 +233,7 @@ public class BaseJUStd extends XTestBase {
      * @return URL
      */
     protected String getConnectionURL2() {
-        return "stcmss://" + StcmsProvider.PROPNAME_HOST;
+        return "stcmss://" + mServerProperties.getProperty(StcmsProvider.PROPNAME_HOST);
     }
 
     public void init(boolean producerPooling) throws Throwable {
@@ -252,6 +247,8 @@ public class BaseJUStd extends XTestBase {
             x.setResourceAdapter(ra);
             ra.setConnectionURL(getConnectionURL());
             x.setProducerPooling(Boolean.toString(producerPooling));
+            ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+            ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
             // Factory to be used by the application (done by the Application server)
             QueueConnectionFactory f = (QueueConnectionFactory) x.createConnectionFactory();
@@ -266,6 +263,8 @@ public class BaseJUStd extends XTestBase {
             x.setResourceAdapter(ra);
             ra.setConnectionURL(getConnectionURL());
             x.setProducerPooling(Boolean.toString(producerPooling));
+            ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+            ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
             // Factory to be used by the application (done by the Application server)
             TopicConnectionFactory f = (TopicConnectionFactory) x.createConnectionFactory();
@@ -418,20 +417,14 @@ public class BaseJUStd extends XTestBase {
         // Spec1
         RASTCMSActivationSpec spec1 = new RASTCMSActivationSpec();
         spec1.setConnectionURL(getConnectionURL());
-        spec1.setUserName(StcmsProvider.PROPNAME_USERID);
-        spec1.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         // Spec2 is identical
         RASTCMSActivationSpec spec2 = new RASTCMSActivationSpec();
         spec2.setConnectionURL(getConnectionURL());
-        spec2.setUserName(StcmsProvider.PROPNAME_USERID);
-        spec2.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         // Spec3 uses different URL
         RASTCMSActivationSpec spec3 = new RASTCMSActivationSpec();
         spec3.setConnectionURL(getConnectionURL2());
-        spec3.setUserName(StcmsProvider.PROPNAME_USERID);
-        spec3.setPassword(StcmsProvider.PROPNAME_PASSWORD);
 
         ActivationSpec[] specs = new ActivationSpec[] {
             spec1,
@@ -964,6 +957,8 @@ public class BaseJUStd extends XTestBase {
         mcf.setResourceAdapter(ra);
         mcf.setOptions(Str.serializeProperties(options));
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
         ConnectionManager cm = null; // new XExtendedConnectionManager(mcf);
         QueueConnectionFactory f = (QueueConnectionFactory) mcf.createConnectionFactory(cm);
         return f;
@@ -1894,6 +1889,8 @@ public class BaseJUStd extends XTestBase {
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
         RASTCMSActivationSpec spec = new RASTCMSActivationSpec();
@@ -1968,6 +1965,8 @@ public class BaseJUStd extends XTestBase {
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
         RASTCMSActivationSpec spec = new RASTCMSActivationSpec();
@@ -2037,6 +2036,8 @@ public class BaseJUStd extends XTestBase {
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
         RASTCMSActivationSpec spec = new RASTCMSActivationSpec();
@@ -2118,6 +2119,8 @@ public class BaseJUStd extends XTestBase {
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
         RASTCMSActivationSpec spec = new RASTCMSActivationSpec();
@@ -2170,6 +2173,8 @@ public class BaseJUStd extends XTestBase {
         // RA
         RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
+        ra.setUserName(getJMSProvider().getUserName(mServerProperties));
+        ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
         RASTCMSActivationSpec spec = new RASTCMSActivationSpec();

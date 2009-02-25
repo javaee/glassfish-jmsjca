@@ -57,4 +57,9 @@ public abstract class JMSProvider {
      * Returns the username from the properties set
      */
     public abstract String getUserName(Properties serverProperties);
+
+    /**
+     * @return stcms, sunone, wl, etc.
+     */
+    public abstract String getProviderID();
 }

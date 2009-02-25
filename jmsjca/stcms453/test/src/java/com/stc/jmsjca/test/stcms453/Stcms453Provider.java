@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class Stcms453Provider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms453.host";
@@ -93,5 +93,12 @@ public class Stcms453Provider extends JMSProvider {
      */
     public String getUserName(Properties serverProperties) {
         return "";
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
+     */
+    public String getProviderID() {
+        return "stcms453";
     }
 }

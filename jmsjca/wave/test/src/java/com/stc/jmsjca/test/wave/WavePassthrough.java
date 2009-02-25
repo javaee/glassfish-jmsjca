@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WavePassthrough extends Passthrough {
 
@@ -43,7 +43,7 @@ public class WavePassthrough extends Passthrough {
     }
     
     private String getConnectionUrl() {
-        return TestWaveJUStd.getConnectionUrl();
+        return ((WaveProvider) getJMSProvider()).getConnectionUrl(getServerProperties());
     }
 
     public boolean isDurableSubscriberPresent(String topic, String subname) throws Exception {

@@ -29,7 +29,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
@@ -46,10 +46,14 @@ public class SunOneProvider extends JMSProvider {
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
+        cc.setConnectionURL("mq://" 
+            + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) 
+            + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
 
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
+        cc.setConnectionURL("mq://" 
+            + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) 
+            + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
 
         return dd;
     }
@@ -101,5 +105,12 @@ public class SunOneProvider extends JMSProvider {
      */
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
+     */
+    public String getProviderID() {
+        return "sunone";
     }
 }

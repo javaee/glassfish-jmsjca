@@ -4,25 +4,20 @@
     <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
     <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
+    <property file="${jmsjca.properties.path}" />
+
+    <!-- REQUIRED for compile test -->
+    <path id="jmsjca.sunone.clientjars.path">
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.jar}" />
+    </path>
+
 <!--===========================================================================
     Initializes variables etc
 -->
     <target name="init" unless="init.ed">
-        <!-- To compile/run unit tests -->
-        <path id="jmsjca.test.classpath">
-            <path refid="container.classpath"/>
-            <fileset file="core/test/lib/jdom.jar" />
-            <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${jmsjca.xxx.rar.jar.path}" />
-            <pathelement location="${jmsjca.container.classes.dir}" />
-
-            <fileset file="${jcaid}/lib/imqjmsra.jar" />
-            <fileset file="jndi/test/lib/fscontext.jar" />
-            <fileset file="jndi/test/lib/providerutil.jar" />
-        </path>
-
         <property name="init.ed" value="true" />
     </target>
+
 
 <!--===========================================================================
     Creates the rar file

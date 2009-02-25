@@ -33,7 +33,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class JndiProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jndi.host";
@@ -118,5 +118,12 @@ public class JndiProvider extends JMSProvider {
      */
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
+     */
+    public String getProviderID() {
+        return "jndi";
     }
 }

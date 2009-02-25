@@ -32,11 +32,9 @@ import java.util.Map;
  * as soon as the Container class is moved)
  *
  * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class JmxTest extends EndToEndBase {
     /**

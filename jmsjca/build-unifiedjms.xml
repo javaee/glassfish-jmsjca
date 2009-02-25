@@ -45,25 +45,36 @@
 <!--===========================================================================
     Creates the common rar file
 -->
-        <target name="urar" unless="urar.ed" depends="init">
-            <!-- mk sun-jms-adapter.rar -->
-            <zip destfile="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" >
-                <!-- Include all jars -->
+    <target name="urar" unless="urar.ed" depends="init">
+        <!-- mk sun-jms-adapter.rar -->
+        <zip destfile="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar" >
+            <!-- Include all jars -->
 <!-- This is how it is supposed to be TODO                
                 <fileset dir="${jmsjca.jars.dir}">
                     <include name="*.jar" />
                 </fileset>
                 <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
 -->
-                <fileset dir="${jmsjca.jars.dir}">
-                    <include name="com.stc.jmsjca.core.jar" />
-                </fileset>
-                <fileset file="${jmsjca.xxx.rar.jar.path}"/>
-                <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-            </zip>
+            <fileset dir="${jmsjca.jars.dir}">
+                <include name="com.stc.jmsjca.core.jar" />
+            </fileset>
+            <fileset file="${jmsjca.xxx.rar.jar.path}"/>
+            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
+        </zip>
+        
 
-            <property name="urar.ed" value="true" />
-        </target>
+        <path id="jmsjca.unified.display_x"
+              location="${jmsjca.xxx.module.dir}/sun-jms-adapter.rar"
+        />
+        <pathconvert targetos="windows"
+                     property="jmsjca.unified.display"
+                     refid="jmsjca.unified.display_x"
+        />
+                    
+        <echo message="${jmsjca.unified.display}"/>
+
+        <property name="urar.ed" value="true" />
+    </target>
 
     <!--===========================================================================
     Compiles the source code and produces a jar file

@@ -20,23 +20,14 @@ import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.QueueEndToEnd;
 
 /**
- * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
  * 
- * Sample vm settings:
- * -Dtest.server.properties=s:/stcms453.properties
- * -Dtest.container.properties=../../R1/logicalhost/testsettings.properties
- * -Dtest.ear.path=rastcms453/test/ratest-test.ear 
- * -Dtest.container.id=rts 
- * -Dstcms453.url=stcms453://blue:7555
  * 
  * Sample current directory settings:
  * ${workspace_loc:jmsjca/build}
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Send453Ear1 extends QueueEndToEnd {
     /**

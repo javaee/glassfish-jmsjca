@@ -50,11 +50,9 @@ import junit.framework.TestCase;
 
 /**
  * Required:
- * test.server.properties = path to properties file containing server config
- * test.ear.path          = path to ear file to be tested
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class Perf2 extends TestCase {
     final int N = 100000;
