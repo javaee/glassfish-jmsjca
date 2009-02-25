@@ -42,7 +42,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -373,11 +373,12 @@ java.io.Serializable {
             Method method = c.getMethod("setConnectInfo", signatures);
             method.invoke(mbean, args);
             ret = mbean;
+        } catch (ClassNotFoundException e) {
+            sLog.debug(LOCALE.x("E302: Error instantiating or configuring MBean for "
+                + "external SJS MQ server management: {0}", e));
         } catch (Exception e) {
             sLog.info(LOCALE.x("E302: Error instantiating or configuring MBean for "
                 + "external SJS MQ server management: {0}", e));
-//            throw Exc.jmsExc(LOCALE.x("E302: Error instantiating or configuring MBean for "
-//                + "external SJS MQ server management: {0}", e), e);
         }
         
         return ret;
