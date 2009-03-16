@@ -19,6 +19,7 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
 
 import javax.jms.ConnectionMetaData;
 import javax.jms.Destination;
@@ -53,7 +54,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -778,7 +779,7 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Topic createTopic(String name) throws JMSException {
-        Destination ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
+        Destination ret = getDestination(name, false);
         if (ret == null) {
             return mSessionConnection.createTopic(name);
         } if (ret instanceof AdminDestination) {
@@ -796,7 +797,7 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Queue createQueue(String name) throws JMSException  {
-        Destination ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
+        Destination ret = getDestination(name, true);
         if (ret == null) {
             return mSessionConnection.createQueue(name);
         } if (ret instanceof AdminDestination) {
@@ -804,6 +805,27 @@ public class JSession {
         } else {
             return (Queue) ret;
         }
+    }
+    
+    private Destination getDestination(String name, boolean isQueue) throws JMSException {
+        if (Str.empty(name)) {
+            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
+        }
+        Destination ret = null; 
+        if(name.startsWith("jndi://")){
+            if(isQueue){
+                AdminQueue d = new AdminQueue();
+                d.setName(name);
+                ret = d;
+            }else{
+                AdminTopic d = new AdminTopic();
+                d.setName(name);
+                ret = d;
+            }
+        }else{
+            ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
+        }
+        return ret;
     }
     
     /**

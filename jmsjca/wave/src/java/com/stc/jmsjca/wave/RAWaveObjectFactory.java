@@ -24,6 +24,7 @@ import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.core.XXid;
+import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -44,7 +45,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -312,7 +313,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
         }
         
         try {
-            Class clazz = Class.forName(classname);
+            Class clazz = ClassLoaderHelper.loadClass(classname);
             return (ConnectionFactory) clazz.getConstructor(
                 new Class[] {Properties.class}).newInstance(
                     new Object[] {profileprops});

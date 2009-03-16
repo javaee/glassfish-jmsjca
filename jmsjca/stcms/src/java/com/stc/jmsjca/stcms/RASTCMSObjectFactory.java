@@ -23,6 +23,7 @@ import com.stc.jmsjca.core.SessionConnection;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -40,7 +41,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -280,7 +281,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
         }
         
         try {
-            Class clazz = Class.forName(classname);
+            Class clazz = ClassLoaderHelper.loadClass(classname);
             Constructor constructor = clazz.getConstructor(new Class[] {Properties.class});
             return (ConnectionFactory) constructor.newInstance(new Object[] {p});
         } catch (Exception e) {

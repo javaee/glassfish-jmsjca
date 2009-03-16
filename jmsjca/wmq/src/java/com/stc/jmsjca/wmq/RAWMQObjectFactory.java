@@ -21,6 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -40,7 +41,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -315,27 +316,27 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         try {
             switch (domain) {
                 case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQQueueConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_QUEUE_XA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXAQueueConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_NONXA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXATopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXATopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_NONXA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_XA:
-                cf = (ConnectionFactory) Class.forName(
+                cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXAConnectionFactory").newInstance();
                 break;
             default:

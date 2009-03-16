@@ -28,7 +28,7 @@ import java.util.Set;
  * Utilities that have to do with password credentials
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class Cred {
     /**
@@ -81,7 +81,7 @@ public class Cred {
                     return null;
                 }
             });
-            if (ret.getUserName() != null && ret.getUserName().length() > 0) {
+            if (ret != null && ret.getUserName() != null && ret.getUserName().length() > 0) {
                 return ret;
             } else {
                 return null;

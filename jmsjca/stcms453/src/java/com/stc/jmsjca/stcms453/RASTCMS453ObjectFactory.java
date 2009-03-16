@@ -21,6 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.UrlParser;
@@ -34,7 +35,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -141,7 +142,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
         
         Class clazz;
         try {
-            clazz = Class.forName(classname);
+            clazz = ClassLoaderHelper.loadClass(classname);
             return (ConnectionFactory) clazz.getConstructor(
                 new Class[] {Properties.class}).newInstance(new Object[] {p});
         } catch (Exception e) {

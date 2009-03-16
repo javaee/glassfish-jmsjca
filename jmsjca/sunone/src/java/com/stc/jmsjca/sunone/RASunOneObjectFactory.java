@@ -21,6 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
+import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -42,7 +43,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -204,22 +205,22 @@ java.io.Serializable {
         try {
             switch (domain) {
             case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.QueueConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.QueueConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_QUEUE_XA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.XAQueueConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.XAQueueConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_NONXA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.TopicConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.TopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.XATopicConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.XATopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_NONXA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.ConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.ConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_XA:
-                basicConnectionFactory = Class.forName("com.sun.messaging.XAConnectionFactory").newInstance();
+                basicConnectionFactory = ClassLoaderHelper.loadClass("com.sun.messaging.XAConnectionFactory").newInstance();
                 break;
             default:
                 throw Exc.jmsExc(LOCALE.x("E304: Logic fault: invalid domain {0}", Integer.toString(domain)));

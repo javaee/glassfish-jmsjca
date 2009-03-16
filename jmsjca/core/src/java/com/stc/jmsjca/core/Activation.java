@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -537,8 +537,10 @@ public class Activation extends ActivationBase {
                     setState(CONNECTED);
                     break;
                 } catch (Exception e) {
-                    mDelivery.deactivate();
-                    mDelivery = null;
+                    if(mDelivery != null){
+                        mDelivery.deactivate();
+                        mDelivery = null;
+                    }
                     int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
                     logDeliveryInitiationException(attempt + 1, dt, e);
                     tryAgainAt = System.currentTimeMillis() + dt * 1000;
