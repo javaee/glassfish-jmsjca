@@ -54,7 +54,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -812,17 +812,17 @@ public class JSession {
             throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
         }
         Destination ret = null; 
-        if(name.startsWith("jndi://")){
-            if(isQueue){
+        if (name.startsWith("jndi://")) {
+            if (isQueue) {
                 AdminQueue d = new AdminQueue();
                 d.setName(name);
                 ret = d;
-            }else{
+            } else {
                 AdminTopic d = new AdminTopic();
                 d.setName(name);
                 ret = d;
             }
-        }else{
+        } else {
             ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
         }
         return ret;

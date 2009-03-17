@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -537,7 +537,7 @@ public class Activation extends ActivationBase {
                     setState(CONNECTED);
                     break;
                 } catch (Exception e) {
-                    if(mDelivery != null){
+                    if (mDelivery != null) {
                         mDelivery.deactivate();
                         mDelivery = null;
                     }
