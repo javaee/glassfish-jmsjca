@@ -47,6 +47,7 @@ import javax.transaction.xa.XAResource;
 import java.lang.reflect.Method;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -57,7 +58,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -71,6 +72,11 @@ public abstract class Delivery {
      * Do not log destruction progress more than every xx ms.
      */
     public static final long DESTROY_LOG_INTERVAL_MS = 15000;
+
+    /**
+     * Do not dump threads more than every xx ms;
+     */
+    public static final long DESTROY_DUMP_INTERVAL_MS = 60000;
 
     /**
      * Property name for copying messages to DLQ
@@ -1338,5 +1344,62 @@ public abstract class Delivery {
             }
         }
         return tx;
+    }
+    
+    class DeactivationWaiter {
+        long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
+        long tdump = System.currentTimeMillis() + DESTROY_DUMP_INTERVAL_MS;
+        
+        public boolean isDone(int nNotDestroyed, List threads) {
+            // Wait if not all were destroyed
+            if (nNotDestroyed == 0) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("All work containers were destroyed successfully");
+                }
+                return true;
+            }
+            if (System.currentTimeMillis() > tlog) {
+                sLog.info(LOCALE.x("E021: Deactivating connector; waiting for " +
+                    "work containers finish processing messages; there are {0} containers that " +
+                    "are still active; activation={1}", Integer.toString(nNotDestroyed), mActivation));
+                tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
+            }
+
+            // Dump out threads that are holding work containers captive
+            if (System.currentTimeMillis() > tdump) {
+                Map allStackTraces = Thread.getAllStackTraces();
+                StringBuffer dump = new StringBuffer();
+                for (Iterator it = threads.iterator(); it.hasNext();) {
+                    Thread th = (Thread) it.next();
+                    if (th == null) {
+                        dump.append("Unexpected: thread is null");
+                    } else {
+                        dump.append("* Thread " + th.getName() + "\r\n");
+                        StackTraceElement[] stack = (StackTraceElement[]) allStackTraces.get(th);
+                        for (int i = 0; i < stack.length; i++) {
+                            dump.append(stack[i]).append("\r\n");
+                        }
+                    }
+                }
+                sLog.info(LOCALE.x("E206: Deactivating connector; waiting for " +
+                    "work containers to finish processing messages; there are {0} containers that " +
+                    "are still active; activation={1}. A dump of threads that are active in these " +
+                    "work containers follows: \r\n{2}", 
+                    Integer.toString(nNotDestroyed), mActivation, dump));                        
+                tdump = System.currentTimeMillis() + 5 * DESTROY_DUMP_INTERVAL_MS;
+            }
+
+            // Wait a bit
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(nNotDestroyed + " WorkContainer(s) were (was) not destroyed... waiting");
+            }
+            try {
+                Thread.sleep(DESTROY_RETRY_INTERVAL_MS);
+            } catch (Exception ex) {
+                // ignore
+            }
+
+            return false;
+        }
     }
 }

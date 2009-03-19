@@ -535,6 +535,7 @@ or type
                 <exclude name="jndi/test/lib/**" />
                 <exclude name="core/test/lib/jdom.jar" />
                 <exclude name="**/*.bak" />
+                <exclude name="build/**" />
             </fileset>
         </copy>
 
@@ -567,7 +568,6 @@ or type
     DEV-ONLY: Publishes files to the Maven repository
 -->
     <target name="maven-publish"
-            description="Publishes to the maven repository"
             depends="maven-stage"
     >
         <!-- 
@@ -598,7 +598,6 @@ or type
     DEV-ONLY: Syncs Maven cvs
 -->
     <target name="maven-sync"
-            description="Publishes to the maven cvs"
             depends="maven-stage"
     >
         <!-- import to java.net CVS-->

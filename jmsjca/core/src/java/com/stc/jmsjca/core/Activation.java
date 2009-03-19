@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -876,7 +876,13 @@ public class Activation extends ActivationBase {
             selector = "";
         }
         
-        return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ")" + selector + " @ [" + mURL + "]"; 
+        String contextname = "";
+        if (!Str.empty(mSpec.getContextName())) {
+            contextname = "{" + mSpec.getContextName() + "}";
+        }
+        
+        return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ")" 
+        + selector + contextname + " @ [" + mURL + "]"; 
     }
     
     /**

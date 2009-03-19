@@ -44,7 +44,7 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
@@ -66,6 +66,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
     private LocalizedString mContextName;
     private List mMsgs;
     private DeliveryResults mResult = new DeliveryResults();
+    private Thread mRunningThread;
 
     private static final Localizer LOCALE = Localizer.get();
 
@@ -94,10 +95,11 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * Tries to destroy the work container; this will not succeed if the work container is
      * currently running.
      *
+     * @param threads list of threads to which a running thread will be added if any
      * @return true if destroyed or already destroyed
      */
-    public boolean destroy() {
-        int state = setState(STATE_DESTROYED);
+    public boolean destroy(List threads) {
+        int state = setState(STATE_DESTROYED, threads);
         if (state == STATE_DESTROYED_SUB_ALREADY_DESTROYED) {
             return true;
         } else if (state != STATE_DESTROYED) {
@@ -133,7 +135,16 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         return mMDB.getXAResource();
     }
 
-    private int setState(int newState) {
+    /**
+     * Changes the running-state of the container. Returns the changed state (if any).
+     * The specified list can be null. If not null, and if the container could not be
+     * destroyed, the running thread will be added to the list. 
+     * 
+     * @param newState
+     * @param threads
+     * @return
+     */
+    private int setState(int newState, List threads) {
         synchronized (mStateLock) {
             switch (mState) {
             case STATE_DESTROYED:
@@ -147,8 +158,13 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 }
             case STATE_RUNNING:
                 if (newState == STATE_DESTROYED) {
+                    // Can't destroy: have to wait until state is idle
+                    if (threads != null) {
+                        threads.add(mRunningThread);
+                    }
                     return mState;
                 } else if (newState == STATE_IDLE) {
+                    // Called by MDB thread, switch to idle
                     mState = STATE_IDLE;
                     return mState;
                 } else {
@@ -156,10 +172,13 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 }
             case STATE_IDLE:
                 if (newState == STATE_DESTROYED) {
+                    // Succesful destruction
                     mState = STATE_DESTROYED;
                     return mState;
                 } else if (newState == STATE_RUNNING) {
+                    // Container now in use
                     mState = STATE_RUNNING;
+                    mRunningThread = Thread.currentThread();
                     return mState;
                 } else {
                     break;
@@ -201,7 +220,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 sLog.debug("Running WorkContainer");
             }
             
-            state = setState(STATE_RUNNING);
+            state = setState(STATE_RUNNING, null);
             if (state == STATE_DESTROYED) {
                 sLog.debug("Shutting down... skipped");
             } else {
@@ -233,7 +252,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 + "Associated exception: {1}", e, mResult.getException()), e);
             mDelivery.mActivation.distress(ex);
         } finally {
-            setState(STATE_IDLE);
+            setState(STATE_IDLE, null);
             if (mResult.getShouldDiscardEndpoint()) {
                 mDelivery.release(mEndpoint);
                 mEndpoint = null;

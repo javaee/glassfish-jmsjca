@@ -36,6 +36,7 @@ import javax.transaction.xa.XAResource;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * <P>A strategy for concurrent delivery using connection consumer. The threading model is
@@ -56,7 +57,7 @@ import java.util.Iterator;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -355,44 +356,23 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     
     private void waitUntilAllWorkContainersAreDestroyed() {
         // Wait until all work containers are destroyed
-        long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
+        DeactivationWaiter waiter = new DeactivationWaiter();
         for (;;) {
             // Try to destroy all WorkContainers; count the number of failures
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Trying to destroy all WorkContainer-s");
             }
             int nNotDestroyed = 0;
+            List threads = new ArrayList();
             for (Iterator it = mAllWorkContainers.iterator(); it.hasNext();/*-*/) {
                 WorkContainer w = (WorkContainer) it.next();
-                if (!w.destroy()) {
+                if (!w.destroy(threads)) {
                     nNotDestroyed++;
                 }
             }
-
-            // Wait if not all were destroyed
-            if (nNotDestroyed == 0) {
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug("All work containers were destroyed successfully");
-                }
+            
+            if (waiter.isDone(nNotDestroyed, threads)) {
                 break;
-            } else {
-                if (System.currentTimeMillis() > tlog) {
-                    sLog.info(LOCALE.x("E021: Deactivating connector; waiting for " +
-                            "work containers finish processing messages; there are {0} containers that " +
-                            "are still active; activation={1}", Integer.toString(nNotDestroyed), mActivation));
-                    tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
-                }
-
-                // Wait a bit
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug(nNotDestroyed
-                        + " WorkContainer(s) were (was) not destroyed... waiting");
-                }
-                try {
-                    Thread.sleep(DESTROY_RETRY_INTERVAL_MS);
-                } catch (Exception ex) {
-                    // ignore
-                }
             }
         }
     }

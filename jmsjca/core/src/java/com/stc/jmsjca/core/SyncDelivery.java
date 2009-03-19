@@ -250,7 +250,7 @@ public class SyncDelivery extends Delivery {
         }
 
         // Wait until all workers that were processing a msg are finished
-        long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
+        DeactivationWaiter waiter = new DeactivationWaiter();
         for (;;) {
             // Try to destroy all WorkContainers; count the number of failures
             if (sLog.isDebugEnabled()) {
@@ -264,30 +264,8 @@ public class SyncDelivery extends Delivery {
                 }
             }
 
-            // Wait if not all were destroyed
-            if (mWorkers.isEmpty()) {
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug("All work containers were destroyed successfully");
-                }
+            if (waiter.isDone(mWorkers.size(), mWorkers)) {
                 break;
-            } else {
-                if (System.currentTimeMillis() > tlog) {
-                    sLog.info(LOCALE.x("E059: Stopping message delivery; waiting for work containers to "
-                        + "finish processing messages; there are {0} containers " 
-                        + "that are still active; activation=[{1}].", 
-                        Integer.toString(mWorkers.size()), mActivation));
-                    tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
-                }
-
-                // Wait a bit
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug(mWorkers.size() + " Worker(s) were (was) not destroyed... waiting");
-                }
-                try {
-                    Thread.sleep(DESTROY_RETRY_INTERVAL_MS);
-                } catch (Exception ex) {
-                    // ignore
-                }
             }
         }
 
