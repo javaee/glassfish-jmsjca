@@ -206,20 +206,6 @@ public class TestJUStd extends XTestBase {
     public static String USERID = "stc";
     public static String PASSWORD = "stc";
 
-    private static long sTime = System.currentTimeMillis();
-    private static long sUniquifier;
-
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-        synchronized (TestJUStd.class) {
-            return "JMSJCA-" + this.getClass() + sTime + "-" + sUniquifier++;
-        }
-    }
-
     /**
      * Returns the number of created wires minus the number of closed wires
      *

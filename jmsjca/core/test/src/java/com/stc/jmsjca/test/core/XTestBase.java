@@ -20,6 +20,7 @@ import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.TxMgr;
 import com.stc.jmsjca.core.XXid;
+import com.stc.jmsjca.test.sunone.TestSunOneJUStd;
 import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.XAssert;
 
@@ -243,11 +244,17 @@ abstract public class XTestBase extends BaseTestCase {
      * @return name
      */
     public String generateName() {
-        synchronized (XTestBase.class) {
-            return "JMSJCA-" + this.getClass() + sTime + "-" + sUniquifier++;
+        synchronized (TestSunOneJUStd.class) {
+            return "JMSJCA" + sTime + sUniquifier++;
         }
     }
 
+    public String getQueue1Name() throws Throwable {
+        String dest = getJMSProvider().createPassthrough(mServerProperties).getQueue1Name();
+        clearQueue(dest, -2);
+        return dest;
+    }
+    
     /**
      * A simple rudimentary transaction manager for unit testing
      * 
@@ -2195,7 +2202,7 @@ abstract public class XTestBase extends BaseTestCase {
         QueueSession s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         Message m = s.createTextMessage("x");
-        Queue dest = s.createQueue(generateName());
+        Queue dest = s.createQueue(getQueue1Name());
         QueueSender prod = s.createSender(dest);
         prod.send(m);
         s.commit();
@@ -2229,7 +2236,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         lt.begin();
         Message m = s.createTextMessage("x");
-        Queue dest = s.createQueue(generateName());
+        Queue dest = s.createQueue(getQueue1Name());
         QueueSender prod = s.createSender(dest);
         prod.send(m);
         lt.commit();
@@ -2264,7 +2271,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         lt.begin();
         Message m = s.createTextMessage("x");
-        Queue dest = s.createQueue(generateName());
+        Queue dest = s.createQueue(getQueue1Name());
         QueueSender prod = s.createSender(dest);
         prod.send(m);
         lt.commit();
@@ -2293,6 +2300,8 @@ abstract public class XTestBase extends BaseTestCase {
             QueueReceiver recv = sess.createReceiver(sess.createQueue(queuename));
             conn.start();
             int ct = 0;
+            int commit = 0;
+            int commitsize = getJMSProvider().createPassthrough(mServerProperties).getCommitSize();
             if (expected == 0) {
                 if (recv.receive(DONTEXPECT) != null) {
                     throw new Exception("Found msg where none expected");
@@ -2300,10 +2309,22 @@ abstract public class XTestBase extends BaseTestCase {
             } else if (expected == -1) {
                 while (recv.receive(EXPECTWITHIN) != null) {
                     ct++;
+                    commit++;
+                    if (commit > commitsize) {
+                        sess.commit();
+                        commit = 0;
+                    }
+                }
+            } else if (expected == -2) {
+                while (recv.receive(DONTEXPECT) != null) {
+                    ct++;
+                    commit++;
+                    if (commit > commitsize) {
+                        sess.commit();
+                        commit = 0;
+                    }
                 }
             } else {
-                int commit = 0;
-                int commitsize = getJMSProvider().createPassthrough(mServerProperties).getCommitSize();
                 for (int i = 0; i < expected; i++) {
                     if (recv.receive(EXPECTWITHIN) != null) {
                         ct++;
@@ -2330,7 +2351,7 @@ abstract public class XTestBase extends BaseTestCase {
             sess.close();
             getConnectionManager(f).clear();
             
-            if (ct != expected && expected != -1) {
+            if (ct != expected && expected >= 0) {
                 throw new Exception("Found " + ct + " messages where " + expected + " expected");
             }
             
@@ -2430,7 +2451,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         // First
         QueueSession sess1 = conn1.createQueueSession(true, 0);
-        Queue dest = sess1.createQueue(generateName());
+        Queue dest = sess1.createQueue(getQueue1Name());
         XAResource xa1 = getManagedConnection(sess1).getXAResource();
 
         QueueSender prod1 = sess1.createSender(dest);
@@ -2479,7 +2500,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         // First
         QueueSession sess1 = conn1.createQueueSession(true, 0);
-        Queue dest = sess1.createQueue(generateName());
+        Queue dest = sess1.createQueue(getQueue1Name());
         XAResource xa1 = getManagedConnection(sess1).getXAResource();
 
         // Second
@@ -2647,7 +2668,7 @@ abstract public class XTestBase extends BaseTestCase {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
 
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue(getQueue1Name());
             XAResource xa2 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
             assertTrue(prod1 != null);
@@ -2679,7 +2700,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             QueueSession sess1 = conn1.createQueueSession(true, 0);
             xa1 = getManagedConnection(sess1).getXAResource();
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue(getQueue1Name());
             QueueSender prod1 = sess1.createSender(dest);
             assertTrue(prod1 != null);
             conn1.close();
@@ -2690,7 +2711,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             QueueSession sess1 = conn1.createQueueSession(true, 0);
             XAResource xa2 = getManagedConnection(sess1).getXAResource();
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue(getQueue1Name());
             QueueSender prod1 = sess1.createSender(dest);
             assertTrue(prod1 != null);
             assertTrue(xa1 == xa2);
@@ -2830,7 +2851,7 @@ abstract public class XTestBase extends BaseTestCase {
             // Start tran
             Xid xid1 = new XXid();
             xa1.start(xid1, XAResource.TMNOFLAGS);
-            Queue dest = sess1.getQueueSession().createQueue(generateName());
+            Queue dest = sess1.getQueueSession().createQueue(getQueue1Name());
             QueueSender prod1 = sess1.getQueueSession().createSender(dest);
             prod1.send(sess1.createTextMessage("1"));
 
@@ -2860,7 +2881,7 @@ abstract public class XTestBase extends BaseTestCase {
             // Start tran
             Xid xid1 = new XXid();
             xa1.start(xid1, XAResource.TMNOFLAGS);
-            Queue dest = sess1.getQueueSession().createQueue(generateName());
+            Queue dest = sess1.getQueueSession().createQueue(getQueue1Name());
             QueueSender prod1 = sess1.getQueueSession().createSender(dest);
             prod1.send(sess1.createTextMessage("1"));
 
@@ -2888,7 +2909,7 @@ abstract public class XTestBase extends BaseTestCase {
             // Start tran
             Xid xid1 = new XXid();
             xa1.start(xid1, XAResource.TMNOFLAGS);
-            Queue dest = sess1.getQueueSession().createQueue(generateName());
+            Queue dest = sess1.getQueueSession().createQueue(getQueue1Name());
             QueueSender prod1 = sess1.getQueueSession().createSender(dest);
             prod1.send(sess1.createTextMessage("1"));
 
@@ -2926,7 +2947,7 @@ abstract public class XTestBase extends BaseTestCase {
             // Start tran
             Xid xid1 = new XXid();
             xa1.start(xid1, XAResource.TMNOFLAGS);
-            Queue dest = sess1.getQueueSession().createQueue(generateName());
+            Queue dest = sess1.getQueueSession().createQueue(getQueue1Name());
             QueueSender prod1 = sess1.getQueueSession().createSender(dest);
             prod1.send(sess1.createTextMessage("1"));
 
@@ -3149,7 +3170,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         // First
         QueueSession sess1 = conn1.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-        Queue dest = sess1.createQueue(generateName());
+        Queue dest = sess1.createQueue(getQueue1Name());
         QueueSender prod1 = sess1.createSender(dest);
 
         // Second
@@ -3472,7 +3493,7 @@ abstract public class XTestBase extends BaseTestCase {
             QueueSession s = conn.createQueueSession(true, 0);
             s.getTransacted(); // actuate type
             Message m = s.createTextMessage("x");
-            dest = s.createQueue(generateName());
+            dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             prod.send(m);
             prod.send(m);
@@ -3566,7 +3587,7 @@ abstract public class XTestBase extends BaseTestCase {
             QueueSession s = conn.createQueueSession(true, 0);
             s.getTransacted(); // actuate type
             Message m = s.createTextMessage("x");
-            dest = s.createQueue(generateName());
+            dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             prod.send(m);
             prod.send(m);
@@ -3662,7 +3683,7 @@ abstract public class XTestBase extends BaseTestCase {
             QueueSession s = conn.createQueueSession(true, 0);
             s.getTransacted(); // actuate type
             Message m = s.createTextMessage("x");
-            dest = s.createQueue(generateName());
+            dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             prod.send(m);
             prod.send(m);
@@ -3759,7 +3780,7 @@ abstract public class XTestBase extends BaseTestCase {
                 // NO TYPE ACTUATION!
                 Message m = s.createTextMessage("x");
                 w.check(1, 0, 0);
-                dest = s.createQueue(generateName());
+                dest = s.createQueue(getQueue1Name());
                 QueueSender prod = s.createSender(dest);
                 w.check(1, 1, 0);
                 prod.send(m);
@@ -3855,7 +3876,7 @@ abstract public class XTestBase extends BaseTestCase {
             getManagedConnection(s).getXAResource();
             Message m = s.createTextMessage("x");
             w.check(1, 0, 0);
-            dest = s.createQueue(generateName());
+            dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             w.check(1, 1, 0);
             prod.send(m);
@@ -4108,7 +4129,7 @@ abstract public class XTestBase extends BaseTestCase {
             Session.CLIENT_ACKNOWLEDGE);
         // What this does: new XAQueueConnectionFactory().createXAQueueSession();
 
-        Queue dest = qSession.createQueue(generateName());
+        Queue dest = qSession.createQueue(getQueue1Name());
         qReceiver = qSession.createReceiver(dest);
         qSender = qSession.createSender(dest);
         conn.start();
@@ -4361,7 +4382,7 @@ abstract public class XTestBase extends BaseTestCase {
 
              // close default session and create tx CLIENT_ACK session
              qSess = qc.createQueueSession(true, 0);
-             Queue dest = qSess.createQueue(generateName());
+             Queue dest = qSess.createQueue(getQueue1Name());
              qSender = qSess.createSender(dest);
              qRec = qSess.createReceiver(dest);
              qc.start();
@@ -4401,6 +4422,7 @@ abstract public class XTestBase extends BaseTestCase {
 
              // check for messages; should receive second message
              mReceived = (TextMessage) qRec.receive(EXPECTWITHIN);
+             qc.close();
              if (mReceived == null) {
                  logMsg("Did not receive message!");
                  throw new Exception("Did not receive expected message");
@@ -4726,7 +4748,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         // Session etc.
         QueueSession sess1 = conn1.createQueueSession(false, 0);
-        Queue dest = sess1.createQueue(generateName());
+        Queue dest = sess1.createQueue(getQueue1Name());
         XAResource xa1 = getManagedConnection(sess1).getXAResource();
         QueueSender prod1 = sess1.createSender(dest);
 
@@ -4817,7 +4839,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            dest = sess1.createQueue(generateName());
+            dest = sess1.createQueue(getQueue1Name());
             xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
@@ -4901,7 +4923,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue(getQueue1Name());
             xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
@@ -4974,7 +4996,7 @@ abstract public class XTestBase extends BaseTestCase {
         // First
         {
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            dest = sess1.createQueue(generateName());
+            dest = sess1.createQueue(getQueue1Name());
             xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
             m = getManagedConnection(sess1);
