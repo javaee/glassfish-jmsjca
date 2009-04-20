@@ -261,20 +261,6 @@ public class BaseJUStd extends XTestBase {
     }
     
 
-    private static long sTime = System.currentTimeMillis();
-    private static long sUniquifier;
-
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-        synchronized (BaseJUStd.class) {
-            return "JMSJCA-" + this.getClass() + sTime + "-" + sUniquifier++;
-        }
-    }
-
     /**
      * Returns the number of created wires minus the number of closed wires
      *
@@ -962,7 +948,8 @@ public class BaseJUStd extends XTestBase {
         QueueConnectionFactory f = createCMQF(options);
 
         // Do work
-        String dest = generateName();
+        String dest = getQueue1Name();
+        clearQueue(dest, -1);
         QueueConnection c = f.createQueueConnection();
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.createSender(s.createQueue(dest)).send(s.createTextMessage(dest));
@@ -996,7 +983,7 @@ public class BaseJUStd extends XTestBase {
         QueueConnectionFactory f = createCMQF(options);
 
         // Do work
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
             QueueConnection c = f.createQueueConnection();
             QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -1043,7 +1030,7 @@ public class BaseJUStd extends XTestBase {
         QueueConnectionFactory f = createCMQF(options);
 
         // Do work
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
             QueueConnection c = f.createQueueConnection();
             QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -1099,7 +1086,7 @@ public class BaseJUStd extends XTestBase {
         final QueueConnectionFactory f = createCMQF(options);
 
         // Do work
-        final String dest = generateName();
+        final String dest = getQueue1Name();
         QueueConnection cs;
         {
             cs = f.createQueueConnection();
@@ -1176,7 +1163,7 @@ public class BaseJUStd extends XTestBase {
         final QueueConnectionFactory f = createCMQF(options);
 
         // Do work
-        final String dest = generateName();
+        final String dest = getQueue1Name();
         QueueConnection cs1;
         QueueConnection cs2;
         {
@@ -1260,7 +1247,7 @@ public class BaseJUStd extends XTestBase {
         QueueConnectionFactory f = createCMQF(options);
 
         // Commit one
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
             TxMgr.getUnitTestTxMgr().begin();
             QueueConnection c = f.createQueueConnection();
@@ -1309,7 +1296,7 @@ public class BaseJUStd extends XTestBase {
         WireCount w0 = getConnectionCount();
         
         // Commit one
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
             TxMgr.getUnitTestTxMgr().begin();
             QueueConnection c1 = f.createQueueConnection();
@@ -1390,7 +1377,7 @@ public class BaseJUStd extends XTestBase {
         WireCount w0 = getConnectionCount();
         
         // Commit one
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
             TxMgr.getUnitTestTxMgr().begin();
             QueueConnection c1 = f.createQueueConnection();
@@ -1546,7 +1533,7 @@ public class BaseJUStd extends XTestBase {
         getConnectionManager(f).getMCF().testSetAllocator(null);
         
         // Verify that works correctly
-        String dest = generateName();
+        String dest = getQueue1Name();
         QueueConnection c = f.createQueueConnection();
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.createSender(s.createQueue(dest)).send(s.createTextMessage(dest));
@@ -1613,7 +1600,7 @@ public class BaseJUStd extends XTestBase {
         getConnectionManager(f).getMCF().testSetAllocator(null);
         
         // Verify that works correctly
-        String dest = generateName();
+        String dest = getQueue1Name();
         QueueConnection c = f.createQueueConnection();
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.createSender(s.createQueue(dest)).send(s.createTextMessage(dest));
@@ -1665,7 +1652,7 @@ public class BaseJUStd extends XTestBase {
         getConnectionManager(f).getMCF().testSetAllocator(allocator);
 
         // Verify that works correctly
-        String dest = generateName();
+        String dest = getQueue1Name();
         {
         QueueConnection c = f.createQueueConnection();
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -1739,7 +1726,7 @@ public class BaseJUStd extends XTestBase {
         invalid[0] = true;
         
         // cleanup exception should not disrupt
-        String dest = generateName();
+        String dest = getQueue1Name();
         for (int i = 0; i < 5; i++) {
             QueueConnection c = f.createQueueConnection();
             QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);

@@ -212,21 +212,8 @@ public class TestSunOneJUStd extends XTestBase {
         return fact;
     }
 
-    private static long sTime = System.currentTimeMillis();
-    private static long sUniquifier;
-
     protected void setClientID(Connection con) throws JMSException {
         con.setClientID("X");
-    }
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-        synchronized (TestSunOneJUStd.class) {
-            return "JMSJCA" + sTime + sUniquifier++;
-        }
     }
 
     public WireCount getConnectionCount() {

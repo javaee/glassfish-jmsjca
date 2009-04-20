@@ -4672,7 +4672,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            dest = sess1.createQueue(generateName());
+            dest = sess1.createQueue(getQueue1Name());
             w.check(1, 0, 0);
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);

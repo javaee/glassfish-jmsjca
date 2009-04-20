@@ -185,21 +185,8 @@ public class TestWaveJUStd extends XTestBase {
         return new WaveXAQueueConnectionFactory(p);
     }
 
-    private static long sTime = System.currentTimeMillis();
-    private static long sUniquifier;
-
     protected void setClientID(Connection con) throws JMSException {
         con.setClientID("X");
-    }
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-        synchronized (TestWaveJUStd.class) {
-            return "JMSJCA-" + this.getClass() + sTime + "-" + sUniquifier++;
-        }
     }
 
     public WireCount getConnectionCount() {
