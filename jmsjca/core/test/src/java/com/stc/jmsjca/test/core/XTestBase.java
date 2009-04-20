@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
+import com.stc.jmsjca.core.TxMgr;
 import com.stc.jmsjca.core.XXid;
 import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.XAssert;
@@ -60,6 +61,15 @@ import javax.naming.InitialContext;
 import javax.resource.ResourceException;
 import javax.resource.spi.LocalTransaction;
 import javax.resource.spi.ManagedConnection;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
@@ -69,8 +79,12 @@ import java.io.InputStream;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -130,10 +144,21 @@ abstract public class XTestBase extends BaseTestCase {
     private static Logger sLog = Logger.getLogger(XTestBase.class.getName());
 
 
+    /**
+     * @see com.stc.jmsjca.test.core.BaseTestCase#setUp()
+     */
     public void setUp() throws Exception {
         super.setUp();
         USERID = getJMSProvider().getUserName(mServerProperties);
         PASSWORD = getJMSProvider().getPassword(mServerProperties);
+        TxMgr.setUnitTestTxMgr(new TestTransactionManager());
+    }
+
+    /**
+     * @see junit.framework.TestCase#tearDown()
+     */
+    public void tearDown() throws Exception {
+        super.tearDown();
     }
 
     /**
@@ -220,6 +245,294 @@ abstract public class XTestBase extends BaseTestCase {
     public String generateName() {
         synchronized (XTestBase.class) {
             return "JMSJCA-" + this.getClass() + sTime + "-" + sUniquifier++;
+        }
+    }
+
+    /**
+     * A simple rudimentary transaction manager for unit testing
+     * 
+     * @author fkieviet
+     */
+    public static class TestTransactionManager implements TransactionManager {
+        private IdentityHashMap mActiveTransactions = new IdentityHashMap();
+        
+        /**
+         * @see javax.transaction.TransactionManager#begin()
+         */
+        public void begin() throws NotSupportedException, SystemException {
+            if (getTransaction() != null) {
+                throw new RuntimeException("Tx already started");
+            }
+            TestTransaction tx = new TestTransaction(this);
+            mActiveTransactions.put(Thread.currentThread(), tx);
+        }
+        
+        private void check(boolean test) {
+            if (!test) {
+                throw new RuntimeException("Assertion failed");
+            }
+        }
+
+        public void removeTx(TestTransaction tx) {
+            if (mActiveTransactions.get(Thread.currentThread()) == tx) {
+                check(mActiveTransactions.remove(Thread.currentThread()) != null);
+            } else {
+                boolean found = false;
+                for (Iterator iter = mActiveTransactions.entrySet().iterator(); iter.hasNext();) {
+                    Map.Entry element = (Map.Entry) iter.next();
+                    if (element.getValue() == tx) {
+                        iter.remove();
+                        found = true;
+                        break;
+                    }
+                }
+                check(found);
+            }
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#commit()
+         */
+        public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
+            getTransaction().commit();
+        }
+
+        public int getStatus() throws SystemException {
+            throw new RuntimeException("Not implemented");
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#getTransaction()
+         */
+        public Transaction getTransaction() throws SystemException {
+            return (Transaction) mActiveTransactions.get(Thread.currentThread());
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#resume(javax.transaction.Transaction)
+         */
+        public void resume(Transaction tx1) throws InvalidTransactionException, IllegalStateException, SystemException {
+            TestTransaction tx = (TestTransaction) tx1;
+            tx.unsuspendAll();
+            mActiveTransactions.put(Thread.currentThread(), tx);
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#rollback()
+         */
+        public void rollback() throws IllegalStateException, SecurityException, SystemException {
+            getTransaction().rollback();
+            mActiveTransactions.remove(Thread.currentThread());
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#setRollbackOnly()
+         */
+        public void setRollbackOnly() throws IllegalStateException, SystemException {
+            getTransaction().setRollbackOnly();
+        }
+
+        public void setTransactionTimeout(int arg0) throws SystemException {
+            throw new RuntimeException("Not implemented");
+        }
+
+        /**
+         * @see javax.transaction.TransactionManager#suspend()
+         */
+        public Transaction suspend() throws SystemException {
+            TestTransaction tx = (TestTransaction) getTransaction();
+            if (tx == null) {
+                throw new RuntimeException("No transaction");
+            }
+            mActiveTransactions.remove(Thread.currentThread());
+            tx.suspendEnlisted();
+            return tx;
+        }
+    }
+
+    /**
+     * A simple rudimentary transaction for unit testing
+     * 
+     * @author fkieviet
+     */
+    public static class TestTransaction implements Transaction {
+        private Map mAllResources = new IdentityHashMap();
+        private List mEnlistedResources = new ArrayList();
+        private List mSuspendedResources = new ArrayList();
+        private List mSynchronizations = new ArrayList();
+        private boolean mRollbackOnly;
+        private TestTransactionManager mTxMgr;
+        
+        public TestTransaction(TestTransactionManager txmgr) {
+            mTxMgr = txmgr;
+        }
+
+        /**
+         * @see javax.transaction.Transaction#commit()
+         */
+        public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
+            // syn.before
+            for (Iterator syns = mSynchronizations.iterator(); syns.hasNext();) {
+                Synchronization syn = (Synchronization) syns.next();
+                syn.beforeCompletion();
+            }
+            
+            Exception failed = null;
+            
+            // prepare
+            for (Iterator xars = mAllResources.entrySet().iterator(); xars.hasNext();) {
+                Map.Entry x = (Entry) xars.next();
+                XAResource xar = (XAResource) x.getKey();
+                ResourceHolder h = (ResourceHolder) x.getValue();
+                try {
+                    xar.prepare(h.getXid());
+                } catch (XAException e) {
+                    failed = e;
+                    mRollbackOnly = true;
+                }
+            }
+            
+            // commit/rollback
+            for (Iterator xars = mAllResources.entrySet().iterator(); xars.hasNext();) {
+                Map.Entry x = (Entry) xars.next();
+                XAResource xar = (XAResource) x.getKey();
+                ResourceHolder h = (ResourceHolder) x.getValue();
+                try {
+                    if (mRollbackOnly) {
+                        xar.rollback(h.getXid()); 
+                    } else {
+                        xar.commit(h.getXid(), false);
+                    }
+                } catch (XAException e) {
+                    throw new RuntimeException("commit failed; transaction left in doubt", e);
+                }
+            }
+
+            // syn.before
+            for (Iterator syns = mSynchronizations.iterator(); syns.hasNext();) {
+                Synchronization syn = (Synchronization) syns.next();
+                syn.afterCompletion(mRollbackOnly ? XAResource.TMFAIL : XAResource.TMSUCCESS);
+            }
+            
+            mTxMgr.removeTx(this);
+
+            if (failed != null) {
+                throw new RuntimeException("prepare failed", failed);
+            }
+        }
+        
+        private void check(boolean test) {
+            if (!test) {
+                throw new RuntimeException("Assertion failed");
+            }
+        }
+
+        /**
+         * @see javax.transaction.Transaction#delistResource(javax.transaction.xa.XAResource, int)
+         */
+        public boolean delistResource(XAResource xar, int flag) throws IllegalStateException, SystemException {
+            check(flag == XAResource.TMSUCCESS);
+            boolean removed = mEnlistedResources.remove(xar);
+            ResourceHolder h = (ResourceHolder) mAllResources.get(xar);
+            check(removed);
+            try {
+                xar.end(h.getXid(), flag);
+            } catch (XAException e) {
+                throw new RuntimeException("delist failed", e);
+            }
+            return true;
+        }
+
+        /**
+         * @see javax.transaction.Transaction#enlistResource(javax.transaction.xa.XAResource)
+         */
+        public boolean enlistResource(XAResource xar) throws RollbackException, IllegalStateException, SystemException {
+            mAllResources.remove(xar);
+            
+            ResourceHolder h = new ResourceHolder();
+            h.setXid(new XXid());
+            
+            try {
+                xar.start(h.getXid(), XAResource.TMNOFLAGS);
+            } catch (XAException e) {
+                throw new RuntimeException("enlist failed", e);
+            }
+            mAllResources.put(xar, h);
+            mEnlistedResources.add(xar);
+            return true;
+        }
+
+        /**
+         * @see javax.transaction.Transaction#getStatus()
+         */
+        public int getStatus() throws SystemException {
+            return mRollbackOnly ? XAResource.TMSUCCESS : XAResource.TMFAIL;
+        }
+
+        /**
+         * @see javax.transaction.Transaction#registerSynchronization(javax.transaction.Synchronization)
+         */
+        public void registerSynchronization(Synchronization syn) throws RollbackException, IllegalStateException, SystemException {
+            mSynchronizations.add(syn);
+        }
+
+        /**
+         * @see javax.transaction.Transaction#rollback()
+         */
+        public void rollback() throws IllegalStateException, SystemException {
+            mRollbackOnly = true;
+            try {
+                commit();
+            } catch (Exception e) {
+                throw new RuntimeException("rollback failed", e);
+            }
+        }
+
+        /**
+         * @see javax.transaction.Transaction#setRollbackOnly()
+         */
+        public void setRollbackOnly() throws IllegalStateException, SystemException {
+            mRollbackOnly = true;
+        }
+
+        public void suspendEnlisted() throws SystemException {
+            XAResource[] xars = (XAResource[]) mEnlistedResources.toArray(new XAResource[mEnlistedResources.size()]);
+            for (int i = 0; i < xars.length; i++) {
+                try {
+                    ResourceHolder h = (ResourceHolder) mAllResources.get(xars[i]);
+                    xars[i].end(h.getXid(), XAResource.TMSUSPEND);
+                    mSuspendedResources.add(xars[i]);
+                    mEnlistedResources.remove(xars[i]);
+                } catch (XAException e) {
+                    throw new RuntimeException("end failed", e);
+                }
+            }
+        }
+
+        public void unsuspendAll() throws SystemException {
+            XAResource[] xars = (XAResource[]) mSuspendedResources.toArray(new XAResource[mSuspendedResources.size()]);
+            for (int i = 0; i < xars.length; i++) {
+                try {
+                    ResourceHolder h = (ResourceHolder) mAllResources.get(xars[i]);
+                    xars[i].start(h.getXid(), XAResource.TMRESUME);
+                    mSuspendedResources.remove(xars[i]);
+                    mEnlistedResources.add(xars[i]);
+                } catch (XAException e) {
+                    throw new RuntimeException("start failed", e);
+                }
+            }
+        }
+    }
+
+    public static class ResourceHolder {
+        private XXid mXid;
+        
+        public Xid getXid() {
+            return mXid;
+        }
+
+        public void setXid(XXid xid) {
+            mXid = xid;
         }
     }
 
@@ -2877,7 +3190,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue("x");
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
@@ -2896,7 +3209,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            Queue dest = sess1.createQueue(generateName());
+            Queue dest = sess1.createQueue("x");
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
