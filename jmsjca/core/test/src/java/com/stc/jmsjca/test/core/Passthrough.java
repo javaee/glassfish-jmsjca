@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -536,7 +536,7 @@ public abstract class Passthrough {
                     break;
                 }
                 ret++;
-                if (ret % mCommitSize == 0) {
+                if (ret % getCommitSize() == 0) {
                     getSession().commit();
                 }
                 if (ret % 100 == 0) {
@@ -730,7 +730,7 @@ public abstract class Passthrough {
                 }
                 
                 // Commit
-                if (i % mCommitSize == 0) {
+                if (i % getCommitSize() == 0) {
                     getSession().commit();
                 }
             }

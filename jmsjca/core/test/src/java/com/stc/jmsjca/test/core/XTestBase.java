@@ -2302,13 +2302,25 @@ abstract public class XTestBase extends BaseTestCase {
                     ct++;
                 }
             } else {
+                int commit = 0;
+                int commitsize = getJMSProvider().createPassthrough(mServerProperties).getCommitSize();
                 for (int i = 0; i < expected; i++) {
                     if (recv.receive(EXPECTWITHIN) != null) {
                         ct++;
+                        commit++;
+                        if (commit > commitsize) {
+                            sess.commit();
+                            commit = 0;
+                        }
                     }
                 }
                 if (recv.receive(DONTEXPECT) != null) {
                     ct++;
+                    commit++;
+                    if (commit > commitsize) {
+                        sess.commit();
+                        commit = 0;
+                    }
                 }
             }
             
@@ -2354,8 +2366,15 @@ abstract public class XTestBase extends BaseTestCase {
                 topicName), durableName);
             conn.start();
             int ct = 0;
+            int commit = 0;
+            int commitsize = getJMSProvider().createPassthrough(mServerProperties).getCommitSize();
             while (recv.receive(expect ? EXPECTWITHIN : DONTEXPECT) != null) {
                 ct++;
+                commit++;
+                if (commit > commitsize) {
+                    sess.commit();
+                    commit = 0;
+                }
             }
             sess.commit();
             conn.stop();
