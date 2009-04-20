@@ -54,7 +54,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -474,6 +474,14 @@ public class JSession {
         } catch (Exception e) {
             closeException = e;
         }
+        
+        // The expectation is that cleanup() will be called by the MC as a result of 
+        // the application server calling cleanup() on the MC. This is expectation is 
+        // that the application server will do that upon receiving the close event.
+        // It appears that's not the case in GF v2.1, so do it here right now.
+        cleanup();
+        
+        // Notify the application server
         mManagedConnection.notifyClosedByApplicationConnection(w);
         
         if (closeException != null) {
