@@ -39,7 +39,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {
@@ -169,9 +169,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("serial");
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
         dd.update();
 
@@ -234,9 +234,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
-        spec.setSubscriptionName(p.getDurableTopic1Name());
-        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String subscriptionName = p.getDurableTopic1Name1();
+        spec.setSubscriptionName(p.getDurableTopic1Name1());
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientId);
         dd.update();
  
@@ -296,9 +296,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("serial");
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
-        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientId);
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testTTXAXA");
         dd.update();
@@ -360,9 +360,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
-        spec.setSubscriptionName(p.getDurableTopic1Name());
-        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String subscriptionName = p.getDurableTopic1Name1();
+        spec.setSubscriptionName(p.getDurableTopic1Name1());
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientId);
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testTTXAXA");
         dd.update();
@@ -532,11 +532,11 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(Options.Subname.PREFIX + "?"
             + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
             + Options.Subname.DISTRIBUTION_TYPE + "=1");
-        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
 
         dd.update();
@@ -591,12 +591,12 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(Options.Subname.PREFIX + "?"
             + Options.Subname.SUBSCRIBERNAME + "=" + subscriptionName + "&"
             + Options.Subname.DISTRIBUTION_TYPE + "=1&"
             + Options.Subname.QUEUENAME + "=" + p.getQueue1Name());
-        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
         dd.update();
 
@@ -611,7 +611,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         }
         TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
         Topic t = sess.createTopic(p.getTopic1Name());
-        sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+        sess.createDurableSubscriber(t, p.getDurableTopic1Name1());
 
         try {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
@@ -671,9 +671,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode(mode);
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
 
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
@@ -691,7 +691,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
-            p.removeDurableSubscriber(clientID, p.getTopic1Name(), p.getDurableTopic1Name());
+            p.removeDurableSubscriber(clientID, p.getTopic1Name(), p.getDurableTopic1Name1());
 
             // Create a durable subscriber
             TopicConnectionFactory f = p.createTopicConnectionFactory();
@@ -701,7 +701,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             }
             TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
             Topic t = sess.createTopic(p.getTopic1Name());
-            sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+            sess.createDurableSubscriber(t, p.getDurableTopic1Name1());
      
             p.drainQ2();
           
@@ -768,9 +768,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         spec.setConcurrencyMode(ccmode);
         
         spec.setSubscriptionDurability("Durable");
-        final String subscriptionName = p.getDurableTopic1Name();
+        final String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
-        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientId = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientId);
         spec.setMessageSelector("a = 1");
         

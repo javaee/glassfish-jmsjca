@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -72,7 +72,9 @@ public abstract class Passthrough {
     private String mQueue4Name = "Queue4";
     private String mTopic1Name = "Topic1";
     private String mTopic2Name = "Topic2";
-    private String mTopic1DurableName = "T1SUB";
+    private String mTopic1DurableName1 = "T1SUB";
+    private String mTopic1DurableName2 = "T1SUB2";
+    private String mTopic1DurableName3 = "T1SUB3";
     private JMSProvider mProvider;
     
     /**
@@ -215,14 +217,28 @@ public abstract class Passthrough {
      * @param name durable subscriber name
      */
     public void setDurableTopic1Name(String name) {
-        mTopic1DurableName = name;
+        mTopic1DurableName1 = name;
     }
     
     /**
      * @return durable subscriber name
      */
-    public String getDurableTopic1Name() {
-        return mTopic1DurableName;
+    public String getDurableTopic1Name1() {
+        return mTopic1DurableName1;
+    }
+    
+    /**
+     * @return durable subscriber name
+     */
+    public String getDurableTopic1Name2() {
+        return mTopic1DurableName2;
+    }
+    
+    /**
+     * @return durable subscriber name
+     */
+    public String getDurableTopic1Name3() {
+        return mTopic1DurableName3;
     }
     
     /**
@@ -1364,7 +1380,7 @@ public abstract class Passthrough {
     public void passFromT1ToT2() throws Exception {
         close();
 
-        TopicSource source = new TopicSource(mTopic1Name, mTopic1DurableName);
+        TopicSource source = new TopicSource(mTopic1Name, getDurableTopic1Name1());
         TopicDest dest = new TopicDest(mTopic2Name);
         source.connect();
         dest.connect();
@@ -1400,7 +1416,7 @@ public abstract class Passthrough {
     public void passFromT1DurableToQ2() throws Exception {
         close();
 
-        TopicSource source = new TopicSource(mTopic1Name, mTopic1DurableName);
+        TopicSource source = new TopicSource(mTopic1Name, getDurableTopic1Name1());
         QueueDest dest = new QueueDest(mQueue2Name);
         source.connect();
         dest.connect();
@@ -1503,7 +1519,7 @@ public abstract class Passthrough {
     public void passFromT1DurableToT2() throws Exception {
         close();
 
-        TopicSource source = new TopicSource(mTopic1Name, mTopic1DurableName);
+        TopicSource source = new TopicSource(mTopic1Name, getDurableTopic1Name1());
         TopicDest dest = new TopicDest(mTopic2Name);
         source.connect();
         dest.connect();

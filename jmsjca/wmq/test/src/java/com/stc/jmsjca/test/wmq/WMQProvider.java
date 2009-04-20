@@ -28,13 +28,14 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
     public static final String PROPNAME_PORT = "jmsjca.jmsimpl.wmq.port";
     public static final String PROPNAME_USERID = "jmsjca.jmsimpl.wmq.userid";
     public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.wmq.password";
+    public static final String QUEUEMANAGER = "jmsjca.jmsimpl.wmq.queuemanager";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider

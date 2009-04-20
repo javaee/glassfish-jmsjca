@@ -20,7 +20,6 @@ import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.TxMgr;
 import com.stc.jmsjca.core.XXid;
-import com.stc.jmsjca.test.sunone.TestSunOneJUStd;
 import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.XAssert;
 
@@ -231,28 +230,51 @@ abstract public class XTestBase extends BaseTestCase {
     public String USERID;
     public String PASSWORD;
 
-    private static long sTime = System.currentTimeMillis();
-    private static long sUniquifier;
     
     protected void setClientID(Connection con) throws JMSException {
         // nothing
     }
 
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-        synchronized (TestSunOneJUStd.class) {
-            return "JMSJCA" + sTime + sUniquifier++;
-        }
-    }
+//    private static long sTime = System.currentTimeMillis();
+//    private static long sUniquifier;
+//    /**
+//     * Generates a unique name
+//     *
+//     * @return name
+//     */
+//    public String generateName() {
+//        synchronized (TestSunOneJUStd.class) {
+//            return "JMSJCA" + sTime + sUniquifier++;
+//        }
+//    }
 
     public String getQueue1Name() throws Throwable {
         String dest = getJMSProvider().createPassthrough(mServerProperties).getQueue1Name();
         clearQueue(dest, -2);
         return dest;
+    }
+    
+    public String getTopic1Name() throws Throwable {
+        String dest = getJMSProvider().createPassthrough(mServerProperties).getTopic1Name();
+        return dest;
+    }
+    
+    public String getDur1Name(String topicName) throws Throwable {
+        String sub = getJMSProvider().createPassthrough(mServerProperties).getDurableTopic1Name1();
+        clearTopic(sub, topicName, false);
+        return sub;
+    }
+    
+    public String getDur2Name(String topicName) throws Throwable {
+        String sub = getJMSProvider().createPassthrough(mServerProperties).getDurableTopic1Name2();
+        clearTopic(sub, topicName, false);
+        return sub;
+    }
+    
+    public String getDur3Name(String topicName) throws Throwable {
+        String sub = getJMSProvider().createPassthrough(mServerProperties).getDurableTopic1Name3();
+        clearTopic(sub, topicName, false);
+        return sub;
     }
     
     /**
@@ -1081,10 +1103,10 @@ abstract public class XTestBase extends BaseTestCase {
 
         WireCount w = getConnectionCount();
         WireCount w0 = w;
-        String destName = generateName();
-        String subname1 = generateName();
-        String subname2 = generateName();
-        String subname3 = generateName();
+        String destName = getTopic1Name();
+        String subname1 = getDur1Name(destName);
+        String subname2 = getDur2Name(destName);
+        String subname3 = getDur3Name(destName);
 
         TopicSession s = conn.createTopicSession(true, 0);
         s.getTransacted(); // actuate type
@@ -1211,10 +1233,10 @@ abstract public class XTestBase extends BaseTestCase {
         setClientID(conn);
 
         WireCount w = getConnectionCount();
-        String destName = generateName();
-        String subname1 = generateName();
-        String subname2 = generateName();
-        String subname3 = generateName();
+        String destName = getTopic1Name();
+        String subname1 = getDur1Name(destName);
+        String subname2 = getDur2Name(destName);
+        String subname3 = getDur3Name(destName);
 
         TopicSession s = conn.createTopicSession(true, 0);
         s.getTransacted(); // actuate type
@@ -2554,8 +2576,8 @@ abstract public class XTestBase extends BaseTestCase {
     public void test500t() throws Throwable {
         init(false, true);
 
-        String subname = generateName();
-        String destname = generateName();
+        String destname = getTopic1Name();
+        String subname = getDur1Name(destname);
         createDurableSubscriber(destname, subname);
 
         // This is how the client would normally create connections
@@ -3314,7 +3336,8 @@ abstract public class XTestBase extends BaseTestCase {
     }
 
     private void t800tx(TopicConnectionFactory f) throws Throwable {
-        String subname = generateName();
+        String destname = getTopic1Name();
+        String subname = getDur1Name(destname);
         Topic dest;
         {
             TopicConnection conn1 = f.createTopicConnection(USERID, PASSWORD);
@@ -3322,7 +3345,7 @@ abstract public class XTestBase extends BaseTestCase {
             TopicSession sess1 = conn1.createTopicSession(true, 0);
             sess1.getTransacted(); // actuate type
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
-            dest = sess1.createTopic(generateName());
+            dest = sess1.createTopic(destname);
             sess1.createDurableSubscriber(dest, subname);
             TopicPublisher prod1 = sess1.createPublisher(dest);
 
@@ -4069,7 +4092,7 @@ abstract public class XTestBase extends BaseTestCase {
         Connection conn = f.createConnection(USERID, PASSWORD);
         Session s = conn.createSession(true, 0);
 
-        Topic defaultDest = s.createTopic(generateName());
+        Topic defaultDest = s.createTopic(getTopic1Name());
         MessageConsumer defaultConsumer = s.createConsumer(defaultDest);
 
 
@@ -4467,7 +4490,7 @@ abstract public class XTestBase extends BaseTestCase {
              TopicSession newTopicSess = conn2.createTopicSession(true, 0);
              TopicSession s1 = conn1.createTopicSession(true, 0);
 
-             Topic dest = newTopicSess.createTopic(generateName());
+             Topic dest = newTopicSess.createTopic(getTopic1Name());
 
              TopicPublisher prod1 = s1.createPublisher(dest);
 
@@ -4557,7 +4580,7 @@ abstract public class XTestBase extends BaseTestCase {
              // close default session and create tx CLIENT_ACK session
              TopicConnection conn1 = f.createTopicConnection(USERID, PASSWORD);
              tSess = conn1.createTopicSession(true, 0);
-             Topic dest = tSess.createTopic(generateName());
+             Topic dest = tSess.createTopic(getTopic1Name());
              tPub = tSess.createPublisher(dest);
              tSub = tSess.createSubscriber(dest);
              tSess.close();

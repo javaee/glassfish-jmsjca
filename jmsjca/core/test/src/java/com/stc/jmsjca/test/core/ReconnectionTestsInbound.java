@@ -32,7 +32,7 @@ import javax.jms.TopicSession;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
     // To test:
@@ -217,9 +217,9 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode(mode);
         spec.setSubscriptionDurability("Durable");
-        String subscriptionName = p.getDurableTopic1Name();
+        String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
-        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name() + "clientID");
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
 
         spec.setConnectionURL(proxyUrl + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB 
@@ -243,7 +243,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
             }
             TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
             Topic t = sess.createTopic(p.getTopic1Name());
-            sess.createDurableSubscriber(t, p.getDurableTopic1Name());
+            sess.createDurableSubscriber(t, p.getDurableTopic1Name1());
      
             p.drainQ2();
             

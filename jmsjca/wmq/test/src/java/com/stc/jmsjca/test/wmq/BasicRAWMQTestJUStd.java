@@ -61,7 +61,7 @@ public class BasicRAWMQTestJUStd extends TestCase {
     /**
      * test host name
      */
-    public static final String HOSTNAME      = "runtime4";    //"localhost" "ICAN-RTS"
+    public static final String HOSTNAME      = "runtime6";    //"localhost" "ICAN-RTS"
 
     /**
      * test host port
@@ -71,7 +71,7 @@ public class BasicRAWMQTestJUStd extends TestCase {
     /**
      * test queue manager
      */
-    public static final String QUEUE_MANAGER = "QM_runtime4";    //"QM_ican_rts" "WebSphere_ican_rts" "QM_cye_d6002k" 
+    public static final String QUEUE_MANAGER = "QM_runtime6";    //"QM_ican_rts" "WebSphere_ican_rts" "QM_cye_d6002k" 
                                                                  // mq manager logical name
     /**
      * test transport type 
@@ -86,12 +86,12 @@ public class BasicRAWMQTestJUStd extends TestCase {
     /**
      * test user name 
      */
-    public static String userName = "Administrator";
+    public static String userName = "WMQAdmin";
     
     /**
      * test user password
      */
-    public static String password = "STC";
+    public static String password = "M0nr0via1";
     
     /**
      * Constructor

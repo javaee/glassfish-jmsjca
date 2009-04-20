@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author  cye
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMQPassthrough extends Passthrough {
 
@@ -114,7 +114,7 @@ public class WMQPassthrough extends Passthrough {
         cf.setQueueManager(QUEUE_MANAGER);
         cf.setTransportType(BasicRAWMQTestJUStd.TRANSPORT_TYPE);
         cf.setChannel(BasicRAWMQTestJUStd.CHANNEL);   
-        cf.setClientID(getDurableTopic1Name() + "clientID");
+        cf.setClientID(getDurableTopic1Name1() + "clientID");
         return cf;
     }
 

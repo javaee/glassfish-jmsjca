@@ -260,7 +260,7 @@ public class TestWaveJUStd extends XTestBase {
         getRA(f).setOptions(Options.NOXA + "=true\r\n" + Options.Out.IGNORETX + "=false");
 
         try {
-            String name = generateName();
+            String name = getQueue1Name();
             {
                 QueueConnection conn = f.createQueueConnection();
                 QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);

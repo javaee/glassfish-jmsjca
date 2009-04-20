@@ -41,7 +41,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -70,22 +70,22 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     /**
      * WebSphere MQ Queue Manager Name
      */        
-    private static final String QUEUEMANAGER = "QueueManager";
+    public static final String QUEUEMANAGER = "QueueManager";
 
     /**
      * WebSphere MQ transport type
      */            
-    private static final String TRANSPORTTYPE = "TransportType";
+    public static final String TRANSPORTTYPE = "TransportType";
     
     /**
      * WebSphere MQ Channel
      */            
-    private static final String CHANNEL = "Channel";
+    public static final String CHANNEL = "Channel";
  
     /**
      * WebSphere MQ Client Id
      */            
-    private static final String CLIENTID = "ClientId";
+    public static final String CLIENTID = "ClientId";
     
     /**
      * WebSphere MQ Default Client Id
