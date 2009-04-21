@@ -41,7 +41,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -275,7 +275,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
 
         // need to ensure that this URL isn't an indirect reference, i.e.
         // actually an LDAP URL where the real value is bound
-        String realUrl = resourceAdapter.lookUpLDAP(urlstr);
+        String realUrl = resourceAdapter == null ? urlstr : resourceAdapter.lookUpLDAP(urlstr);
         
         String clientId = DEFAULT_CLIENTID;
         if (activationSpec != null && !Str.empty(activationSpec.getClientId())) {

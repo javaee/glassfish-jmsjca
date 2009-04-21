@@ -20,6 +20,8 @@ import com.stc.jmsjca.core.AdminQueue;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.TxMgr;
 import com.stc.jmsjca.core.XXid;
+import com.stc.jmsjca.localization.LocalizedString;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Semaphore;
 import com.stc.jmsjca.util.XAssert;
 
@@ -870,7 +872,7 @@ abstract public class XTestBase extends BaseTestCase {
         s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        s.createQueue("x");
+        s.createQueue(getQueue1Name());
 
         conn.close();
 
@@ -916,7 +918,7 @@ abstract public class XTestBase extends BaseTestCase {
         s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        s.createQueue("x");
+        s.createQueue(getQueue1Name());
 
         conn.close();
         s0.check(1);
@@ -968,7 +970,7 @@ abstract public class XTestBase extends BaseTestCase {
         s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        s.createQueue("x");
+        s.createQueue(getQueue1Name());
 
         conn.close();
 
@@ -1023,7 +1025,7 @@ abstract public class XTestBase extends BaseTestCase {
         s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        s.createQueue("x");
+        s.createQueue(getQueue1Name());
 
         conn.close();
 
@@ -1237,8 +1239,12 @@ abstract public class XTestBase extends BaseTestCase {
         String subname1 = getDur1Name(destName);
         String subname2 = getDur2Name(destName);
         String subname3 = getDur3Name(destName);
+        clearTopic(subname1, destName, false);
+        clearTopic(subname2, destName, false);
+        clearTopic(subname3, destName, false);
 
         TopicSession s = conn.createTopicSession(true, 0);
+        
         s.getTransacted(); // actuate type
         w.check(1, 0, 0);
         {
@@ -1336,7 +1342,7 @@ abstract public class XTestBase extends BaseTestCase {
         int n = clearTopic(subname1, destName, true);
         assertTrue(n == 3);
         n = clearTopic(subname2, destName, true);
-        assertTrue(n == 2);
+        assertTrue("n=" + n, n == 2);
         n = clearTopic(subname3, destName, true);
         assertTrue(n == 1);
     }
@@ -1412,7 +1418,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1473,7 +1479,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1537,7 +1543,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1596,7 +1602,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1658,7 +1664,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1741,7 +1747,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1811,7 +1817,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1858,7 +1864,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -1905,7 +1911,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Topic t = s.createTopic("x");
+        Topic t = s.createTopic(getTopic1Name());
 
         TopicPublisher p = s.createPublisher(t);
         s0.check(2);
@@ -2022,7 +2028,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         QueueReceiver cons = s.createReceiver(dest);
         s0.check(2);
@@ -2071,7 +2077,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         QueueReceiver cons = s.createReceiver(dest);
         s0.check(2);
@@ -2121,7 +2127,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         QueueReceiver cons = s.createReceiver(dest);
         s0.check(2);
@@ -2170,7 +2176,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         s0.check(1);
 
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         QueueReceiver cons = s.createReceiver(dest);
         s0.check(2);
@@ -2420,6 +2426,10 @@ abstract public class XTestBase extends BaseTestCase {
                 }
             }
             sess.commit();
+            
+            recv.close();
+            sess.unsubscribe(durableName);
+            
             conn.stop();
             sess.close();
             getConnectionManager(f).clear();
@@ -3067,7 +3077,7 @@ abstract public class XTestBase extends BaseTestCase {
         QueueSession s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         // Don't reuse producer
         {
@@ -3115,7 +3125,7 @@ abstract public class XTestBase extends BaseTestCase {
         QueueSession s = conn.createQueueSession(true, 0);
         s.getTransacted(); // actuate type
         s0.check(1);
-        Queue dest = s.createQueue("x");
+        Queue dest = s.createQueue(getQueue1Name());
 
         // Cause exception in producer
         {
@@ -3252,7 +3262,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(true, 0);
-            Queue dest = sess1.createQueue("x");
+            Queue dest = sess1.createQueue(getQueue1Name());
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
@@ -3271,7 +3281,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
             QueueSession sess1 = conn1.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            Queue dest = sess1.createQueue("x");
+            Queue dest = sess1.createQueue(getQueue1Name());
             XAResource xa1 = getManagedConnection(sess1).getXAResource();
             QueueSender prod1 = sess1.createSender(dest);
 
@@ -3446,7 +3456,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             QueueSession s = conn.createQueueSession(true, 0);
             Message m = s.createTextMessage("x");
-            dest = s.createQueue("QUEUEX1");
+            dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             prod.send(m);
             prod.send(m);
@@ -3890,6 +3900,7 @@ abstract public class XTestBase extends BaseTestCase {
         QueueConnectionFactory f = (QueueConnectionFactory) ctx.lookup(appjndiQueue);
 
         Queue dest;
+        String uniquepayload = "x" + System.currentTimeMillis();
 
         // First send two msgs
         {
@@ -3897,14 +3908,17 @@ abstract public class XTestBase extends BaseTestCase {
 
             QueueSession s = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
             getManagedConnection(s).getXAResource();
-            Message m = s.createTextMessage("x");
+
+            Message m = s.createTextMessage(uniquepayload);
             w.check(1, 0, 0);
             dest = s.createQueue(getQueue1Name());
             QueueSender prod = s.createSender(dest);
             w.check(1, 1, 0);
+            // Send first
             prod.send(m);
             w.check(1, 1, 0);
 
+            // Send second
             prod.send(m);
             conn.close();
 
@@ -3931,6 +3945,7 @@ abstract public class XTestBase extends BaseTestCase {
             conn.start();
             m = cons.receive(EXPECTWITHIN);
             assertTrue(m != null);
+            assertTrue(((TextMessage) m).getText().equals(uniquepayload));
 
             conn.close();
             w.check(1, 1, 0);
@@ -4293,7 +4308,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             // create the TemporaryTopic
             TestUtil.logTrace("Creating TemporaryTopic");
-            TemporaryTopic  tempT = s.createTemporaryTopic();
+            TemporaryTopic  topic = s.createTemporaryTopic();
 
             // open a new connection, create Session and Sender
             TestUtil.logTrace("Creating new Connection");
@@ -4303,16 +4318,23 @@ abstract public class XTestBase extends BaseTestCase {
             TopicSession    newTSess = newTConn.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
 
             TestUtil.logTrace("Create new sender for TemporaryTopic");
-            TopicPublisher  newTPublisher = newTSess.createPublisher(tempT);
+            TopicPublisher  newTPublisher = newTSess.createPublisher(topic);
 
             // send message to verify TemporaryTopic exists so far
             TestUtil.logTrace("Send message to TemporaryTopic");
             TextMessage tMsg = newTSess.createTextMessage();
 
+            XAResource xa1 = getManagedConnection(newTSess).getXAResource();
+            Xid xid = new XXid();
+            xa1.start(xid, XAResource.TMNOFLAGS);
+            
             tMsg.setText("test message");
             tMsg.setStringProperty("COM_SUN_JMS_TESTNAME", "temporaryTopicConnectionClosesTest");
             TestUtil.logTrace("TextMessage created. Now publishing");
             newTPublisher.publish(tMsg);
+            
+            xa1.end(xid, XAResource.TMSUCCESS);
+            xa1.commit(xid, true);
 
             // close the connection
             TestUtil.logTrace("Close original Connection");
@@ -4338,6 +4360,8 @@ abstract public class XTestBase extends BaseTestCase {
 
             // throw exception if test failed
             assertTrue(passed);
+        } catch (JMSException e) {
+            throw Exc.rsrcExc(new LocalizedString("Test failure: " + e), e);
         } finally {
             getConnectionManager(f).clear();
         }
@@ -5468,7 +5492,7 @@ abstract public class XTestBase extends BaseTestCase {
         {
             final QueueConnection conn = fact.createQueueConnection(USERID, PASSWORD);
             QueueSession session = conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            dest = session.createQueue("Queue1");
+            dest = session.createQueue(getQueue1Name());
             QueueSender producer = session.createSender(dest);
             for (int i = 0; i < N; i++) {
                 TextMessage msg1 = session.createTextMessage("Msg " + i + " for Q1");

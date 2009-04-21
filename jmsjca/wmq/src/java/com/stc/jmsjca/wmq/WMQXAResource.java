@@ -23,7 +23,10 @@ import javax.transaction.xa.Xid;
 /**
  * A wrapper of MQXAResource
  * 
- * @version $Revision: 1.5 $
+ * In MQSeries 6, the isSameRM() doesn't work properly. The purpose of this wrapper is
+ * to make sure that isSameRM() always returns false.
+ * 
+ * @version $Revision: 1.6 $
  * @author cye
  */
 public class WMQXAResource implements XAResource {
@@ -85,7 +88,7 @@ public class WMQXAResource implements XAResource {
     * @throws XAException on failure
     */        
     public boolean isSameRM(XAResource xares) throws XAException {
-        return mXAResourceImpl.isSameRM(xares);
+        return false;
     }
     
    /**
