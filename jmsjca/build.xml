@@ -317,8 +317,7 @@
                source="1.4"
         >
             <src path="container/src/java"/>
-            <include name="com/stc/jmsjca/container/*" />
-            <include name="com/stc/jmsjca/container/${jmsjca.container.id}/*"/>
+            <src path="container-${jmsjca.container.id}/src/java"/>
             <classpath refid="jmsjca.core.classpath" />
             <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
             <classpath>

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/WASContainer.java" kind="src" path="container/src/java"/>
+	<classpathentry kind="src" path="container/src/java"/>
+	<classpathentry kind="src" path="container-wl/src/java"/>
+	<classpathentry kind="src" path="container-sjsas/src/java"/>
+	<classpathentry kind="src" path="container-glassfish/src/java"/>
+	<classpathentry kind="src" path="container-jboss/src/java"/>
+	<classpathentry kind="src" path="container-rts/src/java"/>
 	<classpathentry kind="src" path="buildtools/src/java"/>
 	<classpathentry kind="src" path="unifiedjms/src/java"/>
 	<classpathentry kind="src" path="unifiedjms/test/src/java"/>

@@ -32,7 +32,7 @@ import org.jboss.jmx.adaptor.rmi.RMIAdaptor;
 /**
  * JBoss 4.0.2 Deployer 
  * @author cye
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.1 $
  */
 public class Deployer extends Container {
 
