@@ -61,6 +61,10 @@
     <property name="jmsjca.properties.path" value="${user.home}/jmsjca.properties"/>
     <property file="${jmsjca.properties.path}" />
     
+    <path id="jmsjca.core.classpath">
+        <fileset file="${stc.api.dir}/j2ee.jar" />
+    </path>
+
     <path id="jmsjca.glassfish.classpath">
         <fileset file="${jmsjca.glassfish.home.dir}/lib/appserv-deployment-client.jar" />
         <fileset file="${jmsjca.glassfish.home.dir}/lib/javaee.jar" />
@@ -182,10 +186,6 @@
     Compiles the source code and produces a jar file
 -->
     <target name="compile-core" depends="init" unless="compile-core.ed">
-        <path id="jmsjca.core.classpath">
-            <fileset file="${stc.api.dir}/j2ee.jar" />
-        </path>
-
         <!-- Build tools -->
         <mkdir dir="${jmsjca.build-tools.classes.dir}" />
         <javac fork="stc.jdk13.fork"
@@ -396,6 +396,15 @@
 -->
     <target name="sunone" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="sunone" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
+    <target name="wmq" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="wmq" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
