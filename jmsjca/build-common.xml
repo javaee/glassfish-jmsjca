@@ -105,6 +105,7 @@
                 <pathelement path="${jmsjca.xxx.rar.jar.path}"/>
                 <pathelement path="${jmsjca.container.classes.dir}"/>
                 <fileset file="${stc.lib.dir}/jdom.jar" />
+                <fileset file="${stc.lib.dir}/junit.jar" />
             </classpath>
             <classpath refid="jmsjca.${jcaid}.clientjars.path" />
         </javac>
@@ -266,6 +267,7 @@
             <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
             <classpath>
                 <fileset file="${jmsjca.core.jar.path}" />
+                <fileset file="${stc.lib.dir}/junit.jar" />
                 <pathelement path="${jmsjca.xxx.rar.jar.path}"/>
                 <pathelement path="${jmsjca.container.classes.dir}"/>
                 <fileset file="${stc.lib.dir}/jdom.jar" />

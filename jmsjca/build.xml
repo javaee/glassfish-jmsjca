@@ -144,10 +144,15 @@
              verbose="true"
              usetimestamp="true"
         />
+        <get src="${jmsjca.junit.url}"
+             dest="${stc.api.dir}/junit.jar"
+             verbose="true"
+             usetimestamp="true"
+        />
     </target>
 
     <target name="init" unless="init.ed">
-        <available property="apis-init.ed" file="${stc.api.dir}/j2ee.jar" />
+        <available property="apis-init.ed" file="${stc.api.dir}/junit.jar" />
         <antcall target="init-apis" />
         <property name="init.ed" value="true" />
     </target>

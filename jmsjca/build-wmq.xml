@@ -4,6 +4,14 @@
     <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
     <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
+    <!-- REQUIRED for compile test -->
+    <path id="jmsjca.wmq.clientjars.path">
+        <fileset file="${jmsjca.wmq.jar.path-mq.jar}" />
+        <fileset file="${jmsjca.wmq.jar.path-mqetclient.jar}" />
+        <fileset file="${jmsjca.wmq.jar.path-mqjms.jar}" />
+        <fileset file="${jmsjca.wmq.jar.path-dhbcore.jar}" />
+    </path>
+
 <!--===========================================================================
     Initializes variables etc
 -->
@@ -40,174 +48,4 @@
         
         <property name="rar.ed" value="true" />
     </target>
-
-<!--===========================================================================
-    DEV-ONLY: compile-test
--->
-    <target
-        name="compile-test"
-        depends="init"
-        description=""
-        unless="compile-test.ed"
-    >
-        <!-- compile test code -->
-        <mkdir dir="${jmsjca.xxx.test.classes.dir}"/>
-        <javac
-            fork="stc.jdk13.fork"
-            destdir="${jmsjca.xxx.test.classes.dir}"
-            debug="true"
-            deprecation="${stc.java.deprecation}"
-            target="1.4"
-            source="1.4"
-        >
-            <src path="core/test/src/java" />
-            <src path="${jcaid}/test/src/java" />
-            <classpath refid="jmsjca.test.classpath"/>
-        </javac>
-        <copy todir="${jmsjca.xxx.test.classes.dir}">
-            <fileset dir="core/test/src/java" excludes="**/*.java"/>
-            <fileset dir="${jcaid}/test/src/java" excludes="**/*.java"/>
-        </copy>
-
-        <!-- ejb -->
-        <mkdir dir="${jmsjca.xxx.test.dir}"/>
-        <jar destfile="${jmsjca.xxx.ejb.jar.path}">
-            <fileset dir="${jmsjca.xxx.test.classes.dir}">
-                <include name="com/stc/jmsjca/test/core/**.*" />
-                <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
-            </fileset>
-            <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
-            <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
-        </jar>
-
-        <!-- Generate manifests for embedded RARs -->
-        <!-- When outside of RTS -->
-        <manifest file="${jmsjca.xxx.test.mft.path}">
-            <attribute 
-                name="Class-Path" 
-                value="${jmsjca.core.jar.name} ${jmsjca.xxx.jar.name}"
-            />
-        </manifest>
-        <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />
-
-        <!-- make embedded rar -->
-        <zip destfile="${jmsjca.xxx.test.rar.path}" >
-            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft.path}"  />
-        </zip>
-        <zip destfile="${jmsjca.xxx.test.rar1.path}" >
-            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
-        </zip>
-
-        <if>
-            <equals arg1="${containerid}" arg2="rts" />
-            <then>
-                <!-- mk ear INSIDE of RTS -->
-                <zip destfile="${jmsjca.xxx.ear.path}.1">
-                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
-                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
-                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
-                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
-                </zip>
-            </then>
-            <else>
-                <!-- mk ear OUTSIDE of RTS -->
-                <zip destfile="${jmsjca.xxx.ear.path}.1">
-                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
-                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
-                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
-                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
-
-                    <!-- When outside of RTS -->
-                    <zipfileset file="${jmsjca.core.jar.path}" />
-                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
-                </zip>
-            </else>
-        </if>
-        <property name="compile-test.ed" value="true" />
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: install-jms-jars: jms provider client jars
--->
-    <target
-        name="install-jms-jars"
-        depends="init"
-        if="lh"
-    >
-       <!-- provider jars -->
-       <copy todir="${lh}/logicalhost/is/lib" >
-        <fileset dir="${jcaid}/lib" >
-            <include name="dhbcore.jar" />
-            <include name="com.ibm.mqjms.jar" />
-            <include name="com.ibm.mqetclient.jar" />
-            <include name="com.ibm.mq.jar" />
-        </fileset>
-       </copy>                
-       <echo message="intalled dhbcore.jar" />
-       <echo message="intalled com.ibm.mqjms.jar" />
-       <echo message="intalled com.ibm.mqetclient.jar" />
-       <echo message="intalled com.ibm.mq.jar" />
-       
-    </target>
-
-    <target
-        name="uninstall-jms-jars"
-        depends="init"
-        if="lh"
-    >
-       <!-- Remove provider jars -->
-       <delete>
-        <fileset dir="${lh}/logicalhost/is/lib" >
-            <include name="dhbcore.jar" />
-            <include name="com.ibm.mqjms.jar" />
-            <include name="com.ibm.mqetclient.jar" />
-            <include name="com.ibm.mq.jar" />
-        </fileset>
-       </delete>                
-       <echo message="unintalled dhbcore.jar" />
-       <echo message="unintalled com.ibm.mqjms.jar" />
-       <echo message="unintalled com.ibm.mqetclient.jar" />
-       <echo message="unintalled com.ibm.mq.jar" />
-       
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: run-test: executes the tests
--->
-    <target
-        name="run-test"
-        depends="init, compile-test"
-    >
-        <!-- Test in Tomato -->
-        <junit
-            printsummary="on"
-            haltonerror="off"
-            haltonfailure="off"
-        >        
-            <jvmarg value="${junit.jvm.options}"/>
-            <sysproperty key="test.container.id" value="${testcontainer.id}"/>
-            <sysproperty key="test.server.properties" value="${testjmsserver.properties}"/>
-            <sysproperty key="test.container.properties" value="${testcontainer.properties}"/>
-            <sysproperty key="test.ear.path" value="${jmsjca.xxx.ear.path}"/>
-            <sysproperty key="wmq.url" value="${jmsjca.wmq.url}"/>
-
-            <classpath refid="jmsjca.test.classpath"/>
-            <classpath  path="${jmsjca.xxx.test.classes.dir}" />
-
-            <batchtest
-                haltonfailure="no"
-                haltonerror="no"
-                todir="${jmsjca.reports.junit.dir}"
-            >
-                <fileset dir="${jmsjca.xxx.test.classes.dir}">
-                    <include name="**/${jmsjca.ear1.pattern}JUStd.class"/>
-                    <include name="**/${jmsjca.ear1.pattern}Ear1.class"/>
-               </fileset>
-                <formatter type="xml"/>
-            </batchtest>
-        </junit>
-    </target>
-
 </project>
