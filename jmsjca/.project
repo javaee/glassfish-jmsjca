@@ -21,20 +21,5 @@
 		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 	</natures>
 	<linkedResources>
-		<link>
-			<name>bin</name>
-			<type>2</type>
-			<location>D:/jmsjca-src/bin</location>
-		</link>
-		<link>
-			<name>junit</name>
-			<type>2</type>
-			<locationURI>STC_ROOT/build-tools/junit</locationURI>
-		</link>
-		<link>
-			<name>out</name>
-			<type>2</type>
-			<locationURI>STC_ROOT/BUILD/Modules/eclipse-out/jmsjca</locationURI>
-		</link>
 	</linkedResources>
 </projectDescription>
