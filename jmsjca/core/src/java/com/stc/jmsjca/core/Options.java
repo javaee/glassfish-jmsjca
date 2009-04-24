@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public interface Options {
     /**
@@ -199,6 +199,26 @@ public interface Options {
          * Batch size
          */
         String BATCHSIZE = "batchsize";
+    }
+    
+    /**
+     * Options for destination names
+     */
+    public interface Dest {
+        /**
+         * To recognize a specially formatted queue or topic name
+         */
+        String PREFIX = "jmsjca://";
+        
+        /**
+         * Destination name, e.g. Queue1
+         */
+        String NAME = "name";
+
+        /**
+         * Internal use only
+         */
+        String ORIGINALNAME = "JMSJCA.originalname";
     }
     
     /**

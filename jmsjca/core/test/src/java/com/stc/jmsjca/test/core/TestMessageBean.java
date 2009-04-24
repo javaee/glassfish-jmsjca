@@ -72,7 +72,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -2568,6 +2568,31 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 } catch (JMSException ignore) {
                 }
             }
+        }
+    }
+
+    /**
+     * Sends from Queue1 to Queue2 with option
+     *
+     * @param message Message
+     */
+    public void testOptionDestination(javax.jms.Message message) {
+        try {
+            QueueConnection conn = null;
+            try {
+                QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+                    .lookup("java:comp/env/queuefact");
+                conn = fact.createQueueConnection();
+                QueueSession s = conn.createQueueSession(true, Session.AUTO_ACKNOWLEDGE);
+                Queue dest = s.createQueue("jmsjca://?name=Queue2&testoption=54");
+                QueueSender prod = s.createSender(dest);
+                prod.send(message);
+            } finally {
+                safeClose(conn);
+            }
+        } catch (Exception e) {
+            sLog.errorNoloc("Failed: " + e, e);
+            throw new EJBException("Failed: " + e, e);
         }
     }
 }

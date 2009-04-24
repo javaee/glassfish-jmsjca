@@ -28,12 +28,14 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.transaction.xa.XAResource;
 
+import java.util.Properties;
+
 /**
  * Manages a connection/session for a generic JMS provider: no optimizations are done; no
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class GenericSessionConnection extends SessionConnection {
     private static final Localizer LOCALE = Localizer.get();
@@ -215,14 +217,14 @@ public class GenericSessionConnection extends SessionConnection {
     /**
      * @see com.stc.jmsjca.core.SessionConnection#createQueue(java.lang.String)
      */
-    public Queue createQueue(String name) throws JMSException {
+    public Queue createQueue(String name, Properties options) throws JMSException {
         return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass).createQueue(name);
     }
 
     /**
      * @see com.stc.jmsjca.core.SessionConnection#createTopic(java.lang.String)
      */
-    public Topic createTopic(String name) throws JMSException {
+    public Topic createTopic(String name, Properties options) throws JMSException {
         return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass).createTopic(name);
     }
     
@@ -256,9 +258,9 @@ public class GenericSessionConnection extends SessionConnection {
      */
     public Destination createDestination(AdminDestination dest) throws JMSException {
         if (dest instanceof AdminQueue) {
-            return createQueue(dest.retrieveCheckedName());
+            return createQueue(dest.retrieveCheckedName(), dest.retrieveProperties());
         } else {
-            return createTopic(dest.retrieveCheckedName());
+            return createTopic(dest.retrieveCheckedName(), dest.retrieveProperties());
         }
     }
 }

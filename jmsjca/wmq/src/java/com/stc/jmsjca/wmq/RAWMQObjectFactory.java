@@ -19,7 +19,9 @@ package com.stc.jmsjca.wmq;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.SessionConnection;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
+import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
@@ -41,7 +43,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -361,9 +363,6 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             clazz.getMethod("setTransportType", new Class[] {int.class}).invoke(
                 cf, new Object[] {Integer.valueOf(cfp.getProperty(TRANSPORTTYPE))});
 
-//            clazz.getMethod("setClientID", new Class[] {String.class}).invoke(
-//                cf, new Object[] {cfp.getProperty(CLIENTID)});
-
             String channelName = cfp.getProperty(CHANNEL);
             if (channelName != null) {
                 clazz.getMethod("setChannel", new Class[] {String.class}).invoke(cf,
@@ -372,12 +371,6 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALE.x("E841: Failure to set connection factory properties: {0}", e), e);
         }
-//        ((MQConnectionFactory) cf).setHostName(cfp.getProperty(HOSTNAME));
-//        ((MQConnectionFactory) cf).setPort(Integer.valueOf(cfp.getProperty(PORT)).intValue());
-//        ((MQConnectionFactory) cf).setQueueManager(cfp.getProperty(QUEUEMANAGER));      
-//        ((MQConnectionFactory) cf).setTransportType(Integer.valueOf(cfp.getProperty(TRANSPORTTYPE)).intValue());
-//        ((MQConnectionFactory) cf).setClientID(cfp.getProperty(CLIENTID));                      
-//        }
         return cf;
     } 
     
@@ -435,6 +428,23 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     public boolean isMsgPrefixOK() {
         return false;
     }
-    
-    
+
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createSessionConnection(
+     * java.lang.Object, com.stc.jmsjca.core.RAJMSObjectFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, 
+     * com.stc.jmsjca.core.XManagedConnection, 
+     * com.stc.jmsjca.core.XConnectionRequestInfo, boolean, boolean, int, java.lang.Class)
+     */
+    public SessionConnection createSessionConnection(Object connectionFactory,
+        RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
+        XManagedConnection mc, XConnectionRequestInfo descr,
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        throws JMSException {
+
+        return new WMQSessionConnection(connectionFactory, objfact, ra,
+            mc, descr, isXa, isTransacted, acknowledgmentMode,
+            sessionClass);
+    }
+
 }

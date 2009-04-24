@@ -18,8 +18,11 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.Str;
 
 import javax.jms.JMSException;
+
+import java.util.Properties;
 
 
 /**
@@ -27,7 +30,7 @@ import javax.jms.JMSException;
  * describe queues and topics. 
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public abstract class AdminDestination implements javax.jms.Destination, java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -40,6 +43,13 @@ public abstract class AdminDestination implements javax.jms.Destination, java.io
     public abstract String getName();
     
     /**
+     * Gets the optional settings for creating the destination
+     * 
+     * @return options string
+     */
+    public abstract String getOptions();
+    
+    /**
      * @return non-null name
      * @throws JMSException on configuration failure
      */
@@ -50,5 +60,19 @@ public abstract class AdminDestination implements javax.jms.Destination, java.io
                 + " is not properly configured: the Name-property is not set."));
         }
         return ret;
+    }
+
+    /**
+     * @return the Options field in the form of a properties set
+     */
+    public Properties retrieveProperties() {
+        if (Str.empty(getOptions())) {
+            return null;
+            
+        } else {
+            Properties p = new Properties();
+            Str.deserializeProperties(Str.parseProperties(Options.SEP, getOptions()), p);
+            return p;
+        }
     }
 }

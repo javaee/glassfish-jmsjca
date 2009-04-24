@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -339,7 +339,7 @@ public abstract class RAJMSObjectFactory {
      * lookup://
      * 
      * @param destName destination name
-     * @return null if no such prefix
+     * @return null if no such prefix; a concrete destination, or an admin destination
      * @throws JMSException on lookup failure or null
      */
     public Destination adminDestinationLookup(String destName) throws JMSException {

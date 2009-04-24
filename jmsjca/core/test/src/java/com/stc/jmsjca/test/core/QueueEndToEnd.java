@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -2312,4 +2312,47 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             Passthrough.safeClose(p);
         }                
     }        
+
+    /**
+     * Queue to queue XA on in, XA on out CC-mode
+     * 
+     * @throws Throwable
+     */
+    public void testDestinationWithOptionsOutbound() throws Throwable {
+        EmbeddedDescriptor dd = getDD();
+        dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText("testOptionDestination");
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+            p.clearQ1Q2Q3();
+
+            Passthrough.QueueSource source = p.new QueueSource("Queue1");
+            source.connect();
+            source.drain();
+
+            c.redeployModule(mTestEar.getAbsolutePath());
+            p.passFromQ1ToQ2();
+            c.undeploy(mTestEarName);
+            p.get("Queue1").assertEmpty();
+
+            if (!isFastTest()) {
+                c.deployModule(mTestEar.getAbsolutePath());
+                p.passFromQ1ToQ2();
+                c.undeploy(mTestEarName);
+                p.get("Queue1").assertEmpty();
+            }
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+
 }

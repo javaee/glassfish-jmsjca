@@ -24,6 +24,8 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.transaction.xa.XAResource;
 
+import java.util.Properties;
+
 /**
  * A provider specific class that takes care of interfacing with the JMS Server or JMS
  * Runtime client. It is created and managed by JSession. Originally it is used to solve
@@ -34,7 +36,7 @@ import javax.transaction.xa.XAResource;
  * container and hence does not use XA.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class SessionConnection {
 //    private static Logger sLog = Logger.getLogger(SessionConnection.class);
@@ -118,19 +120,21 @@ public abstract class SessionConnection {
      * Creates a destination; used for interceptors such as WebLogic
      * 
      * @param name destination name
+     * @param options Optional settings that convey how to create the destination
      * @return destination
      * @throws JMSException on failure
      */
-    public abstract Queue createQueue(String name) throws JMSException;
+    public abstract Queue createQueue(String name, Properties options) throws JMSException;
 
     /**
      * Creates a destination; used for interceptors such as WebLogic
      * 
      * @param name destination name
+     * @param options Optional settings that convey how to create the destination
      * @return destination
      * @throws JMSException on failure
      */
-    public abstract Topic createTopic(String name) throws JMSException;
+    public abstract Topic createTopic(String name, Properties options) throws JMSException;
 
     /**
      * Creates a JMS client specific destination based on an administrative object

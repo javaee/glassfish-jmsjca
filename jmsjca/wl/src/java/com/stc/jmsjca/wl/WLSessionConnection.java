@@ -28,16 +28,17 @@ import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Topic;
 
+import java.util.Properties;
+
 /**
  * Provides some WebLogic specific features:
  * - looks up destinations in JNDI
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WLSessionConnection extends GenericSessionConnection {
-//    private static Logger sLog = Logger.getLogger(WLSessionConnection.class);
 
     /**
      * Constructor
@@ -66,7 +67,7 @@ public class WLSessionConnection extends GenericSessionConnection {
     /**
      * @see com.stc.jmsjca.core.GenericSessionConnection#createQueue(java.lang.String)
      */
-    public Queue createQueue(String name) throws JMSException {
+    public Queue createQueue(String name, Properties options) throws JMSException {
         DestinationCacheEntry d = mMC.getManagedConnectionFactory().getQueueCache().get(name);
         synchronized (d) {
             if (d.get() == null) {
@@ -81,7 +82,7 @@ public class WLSessionConnection extends GenericSessionConnection {
     /**
      * @see com.stc.jmsjca.core.GenericSessionConnection#createTopic(java.lang.String)
      */
-    public Topic createTopic(String name) throws JMSException {
+    public Topic createTopic(String name, Properties options) throws JMSException {
         DestinationCacheEntry d = mMC.getManagedConnectionFactory().getTopicCache().get(name);
         synchronized (d) {
             if (d.get() == null) {

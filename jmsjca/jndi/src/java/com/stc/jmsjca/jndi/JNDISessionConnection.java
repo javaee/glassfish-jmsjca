@@ -32,13 +32,15 @@ import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Topic;
 
+import java.util.Properties;
+
 /**
  * Provides some JNDI specific features:
  * - looks up destinations in JNDI
  * - pools destinations
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class JNDISessionConnection extends GenericSessionConnection {
 
@@ -76,9 +78,9 @@ public class JNDISessionConnection extends GenericSessionConnection {
         if (!name.startsWith(RAJNDIObjectFactory.JNDI_PREFIX)) {
             // Not a JNDI name
             if (dest instanceof AdminQueue) {
-                ret = super.createQueue(name);
+                ret = super.createQueue(name, dest.retrieveProperties());
             } else {
-                ret = super.createTopic(name);
+                ret = super.createTopic(name, dest.retrieveProperties());
             }
         } else {
             // Lookup JNDI name in cache
@@ -107,7 +109,7 @@ public class JNDISessionConnection extends GenericSessionConnection {
     /**
      * @see com.stc.jmsjca.core.SessionConnection#createQueue(java.lang.String)
      */
-    public Queue createQueue(String name) throws JMSException {
+    public Queue createQueue(String name, Properties options) throws JMSException {
         AdminQueue admindest = new AdminQueue();
         admindest.setName(name);
         return (Queue) createDestination(admindest);
@@ -116,7 +118,7 @@ public class JNDISessionConnection extends GenericSessionConnection {
     /**
      * @see com.stc.jmsjca.core.SessionConnection#createTopic(java.lang.String)
      */
-    public Topic createTopic(String name) throws JMSException {
+    public Topic createTopic(String name, Properties options) throws JMSException {
         AdminTopic admindest = new AdminTopic();
         admindest.setName(name);
         return (Topic) createDestination(admindest);

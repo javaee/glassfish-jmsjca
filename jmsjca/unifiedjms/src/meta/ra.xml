@@ -210,6 +210,10 @@
                 <config-property-name>Name</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>
             </config-property>
+            <config-property>
+                <config-property-name>Options</config-property-name>
+                <config-property-type>java.lang.String</config-property-type>
+            </config-property>
         </adminobject>
 
         <adminobject>
@@ -217,6 +221,10 @@
             <adminobject-class>com.stc.jmsjca.core.AdminTopic</adminobject-class>
             <config-property>
                 <config-property-name>Name</config-property-name>
+                <config-property-type>java.lang.String</config-property-type>
+            </config-property>
+            <config-property>
+                <config-property-name>Options</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>
             </config-property>
         </adminobject>
