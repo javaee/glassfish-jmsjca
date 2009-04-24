@@ -31,12 +31,13 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
     protected File mTestEarOrg;
     protected String mTestEarName;
+    protected String mContainerID;
 
     public final static String RAXML = "ratest.rar#/META-INF/ra.xml";
     public final static String RAXML1 = "ratest1.rar#/META-INF/ra.xml";
@@ -121,8 +122,6 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
 
         return dd;
     }
-    
-    private String mContainerID;
     
     /**
      * Returns the container id where the test will run in

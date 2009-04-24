@@ -39,7 +39,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class Exc {
 
@@ -61,6 +61,10 @@ public class Exc {
      * @return new exception
      */
     public static ResourceException rsrcExc(LocalizedString msg, Exception cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
+        
         ResourceException ret;
         if (cause instanceof JMSSecurityException || cause instanceof SecurityException) { 
             ret = new SecurityException(msg.toString());
@@ -80,6 +84,10 @@ public class Exc {
      * @return new exception
      */
     public static XAException xaExc(int errcode, Exception cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
+
         XAException ret = new XAException(errcode);
         setCause(ret, cause);
         return ret;
@@ -93,6 +101,9 @@ public class Exc {
      * @return new exception
      */
     public static JMSException jmsExc(LocalizedString msg, Exception cause) {
+        if (cause instanceof JMSException) {
+            checkLinkedException(cause);
+        }
         JMSException ret;
         if (cause instanceof JMSSecurityException || cause instanceof SecurityException) {
             ret = new JMSSecurityException(msg.toString());
@@ -130,8 +141,11 @@ public class Exc {
      * @param t Throwable
      * @return new exception
      */
-    public static Exception exc(LocalizedString msg, Throwable t) {
-        return new Exception(msg.toString(), t);
+    public static Exception exc(LocalizedString msg, Throwable cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
+        return new Exception(msg.toString(), cause);
     }
     
     /**
@@ -151,8 +165,11 @@ public class Exc {
      * @param t Throwable
      * @return new exception
      */
-    public static RuntimeException rtexc(LocalizedString msg, Throwable t) {
-        return new RuntimeException(msg.toString(), t);
+    public static RuntimeException rtexc(LocalizedString msg, Throwable cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
+        return new RuntimeException(msg.toString(), cause);
     }
     
     /**
@@ -173,6 +190,9 @@ public class Exc {
      * @return new exception
      */
     public static InvalidPropertyException invprop(LocalizedString msg, Throwable cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
         return new InvalidPropertyException(msg.toString(), cause);
     }
     
@@ -194,6 +214,9 @@ public class Exc {
      * @return new exception
      */
     public static IllegalArgumentException illarg(LocalizedString msg, Throwable cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
         return new IllegalArgumentException(msg.toString(), cause);
     }
     
@@ -215,6 +238,9 @@ public class Exc {
      * @return new exception
      */
     public static IllegalStateException illstate(LocalizedString msg, Throwable cause) {
+        if (cause instanceof JMSException) {
+            Exc.checkLinkedException(cause);
+        }
         IllegalStateException ret = new IllegalStateException(msg.toString());
         setCause(ret, cause);
         return ret;

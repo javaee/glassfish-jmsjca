@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class WaveProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wave.host";
@@ -42,9 +42,6 @@ public class WaveProvider extends JMSProvider {
      */
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
-        test.getJmsServerProperties().setProperty("jmsjca.test.commitsize", Integer.toString(1));
-
-
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
                 .createConnector(ConnectorConfig.class);
         cc.setConnectionURL(getConnectionUrl(test.getJmsServerProperties()));
@@ -73,7 +70,9 @@ public class WaveProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new WavePassthrough(serverProperties, this);
+        WavePassthrough ret = new WavePassthrough(serverProperties, this);
+        ret.setCommitSize(1);
+        return ret;
     }
 
     /**

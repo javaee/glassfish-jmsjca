@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -43,8 +43,6 @@ public class WMQProvider extends JMSProvider {
      */
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
-        test.getJmsServerProperties().setProperty("jmsjca.test.commitsize", Integer.toString(10));
-        test.getJmsServerProperties().setProperty("jmsjca.test.mNMsgsToSend", Integer.toString(10));
         
         // Update first RA
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
@@ -75,7 +73,9 @@ public class WMQProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
     public Passthrough createPassthrough(Properties serverProperties) {
-        return new WMQPassthrough(serverProperties, this);
+        WMQPassthrough passthrough = new WMQPassthrough(serverProperties, this);
+        passthrough.setCommitSize(10);
+        return passthrough;
     }
 
     /**

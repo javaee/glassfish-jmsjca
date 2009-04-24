@@ -22,12 +22,9 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  *
  * @author fkieviet, cye
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class QueueWaveEar1 extends QueueEndToEnd {
-
-    String testContainerId = null;
-    
     /**
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#getMaxConcurrency()
      */
@@ -35,7 +32,6 @@ public class QueueWaveEar1 extends QueueEndToEnd {
         // set to the value of maxQueuePresend 
         return 10;
     }
-    
     
     /**
      * Grid does not implement batch size in CC
@@ -66,89 +62,6 @@ public class QueueWaveEar1 extends QueueEndToEnd {
      */
     public void skip_testBatchXAHUARBCC() throws Throwable {
     }
-
-    public void testBatchXACC() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXACC();
-        }  // else skip the test 
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchUTCC() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchUTCC();
-        }
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchXAHUARBCC() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXAHUARBCC();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }        
-    public void testBatchXAHUACC() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXAHUACC();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchXARBCC() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXARBCC();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchXA() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXA();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchUT() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchUT();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchXAHUA() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXAHUA();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }    
-    public void testBatchXAHUARB() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXAHUARB();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }
-    public void testBatchXARB() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBatchXARB();
-        } // else skip the test
-        // between beforeDelivery and afterDelivery, endpoint on message
-        // can not be invoked more than once. The patch is supported in WLS
-    }                
-    public void testBeanManagedRBAllocateOutsideOfTx() throws Throwable {
-        if (testContainerId == null || !testContainerId.equals("wl")) {
-            super.testBeanManagedRBAllocateOutsideOfTx();
-        } // else skip the test
-        // This test does not work with WLS
-        // If XASession is allocated out of TX before getUserTransaction().begin()
-        // A message will be autocomitted after it's been sent. It will not be rolled back.
-        // The reason is that XAsession is created outside of TX, it is not associated any
-        // with and enlisted to any global transaction manager, it is not assocated with any
-        // ejb. That behavior is different glassfish.        
-    }
-
 
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()

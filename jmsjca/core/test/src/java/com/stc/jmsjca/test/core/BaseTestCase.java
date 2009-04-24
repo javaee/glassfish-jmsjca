@@ -34,7 +34,7 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class BaseTestCase extends TestCase {
     private List mAsyncErrors = new ArrayList();
@@ -208,7 +208,8 @@ public abstract class BaseTestCase extends TestCase {
         } catch (Exception ignore) {
         }
         
-        // Is class marked as _only?
+        // Is class marked as _only? If so, only run those tests that are suffixed with
+        // _only
         boolean only = false;
         Method[] methods = getClass().getMethods();
         for (int i = 0; i < methods.length; i++) {

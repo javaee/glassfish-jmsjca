@@ -22,29 +22,26 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  * Queue Tests for WMQ
  * @author  fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class BasicWMQQueueEar1 extends QueueEndToEnd {
 
-    public void invalid_testMixCMTWithLTResource() throws Throwable {
+//    public void invalid_testMixCMTWithLTResource() throws Throwable {
+//    }
+    
+    /**
+     * Autocommit behavior on XA Sessions is not supported in MQSeries
+     */
+    public void invalid_testNoTransaction() {
     }
     
-//    public void testMultiNonSharedResources() throws Throwable {
-//    // a bug
-//    }
-//    
-//    public void testMultiXA() throws Throwable {
-//    // a bug
-//    }
-//    
-//    public void testConcurrency() throws Throwable {
-//    //a bug
-//    }
-//    
-//    public void testExceptionBMTSerial2() throws Throwable {
-//    }
-
     /**
+     * Autocommit behavior on XA Sessions is not supported in MQSeries
+     */    
+    public void invalid_testXASessionCommitAllocateOutsideOfTx() {
+    }
+
+        /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
     public JMSProvider getJMSProvider() {

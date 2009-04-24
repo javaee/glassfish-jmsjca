@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1695,7 +1695,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     
 
     /**
-     * Assert that a connection can be used in auto-ack mode
+     * Q1 to Q2 + Q3
+     * Q3 is setup as NoTransaction, using AutoAck. Still uses an XA session
      */
     public void testNoTransaction() throws Throwable {
         EmbeddedDescriptor dd = getDD();
@@ -1794,9 +1795,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
         .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
-        if (url.indexOf('?') < 0) {
-            url += "?";
-        }
+        url += url.indexOf('?') < 0 ? "?" : "&";
         url += Options.FORCE_BMT + "=true&" + Options.NOXA + "=true" ;
         cc.setConnectionURL(url);
         dd.update();
@@ -1888,9 +1887,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
         .createConnector(ConnectorConfig.class);
         String url = cc.getConnectionURL();
-        if (url.indexOf('?') < 0) {
-            url += "?";
-        }
+        url += url.indexOf('?') < 0 ? "?" : "&";
         url += Options.NOXA + "=true&JMSJCA.IgnoreTx=false";
         cc.setConnectionURL(url);
         dd.update();
@@ -1937,12 +1934,27 @@ public abstract class QueueEndToEnd extends EndToEndBase {
      *  x               x    x                    ok  testXAHUARB
      *  
      */
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXA() {
+        return !mContainerID.equals(WL_ID);
+    }
     
     /**
      * Batch, XA, sync, no-rollback
      */
     public void testBatchXA() throws Throwable {
         dotestBatch("batch", 50, false, "false", "sync");
+    }
+
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXACC() {
+        return !mContainerID.equals(WL_ID);
     }
 
     /**
@@ -1953,12 +1965,28 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
 
     /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXARB() {
+        return !mContainerID.equals(WL_ID);
+    }
+
+    /**
      * Batch, XA, sync, rollback
      */
     public void testBatchXARB() throws Throwable {
         dotestBatch("batchRollback", 3, false, "false", "sync");
     }
     
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXARBCC() {
+        return !mContainerID.equals(WL_ID);
+    }
+
     /**
      * Batch, XA, cc, rollback
      */
@@ -1967,10 +1995,26 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
     
     /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchUT() {
+        return !mContainerID.equals(WL_ID);
+    }
+
+    /**
      * Batch, NonXA, sync, no-rollback
      */
     public void testBatchUT() throws Throwable {
         dotestBatch("batchUT", 50, true, "false", "sync");
+    }
+
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchUTCC() {
+        return !mContainerID.equals(WL_ID);
     }
 
     /**
@@ -1981,12 +2025,28 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
 
     /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXAHUA() {
+        return !mContainerID.equals(WL_ID);
+    }
+
+    /**
      * Batch, XA, sync, no-rollback, HUA
      */
     public void testBatchXAHUA() throws Throwable {
         dotestBatch("batchHoldUntilAck", 50, false, "true", "sync");
     }
     
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXAHUACC() {
+        return !mContainerID.equals(WL_ID);
+    }
+
     /**
      * Batch, XA, cc, no-rollback, HUA
      */
@@ -1995,12 +2055,28 @@ public abstract class QueueEndToEnd extends EndToEndBase {
     }
     
     /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXAHUARB() {
+        return !mContainerID.equals(WL_ID);
+    }
+
+    /**
      * Batch, XA, sync, rollback, HUA
      */
     public void testBatchXAHUARB() throws Throwable {
         dotestBatch("batchHoldUntilAckRollback", 3, false, "true", "sync");
     }
     
+    /**
+     * @return false if on WL: between beforeDelivery and afterDelivery, the onMessage() 
+     *  method can only be invoked once. Batch is not supported on WL.
+     */
+    public boolean shouldRun_testBatchXAHUARBCC() {
+        return !mContainerID.equals(WL_ID);
+    }
+
     /**
      * Batch, XA, cc, rollback, HUA
      */
@@ -2080,7 +2156,6 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "testQQXAXA").setText(mname);
         dd.findElementByText(EJBDD, "XContextName").setText(mname);
-        
         if (ut) {
             dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
             dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
@@ -2147,6 +2222,19 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         assertTrue("There were " + nErrors + " errors in the error queue", nErrors == 0);
     }
     
+    /**
+     *  This test does not work with WLS: If XASession is allocated out of TX before 
+     *  getUserTransaction().begin(). A message will be autocomitted after it's been sent. 
+     *  It will not be rolled back. The reason is that XAsession is created outside of 
+     *  TX, it is not associated any with and enlisted to any global transaction 
+     *  manager, it is not assocated with any ejb. That behavior is different glassfish.
+     *          
+     * @return false on WL
+     */
+    public boolean shouldRun_testBeanManagedRBAllocateOutsideOfTx() {
+        return !mContainerID.equals(WL_ID);
+    }
+
     /**
      * Test autocommit with connection allocated outside of TX
      */
