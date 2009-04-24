@@ -18,6 +18,10 @@ package com.stc.jmsjca.util;
 
 import com.stc.jmsjca.localization.LocalizedString;
 
+import javax.ejb.EJBException;
+import javax.jms.IllegalStateException;
+import javax.jms.JMSException;
+import javax.jms.JMSSecurityException;
 import javax.resource.ResourceException;
 import javax.resource.spi.InvalidPropertyException;
 import javax.resource.spi.SecurityException;
@@ -27,11 +31,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 
-import javax.ejb.EJBException;
-import javax.jms.IllegalStateException;
-import javax.jms.JMSException;
-import javax.jms.JMSSecurityException;
-
 /**
  * <p>Tool class to facilitate exception throwing and conversions</p>
  *
@@ -39,7 +38,7 @@ import javax.jms.JMSSecurityException;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class Exc {
 
@@ -138,7 +137,7 @@ public class Exc {
      * Creates a new exception
      *
      * @param msg error text
-     * @param t Throwable
+     * @param cause Throwable
      * @return new exception
      */
     public static Exception exc(LocalizedString msg, Throwable cause) {
@@ -162,7 +161,7 @@ public class Exc {
      * Creates a new exception
      *
      * @param msg error text
-     * @param t Throwable
+     * @param cause Throwable
      * @return new exception
      */
     public static RuntimeException rtexc(LocalizedString msg, Throwable cause) {
