@@ -18,84 +18,15 @@ package com.stc.jmsjca.test.wmq;
 
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
-import com.stc.jmsjca.test.wl.WLProvider;
 
 /**
- *
- * @author   jmsjca team
- * @version $Revision: 1.7 $
+ * WMQ Tests for topics
  */
 public class BasicWMQTopicEar1 extends TopicEndToEnd {
-    /**
-     * Topic to queue
-     * XA on in, XA on out
-     * serial-mode
-     * Non-durable
-     *
-     * @throws Throwable
-     */    
-    public void xtestNonDurableTopicToQueueSerial() throws Throwable {
-    }
-    
-    /**
-     * Topic to queue
-     * XA on in, XA on out
-     * cc
-     * Non-durable
-     *
-     * @throws Throwable
-     */    
-    public void xtestNonDurableTopicToQueueCC() throws Throwable {
-    }    
-    
-    /**
-     * Topic to queue
-     * XA on in, XA on out
-     * serial-mode
-     * Durable
-     *
-     * @throws Throwable
-     */
-    public void xtestDurableTopicToQueueSerial() throws Throwable {
-    }
-    
-    /**
-     * Topic to queue
-     * XA on in, XA on out
-     * serial-mode
-     * Durable
-     *
-     * @throws Throwable
-     */
-    public void xtestDurableTopicToQueueCC() throws Throwable {
-    }
-    
-    /**
-     * Topic to topic
-     * XA on in, XA on out
-     * serial-mode
-     * Durable
-     *
-     * @throws Throwable
-     */
-    public void xtestDurableTopicToTopicSerial() throws Throwable {
-    }
-    
-    /**
-     * Topic to topic
-     * XA on in, XA on out
-     * serial-mode
-     * Durable
-     *
-     * @throws Throwable
-     */
-    public void xtestDurableTopicToTopicCC() throws Throwable {
-    }
-
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
     public JMSProvider getJMSProvider() {
-        return new WLProvider();
+        return new WMQProvider();
     }
 }

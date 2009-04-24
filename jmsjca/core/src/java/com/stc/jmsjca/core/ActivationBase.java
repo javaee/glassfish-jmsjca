@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.util.Logger;
+
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 
 /**
@@ -61,17 +63,24 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public abstract class ActivationBase {
-//    private static Logger sLog = Logger.getLogger(ActivationBase.class);
+    /**
+     * Log category for logging enter contexts
+     */
+    private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
+    
+    /**
+     * Log category for logging exit contexts
+     */
+    private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
+
     private RAJMSResourceAdapter mRA;
     private MessageEndpointFactory mEndpointFactory;
     private RAJMSActivationSpec mSpec;
     private String mName;
 
-//    private static final Localizer LOCALE = Localizer.get();
-//    
     /**
      * All states in string format (for diagnostics)
      */
@@ -197,5 +206,23 @@ public abstract class ActivationBase {
      */
     public String getName() {
         return mName;
+    }
+    
+    /**
+     * Enters logging context
+     */
+    public void enterContext() {
+        if (mSpec != null && mSpec.getContextName() != null && mSpec.getContextName().length() > 0) {
+            sContextEnter.debug(mSpec.getContextName());
+        }
+    }
+    
+    /**
+     * Exits logging context
+     */
+    public void exitContext() {
+        if (mSpec != null && mSpec.getContextName() != null && mSpec.getContextName().length() > 0) {
+            sContextExit.debug(mSpec.getContextName());
+        }
     }
 }

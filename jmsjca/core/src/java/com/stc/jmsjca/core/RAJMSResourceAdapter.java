@@ -61,7 +61,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -683,7 +683,12 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         }
 
         // Deactivate
-        a.deactivate();
+        a.enterContext();
+        try {
+            a.deactivate();
+        } finally {
+            a.exitContext();
+        }
 
         if (sLog.isDebugEnabled()) {
             sLog.debug("Activation " + a + " deactivated");

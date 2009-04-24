@@ -16,7 +16,6 @@
 
 package com.stc.jmsjca.core;
 
-import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -109,10 +108,7 @@ public class SyncDelivery extends Delivery {
     public static final int TIMEOUTBATCH = 100;
     
     private static Logger sLog = Logger.getLogger(SyncDelivery.class);
-    private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
-    private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Connection mConnection;
-    private LocalizedString mContextName;
     private int mNThreads;
     private List mWorkers = new ArrayList();
     private boolean mIsStopped = true;
@@ -195,7 +191,6 @@ public class SyncDelivery extends Delivery {
                     mActivation.getRA());
             createDLQDest();
 
-            mContextName = LocalizedString.valueOf(getActivation().getActivationSpec().getContextName()); 
             mConnection.start();
             
             
@@ -209,6 +204,7 @@ public class SyncDelivery extends Delivery {
                     mWorkers.add(w);
                 }
             } catch (JMSException e) {
+                Exc.checkLinkedException(e);
                 throw e;
             }
     
@@ -754,9 +750,7 @@ public class SyncDelivery extends Delivery {
          * @see java.lang.Runnable#run()
          */
         public void run() {
-            if (mContextName != null) {
-                sContextEnter.info(mContextName);
-            }
+            mActivation.enterContext();
             
             for (;;) {
                 try {
@@ -812,9 +806,7 @@ public class SyncDelivery extends Delivery {
 
             close();
 
-            if (mContextName != null) {
-                sContextExit.info(mContextName);
-            }
+            mActivation.exitContext();
 
             synchronized (this) {
                 mRunning = false;

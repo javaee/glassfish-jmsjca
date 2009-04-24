@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -49,12 +49,12 @@ public class WMQProvider extends JMSProvider {
         // Update first RA
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
+        cc.setConnectionURL(WMQPassthrough.getConnectionUrl(test.getJmsServerProperties()));
 
         // Update second RA
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl());
+        cc.setConnectionURL(WMQPassthrough.getConnectionUrl(test.getJmsServerProperties()));
 
         // Commit
         dd.update();
@@ -106,5 +106,12 @@ public class WMQProvider extends JMSProvider {
      */
     public String getProviderID() {
         return "wmq";
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#isMsgPrefixOK()
+     */
+    public boolean isMsgPrefixOK() {
+        return false;
     }
 }

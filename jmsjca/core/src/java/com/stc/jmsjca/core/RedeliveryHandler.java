@@ -151,7 +151,7 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
@@ -1074,6 +1074,11 @@ public abstract class RedeliveryHandler {
          * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getProperty(java.lang.String)
          */
         public String getProperty(String key) throws JMSException {
+            // Legacy key?
+            if (key.startsWith(Options.MessageProperties.OLDFULLPREFIX)) {
+                key = key.substring(Options.MessageProperties.OLDPREFIX.length());
+            }
+
             if (Options.MessageProperties.REDELIVERY_HANDLING.equals(key)) {
                 return mActionStr;
             }
@@ -1120,6 +1125,11 @@ public abstract class RedeliveryHandler {
          * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#getProperty(java.lang.String)
          */
         public String getProperty(String key) {
+            // Legacy key?
+            if (key.startsWith(Options.MessageProperties.OLDFULLPREFIX)) {
+                key = key.substring(Options.MessageProperties.OLDPREFIX.length());
+            }
+            
             if (Options.MessageProperties.REDELIVERY_HANDLING.equals(key)) {
                 return mEncounter.getEncActionString();
             } else {
@@ -1131,15 +1141,20 @@ public abstract class RedeliveryHandler {
          * @see com.stc.jmsjca.core.WMessageIn.RedeliveryStateHandler#setProperty(java.lang.String, java.lang.String)
          */
         public boolean setProperty(String key, String value) throws JMSException {
+            // Legacy key?
+            if (key.startsWith(Options.MessageProperties.OLDFULLPREFIX)) {
+                key = key.substring(Options.MessageProperties.OLDPREFIX.length());
+            }
+            
             if (key.startsWith(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX)) {
                 // User data
                 mEncounter.getStatefulRedeliveryProperties().put(key, value);
                 return true;
-            } else if (key.startsWith(Options.MessageProperties.REDELIVERY_HANDLING)) {
+            } else if (key.equals(Options.MessageProperties.REDELIVERY_HANDLING)) {
                 // Redelivery
                 setActions(value, mEncounter);
                 return true;
-            } else if (key.startsWith(Options.MessageProperties.STOP_CONNECTOR)) {
+            } else if (key.equals(Options.MessageProperties.STOP_CONNECTOR)) {
                 stopConnector(value);
                 return true;
             } else {
@@ -1394,5 +1409,4 @@ public abstract class RedeliveryHandler {
      *   of the RedeliveryHandler to the concrete Actions
      */
     protected abstract void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie);
-
 }

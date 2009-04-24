@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -501,69 +501,75 @@ public class Activation extends ActivationBase {
      * necessary, and then start until starting has succeeded.
      */
     private void asyncStart() {
-        int state;
-        synchronized (mLock) {
-            state = mState;
-        }
-        
-        if (state == DISCONNECTING) {
-            // Creator of the thread must have set the state to DISCONNECTING;
-            // perform deactivation (may take a long time)
-            mDelivery.deactivate();
-            mDelivery = null;
-            setState(CONNECTING);
-        }
-        
-        int[] dts = {1, 2, 5, 5, 10};
-        int attempt = 0;
-        long tryAgainAt = 0;
-
-        for (;;) {
-            // Check for interruption
+        enterContext();
+        try {
+            int state;
             synchronized (mLock) {
-                if (mXConnectingInterruptRequest) {
-                    mXConnectingInterruptRequest = false;
-                    setState(DISCONNECTED);
-                    return;
-                }
+                state = mState;
             }
-            
-            // Attempt initiation
-            if (System.currentTimeMillis() > tryAgainAt) {
-                try {
-                    mDelivery = createDelivery();
-                    mDelivery.start();
-                    sLog.info(LOCALE.x("E015: [{0}]: message delivery initiation was successful.", getName()));
-                    setState(CONNECTED);
-                    break;
-                } catch (Exception e) {
-                    if (mDelivery != null) {
-                        mDelivery.deactivate();
-                        mDelivery = null;
+
+            if (state == DISCONNECTING) {
+                // Creator of the thread must have set the state to DISCONNECTING;
+                // perform deactivation (may take a long time)
+                mDelivery.deactivate();
+                mDelivery = null;
+                setState(CONNECTING);
+            }
+
+            int[] dts = {1, 2, 5, 5, 10};
+            int attempt = 0;
+            long tryAgainAt = 0;
+
+            for (;;) {
+                // Check for interruption
+                synchronized (mLock) {
+                    if (mXConnectingInterruptRequest) {
+                        mXConnectingInterruptRequest = false;
+                        setState(DISCONNECTED);
+                        return;
                     }
-                    int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
-                    logDeliveryInitiationException(attempt + 1, dt, e);
-                    tryAgainAt = System.currentTimeMillis() + dt * 1000;
-                    attempt++;
                 }
-            }
-            
-            // Check for interruption
-            synchronized (mLock) {
-                if (mXConnectingInterruptRequest) {
-                    mXConnectingInterruptRequest = false;
-                    setState(DISCONNECTED);
-                    return;
-                }
-            }
 
-            // Sleep a bit
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                sLog.info(LOCALE.x("E017: [{0}]: message delivery initiation attempt was interrupted", getName()));
-                break;
+                // Attempt initiation
+                if (System.currentTimeMillis() > tryAgainAt) {
+                    try {
+                        mDelivery = createDelivery();
+                        mDelivery.start();
+                        sLog.info(LOCALE.x("E015: [{0}]: message delivery initiation was successful.", getName()));
+                        setState(CONNECTED);
+                        break;
+                    } catch (Exception e) {
+                        Exc.checkLinkedException(e);
+                        if (mDelivery != null) {
+                            mDelivery.deactivate();
+                            mDelivery = null;
+                        }
+                        int dt = attempt < dts.length ? dts[attempt] : dts[dts.length - 1];
+                        logDeliveryInitiationException(attempt + 1, dt, e);
+                        tryAgainAt = System.currentTimeMillis() + dt * 1000;
+                        attempt++;
+                    }
+                }
+
+                // Check for interruption
+                synchronized (mLock) {
+                    if (mXConnectingInterruptRequest) {
+                        mXConnectingInterruptRequest = false;
+                        setState(DISCONNECTED);
+                        return;
+                    }
+                }
+
+                // Sleep a bit
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    sLog.info(LOCALE.x("E017: [{0}]: message delivery initiation attempt was interrupted", getName()));
+                    break;
+                }
             }
+        } finally {
+            exitContext();
         }
     }
 

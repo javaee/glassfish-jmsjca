@@ -18,7 +18,6 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.core.Delivery.ConnectionForMove;
 import com.stc.jmsjca.core.Delivery.DeliveryResults;
-import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -44,14 +43,12 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
 
     private static Logger sLog = Logger.getLogger(WorkContainer.class);
-    private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
-    private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Session mSession;
     private MessageEndpoint mEndpoint;
     private CCDelivery mDelivery;
@@ -63,7 +60,6 @@ public class WorkContainer implements javax.resource.spi.work.Work,
     private int mState;
     private ConnectionForMove mMessageMoveConnection;
     private Delivery.MDB mMDB;
-    private LocalizedString mContextName;
     private List mMsgs;
     private DeliveryResults mResult = new DeliveryResults();
     private Thread mRunningThread;
@@ -87,8 +83,6 @@ public class WorkContainer implements javax.resource.spi.work.Work,
         mSession = session;
         mMessageMoveConnection = this.mDelivery.createConnectionForMove();        
         mMDB = mdb;
-        mContextName = LocalizedString.valueOf(
-            mDelivery.getActivation().getActivationSpec().getContextName());        
     }
 
     /**
@@ -209,9 +203,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * log all failures
      */
     public void run() {
-        if (mContextName != null) {
-            sContextEnter.info(mContextName);
-        }
+        mDelivery.mActivation.enterContext();
 
         int state = STATE_IDLE;
 
@@ -258,9 +250,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
                 mEndpoint = null;
             }
             mDelivery.workDone(this);
-            if (mContextName != null) {
-                sContextExit.info(mContextName);
-            }
+            mDelivery.mActivation.exitContext();
         }
     }
 

@@ -33,7 +33,7 @@ import java.util.Enumeration;
  * method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WMessageIn implements Message, Unwrappable {
     private Message mDelegate;
@@ -298,16 +298,23 @@ public class WMessageIn implements Message, Unwrappable {
      * @see javax.jms.Message#getObjectProperty(java.lang.String)
      */
     public Object getObjectProperty(String name) throws JMSException {
+        // Legacy key?
+        String original = name;
+        if (name.startsWith(Options.MessageProperties.OLDFULLPREFIX)) {
+            name = name.substring(Options.MessageProperties.OLDPREFIX.length());
+        }
+
         if (mBatchAndHua && IBATCH.equalsIgnoreCase(name)) {
             return new Integer(mIBatch);
         } else if (mBatchAndHua && BATCHSIZE.equalsIgnoreCase(name)) {
             return new Integer(mBatchSize);
-        } else if (mRedeliveryStateHandler != null && Delivery.REDELIVERYCOUNT.equalsIgnoreCase(name)) {
+        } else if (mRedeliveryStateHandler != null 
+            && Options.MessageProperties.REDELIVERYCOUNT.equalsIgnoreCase(name)) {
             return new Integer(mRedeliveryStateHandler.getRedeliveryCount());
         } else if (Options.MessageProperties.MBEANSERVER.equals(name)) {
             return mActivation.getRA().getMBeanServer();
         } else {
-            return mDelegate.getObjectProperty(name);
+            return mDelegate.getObjectProperty(original);
         }
     }
 
@@ -330,15 +337,39 @@ public class WMessageIn implements Message, Unwrappable {
      */
     public String getStringProperty(String name) throws JMSException {
         String ret = null;
-        if (mRedeliveryStateHandler != null) {
-            ret = mRedeliveryStateHandler.getProperty(name);
+        // Is using new name?
+        if (name.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+            if (mRedeliveryStateHandler != null) {
+                ret = mRedeliveryStateHandler.getProperty(name);
+            }
+            if (ret == null && Options.MessageProperties.MBEANNAME.equals(name)) {
+                ret = mActivation.getActivationSpec().getMBeanName();
+            }
+            if (ret == null && Options.MessageProperties.MBEANNAME_OLD.equals(name)) {
+                ret = mActivation.getActivationSpec().getMBeanName();
+            }
         }
-        if (ret == null && Options.MessageProperties.MBEANNAME.equals(name)) {
-            ret = mActivation.getActivationSpec().getMBeanName();
+
+        // Is using old name?
+        if (ret == null && name.startsWith(Options.MessageProperties.OLDFULLPREFIX)) {
+            String newname = name.substring(Options.MessageProperties.OLDPREFIX.length());
+
+            if (mRedeliveryStateHandler != null) {
+                ret = mRedeliveryStateHandler.getProperty(newname);
+            }
+            if (ret == null && Options.MessageProperties.MBEANNAME.equals(newname)) {
+                ret = mActivation.getActivationSpec().getMBeanName();
+            }
+            if (ret == null && Options.MessageProperties.MBEANNAME_OLD.equals(newname)) {
+                ret = mActivation.getActivationSpec().getMBeanName();
+            }
         }
+
+        // Not found... delegate to original message
         if (ret == null) {
             ret = mDelegate.getStringProperty(name);
         }
+        
         return ret;
     }
 

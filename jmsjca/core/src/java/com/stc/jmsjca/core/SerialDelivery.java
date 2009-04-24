@@ -33,17 +33,14 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
     private static Logger sLog = Logger.getLogger(SerialDelivery.class);
-    private static Logger sContextEnter = Logger.getLogger("com.stc.EnterContext");
-    private static Logger sContextExit = Logger.getLogger("com.stc.ExitContext");
     private javax.jms.Connection mConnection;
     private javax.jms.Session mSession;
     private MessageEndpoint mEndpoint;
-    private LocalizedString mContextName;
     private XAResource mXA;
     private RAJMSObjectFactory mObjFactory;
     private ConnectionForMove mMessageMoveConnection;
@@ -129,8 +126,6 @@ public class SerialDelivery extends Delivery implements MessageListener,
         
         mMDB = new Delivery.MDB(mXA);
 
-        mContextName = LocalizedString.valueOf(getActivation().getActivationSpec().getContextName());
-        
         mConnection.setExceptionListener(this);
         
         mMessageMoveConnection = createConnectionForMove();
@@ -228,9 +223,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
      */
     public void onMessage(Message m) {
         try {
-            if (mContextName != null) {
-                sContextEnter.info(mContextName);
-            }
+            mActivation.enterContext();
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Delivering message to endpoint");
             }
@@ -271,9 +264,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 }
             }
         } finally {
-            if (mContextName != null) {
-                sContextExit.info(mContextName);
-            }
+            mActivation.exitContext();
         }
     }
 

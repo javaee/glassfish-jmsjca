@@ -34,7 +34,7 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class BaseTestCase extends TestCase {
     private List mAsyncErrors = new ArrayList();
@@ -206,6 +206,19 @@ public abstract class BaseTestCase extends TestCase {
                 e.printStackTrace();
             }
         } catch (Exception ignore) {
+        }
+        
+        // Is class marked as _only?
+        boolean only = false;
+        Method[] methods = getClass().getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            if (methods[i].getName().endsWith("_only")) {
+                only = true;
+            }
+        }
+        if (only && !getName().endsWith("_only")) {
+            System.out.println("Skipping " + getName() + ": there is at least one _only method");
+            return;
         }
 
         // Apparently specially marked method does not exist; execute it.

@@ -18,7 +18,6 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.core.Delivery;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.SyncDelivery;
 import com.stc.jmsjca.test.core.Passthrough.QueueDest;
@@ -48,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1156,6 +1155,9 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
             for (Enumeration iter = message.getPropertyNames(); iter.hasMoreElements();) {
                 String name = (String) iter.nextElement();
+                if (name.startsWith("JMSX")) {
+                    continue;
+                }
                 Object o = message.getObjectProperty(name);
                 if (o instanceof Integer) {
                     m1.setIntProperty(name, ((Integer) o).intValue());
@@ -1319,6 +1321,10 @@ public abstract class QueueEndToEnd extends EndToEndBase {
             Passthrough.safeClose(p);
         }
     }
+
+    public boolean isMsgPrefixOK() {
+        return getJMSProvider().isMsgPrefixOK();
+    }
     
     private void doTestDlq(boolean xa, boolean cc, boolean longdelay) throws Throwable {
         EmbeddedDescriptor dd = getDD();
@@ -1335,8 +1341,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 
         long delay = longdelay ? 6000 : 1;
         
-        // queue will be removed by topic in TestMessageBean
-        String handling = "4:" + delay + ";5:move(" + (xa ? "topic" : "queue") + ":" + p.getTopic2Name() + ")";
+        // queue will be replaced by topic in TestMessageBean
+        String handling = "4:" + delay + ";5:move(" + (xa ? "topic:" : "queue:") + p.getTopic2Name() + ")";
         
         // Test both ways of setting the redelivery handling
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
@@ -1344,10 +1350,10 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         String url = x.getConnectionURL();
         if (cc) {
             spec.setRedeliveryHandling(handling);
-            url = url + "?" + Options.In.OPTION_REDELIVERYWRAP + "=1";
+            url = url + (url.indexOf('?') > 0 ? "&" : "?") + Options.In.OPTION_REDELIVERYWRAP + "=1";
             x.setConnectionURL(url);
         } else {
-            url = url + "?" + Options.In.OPTION_REDELIVERYHANDLING + "=" + handling 
+            url = url + (url.indexOf('?') > 0 ? "&" : "?") + Options.In.OPTION_REDELIVERYHANDLING + "=" + handling 
             + "&" + Options.In.OPTION_REDELIVERYWRAP + "=1";
             x.setConnectionURL(url);
         }
@@ -1379,6 +1385,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 m1.setIntProperty("int1", 2);
                 m1.setLongProperty("long1", 3);
                 m1.setJMSCorrelationID("cid");
+                m1.setBooleanProperty("isMsgPrefixOK", isMsgPrefixOK());
                 q1.send(m1);
                 q1.getSession().commit();
                 
@@ -1392,19 +1399,44 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 assertTrue(payload[1].equals("b"));
                 
                 // Validate extra props
-                assertTrue(m2.getIntProperty(Delivery.REDELIVERYCOUNT) == 5);
-                assertTrue(m2.getStringProperty(Delivery.ORIGINALDESTINATIONNAME).equals(p.getQueue1Name()));
-                assertTrue(m2.getStringProperty(Delivery.ORIGINALDESTINATIONTYPE).equals(Queue.class.getName()));
-                assertTrue(m2.getLongProperty(Delivery.ORIGINALTIMESTAMP) == m1.getJMSTimestamp());
-                assertTrue(m2.getStringProperty(Delivery.CONTEXTNAME).equals(contextname));
+                assertTrue(m2.getIntProperty(Options.MessageProperties.REDELIVERYCOUNT) == 5);
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getIntProperty(Options.MessageProperties.REDELIVERYCOUNT_OLD) == 5);
+                }
+                assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINALDESTINATIONNAME).equals(p.getQueue1Name()));
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINALDESTINATIONNAME_OLD).equals(p.getQueue1Name()));
+                }
+                assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINALDESTINATIONTYPE).equals(Queue.class.getName()));
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINALDESTINATIONTYPE_OLD).equals(Queue.class.getName()));
+                }
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getLongProperty(Options.MessageProperties.ORIGINALTIMESTAMP_OLD) == m1.getJMSTimestamp());
+                }
+                assertTrue(m2.getLongProperty(Options.MessageProperties.ORIGINALTIMESTAMP) == m1.getJMSTimestamp());
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.CONTEXTNAME_OLD).equals(contextname));
+                }
+                assertTrue(m2.getStringProperty(Options.MessageProperties.CONTEXTNAME).equals(contextname));
                 assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "1").equals("x"));
                 assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "2").equals("y"));
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX_OLD + "1").equals("x"));
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX_OLD + "2").equals("y"));
+                }
                 
 //              assertTrue(m2.(Delivery.SUBSCRIBERNAME).equals(contextname));
 //              assertTrue(m2.(Delivery.ORIGINAL_CLIENTID).equals(contextname));
                 
                 // Msgid and correlation id should be copied
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_MSGID_OLD).equals(m1.getJMSMessageID()));
+                }
                 assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_MSGID).equals(m1.getJMSMessageID()));
+                if (isMsgPrefixOK()) {
+                    assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID_OLD).equals(m1.getJMSCorrelationID()));
+                }
                 assertTrue(m2.getStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID).equals(m1.getJMSCorrelationID()));
                 
                 // Exceptions should be propagated
@@ -1414,11 +1446,29 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 } else {
                     assertTrue(s != null);
                 }
+                
+                if (isMsgPrefixOK()) {
+                    s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONCLASS_OLD);
+                    if (xa) {
+                        assertTrue(s == null);
+                    } else {
+                        assertTrue(s != null);
+                    }
+                }
+                
                 s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONMESSAGE);
                 if (xa) {
                     assertTrue(s == null);
                 } else {
                     assertTrue(s != null);
+                }
+                if (isMsgPrefixOK()) {
+                    s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONMESSAGE_OLD);
+                    if (xa) {
+                        assertTrue(s == null);
+                    } else {
+                        assertTrue(s != null);
+                    }
                 }
                 s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONTRACE);
                 if (xa) {
@@ -1426,11 +1476,22 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 } else {
                     assertTrue(s != null);
                 }
-                
+                if (isMsgPrefixOK()) {
+                    s = m2.getStringProperty(Options.MessageProperties.LAST_EXCEPTIONTRACE_OLD);
+                    if (xa) {
+                        assertTrue(s == null);
+                    } else {
+                        assertTrue(s != null);
+                    }
+                }                
                 // Redelivery count; also checks that user strings can be read in the MDB
                 s = m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "ct");
                 String expected = "0,1,2,3,4";
                 assertTrue(expected + "!=" + s, expected.equals(s));
+                if (isMsgPrefixOK()) {
+                    s = m2.getStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX_OLD + "ct");
+                    assertTrue(expected + "!=" + s, expected.equals(s));
+                }
                 
 
                 // Validate user props
@@ -1687,6 +1748,8 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         String url = cc.getConnectionURL();
         if (url.indexOf('?') < 0) {
             url += "?";
+        } else {
+            url += "&";
         }
         url += Options.NOXA + "=true";
         cc.setConnectionURL(url);

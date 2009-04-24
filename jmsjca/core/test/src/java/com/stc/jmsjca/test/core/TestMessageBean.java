@@ -16,7 +16,6 @@
 
 package com.stc.jmsjca.test.core;
 
-import com.stc.jmsjca.core.Delivery;
 import com.stc.jmsjca.core.EndOfBatchMessage;
 import com.stc.jmsjca.core.JConnectionFactory;
 import com.stc.jmsjca.core.Options;
@@ -73,7 +72,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -1444,6 +1443,9 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
         for (Enumeration iter = message.getPropertyNames(); iter.hasMoreElements();) {
             String name = (String) iter.nextElement();
+            if (name.startsWith("JMSX")) {
+                continue;
+            }
             Object o = message.getObjectProperty(name);
             if (o instanceof Integer) {
                 m1.setIntProperty(name, ((Integer) o).intValue());
@@ -1473,6 +1475,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             conn = fact.createQueueConnection();
             QueueSession s;
             TemporaryQueue tempdest;
+            QueueReceiver cons;
             
             // Send request
             {
@@ -1486,7 +1489,9 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 prod.send(message);
                 
                 // For 453: creation of the receiver will actually create the temp dest
-                s.createReceiver(tempdest);
+                // Note: WMQ doesn't allow more than one receiver on a temp dest, so
+                // save the receiver here for later use
+                cons = s.createReceiver(tempdest);
                 
                 mMdc.getUserTransaction().commit();
                 prod.close();
@@ -1496,7 +1501,6 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             {
                 conn.start();
                 mMdc.getUserTransaction().begin();
-                QueueReceiver cons = s.createReceiver(tempdest);
                 message = cons.receive(10000);
                 mMdc.getUserTransaction().commit();
                 cons.close();
@@ -1965,15 +1969,22 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     }
     
     private void setPropsForRollback(Message m) throws JMSException {
+        boolean candoOld = m.getBooleanProperty("isMsgPrefixOK");
         m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "1", "x");
         m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "2", "y");
+        if (candoOld) {
+            m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX_OLD + "1", "x");
+            m.setStringProperty(Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX_OLD + "2", "y");
+        }
         
         String ctid = Options.MessageProperties.USER_ROLLBACK_DATA_PREFIX + "ct";
-        Integer ct = (Integer) m.getObjectProperty(Delivery.REDELIVERYCOUNT);
+        Integer ct = (Integer) m.getObjectProperty(Options.MessageProperties.REDELIVERYCOUNT);
         if (ct.intValue() == 0) {
             m.setStringProperty(ctid, ct.toString());
         } else {
-            m.setStringProperty(ctid, m.getStringProperty(ctid) + "," + m.getObjectProperty(Delivery.REDELIVERYCOUNT));
+            Object r = candoOld ? m.getObjectProperty(Options.MessageProperties.REDELIVERYCOUNT)
+                : m.getObjectProperty(Options.MessageProperties.REDELIVERYCOUNT_OLD);
+            m.setStringProperty(ctid, m.getStringProperty(ctid) + "," + r);
         }
         
         String h = m.getStringProperty(Options.MessageProperties.REDELIVERY_HANDLING);
@@ -1993,16 +2004,26 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     
     public void stopDelivery(Message m) throws Exception {
         testQQXAXA(m);
-        m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR, "Test: stopDelivery()");
+        if (shouldThrow()) {
+            m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR, "Test: stopDelivery()");
+        } else {
+            m.setStringProperty(Options.MessageProperties.STOP_CONNECTOR_OLD, "Test: stopDelivery()");
+        }
     }
     
     public void stopDeliveryThroughAlert(Message m) throws Exception {
         testQQXAXA(m);
         
         // Invoke stop directly
-        MBeanServer srv = (MBeanServer) m.getObjectProperty(Options.MessageProperties.MBEANSERVER);
-        ObjectName oname = new ObjectName(m.getStringProperty(Options.MessageProperties.MBEANNAME));
-        srv.invoke(oname, "stop", new Object[0], new String[0]);
+        if (shouldThrow()) {
+            MBeanServer srv = (MBeanServer) m.getObjectProperty(Options.MessageProperties.MBEANSERVER);
+            ObjectName oname = new ObjectName(m.getStringProperty(Options.MessageProperties.MBEANNAME));
+            srv.invoke(oname, "stop", new Object[0], new String[0]);
+        } else {
+            MBeanServer srv = (MBeanServer) m.getObjectProperty(Options.MessageProperties.MBEANSERVER_OLD);
+            ObjectName oname = new ObjectName(m.getStringProperty(Options.MessageProperties.MBEANNAME_OLD));
+            srv.invoke(oname, "stop", new Object[0], new String[0]);
+        }
     }
         
     

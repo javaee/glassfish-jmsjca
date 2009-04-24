@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public interface Options {
     /**
@@ -207,62 +207,264 @@ public interface Options {
      * @author fkieviet
      */
     public interface MessageProperties {
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String ORIGINAL_MSGID = "JMS_Sun_JMSJCA_OriginalJMSMessageID";
-
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String ORIGINAL_CORRELATIONID = "JMS_Sun_JMSJCA_OriginalJMSCorrelationID";
-
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String ORIGINAL_CLIENTID = "JMS_Sun_JMSJCA_OriginalClientID";
         
         /**
-         * For stateful redelivery: the user can set these properties if prefixed with 
-         * these value
+         * Old prefix that should be chopped off to get the new prefix
          */
-        String USER_ROLLBACK_DATA_PREFIX = "JMS_Sun_JMSJCA_UserRollbackData";
-
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String LAST_EXCEPTIONCLASS = "JMS_Sun_JMSJCA_ExceptionClass";
-
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String LAST_EXCEPTIONMESSAGE = "JMS_Sun_JMSJCA_ExceptionMessage";
-
-        /**
-         * Property name for copying messages to DLQ
-         */
-        String LAST_EXCEPTIONTRACE = "JMS_Sun_JMSJCA_ExceptionStackTrace";
-
-        /**
-         * Property name for msg wrapping
-         */
-        String REDELIVERY_HANDLING = "JMS_Sun_JMSJCA_RedeliveryHandling";
-
-        /**
-         * Property name for msg wrapping
-         */
-        String STOP_CONNECTOR = "JMS_Sun_JMSJCA_StopMessageDelivery";
+        String OLDPREFIX = "JMS_Sun";
         
         /**
-         * Object property that returns the MBean server used to register the 
-         * Activation MBean
+         * Prefix for JMSX properties
          */
-        String MBEANSERVER = "JMS_Sun_JMSJCA_MBeanServer";
-        
+        String MSG_PROP_PREFIX = "_JMSJCA_";
+
         /**
-         * String property that returns the MBean Name from the activation spec
+         * Old prefix
          */
-        String MBEANNAME = "JMS_Sun_JMSJCA_MBeanName";
+        String OLDFULLPREFIX = "JMS_Sun_JMSJCA_";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_MSGID_OLD = "JMS_Sun_JMSJCA_OriginalJMSMessageID";
+    
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_MSGID = "_JMSJCA_OriginalJMSMessageID";
+
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_CORRELATIONID_OLD = "JMS_Sun_JMSJCA_OriginalJMSCorrelationID";
+    
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_CORRELATIONID = "_JMSJCA_OriginalJMSCorrelationID";
+
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: NO
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_CLIENTID_OLD = "JMS_Sun_JMSJCA_OriginalClientID";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINAL_CLIENTID = "_JMSJCA_OriginalClientID";
+        
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * For stateful redelivery: the user can set these properties if prefixed with 
+             * these value
+             */
+            String USER_ROLLBACK_DATA_PREFIX_OLD = "JMS_Sun_JMSJCA_UserRollbackData";
+    
+            /**
+             * For stateful redelivery: the user can set these properties if prefixed with 
+             * these value
+             */
+            String USER_ROLLBACK_DATA_PREFIX = "_JMSJCA_UserRollbackData";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONCLASS_OLD = "JMS_Sun_JMSJCA_ExceptionClass";
+    
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONCLASS = "_JMSJCA_ExceptionClass";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONMESSAGE_OLD = "JMS_Sun_JMSJCA_ExceptionMessage";
+    
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONMESSAGE = "_JMSJCA_ExceptionMessage";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONTRACE_OLD = "JMS_Sun_JMSJCA_ExceptionStackTrace";
+    
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String LAST_EXCEPTIONTRACE = "_JMSJCA_ExceptionStackTrace";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: ok 
+            // test: ok
+            /**
+             * Property name for msg wrapping
+             */
+            String REDELIVERY_HANDLING_OLD = "JMS_Sun_JMSJCA_RedeliveryHandling";
+    
+            /**
+             * Property name for msg wrapping
+             */
+            String REDELIVERY_HANDLING = "_JMSJCA_RedeliveryHandling";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: ok 
+            // test: ok
+            /**
+             * Property name for msg wrapping
+             */
+            String STOP_CONNECTOR_OLD = "JMS_Sun_JMSJCA_StopMessageDelivery";
+            
+            /**
+             * Property name for msg wrapping
+             */
+            String STOP_CONNECTOR = "_JMSJCA_StopMessageDelivery";
+        
+            // copy: n/a
+            // read access in MDB: ok
+            // write access in MDB: n/a 
+            // test: ok
+            /**
+             * Object property that returns the MBean server used to register the 
+             * Activation MBean
+             */
+            String MBEANSERVER_OLD = "JMS_Sun_JMSJCA_MBeanServer";
+            
+            /**
+             * Object property that returns the MBean server used to register the 
+             * Activation MBean
+             */
+            String MBEANSERVER = "_JMSJCA_MBeanServer";
+        
+            // copy: n/a
+            // read access in MDB: ok
+            // write access in MDB: n/a 
+            // test: ok
+            /**
+             * String property that returns the MBean Name from the activation spec
+             */
+            String MBEANNAME_OLD = "JMS_Sun_JMSJCA_MBeanName";
+    
+            /**
+             * String property that returns the MBean Name from the activation spec
+             */
+            String MBEANNAME = "_JMSJCA_MBeanName";
+
+            // copy: ok
+            // read access in MDB: ok
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String REDELIVERYCOUNT_OLD = "JMS_Sun_JMSJCA_RedeliveryCount";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String REDELIVERYCOUNT = "_JMSJCA_RedeliveryCount";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALDESTINATIONNAME_OLD = "JMS_Sun_JMSJCA_OriginalDestinationName";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALDESTINATIONNAME = "_JMSJCA_OriginalDestinationName";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALDESTINATIONTYPE_OLD = "JMS_Sun_JMSJCA_OriginalDestinationType";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALDESTINATIONTYPE = "_JMSJCA_OriginalDestinationType";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALTIMESTAMP_OLD = "JMS_Sun_JMSJCA_OriginalTimestamp";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String ORIGINALTIMESTAMP = "_JMSJCA_OriginalTimestamp";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String SUBSCRIBERNAME_OLD = "JMS_Sun_JMSJCA_SubscriberName";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String SUBSCRIBERNAME = "_JMSJCA_SubscriberName";
+        
+            // copy: ok
+            // read access in MDB: n/a
+            // write access in MDB: n/a
+            // test: ok
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String CONTEXTNAME_OLD = "JMS_Sun_JMSJCA_ContextName";
+            
+            /**
+             * Property name for copying messages to DLQ
+             */
+            String CONTEXTNAME = "_JMSJCA_ContextName";
+        
     }
     
     /**

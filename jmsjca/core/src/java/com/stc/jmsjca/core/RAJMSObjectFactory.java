@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -1010,6 +1010,10 @@ public abstract class RAJMSObjectFactory {
         for (Enumeration en = toCopy.getPropertyNames(); en.hasMoreElements();/*-*/) {
             String name = (String) en.nextElement();
             Object o = toCopy.getObjectProperty(name);
+            String originalName = name;
+            if (name.startsWith("JMSX")) {
+                name = Options.MessageProperties.MSG_PROP_PREFIX + name;
+            }
             if (o instanceof Integer) {
                 ret.setIntProperty(name, ((Integer) o).intValue());
             } else if (o instanceof Long) {
@@ -1028,7 +1032,7 @@ public abstract class RAJMSObjectFactory {
                 ret.setDoubleProperty(name, ((Double) o).doubleValue());
             } else {
                 throw Exc.jmsExc(LOCALE.x("E189: Unknown property type for {0}: {1}"
-                    , name, o.getClass().getName()));
+                    , originalName, o.getClass().getName()));
             }
             
             // Copy other properties
@@ -1124,5 +1128,12 @@ public abstract class RAJMSObjectFactory {
         }
         
         return d;
+    }
+
+    /**
+     * @return true if message properties may begin with JMS. WMQ does not allow this.
+     */
+    public boolean isMsgPrefixOK() {
+        return true;
     }
 }

@@ -39,7 +39,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {
@@ -525,11 +525,12 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         if (bmt) {
             dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
             dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
+            dd.findElementByText(EJBDD, "testQQXAXA").setText("testQQBM1");
         }
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setDestination(p.getTopic1Name());
-        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setDestinationType(javax.jms.Topic.class.getName()); 
         spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
         String subscriptionName = p.getDurableTopic1Name1();
@@ -679,7 +680,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
         .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
-        x.setConnectionURL(url + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB + "=1");
+        x.setConnectionURL(url + (url.indexOf('?') < 0 ? "?" : "&") + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB + "=1");
 
         dd.update();
 
@@ -777,7 +778,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML)
         .createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
-        url = url + "?" + Options.In.OPTION_SELECTOR + "=" 
+        url = url + (url.indexOf('?') < 0 ? "?" : "&") + Options.In.OPTION_SELECTOR + "=" 
         + URLEncoder.encode("(sub = '${" + Options.Selector.SUB_NAME + "}')  ${andselector}", "UTF-8");
         x.setConnectionURL(url);
         

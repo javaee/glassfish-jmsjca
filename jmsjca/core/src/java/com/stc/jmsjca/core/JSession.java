@@ -54,7 +54,7 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -389,6 +389,10 @@ public class JSession {
         } else {
             exception = new Exception("Runtime exception: " + ex);
             Exc.setCause(exception, ex);
+        }
+        
+        if (ex instanceof JMSException) {
+            Exc.checkLinkedException(ex);
         }
 
         if (mFirstException == null) {

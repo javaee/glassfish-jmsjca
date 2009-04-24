@@ -21,6 +21,7 @@ import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
 import com.stc.jmsjca.util.XAssert;
 
@@ -58,7 +59,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -77,36 +78,6 @@ public abstract class Delivery {
      * Do not dump threads more than every xx ms;
      */
     public static final long DESTROY_DUMP_INTERVAL_MS = 60000;
-
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String REDELIVERYCOUNT = "JMS_Sun_JMSJCA_RedeliveryCount";
-    
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String ORIGINALDESTINATIONNAME = "JMS_Sun_JMSJCA_OriginalDestinationName";
-    
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String ORIGINALDESTINATIONTYPE = "JMS_Sun_JMSJCA_OriginalDestinationType";
-    
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String ORIGINALTIMESTAMP = "JMS_Sun_JMSJCA_OriginalTimestamp";
-    
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String SUBSCRIBERNAME = "JMS_Sun_JMSJCA_SubscriberName";
-    
-    /**
-     * Property name for copying messages to DLQ
-     */
-    public static final String CONTEXTNAME = "JMS_Sun_JMSJCA_ContextName";
     
     /**
      * The activation object
@@ -339,6 +310,63 @@ public abstract class Delivery {
         return new ConnectionForMove();
     }
     
+    /**
+     * Used to copy legacy properties
+     * 
+     * @author fkieviet
+     */
+    private class LegacyProperties {
+        Message mDelegate;
+        boolean mSupportsLegacy;
+        
+        public LegacyProperties(Message msg, boolean supportsLegacy) {
+            mDelegate = msg;
+            mSupportsLegacy = supportsLegacy;
+        }
+
+        public void setStringProperty(String key, String value) throws JMSException {
+            if (Str.empty(value)) {
+                return;
+            }
+            mDelegate.setStringProperty(key, value);
+
+            // For legacy properties:
+            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+                mDelegate.setStringProperty(Options.MessageProperties.OLDPREFIX + key, value);
+            }
+        }
+        
+        public void setObjectProperty(String key, Object value) throws JMSException {
+            if (value != null) {
+                return;
+            }
+            mDelegate.setObjectProperty(key, value);
+
+            // For legacy properties:
+            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+                mDelegate.setObjectProperty(Options.MessageProperties.OLDPREFIX + key, value);
+            }
+        }
+
+        public void setIntProperty(String key, int value) throws JMSException {
+            mDelegate.setIntProperty(key, value);
+
+            // For legacy properties:
+            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+                mDelegate.setIntProperty(Options.MessageProperties.OLDPREFIX + key, value);
+            }
+        }
+
+        public void setLongProperty(String key, long value) throws JMSException {
+            mDelegate.setLongProperty(key, value);
+
+            // For legacy properties:
+            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+                mDelegate.setLongProperty(Options.MessageProperties.OLDPREFIX + key, value);
+            }
+        }
+    }
+    
     private class DeliveryActions extends RedeliveryHandler {
 
         public DeliveryActions(RAJMSActivationSpec spec, DeliveryStats stats, int lookbackSize) {
@@ -405,38 +433,38 @@ public abstract class Delivery {
                         mActivation.isCMT() && !mActivation.isXAEmulated(), isTopic, mActivation.getRA());
                     
                     // Add diagnostics info to msg
+                    LegacyProperties prop = new LegacyProperties(newMsg, 
+                        mActivation.getObjectFactory().isMsgPrefixOK());
                     RAJMSActivationSpec spec = mActivation.getActivationSpec();
-                    newMsg.setIntProperty(REDELIVERYCOUNT, e.getNEncountered());
-                    newMsg.setStringProperty(ORIGINALDESTINATIONNAME, spec.getDestination());
-                    newMsg.setStringProperty(ORIGINALDESTINATIONTYPE, spec.getDestinationType());
-                    newMsg.setLongProperty(ORIGINALTIMESTAMP, m.getJMSTimestamp());
+                    
+                    prop.setIntProperty(Options.MessageProperties.REDELIVERYCOUNT, e.getNEncountered());
+                    prop.setStringProperty(Options.MessageProperties.ORIGINALDESTINATIONNAME, spec.getDestination());
+                    prop.setStringProperty(Options.MessageProperties.ORIGINALDESTINATIONTYPE, 
+                        spec.getDestinationType());
+                    prop.setLongProperty(Options.MessageProperties.ORIGINALTIMESTAMP, m.getJMSTimestamp());
+
                     if (RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
-                        newMsg.setStringProperty(SUBSCRIBERNAME
-                            , mActivation.getActivationSpec().getSubscriptionName());
+                        prop.setStringProperty(Options.MessageProperties.SUBSCRIBERNAME, 
+                            mActivation.getActivationSpec().getSubscriptionName());
                     }
-                    if (spec.getContextName() != null && spec.getContextName().length() > 0) {
-                        newMsg.setStringProperty(CONTEXTNAME, spec.getContextName());
-                    }
-                    newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_MSGID, e.getMsgid());
-                    String correlationId = null;
+                    prop.setStringProperty(Options.MessageProperties.CONTEXTNAME, spec.getContextName());
+                    prop.setStringProperty(Options.MessageProperties.ORIGINAL_MSGID, e.getMsgid());
+
                     try {
-                        correlationId = m.getJMSCorrelationID();
+                        prop.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, 
+                            m.getJMSCorrelationID());
                     } catch (JMSException ignore) {
                         // ignore
                     }
-                    if (correlationId != null) {
-                        newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CORRELATIONID, correlationId);
-                    }
                     
-                    if (spec.getClientId() != null) {
-                        newMsg.setStringProperty(Options.MessageProperties.ORIGINAL_CLIENTID, spec.getClientId());
-                    }
+                    prop.setStringProperty(Options.MessageProperties.ORIGINAL_CLIENTID, spec.getClientId());
                     
                     // Copy stateful redelivery properties
                     Map statefulRedeliveryProperties = e.getStatefulRedeliveryProperties();
                     for (Iterator iterator = statefulRedeliveryProperties.entrySet().iterator(); iterator.hasNext();) {
                         Map.Entry kv = (Map.Entry) iterator.next();
-                        newMsg.setStringProperty((String) kv.getKey(), (String) kv.getValue());
+                        String key = (String) kv.getKey();
+                        prop.setStringProperty(key, (String) kv.getValue());
                     }
                     
                     // Send msg

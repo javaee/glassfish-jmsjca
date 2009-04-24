@@ -78,4 +78,11 @@ public abstract class JMSProvider {
      * @return stcms, sunone, wl, etc.
      */
     public abstract String getProviderID();
+
+    /**
+     * @return true if the msg may have properties that start with JMS
+     */
+    public boolean isMsgPrefixOK() {
+        return true;
+    }
 }
