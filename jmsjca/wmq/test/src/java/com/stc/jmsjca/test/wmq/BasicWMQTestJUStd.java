@@ -356,15 +356,6 @@ public class BasicWMQTestJUStd extends TestCase {
         }
     }
 
-    /**
-     * Generates a unique name
-     *
-     * @return name
-     */
-    public String generateName() {
-      return "JMSJCA-" + this.getClass() + sTime++;
-    }
-    
     void drain(String queueName) {
   
         try {
@@ -399,7 +390,7 @@ public class BasicWMQTestJUStd extends TestCase {
     /**
      * test000: xa queue domain
      */
-    public void test000() {
+    public void xtest000() {
         
         System.out.println("test000...");   
         
@@ -503,7 +494,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * 
      * test001: queue domain
      */
-    public void test001() {
+    public void xtest001() {
         
         System.out.println("test001...");   
         
@@ -577,7 +568,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * 
      * test001: queue domain
      */
-    public void test010() {
+    public void xtest010() {
         
         System.out.println("test010...");   
         
@@ -745,7 +736,7 @@ public class BasicWMQTestJUStd extends TestCase {
     /**
      * test002: xa queue domain
      */
-    public void test002() {
+    public void xtest002() {
         
         System.out.println("test002...");   
         
@@ -827,7 +818,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * test003: topic domain
      *
      */
-    public void test003() {
+    public void xtest003() {
         
         System.out.println("test003..."); 
         
@@ -890,7 +881,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * test004: xa topic domain
      *
      */
-    public void test004() {
+    public void xtest004() {
         
         System.out.println("test004...");   
         
@@ -968,7 +959,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * test005: topic domain
      *
      */
-    public void test005() {
+    public void xtest005() {
         
         System.out.println("test005...");   
         
@@ -1055,6 +1046,9 @@ public class BasicWMQTestJUStd extends TestCase {
                 //ignore
             }
         }
+    }
+    
+    public void testPlaceHolderTestNothing() {
     }
 
 }    
