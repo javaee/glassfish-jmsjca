@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -352,8 +353,12 @@ public class TcpProxyNIO implements Runnable {
                             pt.server.setChannel(SocketChannel.open());
                             pt.server.key = pt.server.channel.register(
                                 selector, SelectionKey.OP_CONNECT);
-                            pt.server.channel.connect(new InetSocketAddress(
-                                mRelayServer, mRelayPort));                            
+                            boolean established = pt.server.channel.connect(new InetSocketAddress(
+                                mRelayServer, mRelayPort));    
+                            if (established){
+                                // The connection has been established immediately. Gosh, that was quick! 
+                                initialiseNewServerConnection(pt.server);
+                            }
                         } catch (IOException e) {
                             System.err.println(">Unable to accept channel");
                             e.printStackTrace();
@@ -373,15 +378,7 @@ public class TcpProxyNIO implements Runnable {
                             sLog.debug(">CONNECT event on " + p + " -- other: " + p.other);
                         }
                         
-                        boolean success;
-                        try {
-                            success = c.finishConnect();
-                        } catch (RuntimeException e) {
-                            success = false;
-                            if (sLog.isDebugEnabled()) {
-                                sLog.debug("Connect failed: " + e, e);
-                            }
-                        }
+                        boolean success = initialiseNewServerConnection(p);
                         if (!success) {
                             // Connection failure
                             p.close();
@@ -390,12 +387,6 @@ public class TcpProxyNIO implements Runnable {
                             // Unregister the channel with this selector
                             key.cancel();
                             key = null;
-                        } else {
-                            // Connection was established successfully
-                            // Both need to be in readmode; note that the key for 
-                            // "other" has not been created yet
-                            p.other.key = p.other.channel.register(selector, SelectionKey.OP_READ);
-                            p.key.interestOps(SelectionKey.OP_READ);
                         }
 
                         if (sLog.isDebugEnabled()) {
@@ -531,6 +522,38 @@ public class TcpProxyNIO implements Runnable {
             sLog.fatalNoloc("Cleanup error: " + e, e);
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * We have established a connection to the server. 
+     * Now initialise both PipeEnds
+     * Both ends need to start reading. 
+     * 
+     * @param p PipeEnd representing the server connection
+     * @return Whether a RuntimeException was thrown whilst finishing the process of connecting the socket channel
+     * @throws IOException 
+     * @throws IOException
+     */
+    private boolean initialiseNewServerConnection(PipeEnd p) throws IOException {
+        boolean success;
+        SocketChannel c = p.channel;
+        try {
+            success = c.finishConnect();
+        } catch (RuntimeException e) {
+            // Nigel: Why don't we catch IOException here as well?
+            success = false;
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Connect failed: " + e, e);
+            }
+        }
+        if (success) {
+            // Connection was established successfully
+            // Both need to be in readmode; note that the key for 
+            // "other" has not been created yet
+            p.other.key = p.other.channel.register(selector, SelectionKey.OP_READ);
+            p.key.interestOps(SelectionKey.OP_READ);
+        }
+        return success;
     }
     
     private PipeEnd[] toPipeArray() {

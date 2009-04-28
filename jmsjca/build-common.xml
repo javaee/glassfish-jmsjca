@@ -286,7 +286,6 @@
                 <fileset dir="${jmsjca.xxx.test.classes.dir}">
                     <include name="**/${jmsjca.ear1.pattern}JUStd.class"/>
                     <include name="**/${jmsjca.ear1.pattern}Ear1.class"/>
-                	<exclude name="**/TcpProxyNIOJUStd.class"/>
                 </fileset>
                 <formatter type="xml"/>
             </batchtest>
