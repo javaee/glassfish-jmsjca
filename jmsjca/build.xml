@@ -700,7 +700,7 @@ or type
 	<target name="emma-report">
        <!-- junit writes coverage.ec into module root directory -->
 	   <!-- application server should write *.ec into coverage directory -->
-	   <1-- currently source code is not used -->
+	   <!-- currently source code is not used -->
 		<echo>${coverage.dir}</echo>		
 	    <emma enabled="${emma.enabled}" >
 	    	<report sourcepath="${src.dir}" >
