@@ -75,7 +75,30 @@
 
         <!-- copy jar file -->
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.jars.dir}" />
-
+    	
+    	<!-- instrument jar for emma -->
+    	<echo>instrument jar for emma: emma.enabled=${emma.enabled}</echo>
+        <path id="emma.jmsjca.xxx.rar.jar">
+           <fileset file="${jmsjca.xxx.rar.jar.path}"/>
+        </path>
+        <emma enabled="${emma.enabled}" >
+           <instr instrpathref="emma.jmsjca.xxx.rar.jar"
+              destdir="${out.instr.dir}"	
+              metadatafile="${coverage.dir}/metadata.emma"
+              merge="true"
+           />
+        </emma>  
+    	    	
+    	<if>
+    	<equals arg1="${emma.enabled}" arg2="true" />
+    	<then>
+           <!-- Copy resources and any additional classes to the directory containing the instrumented classes (without overwriting existing files) -->
+            <copy todir="${out.instr.dir}">
+                <fileset dir="${jmsjca.xxx.rar.classes.dir}"/>
+            </copy>
+    	</then>
+    	</if>      	
+    	   	
         <property name="compilejar.ed" value="true" />
     </target>
 
@@ -251,21 +274,22 @@
         <echo message="test container properties : ${jmsjca.properties.path}" />
         <echo message="test jms server properties: ${jmsjca.properties.path}" />
         <echo message="results in                : ${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
-
         <delete dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
         <mkdir dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
 
         <junit
+        	fork="yes"
             printsummary="on"
             haltonerror="off"
             haltonfailure="off"
         >
-            <jvmarg value="${junit.jvm.options}"/>
             <sysproperty key="jmsjca.container.id" value="${jmsjca.container.id}"/>
             <sysproperty key="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
-
+            <jvmarg value="-Demma.coverage.out.file=${coverage.dir}\junit-coverage.ec"/>
             <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
             <classpath>
+            	<!-- emma instrumented classes need to be first (if present) -->
+                <pathelement location="${out.instr.dir}"/>
                 <fileset file="${jmsjca.core.jar.path}" />
                 <fileset file="${stc.lib.dir}/junit.jar" />
                 <pathelement path="${jmsjca.xxx.rar.jar.path}"/>
@@ -273,6 +297,7 @@
                 <fileset file="${stc.lib.dir}/jdom.jar" />
                 <fileset file="${jmsjca.filejndi.jar.path-fscontext.jar}" />
                 <fileset file="${jmsjca.filejndi.jar.path-providerutil.jar}" />
+                <path refid="emma.lib" />
             </classpath>
             <classpath refid="jmsjca.${jcaid}.clientjars.path" />
             <classpath path="${jmsjca.xxx.test.classes.dir}" />

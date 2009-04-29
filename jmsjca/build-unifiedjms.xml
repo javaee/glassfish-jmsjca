@@ -141,6 +141,29 @@ TODO
         
         <!-- copy jar file -->
         <copy file="${jmsjca.xxx.rar.jar.path}" todir="${jmsjca.jars.dir}" />
+    	
+    	<!-- instrument jar for emma -->
+        <path id="emma.jmsjca.xxx.rar.jar">
+           <fileset file="${jmsjca.xxx.rar.jar.path}"/>
+        </path>
+        <emma enabled="${emma.enabled}" >
+           <instr instrpathref="emma.jmsjca.xxx.rar.jar"
+              destdir="${out.instr.dir}"	
+              metadatafile="${coverage.dir}/metadata.emma"
+              merge="true"
+          />
+        </emma>
+    	
+    	<if>
+    	<equals arg1="${emma.enabled}" arg2="true" />
+    	<then>
+           <!-- Copy resources and any additional classes to the directory containing the instrumented classes (without overwriting existing files) -->
+            <copy todir="${out.instr.dir}">
+                <fileset dir="${jmsjca.xxx.rar.classes.dir}"/>
+            </copy>
+    	</then>
+    	</if>     	
+ 	
 
         <property name="compilejar.ed" value="true" />
     </target>

@@ -83,6 +83,13 @@
         <fileset file="${jmsjca.jboss.home.dir}/lib/jboss-client.jar" />
         <fileset file="${jmsjca.jboss.home.dir}/lib/jmx-invoker-adaptor-client.jar" />
     </path>
+	
+	<path id="emma.lib" >
+	    <pathelement location="${emma.dir}/emma.jar" />
+	    <pathelement location="${emma.dir}/emma_ant.jar" />
+	 </path>
+
+	 <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
 
 <!--===========================================================================
     OLD STUFF - CLEAN UP
@@ -149,6 +156,18 @@
              verbose="true"
              usetimestamp="true"
         />
+    	 <!-- emma -->
+        <mkdir dir="${emma.dir}" />
+        <get src="${jmsjca.emma.url}"
+             dest="${emma.dir}/emma.jar"
+             verbose="true"
+             usetimestamp="true"
+        />
+        <get src="${jmsjca.emma_ant.url}"
+             dest="${emma.dir}/emma_ant.jar"
+             verbose="true"
+             usetimestamp="true"
+        />   	
     </target>
 
     <target name="init" unless="init.ed">
@@ -171,6 +190,18 @@
             <property name="jcaid" value="${jcaid}" />
         </ant>
     </target>
+
+	<!--===========================================================================
+	    emma - enables the use of emma for a given ant run (specify this as the first target)
+	-->	
+	  <target name="emma" description="turns on EMMA instrumentation/reporting" >
+	    <property name="emma.enabled" value="true" />
+	    <!-- specify the directory used to hold instrumented classes -->
+	  	<!-- It is important that this property exist only when emma.enabled=true -->
+	    <property name="out.instr.dir" value="${jmsjca.module.dir}/outinstr" />
+	    <mkdir dir="${out.instr.dir}" />
+	  </target>
+	
 
 <!--===========================================================================
     Creates the rar file
@@ -239,6 +270,29 @@
         <!-- copy jar file -->
         <mkdir dir="${jmsjca.jars.dir}" />
         <copy file="${jmsjca.core.jar.path}" todir="${jmsjca.jars.dir}" />
+    	
+    	
+    	<!-- instrument core jar for emma -->
+        <path id="emma.jmsjca.core.jar">
+           <fileset file="${jmsjca.core.jar.path}"/>
+        </path>
+        <emma enabled="${emma.enabled}" >
+           <instr instrpathref="emma.jmsjca.core.jar"
+              destdir="${out.instr.dir}"	
+              metadatafile="${coverage.dir}/metadata.emma"
+              merge="true"
+          />
+        </emma>   	
+    	
+    	<if>
+    	<equals arg1="${emma.enabled}" arg2="true" />
+    	<then>
+           <!-- Copy resources and any additional classes to the directory containing the instrumented classes (without overwriting existing files) -->
+            <copy todir="${out.instr.dir}">
+                <fileset dir="${jmsjca.core.classes.dir}"/>
+            </copy>
+    	</then>
+    	</if>    	
 
         <property name="compilecore.ed" value="true" />
     </target>
@@ -251,7 +305,7 @@
             description="Compiles the source base"
             unless="compile.ed"
     >
-        <foreach list="${jcaids}" target="call-compile" param="jcaid" />
+        <foreach list="${jcaids}" target="call-compile" param="jcaid" inheritall="true" />
         <property name="compile.ed" value="true" />
     </target>
 
@@ -262,6 +316,8 @@
              inheritall="false"
         >
             <property name="jcaid" value="${jcaid}" />
+        	<property name="emma.enabled" value="${emma.enabled}" />
+        	<property name="out.instr.dir" value="${out.instr.dir}" />
         </ant>
     </target>
 
@@ -420,7 +476,6 @@
     <target name="test" depends="check-config-file" description="Runs tests for the specified jmsimpl and container">
         <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
         <fail unless="jmsjca.jmsimpl.id" >$${jmsjca.jmsimpl.id} needs to be specified: call a jmsimpl target first</fail>
-        
         <ant antfile="build-${jmsjca.jmsimpl.id}.xml"
              target="run-test2"
              inheritall="false"
@@ -429,6 +484,8 @@
             <property name="jcaid" value="${jmsjca.jmsimpl.id}" />
             <property name="jmsjca.container.id" value="${jmsjca.container.id}" />
             <property name="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
+        	<reference refid="emma.lib"/>
+        	<property name="out.instr.dir" value="${out.instr.dir}"/>
             <reference refid="jmsjca.${jmsjca.container.id}.classpath"/>
         </ant>
         
@@ -639,4 +696,21 @@ or type
             </commandline>
         </cvs>
     </target>
+	
+	<target name="emma-report">
+       <!-- junit writes coverage.ec into module root directory -->
+	   <!-- application server should write *.ec into coverage directory -->
+	   <1-- currently source code is not used -->
+		<echo>${coverage.dir}</echo>		
+	    <emma enabled="${emma.enabled}" >
+	    	<report sourcepath="${src.dir}" >
+	    		<fileset dir="${coverage.dir}" >
+	        		<include name="*.ec" />
+	        		<include name="*.emma" />
+	        	</fileset>
+	        	<txt outfile="${coverage.dir}/coverage.txt" />
+	    		<html outfile="${coverage.dir}/coverage.html" />
+	      </report>
+		</emma>
+	</target>
 </project>
