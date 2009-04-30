@@ -274,7 +274,7 @@
         <echo message="test container properties : ${jmsjca.properties.path}" />
         <echo message="test jms server properties: ${jmsjca.properties.path}" />
         <echo message="results in                : ${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
-        <echo message ="EMMA coverage dump to    : ${coverage.dir}\junit-coverage.ec"/>
+        <echo message="EMMA coverage dump to     : ${coverage.dir}\junit-coverage.ec"/>
         <delete dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
         <mkdir dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
 

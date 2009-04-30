@@ -449,6 +449,15 @@
     </target>
 
 <!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
+    <target name="jndi" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="jndi" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
     DEV-ONLY: Runs unit tests for a jms-impl and container
 -->
     <target name="test" depends="check-config-file" description="Runs tests for the specified jmsimpl and container">

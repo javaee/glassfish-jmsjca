@@ -4,24 +4,18 @@
     <taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="./buildtools/lib/ant-contrib.jar"/>
     <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
+    <property file="${jmsjca.properties.path}" />
+
+    <!-- REQUIRED for compile test -->
+    <path id="jmsjca.jndi.clientjars.path">
+        <fileset file="${jmsjca.jndi.jar.path-com.stc.jms.stcjms.jar}" />
+        <fileset file="${jmsjca.jndi.jar.path-com.stc.jms.stcqueueviewer.jar}" />
+    </path>
+    
 <!--===========================================================================
     Initializes variables etc
 -->
     <target name="init" unless="init.ed">
-        <!-- To compile/run unit tests -->
-        <path id="jmsjca.test.classpath">
-            <path refid="container.classpath"/>
-            <fileset file="core/test/lib/jdom.jar" />
-            <fileset file="${jmsjca.core.jar.path}" />
-            <fileset file="${jmsjca.xxx.rar.jar.path}" />
-            <pathelement location="${jmsjca.container.classes.dir}" />
-
-            <fileset file="${stc.api.dir}/com.stc.jms.stcjms.jar" />
-            <fileset file="${stc.api.dir}/com.stc.jms.stcqueueviewer.jar" />
-            <fileset file="jndi/test/lib/fscontext.jar" />
-            <fileset file="jndi/test/lib/providerutil.jar" />
-        </path>
-
         <property name="init.ed" value="true" />
     </target>
 
@@ -37,147 +31,5 @@
         </zip>
         
         <property name="rar.ed" value="true" />
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: compile-test
--->
-    <target
-        name="compile-test"
-        depends="init"
-        description=""
-        unless="compile-test.ed"
-    >
-        <!-- compile test code -->
-        <mkdir dir="${jmsjca.xxx.test.classes.dir}"/>
-        <javac
-            fork="stc.jdk13.fork"
-            destdir="${jmsjca.xxx.test.classes.dir}"
-            debug="true"
-            deprecation="${stc.java.deprecation}"
-            target="1.4"
-            source="1.4"
-        >
-            <src path="core/test/src/java" />
-            <src path="${jcaid}/test/src/java" />
-            <classpath refid="jmsjca.test.classpath"/>
-        </javac>
-        <copy todir="${jmsjca.xxx.test.classes.dir}">
-            <fileset dir="core/test/src/java" excludes="**/*.java"/>
-            <fileset dir="${jcaid}/test/src/java" excludes="**/*.java"/>
-        </copy>
-
-        <!-- ejb -->
-        <mkdir dir="${jmsjca.xxx.test.dir}"/>
-        <jar destfile="${jmsjca.xxx.ejb.jar.path}">
-            <fileset dir="${jmsjca.xxx.test.classes.dir}">
-                <include name="com/stc/jmsjca/test/core/**.*" />
-                <include name="com/stc/jmsjca/test/${jcaid}/**.*" />
-            </fileset>
-            <zipfileset prefix="META-INF" file="core/test/src/meta/ejb-jar.xml" />
-            <zipfileset prefix="META-INF" file="core/test/src/meta/sun-ejb-jar.xml" />
-        </jar>
-
-        <!-- Generate manifests for embedded RARs -->
-        <!-- When outside of RTS -->
-        <manifest file="${jmsjca.xxx.test.mft.path}">
-            <attribute 
-                name="Class-Path" 
-                value="${jmsjca.core.jar.name} ${jmsjca.xxx.jar.name} com.stc.jms.stcjms.jar"
-            />
-        </manifest>
-        <copy file="${jmsjca.xxx.test.mft.path}" tofile="${jmsjca.xxx.test.mft1.path}" />
-
-        <!-- make embedded rar -->
-        <zip destfile="${jmsjca.xxx.test.rar.path}" >
-            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft.path}"  />
-        </zip>
-        <zip destfile="${jmsjca.xxx.test.rar1.path}" >
-            <zipfileset prefix="META-INF" file="${jcaid}/src/meta/ra.xml" />
-            <zipfileset fullpath="META-INF/MANIFEST.MF" file="${jmsjca.xxx.test.mft1.path}"  />
-        </zip>
-
-        <if>
-            <equals arg1="${containerid}" arg2="rts" />
-            <then>
-                <!-- mk ear INSIDE of RTS -->
-                <zip destfile="${jmsjca.xxx.ear.path}.1">
-                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
-                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
-                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
-                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
-                </zip>
-            </then>
-            <else>
-                <!-- mk ear OUTSIDE of RTS -->
-                <zip destfile="${jmsjca.xxx.ear.path}.1">
-                    <zipfileset file="${jmsjca.xxx.test.rar.path}" />
-                    <zipfileset file="${jmsjca.xxx.test.rar1.path}" />
-                    <zipfileset file="${jmsjca.xxx.ejb.jar.path}" />
-                    <zipfileset prefix="META-INF" file="core/test/src/meta/application.xml" />
-
-                    <!-- When outside of RTS -->
-                    <zipfileset file="${jmsjca.core.jar.path}" />
-                    <zipfileset file="${jmsjca.xxx.rar.jar.path}" />
-                    <zipfileset file="${stc.api.dir}/com.stc.jms.stcjms.jar" />
-                </zip>
-            </else>
-        </if>
-        <property name="compile-test.ed" value="true" />
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: install-jms-jars: jms provider client jars
--->
-    <target
-        name="install-jms-jars"
-        depends="init"
-        if="lh"
-    >
-        <echo message="${jcaid} installed" />
-    </target>
-
-    <target
-        name="uninstall-jms-jars"
-        depends="init"
-        if="lh"
-    >
-    </target>
-
-<!--===========================================================================
-    DEV-ONLY: run-test: executes the tests
--->
-    <target
-        name="run-test"
-        depends="init, compile-test"
-    >
-        <!-- Test in Tomato -->
-        <junit
-            printsummary="on"
-            haltonerror="off"
-            haltonfailure="off"
-        >
-            <jvmarg value="${junit.jvm.options}"/>
-            <sysproperty key="test.container.id" value="${testcontainer.id}"/>
-            <sysproperty key="test.server.properties" value="${testjmsserver.properties}"/>
-            <sysproperty key="test.container.properties" value="${testcontainer.properties}"/>
-            <sysproperty key="test.ear.path" value="${jmsjca.xxx.ear.path}"/>
-
-            <classpath refid="jmsjca.test.classpath"/>
-            <classpath  path="${jmsjca.xxx.test.classes.dir}" />
-
-            <batchtest
-                haltonfailure="no"
-                haltonerror="no"
-                todir="${jmsjca.reports.junit.dir}"
-            >
-                <fileset dir="${jmsjca.xxx.test.classes.dir}">
-                    <include name="**/${jmsjca.ear1.pattern}JUStd.class"/>
-                    <include name="**/${jmsjca.ear1.pattern}Ear1.class"/>
-                </fileset>
-                <formatter type="xml"/>
-            </batchtest>
-        </junit>
     </target>
 </project>

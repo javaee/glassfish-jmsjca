@@ -29,7 +29,6 @@ import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
-import com.stc.jmsjca.test.stcms.StcmsProvider;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -59,7 +58,7 @@ public class TestJUStd extends XTestBase {
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
     public JMSProvider getJMSProvider() {
-        return new StcmsProvider();
+        return new JndiProvider();
     }
 
     /**
@@ -253,7 +252,9 @@ public class TestJUStd extends XTestBase {
         QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
         assertTrue(fact != null);
         
-        QueueConnection c = fact.createQueueConnection();
+        QueueConnection c = fact.createQueueConnection(
+            getJMSProvider().getUserName(mServerProperties), 
+            getJMSProvider().getPassword(mServerProperties));
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.close();
         c.close();
@@ -291,7 +292,9 @@ public class TestJUStd extends XTestBase {
         QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
         assertTrue(fact != null);
         
-        QueueConnection c = fact.createQueueConnection();
+        QueueConnection c = fact.createQueueConnection(
+            getJMSProvider().getUserName(mServerProperties), 
+            getJMSProvider().getPassword(mServerProperties));
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         s.close();
         c.close();
@@ -322,7 +325,9 @@ public class TestJUStd extends XTestBase {
         QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory();
         assertTrue(fact != null);
         
-        QueueConnection c = fact.createQueueConnection();
+        QueueConnection c = fact.createQueueConnection(
+            getJMSProvider().getUserName(mServerProperties), 
+            getJMSProvider().getPassword(mServerProperties));
         QueueSession s = c.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
         
         // Queue creation

@@ -11,7 +11,6 @@
         <fileset file="${jmsjca.stcms.jar.path-com.stc.jms.stcjms.jar}" />
         <fileset file="${jmsjca.stcms.jar.path-com.stc.jms.stcqueueviewer.jar}" />
     </path>
-    
 
 <!--===========================================================================
     Initializes variables etc
@@ -33,5 +32,4 @@
 
         <property name="rar.ed" value="true" />
     </target>
-
 </project>
