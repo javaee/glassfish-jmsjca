@@ -701,9 +701,15 @@ or type
        <!-- junit writes coverage.ec into module root directory -->
 	   <!-- application server should write *.ec into coverage directory -->
 	   <!-- currently source code is not used -->
-		<echo>${coverage.dir}</echo>		
-	    <emma enabled="${emma.enabled}" >
-	    	<report sourcepath="${src.dir}" >
+		<echo>${jmsjca.module.dir</echo>		
+	    <emma enabled="${emma.enabled}">	    	
+	    	<report>
+	            <sourcepath>
+	              <dirset dir="${jmsjca.module.dir}" >
+	                <include name="**/java" /> 
+	              </dirset>
+	            </sourcepath>
+
 	    		<fileset dir="${coverage.dir}" >
 	        		<include name="*.ec" />
 	        		<include name="*.emma" />
