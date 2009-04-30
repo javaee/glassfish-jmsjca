@@ -89,7 +89,7 @@
 	    <pathelement location="${emma.dir}/emma_ant.jar" />
 	 </path>
 
-	 <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+
 
 <!--===========================================================================
     OLD STUFF - CLEAN UP
@@ -155,8 +155,11 @@
              dest="${stc.api.dir}/junit.jar"
              verbose="true"
              usetimestamp="true"
-        />
-    	 <!-- emma -->
+        /> 	
+    </target>
+	
+	<!-- Download the emma jars (anttaskdefs depend on them) -->
+    <target name="init-emma" unless="emma-init.ed">
         <mkdir dir="${emma.dir}" />
         <get src="${jmsjca.emma.url}"
              dest="${emma.dir}/emma.jar"
@@ -168,11 +171,14 @@
              verbose="true"
              usetimestamp="true"
         />   	
-    </target>
+    </target>	
 
     <target name="init" unless="init.ed">
         <available property="apis-init.ed" file="${stc.api.dir}/junit.jar" />
+        <available property="emma-init.ed" file="${emma.dir}/emma_ant.jar" />
         <antcall target="init-apis" />
+        <antcall target="init-emma" />
+   	     <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
         <property name="init.ed" value="true" />
     </target>
 
