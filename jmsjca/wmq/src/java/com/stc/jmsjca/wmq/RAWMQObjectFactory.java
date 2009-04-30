@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.wmq;
 
+import com.stc.jmsjca.core.AdminDestination;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
@@ -32,23 +34,30 @@ import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.jms.XASession;
 import javax.transaction.xa.XAResource;
 
+import java.lang.reflect.Method;
 import java.util.Properties;
 
 /**
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWMQObjectFactory.class);
     
+    /**
+     * The option name for BROKERDURSUBQUEUE
+     */
+    public static final String BROKERDURSUBQUEUE = "BrokerDurSubQueue";
+
     /**
      * Protocol
      */
@@ -183,8 +192,8 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         if (xa) {
             if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
                 newMode = RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC;
-                sLog.warn(LOCALE.x("E820: Current delivery mode {0} not supported; "
-                    + " not supported; switching to {1}", 
+                sLog.warn(LOCALE.x("E820: Delivery mode {0} is not supported; "
+                    + " using {1} instead.", 
                     RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mode],
                     RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[newMode]));
             }
@@ -446,5 +455,99 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             mc, descr, isXa, isTransacted, acknowledgmentMode,
             sessionClass);
     }
+    
+    /**
+     * createDestination()
+     *
+     * @param sess Session
+     * @param isXA boolean
+     * @param isTopic boolean
+     * @param activationSpec RAJMSActivationSpec
+     * @param fact MCF
+     * @param ra RAJMSResourceAdapter
+     * @param destName String
+     * @param options TODO
+     * @param sessionClass TODO
+     * @return Destination
+     * @throws JMSException failure
+     */
+    public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
+        String destName, Properties options, Class sessionClass) throws JMSException {
+        
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("createDestination(" + destName + ")");
+        }
 
+        // Check for lookup:// destination: this may return an admin destination 
+        Destination ret = adminDestinationLookup(destName);
+        
+        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
+        ret = checkGeneric(ret);
+        
+        // Unwrap admin destination if necessary
+        Properties options2 = null;
+        if (ret != null && ret instanceof AdminDestination) {
+            AdminDestination admindest = (AdminDestination) ret;
+            destName = admindest.retrieveCheckedName();
+            options2 = admindest.retrieveProperties();
+            
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(ret + " is an admin object: embedded name: " + destName);
+            }
+            ret = null;
+        }
+        
+        // Needs to parse jmsjca:// format?
+        Properties options3 = new Properties();
+        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
+            UrlParser u = new UrlParser(destName);
+            options3 = u.getQueryProperties();
+
+            // Reset name from options
+            if (Str.empty(options3.getProperty(Options.Dest.NAME))) {
+                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
+                    + "specify a destination name. Destination names are specified using " 
+                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
+                    options3.getProperty(Options.Dest.ORIGINALNAME)));
+            }
+            destName = options3.getProperty(Options.Dest.NAME);
+        }
+        
+        // Create if necessary
+        if (ret == null) {
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
+            }
+            if (!isTopic) {
+                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
+            } else {
+                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
+            }
+        }
+        
+        // Call setBrokerDurSubQueue()
+        String dursubqueue = null;
+        if (options3 != null) {
+            dursubqueue = options3.getProperty(BROKERDURSUBQUEUE);            
+        }
+        if (options2 != null && dursubqueue == null) {
+            dursubqueue = options2.getProperty(BROKERDURSUBQUEUE);            
+        }
+        if (options != null && dursubqueue == null) {
+            dursubqueue = options.getProperty(BROKERDURSUBQUEUE);            
+        }
+        if (dursubqueue != null) {
+            try {
+                Method m = ret.getClass().getMethod("setBrokerDurSubQueue", new Class[] {String.class });
+                m.invoke(ret, new Object[] {dursubqueue });
+            } catch (Exception e) {
+                Exc.jmsExc(LOCALE.x("E842: Could not set the broker durable " 
+                    + "subscriber subqueue [{0}] on topic [{1}]: {2}",
+                    dursubqueue, destName, e), e);
+            }
+        }
+        
+        return ret;
+    }
 }

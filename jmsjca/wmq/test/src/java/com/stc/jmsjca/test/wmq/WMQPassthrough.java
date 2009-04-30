@@ -20,6 +20,7 @@ import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.mq.jms.MQTopicConnectionFactory;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
+import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.wmq.RAWMQObjectFactory;
 
 import javax.jms.JMSException;
@@ -34,12 +35,13 @@ import javax.jms.TopicSession;
 import javax.jms.TopicSubscriber;
 
 import java.util.Properties;
+import java.util.logging.Level;
 
 /**
  * Passthrough for MQSeries
  * 
  * @author  fkieviet (rewrite April 2009)
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WMQPassthrough extends Passthrough {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -114,7 +116,12 @@ public class WMQPassthrough extends Passthrough {
         sub.close();
         
         // Unsubscribe
-        sess.unsubscribe(subname);
+        try {
+            sess.unsubscribe(subname);
+        } catch (Exception e) {
+            Exc.checkLinkedException(e);
+            java.util.logging.Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, "Failed to unsubscribe: " + e, e);
+        }
         sess.close();
         conn.close();
     }

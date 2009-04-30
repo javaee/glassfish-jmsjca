@@ -43,5 +43,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-rts"/>
 	<classpathentry kind="lib" path="ext/j2ee.jar"/>
 	<classpathentry kind="lib" path="build/jmsjca"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wl"/>
 	<classpathentry kind="output" path="out"/>
 </classpath>

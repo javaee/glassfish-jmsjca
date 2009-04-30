@@ -39,7 +39,6 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -52,29 +51,9 @@ import java.util.Map.Entry;
  * @version 1.0
  */
 public class TestWLJUStd extends EndToEndBase {
-    public final static String JNDI_FACTORY = "weblogic.jndi.WLInitialContextFactory";
-
-    public static String getJNDIUrl() {
-        String url = System.getProperty("wl.url");
-        if (url == null) {
-            throw new RuntimeException("System property [wl.url] was not found, " +
-                    "should be set to WebLogic server, e.g. t3://blue:7001");
-        }
-        return url;
-    }
     
-    public static String getConnectionUrl() {
-        String url = getJNDIUrl();
-        return url;
-    }
-
-    public static InitialContext getInitialContext() throws Exception {
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
-        env.put(Context.PROVIDER_URL, getJNDIUrl());
-        System.out.println("Connecting to " + getJNDIUrl());
-        InitialContext ctx = new InitialContext(env);
-        return ctx;
+    private InitialContext getInitialContext() throws Exception {
+        return new WLProvider().getInitialContext(this);
     }
 
     public void test001() throws Throwable {

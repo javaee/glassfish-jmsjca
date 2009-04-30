@@ -23,9 +23,7 @@ import javax.jms.Connection;
 import javax.jms.ConnectionMetaData;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Queue;
 import javax.jms.Session;
-import javax.jms.Topic;
 import javax.transaction.xa.XAResource;
 
 import java.util.Properties;
@@ -35,7 +33,7 @@ import java.util.Properties;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class GenericSessionConnection extends SessionConnection {
     private static final Localizer LOCALE = Localizer.get();
@@ -215,20 +213,6 @@ public class GenericSessionConnection extends SessionConnection {
     }
 
     /**
-     * @see com.stc.jmsjca.core.SessionConnection#createQueue(java.lang.String)
-     */
-    public Queue createQueue(String name, Properties options) throws JMSException {
-        return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass).createQueue(name);
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.SessionConnection#createTopic(java.lang.String)
-     */
-    public Topic createTopic(String name, Properties options) throws JMSException {
-        return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass).createTopic(name);
-    }
-    
-    /**
      * @see com.stc.jmsjca.core.SessionConnection#checkGeneric(javax.jms.Destination)
      */
     public Destination checkGeneric(Destination d) throws JMSException {
@@ -254,14 +238,11 @@ public class GenericSessionConnection extends SessionConnection {
     }
 
     /**
-     * @see com.stc.jmsjca.core.SessionConnection#createDestination(com.stc.jmsjca.core.AdminDestination)
+     * @see com.stc.jmsjca.core.SessionConnection#createDestination(boolean, java.lang.String, java.util.Properties)
      */
-    public Destination createDestination(AdminDestination dest) throws JMSException {
-        if (dest instanceof AdminQueue) {
-            return createQueue(dest.retrieveCheckedName(), dest.retrieveProperties());
-        } else {
-            return createTopic(dest.retrieveCheckedName(), dest.retrieveProperties());
-        }
+    public Destination createDestination(boolean isTopic, String name, Properties options) throws JMSException {
+        return mObjFact.createDestination(mSession, mIsXA, isTopic, null, mMC.getManagedConnectionFactory(), 
+            mRA, name, options, mSessionClass);
     }
 }
 

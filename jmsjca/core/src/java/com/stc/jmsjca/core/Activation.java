@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -582,10 +582,10 @@ public class Activation extends ActivationBase {
      */
     protected void logDeliveryInitiationException(int attemptPlusOne, int dt, Exception e) {
         if (!mMinimalReconnectLogging && !mMinimalReconnectLoggingDurSub) {
-        sLog.warn(LOCALE.x("E016: [{0}]: message delivery initiation failed " +
-            "(attempt #{1}); will retry in {2} seconds. " +
-            "The error was: {3}", 
-            getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), e), e);
+            sLog.warn(LOCALE.x("E016: [{0}]: message delivery initiation failed " +
+                "(attempt #{1}); will retry in {2} seconds. " +
+                "The error was: {3}", 
+                getName(), Integer.toString(attemptPlusOne), Integer.toString(dt), e), e);
         } else {
             if (attemptPlusOne > 1) {
                 // Ignore repeated errors

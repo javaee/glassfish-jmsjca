@@ -84,49 +84,11 @@
         <fileset file="${jmsjca.jboss.home.dir}/lib/jmx-invoker-adaptor-client.jar" />
     </path>
 	
-	<path id="emma.lib" >
-	    <pathelement location="${emma.dir}/emma.jar" />
-	    <pathelement location="${emma.dir}/emma_ant.jar" />
-	 </path>
-
-
-
-<!--===========================================================================
-    OLD STUFF - CLEAN UP
--->
-    <!-- 
-    <path id="rts.container.classpath">
-        <fileset file="${stc.api.dir}/j2ee.jar" />
-        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
+    <path id="emma.lib" >
+        <pathelement location="${emma.dir}/emma.jar" />
+        <pathelement location="${emma.dir}/emma_ant.jar" />
     </path>
 
-    <path id="bare-rts.container.classpath">
-        <fileset file="${stc.api.dir}/j2ee.jar" />
-        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-    </path>
-
-    <path id="wl.container.classpath">
-        <fileset file="${wl.install.lib.path}/weblogic.jar" />
-        <fileset file="${wl.install.lib.path}/wlclient.jar" />
-        <fileset file="${wl.install.lib.path}/wljmsclient.jar" />
-        <fileset file="${wl.install.lib.path}/wljmxclient.jar" />
-        <fileset file="${stc.api.dir}/j2ee.jar" />
-        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-    </path>
-
-    <path id="was.container.classpath">
-        <fileset dir="${was.install.lib.path}">
-            <include name="*.jar" />
-        </fileset>
-        <fileset file="${stc.api.dir}/j2ee.jar" />
-        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-    </path>
-
-    <path id="sjsas.container.classpath">
-        <fileset file="${stc.api.dir}/j2ee.jar" />
-        <fileset file="${stc.lib.dir}/com.stc.rts.deployimpl.jar" />
-    </path>
--->
     
 <!--===========================================================================
     MAIN TARGET
@@ -178,7 +140,7 @@
         <available property="emma-init.ed" file="${emma.dir}/emma_ant.jar" />
         <antcall target="init-apis" />
         <antcall target="init-emma" />
-   	     <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+        <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
         <property name="init.ed" value="true" />
     </target>
 
@@ -197,16 +159,16 @@
         </ant>
     </target>
 
-	<!--===========================================================================
-	    emma - enables the use of emma for a given ant run (specify this as the first target)
-	-->	
-	  <target name="emma" description="turns on EMMA instrumentation/reporting" >
-	    <property name="emma.enabled" value="true" />
-	    <!-- specify the directory used to hold instrumented classes -->
-	  	<!-- It is important that this property exist only when emma.enabled=true -->
-	    <property name="out.instr.dir" value="${jmsjca.module.dir}/outinstr" />
-	    <mkdir dir="${out.instr.dir}" />
-	  </target>
+<!--===========================================================================
+    emma - enables the use of emma for a given ant run (specify this as the first target)
+-->	
+    <target name="emma" description="turns on EMMA instrumentation/reporting" >
+        <property name="emma.enabled" value="true" />
+        <!-- specify the directory used to hold instrumented classes -->
+        <!-- It is important that this property exist only when emma.enabled=true -->
+        <property name="out.instr.dir" value="${jmsjca.module.dir}/outinstr" />
+        <mkdir dir="${out.instr.dir}" />
+    </target>
 	
 
 <!--===========================================================================
@@ -283,23 +245,24 @@
            <fileset file="${jmsjca.core.jar.path}"/>
         </path>
         <emma enabled="${emma.enabled}" >
-           <instr instrpathref="emma.jmsjca.core.jar"
-              destdir="${out.instr.dir}"	
-              metadatafile="${coverage.dir}/metadata.emma"
-              merge="true"
-          />
+            <instr instrpathref="emma.jmsjca.core.jar"
+                destdir="${out.instr.dir}"	
+                metadatafile="${coverage.dir}/metadata.emma"
+                merge="true"
+            />
         </emma>   	
     	
-    	<if>
-    	<equals arg1="${emma.enabled}" arg2="true" />
-    	<then>
-           <!-- Copy resources and any additional classes to the directory containing the instrumented classes (without overwriting existing files) -->
-            <copy todir="${out.instr.dir}">
-                <fileset dir="${jmsjca.core.classes.dir}"/>
-            </copy>
-    	</then>
-    	</if>    	
-
+        <if>
+            <equals arg1="${emma.enabled}" arg2="true" />
+            <then>
+            <!-- Copy resources and any additional classes to the directory containing 
+            the instrumented classes (without overwriting existing files) -->
+                <copy todir="${out.instr.dir}">
+                    <fileset dir="${jmsjca.core.classes.dir}"/>
+                </copy>
+            </then>
+        </if>
+        
         <property name="compilecore.ed" value="true" />
     </target>
 
@@ -472,6 +435,15 @@
 -->
     <target name="wmq" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="wmq" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
+    <target name="wl" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="wl" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -703,25 +675,25 @@ or type
         </cvs>
     </target>
 	
-	<target name="emma-report">
-       <!-- junit writes coverage.ec into module root directory -->
-	   <!-- application server should write *.ec into coverage directory -->
-	   <!-- currently source code is not used -->	
-	    <emma enabled="${emma.enabled}">	    	
-	    	<report>
-	            <sourcepath>
-	              <dirset dir="${module.root}" >
-	                <include name="**/java" /> 
-	              </dirset>
-	            </sourcepath>
+    <target name="emma-report" description="Generates an emma report">
+        <!-- junit writes coverage.ec into module root directory -->
+        <!-- application server should write *.ec into coverage directory -->
+        <!-- currently source code is not used -->	
+        <emma enabled="${emma.enabled}">	    	
+            <report>
+                <sourcepath>
+                    <dirset dir="${module.root}" >
+                        <include name="**/java" /> 
+                    </dirset>
+                </sourcepath>
 
-	    		<fileset dir="${coverage.dir}" >
-	        		<include name="*.ec" />
-	        		<include name="*.emma" />
-	        	</fileset>
-	        	<txt outfile="${coverage.dir}/coverage.txt" />
-	    		<html outfile="${coverage.dir}/coverage.html" />
-	      </report>
-		</emma>
-	</target>
+                <fileset dir="${coverage.dir}" >
+                    <include name="*.ec" />
+                    <include name="*.emma" />
+                </fileset>
+                <txt outfile="${coverage.dir}/coverage.txt" />
+                <html outfile="${coverage.dir}/coverage.html" />
+            </report>
+        </emma>
+    </target>
 </project>

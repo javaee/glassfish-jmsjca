@@ -479,7 +479,9 @@ public class SyncDelivery extends Delivery {
                 mActivation.getActivationSpec(),
                 null,
                 mActivation.getRA(),
-                mActivation.getActivationSpec().getDestination());
+                mActivation.getActivationSpec().getDestination(), 
+                null,
+                getSessionClass());
             mCons = o.createMessageConsumer(
                 mSess,
                 mActivation.isCMT() && !mActivation.isXAEmulated(),

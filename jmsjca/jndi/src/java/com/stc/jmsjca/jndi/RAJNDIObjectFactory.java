@@ -17,6 +17,8 @@
 package com.stc.jmsjca.jndi;
 
 import com.stc.jmsjca.core.AdminDestination;
+import com.stc.jmsjca.core.DestinationCacheEntry;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
@@ -27,6 +29,8 @@ import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
+import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -35,9 +39,7 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.XAQueueConnectionFactory;
-import javax.jms.XAQueueSession;
 import javax.jms.XATopicConnectionFactory;
-import javax.jms.XATopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.RefAddr;
@@ -51,7 +53,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -260,27 +262,52 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session, 
      * boolean, boolean, com.stc.jmsjca.core.RAJMSActivationSpec, 
      * com.stc.jmsjca.core.XManagedConnectionFactory, 
-     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String)
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, Properties, Class)
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName) throws JMSException {
-        
-        // Check for local JNDI
+        String destName, Properties options, Class sessionClass) throws JMSException {
+
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");
         }
+
+        if (Str.empty(destName)) {
+            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
+        }
+
+        // Check for lookup:// destination: this may return an admin destination 
         Destination ret = adminDestinationLookup(destName);
         
+        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
         ret = checkGeneric(ret);
         
-        // Unwrap admin destination
+        // Unwrap admin destination if necessary
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).retrieveCheckedName();
+            // Ignore properties and use name only
+            AdminDestination admindest = (AdminDestination) ret;
+            destName = admindest.retrieveCheckedName();
+            
             if (sLog.isDebugEnabled()) {
                 sLog.debug(ret + " is an admin object: embedded name: " + destName);
             }
             ret = null;
+        }
+        
+        // Needs to parse jmsjca:// format?
+        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
+            Properties otherOptions = new Properties();
+            UrlParser u = new UrlParser(destName);
+            otherOptions = u.getQueryProperties();
+
+            // Reset name from options
+            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
+                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
+                    + "specify a destination name. Destination names are specified using " 
+                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
+                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
+            }
+            destName = otherOptions.getProperty(Options.Dest.NAME);
         }
         
         // Check for jndi://
@@ -289,26 +316,32 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
             if (sLog.isDebugEnabled()) {
                 sLog.debug(destName + " is a jndi object: looking up [" + name + "]");
             }
-            ret = (Destination) getJndiObject(ra, activationSpec, fact, null, name);
+            
+            // Check cache
+            if (fact == null) {
+                ret = (Destination) getJndiObject(ra, activationSpec, fact, null, name);
+            } else {
+                DestinationCacheEntry d = isTopic 
+                ? fact.getTopicCache().get(destName) : fact.getQueueCache().get(destName);
+                synchronized (d) {
+                    ret = d.get();
+                    if (ret == null) {
+                        ret = (Destination) getJndiObject(ra, activationSpec, fact, null, name);
+                        d.set(ret);
+                    }
+                }
+            }
         }
-        
+
         // Create if necessary
         if (ret == null) {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
             }
-            if (isXA) {
-                if (isTopic) {
-                    ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
-                } else {
-                    ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
-                }
+            if (!isTopic) {
+                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
             } else {
-                if (isTopic) {
-                    ret = sess.createTopic(destName);
-                } else {
-                    ret = sess.createQueue(destName);
-                }
+                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
             }
         }
         

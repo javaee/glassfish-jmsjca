@@ -19,9 +19,7 @@ package com.stc.jmsjca.core;
 import javax.jms.ConnectionMetaData;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Queue;
 import javax.jms.Session;
-import javax.jms.Topic;
 import javax.transaction.xa.XAResource;
 
 import java.util.Properties;
@@ -36,11 +34,9 @@ import java.util.Properties;
  * container and hence does not use XA.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class SessionConnection {
-//    private static Logger sLog = Logger.getLogger(SessionConnection.class);
-
     /**
      * Returns the JMS session so that the application can delegate calls to it.
      *
@@ -115,35 +111,6 @@ public abstract class SessionConnection {
      * @return boolean
      */
     public abstract boolean isXA();
-
-    /**
-     * Creates a destination; used for interceptors such as WebLogic
-     * 
-     * @param name destination name
-     * @param options Optional settings that convey how to create the destination
-     * @return destination
-     * @throws JMSException on failure
-     */
-    public abstract Queue createQueue(String name, Properties options) throws JMSException;
-
-    /**
-     * Creates a destination; used for interceptors such as WebLogic
-     * 
-     * @param name destination name
-     * @param options Optional settings that convey how to create the destination
-     * @return destination
-     * @throws JMSException on failure
-     */
-    public abstract Topic createTopic(String name, Properties options) throws JMSException;
-
-    /**
-     * Creates a JMS client specific destination based on an administrative object
-     * 
-     * @param dest administrative object
-     * @return JMS client specific destination
-     * @throws JMSException propagated
-     */
-    public abstract Destination createDestination(AdminDestination dest) throws JMSException;
     
     /**
      * Converts optionally from a genericra destination to an admin destination
@@ -153,4 +120,15 @@ public abstract class SessionConnection {
      * @throws JMSException on conversion failure
      */
     public abstract Destination checkGeneric(Destination d) throws JMSException;
+
+    /**
+     * @param isTopic true if the requested object is a topic
+     * @param name destination name
+     * @param options optional (may be null): destination options
+     * @return queue or topic
+     * @throws JMSException propagated
+     */
+    public abstract Destination createDestination(boolean isTopic, String name, Properties options)
+        throws JMSException;
+   
 }

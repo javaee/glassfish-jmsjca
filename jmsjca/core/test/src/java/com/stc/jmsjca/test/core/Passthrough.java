@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -914,7 +914,7 @@ public abstract class Passthrough {
          * @throws JMSException fault
          */
         public int queueSize() throws JMSException {
-            QueueBrowser qb = mSession.createBrowser(mSession.createQueue(getName()));
+            QueueBrowser qb = mSession.createBrowser(createQueue(mSession, getName()));
             int count = 0;
             for (Enumeration en = qb.getEnumeration(); en.hasMoreElements();) {
                 en.nextElement();

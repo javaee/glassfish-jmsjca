@@ -19,8 +19,6 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
-import com.stc.jmsjca.util.Str;
-import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.ConnectionMetaData;
 import javax.jms.Destination;
@@ -45,7 +43,6 @@ import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * Manages a Session; it holds a wrapper (WSession) and manages the JMS Session object
@@ -56,7 +53,7 @@ import java.util.Properties;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
@@ -793,7 +790,7 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Topic createTopic(String name) throws JMSException {
-        return (Topic) createDestination(name, true);
+        return (Topic) mSessionConnection.createDestination(true, name, null);
     }
 
     /**
@@ -804,49 +801,9 @@ public class JSession {
      * @throws JMSException on failure
      */
     public Queue createQueue(String name) throws JMSException  {
-        return (Queue) createDestination(name, false);
+        return (Queue) mSessionConnection.createDestination(false, name, null);
     }
-    
-    private Destination createDestination(String name, boolean isTopic) throws JMSException {
-        if (Str.empty(name)) {
-            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
-        }
-        // Process lookup://; will return concrete destination, admin destination or null
-        Destination ret = mManagedConnection.getManagedConnectionFactory().getObjFactory().adminDestinationLookup(name);
-        
-        if (ret == null) {
-            // No lookup://... is of jmsjca:// form?
-            Properties options = null;
-            if (name.startsWith(Options.Dest.PREFIX)) {
-                UrlParser u = new UrlParser(name);
-                options = u.getQueryProperties();
-                
-                // Save original name
-                options.setProperty(Options.Dest.ORIGINALNAME, name);
-                
-                // Reset name from options
-                name = options.getProperty(Options.Dest.NAME);
-                
-                if (Str.empty(name)) {
-                    throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
-                        + "specify a destination name. Destination names are specified using " 
-                        + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
-                        options.getProperty(Options.Dest.ORIGINALNAME)));
-                }
-            }
-            
-            // create in provider specific way (will take care of jndi:// if appropriate)
-            return isTopic ?  (Destination) mSessionConnection.createTopic(name, options) 
-                : (Destination) mSessionConnection.createQueue(name, options);
-        } else if (ret instanceof AdminDestination) {
-            // Admin destination
-            return createDestination((AdminDestination) ret);
-        } else {
-            // Concrete destination
-            return ret;
-        }
-    }
-    
+
     /**
      * Creates a JMS client specific destination based on an administrative object
      * 
@@ -855,7 +812,8 @@ public class JSession {
      * @throws JMSException propagated
      */
     public Destination createDestination(AdminDestination dest) throws JMSException {
-        return mSessionConnection.createDestination(dest);
+        return mSessionConnection.createDestination(dest instanceof AdminTopic, 
+            dest.retrieveCheckedName(), dest.retrieveProperties());
     }
     
     /**

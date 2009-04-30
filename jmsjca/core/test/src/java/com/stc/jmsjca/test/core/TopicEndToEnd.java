@@ -39,7 +39,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {
@@ -611,7 +611,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
             conn.setClientID(clientID);
         }
         TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
-        Topic t = sess.createTopic(p.getTopic1Name());
+        Topic t = p.createTopic(sess, p.getTopic1Name());
         sess.createDurableSubscriber(t, p.getDurableTopic1Name1());
 
         try {
@@ -701,7 +701,7 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 conn.setClientID(clientID);
             }
             TopicSession sess = conn.createTopicSession(true, Session.SESSION_TRANSACTED);
-            Topic t = sess.createTopic(p.getTopic1Name());
+            Topic t = p.createTopic(sess, p.getTopic1Name());
             sess.createDurableSubscriber(t, p.getDurableTopic1Name1());
      
             p.drainQ2();

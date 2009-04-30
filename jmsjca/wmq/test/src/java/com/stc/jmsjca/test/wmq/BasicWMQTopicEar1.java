@@ -16,7 +16,10 @@
 
 package com.stc.jmsjca.test.wmq;
 
+import com.stc.jmsjca.container.Container;
+import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.test.core.JMSProvider;
+import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
 
 /**
@@ -29,4 +32,67 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
     public JMSProvider getJMSProvider() {
         return new WMQProvider();
     }
+
+    /**
+     * Topic to queue
+     * XA on in, XA on out
+     * serial-mode
+     * Durable
+     * Uses setBrokerDurSubQueue()
+     *
+     * @throws Throwable
+     */
+    public void SetBrokerDurSubQueue() throws Throwable {
+        Passthrough p = createPassthrough(mServerProperties);
+               
+        EmbeddedDescriptor dd = getDD();
+        ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
+        spec.setContextName("setBrokerDurSubQueue");
+        // If not using ".*" at the end of the name, the queue has to be created in MQSeries manually.
+        spec.setDestination("jmsjca://?name=Topic1&BrokerDurSubQueue=SYSTEM.JMS.D.BASEBALL");
+        spec.setDestinationType(javax.jms.Topic.class.getName());
+        spec.setConcurrencyMode("cc");
+        spec.setSubscriptionDurability("Durable");
+        String subscriptionName = p.getDurableTopic1Name1();
+        spec.setSubscriptionName(subscriptionName);
+        String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
+        spec.setClientId(clientID);
+        dd.update();
+
+        // Deploy
+        Container c = createContainer();
+        
+        try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+
+            p.removeDurableSubscriber(clientID, p.getTopic1Name(), subscriptionName);
+            
+            p.setBatchId(900);
+
+            // deploy bean to create a durable subscription then undeploy it
+            c.deployModule(mTestEar.getAbsolutePath());
+            waitUntilRunning(c);
+            c.undeploy(mTestEarName);
+
+            p.drainQ2();
+
+            // send messages to T1 - these should be stored in the durable subscription
+            p.sendToT1();
+
+            // now redeploy the bean 
+            // this should then receive the messages from the durable subscription
+            // and sends them on to Q2
+            c.deployModule(mTestEar.getAbsolutePath());
+            waitUntilRunning(c);
+            p.readFromQ2(); 
+
+            c.undeploy(mTestEarName);
+        } finally {
+            Container.safeClose(c);
+            Passthrough.safeClose(p);
+        }
+    }
+    
 }

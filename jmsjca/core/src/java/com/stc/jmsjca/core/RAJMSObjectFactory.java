@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -378,7 +378,6 @@ public abstract class RAJMSObjectFactory {
     
     /**
      * createDestination()
-     * This is called by the Delivery classes for inbound message delivery
      *
      * @param sess Session
      * @param isXA boolean
@@ -387,28 +386,55 @@ public abstract class RAJMSObjectFactory {
      * @param fact MCF
      * @param ra RAJMSResourceAdapter
      * @param destName String
+     * @param options optional settings for destination creation (may be null)
+     * @param sessionClass exact interface class of the session
      * @return Destination
      * @throws JMSException failure
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName) throws JMSException {
+        String destName, Properties options, Class sessionClass) throws JMSException {
         
-        // Check for local JNDI
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");
         }
+
+        if (Str.empty(destName)) {
+            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
+        }
+
+        // Check for lookup:// destination: this may return an admin destination 
         Destination ret = adminDestinationLookup(destName);
         
+        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
         ret = checkGeneric(ret);
         
-        // Unwrap admin destination
+        // Unwrap admin destination if necessary
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).retrieveCheckedName();
+            // get name, and ignore options
+            AdminDestination admindest = (AdminDestination) ret;
+            destName = admindest.retrieveCheckedName();
+            
             if (sLog.isDebugEnabled()) {
                 sLog.debug(ret + " is an admin object: embedded name: " + destName);
             }
             ret = null;
+        }
+        
+        // Needs to parse jmsjca:// format?
+        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
+            Properties otherOptions = new Properties();
+            UrlParser u = new UrlParser(destName);
+            otherOptions = u.getQueryProperties();
+
+            // Reset name from options
+            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
+                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
+                    + "specify a destination name. Destination names are specified using " 
+                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
+                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
+            }
+            destName = otherOptions.getProperty(Options.Dest.NAME);
         }
         
         // Create if necessary
@@ -416,27 +442,10 @@ public abstract class RAJMSObjectFactory {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
             }
-            if (isXA) {
-                if (isTopic) {
-                    // Patch: topic/queue session confusion
-                    if (sess instanceof XATopicSession) {
-                        ret = ((XATopicSession) sess).getTopicSession().createTopic(destName);
-                    } else {
-                        ret = sess.createTopic(destName);
-                    }
-                } else {
-                    if (sess instanceof XAQueueSession) {
-                        ret = ((XAQueueSession) sess).getQueueSession().createQueue(destName);
-                    } else {
-                        ret = sess.createQueue(destName);
-                    }
-                }
+            if (!isTopic) {
+                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
             } else {
-                if (isTopic) {
-                    ret = sess.createTopic(destName);
-                } else {
-                    ret = sess.createQueue(destName);
-                }
+                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
             }
         }
         

@@ -35,12 +35,16 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WLPassthrough extends Passthrough {
+    private WLProvider mProvider;
+    private Properties mProperties;
 
     public WLPassthrough(Properties server, JMSProvider provider) {
         super(server, provider);
+        mProvider = (WLProvider) provider;
+        mProperties = server;
     }
 
     /**
@@ -48,7 +52,7 @@ public class WLPassthrough extends Passthrough {
      */
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         try {
-            return (TopicConnectionFactory) TestWLJUStd.getInitialContext().lookup(
+            return (TopicConnectionFactory) mProvider.getInitialContext(mProperties).lookup(
                 "weblogic.jms.XAConnectionFactory");
         } catch (Exception e) {
             throw Exc.jmsExc(LocalizedString.valueOf("Cannot create cf: " + e), e);
@@ -86,7 +90,7 @@ public class WLPassthrough extends Passthrough {
 
     public Queue createQueue(Session s, String name) throws JMSException {
         try {
-            return (Queue) TestWLJUStd.getInitialContext().lookup(name);
+            return (Queue) mProvider.getInitialContext(mProperties).lookup(name);
         } catch (Exception e) {
             throw Exc.jmsExc(LocalizedString.valueOf("Cannot find queue " + name + ": " + e), e);
         }
@@ -94,7 +98,7 @@ public class WLPassthrough extends Passthrough {
 
     public Topic createTopic(Session s, String name) throws JMSException {
         try {
-            return (Topic) TestWLJUStd.getInitialContext().lookup(name);
+            return (Topic) mProvider.getInitialContext(mProperties).lookup(name);
         } catch (Exception e) {
             throw Exc.jmsExc(LocalizedString.valueOf("Cannot find topic " + name + ": " + e), e);
         }

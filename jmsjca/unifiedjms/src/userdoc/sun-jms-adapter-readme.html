@@ -454,7 +454,21 @@ The <i>sun-jms-adapter</i> is a J2EE Connector Architecture 1.5 adapter that all
 <li> The user rollback data prefix <tt>JMS_Sun_JMSJCA_UserRollbackData</tt> used to contain a period which was an illegal character for some JMS Providers. The period has been removed.
 </li>
 </ul>
-<p></p>
+<h4><a name="section-Test-6.0.2">6.0.2</a></h4>
+<ul>
+<li> Full support for MQSeries/WebSphere MQ
+</li>
+<li> Message redelivery:
+<ul>
+<li> <tt>JMS_Sun_JMSJCA_*</tt> property names have been deprecated in favor of <tt>_JMSJCA_*</tt>
+</li>
+<li> <tt>JMSX*</tt> properties are now copied as <tt>_JMSJCA_JMSX*</tt>
+</li>
+</ul>
+</li>
+<li> Destinations can now be specified with additional options
+</li>
+</ul>
 <h2><a name="section-Test-Features">Features</a></h2>
 JMSJCA adapters provide the following advanced features:
 <ul>
@@ -663,11 +677,61 @@ The JMSJCA connector can deliver messages to multiple MDBs concurrently. The fol
 <p>The default value for the <tt>ConcurrencyMode</tt>-parameter is <tt>serial</tt>.
 </p>
 <p></p>
-<h2><a name="section-Test-AdministrativeObjects">Administrative objects</a></h2>
-The <tt>ra.xml</tt> defines two administrative objects: one for a <tt>javax.jms.Queue</tt>, and the other one for a <tt>javax.jms.Topic</tt>. These are generic objects that can be bound in JNDI. When they are created and bound in JNDI, they may not represent physical destinations in the JMS server yet. Only when the application code <b>uses</b> an administrative object is the object actually turned into a JMS destination specific for the JMS server in use. This happens in a manner that is specific for the type of JMS server. For example, for the RAWL adapter, the name of an administrative Queue is interpreted as a name bound in the same JNDI provider as is specified for the adapter.
-<p>The destination in an activation spec can also be specified as an administrative object. To indicate that the <tt>destination</tt> parameter in an activation spec denotes an object that should be looked up, prefix the name with <tt>lookup://</tt>.
+<p></p>
+<p></p>
+<h2><a name="section-Test-RAOptions">RA Options</a></h2>
+The following RA options can be defined
+<table class="wikitable" border="1">
+<tr><th>Parameter name</th><th>in/out</th><th>Meaning</th></tr>
+<tr><td><tt>JMSJCA.NoXA</tt></td><td>in/out</td><td>if set to <tt>true</tt>, this indicates that the resource adapter should not use XA. This can be used in case the JMS provider is not configured to use XA. This feature can also be used when the resource adapter is used outside of the application server. See the note on <i>transaction control</i> below.</td></tr>
+<tr><td><tt>JMSJCA.LocatorClass</tt></td><td>in/out</td><td>Specifies the Java class name of the class that will be used to access the transaction manager in the application server. The transaction manager is used in case of temporary destinations (in order to delete them when the connection closes) and when messages are moved to the dead letter queue. The default value will most likely suffice.</td></tr>
+<tr><td><tt>JMSJCA.redeliveryredirect</td><td>in</td><td>If set to <tt>true</tt>, in the case of messages being sent to dead letter queue, messages will be redirected rather than copied.</td></tr>
+<tr><td><tt>JMSJCA.redeliveryhandling</tt></td><td>in</td><td>specifies the behavior of the dead letter queue. See below.</td></tr>
+<tr><td><tt>JMSJCA.concurrencymode</tt></td><td>in</td><td>allows the concurrency mode to be overridden. Values are <tt>sync</tt>, <tt>CC</tt>, or <tt>serial</tt>. This is useful in particular cases (e.g. FIFO modes in STCMS) where the default concurrency mode does not suffice.</td></tr>
+<tr><td><tt>JMSJCA.ACC</tt></td><td>out</td><td>if set to <tt>true</tt> this indicates that the resouce adapter should behave as if it is running inside a client container. This means that the resource adapter will not be under the control of a transaction manager. The default is false.  This property can also be set as a system property.</td></tr>
+<tr><td><tt>JMSJCA.IgnoreTx</tt></td><td>out</td><td>if set to <tt>true</tt>, the resource adapter will ignore the <tt>isTransacted</tt> parameter to the method <tt>createSession(isTransacted, ackmode)</tt> and equivalent functions and always change this parameter to <tt>isTransacted=true</tt> and the <tt>ackmode</tt> parameter is set to <tt>TRANSACTED</tt>. The default value is the opposite of <tt>JMSJCA.ACC</tt>.  This property can also be set as a system property.</td></tr>
+<tr><td><tt>JMSJCA.BypassRA</tt></td><td>out</td><td>if set to <tt>true</tt>, this indicates that factories should not delegate to the resource adapter, but will instead delegate to the "native" JMS connection factory directly. The default is false. This property can also be set as a system property.</td></tr>
+<tr><td><tt>JMSJCA.Strict</tt></td><td>out</td><td>if set to <tt>true</tt>, the adapter will behave as close to the J2EE spec as possible. This property can also be set as a system property. See notes of specific adapters.</td></tr>
+<tr><td><tt>JMSJCA.sep</tt></td><td>in/out</td><td>To allow multiple properties to be specified in one single line (useful for some administrative consoles that limit the user input to one line), this options allows for a character to be specified that will be used to delimit multiple options. Example: "<tt>JMSJCA.sep=,JMSJCA.NoXA=true,JMSJCA.ACC=true</tt>" specifies two options: <tt>JMSJCA.NoXA = true</tt> and <tt>JMSJCA.ACC = true</tt>. Note that the separator can be escaped with a backslash in case it needs to be used as part of an option-value. Example: "<tt>JMSJCA.sep=*JMSJCA.NoXA=true*queuepattern=Q.\*</tt>" yields two values: <tt>JMSJCA.NoXA=true</tt> and <tt>queuepattern=Q.*</tt></td></tr>
+<tr><td><tt>JMSJCA.nocfcache</tt></td><td>out</td><td>Disable connection factory caching. Default: false, but may depend on particular connector (e.g. WL for which it is set to true). Can be set to true for those cases where connection factories constitute live connections. In case of connection failures, these connection factories should not be cached but recreated.</td></tr>
+<tr><td><tt>JMSJCA.messagewrapping</tt></td><td>in</td><td>Always create a message wrapper around a message when it gets delivered to the MDB which allows the application code to associate state with the message in case the message gets redelivered. See Message Wrapping. Possible values: 0=auto, 1=always. Default: 1.</td></tr>
+<tr><td><tt>JMSJCA.selector</tt></td><td>in</td><td>Specifies a default selector for all activations. See Selectors. Default: ""</td></tr>
+<tr><td><tt>JMSJCA.ForceBMT</tt></td><td>in</td><td>When set to true, it will ignore the application server's directive to enlist receiving the message part of the transaction that spans the Message Driven Bean, and will ensure that receiving the message happens in a separate transaction. In other words: it ignores the CMT directive and will behave as if the application server had indicated BMT. Default: false.</td></tr>
+<tr><td>JMSJCA.idletimeout</tt></td><td>out</td><td>This parameter is used for connection validation. If a connection is not used successfully for a period longer than the IdleTimeout period, the connection is marked as invalid. "Successfully" is defined as a msg was sent or received without an exception from the underlying JMS implementation.</td></tr>
+<tr><td><tt>ProducerPooling</tt></td><td>out</td><td>A boolean that indicates if producers are pooled by the connector. For some JMS providers JMS producers (topic-publishers and queue-senders) are expensive to create because it may involve creating a socket connection. When ProducerPooling is turned on, the socket resources of a producer will not be closed when the application closes the producer. Instead, the producer will be returned to a pool that is tied to the session. The next time the application uses a producer on the session, it will be reused from the pool. Default: false, but for some JMS providers this is turned on by default (e.g. STCMS453).</td></tr>
+<tr><td><tt>JMSJCA.minimalreconnectlogging</tt></td><td>in</td><td>If JMSJCA fails to connect to the JMS Provider upon an inbound activation, JMSJCA will retry periodically until the connection can be established. Every time a connection attempt fails, an error is logged. There are cases where it is expected and valid for these connection attempts to fail, for example in a cluster where multiple nodes try to connect to the same durable subscriber. When this option is specifed, and the value is set to 1, i.e. <tt>JMSJCA.minimalreconnectlogging=1</tt>, only a single error is logged upon the first failed connection attempt.</td></tr>
+<tr><td><tt>JMSJCA.minimalreconnectloggingds</tt></td><td>in</td><td>See <tt>JMSJCA.minimalreconnectlogging</tt>. When set to <tt>1</tt>, i.e. <tt>JMSJCA.minimalreconnectloggingds=1</tt>, an <i>informational</i> message will be logged only on the first failed connection attempt if the error is caused by a failure to create a consumer, but failures in making connections and other errors will cause an error to be logged on each failed connection attempt.</td></tr>
+</table>
+<p>Options can be specified in:
 </p>
-<p>The destination obtained through <tt>Session.createQueueue()</tt> or <tt>Session.createTopic()</tt> also uses this approach: if the destination name supplied to these methods starts with <tt>lookup://</tt>, the destination is looked up in the container's JNDI instead of calling <tt>Session.createQueue()</tt> or <tt>Session.createTopic()</tt> on the underlying JMS provider. If the looked up destination is an administrative object, this destination is converted into a JMS provider specific destination using an approach specific for that provider.
+<ol>
+<li> the Options field in the general section of the ra.xml; the options field is a serialized Java properties set. In short: this field consists of key-value pairs. One pair per line. A key is separated from the value using a <tt>=</tt> sign. Comments are indicated using <tt>!</tt> or <tt>#</tt>.
+</li>
+<li> the Options field of the connection factory in the ra.xml, or in the activation spec of the ejb-jar.xml. Format: see 1. Takes precedence over 1.
+</li>
+<li> the connection URL in the form of query parameters. Takes precedence over 2.
+</li>
+</ol>
+<h2><a name="section-Test-Destinations">Destinations</a></h2>
+Destinations can be obtained through calls to <tt>createQueue(String)</tt> or <tt>createTopic(String)</tt>, or as administrative objects.
+<h3><a name="section-Test-OverloadedCreateQueueStringAndCreateTopicString">Overloaded <tt>createQueue(String)</tt> and <tt>createTopic(String)</tt></a></h3>
+JMSJCA provides overloaded functionality for <tt>createQueue(String)</tt> and <tt>createTopic(String)</tt>. Different functionality is provided for different JMS implementations. As an example, for WebLogic, <tt>createQueue(String)</tt> and <tt>createTopic(String)</tt> actually perform a JNDI lookup on the WebLogic server (see the provider notes for WebLogic JMS later in this document). Another example is that for the JNDI JMS provider, <tt>createQueue(jndi://name)</tt> will result in <tt>name</tt> being looked up in the JNDI provider as configured in JMSJCA. See the provider notes on JNDI for more information on this example.
+<p>For all JMS providers, the name that is passed in into <tt>createQueue(String)</tt> and <tt>createTopic(String)</tt> support two special formats:
+</p>
+<ul>
+<li> <tt>lookup://name</tt> is interpreted as <tt>name</tt> being a local JNDI name of destination. This destination can be a concrete destination, or an administrative object (see next section).
+</li>
+<li> <tt>jmsjca://name=DestinationName</tt> is interpreted as a set of options in which the <tt>name</tt> property is typically mandatory and relays the actual destination name. Additional options may be specified that will be interpreted in a manner specific for the JMS implementation. For instance, for WMQ the string <tt>jmsjca:?name=Topic1&BrokerDurSubQueue=myQueue</tt> will create a topic with the name <tt>Topic1</tt> with the BrokerDurSubQueue property on this topic set to <tt>myQueue</tt>. See the provider notes for WMQ for more information on this. In case options are specified as part of the name string <tt>jmsjca://</tt> <i>and</i> in an administrative object, the order of precedence is as follows: 1) specification of <tt>jmsjca://</tt>, 2) options specified in an administrative object.
+</li>
+</ul>
+<p></p>
+<h3><a name="section-Test-AdministrativeObjects">Administrative objects</a></h3>
+The <tt>ra.xml</tt> defines two administrative objects: one for a <tt>javax.jms.Queue</tt>, and the other one for a <tt>javax.jms.Topic</tt>. These are generic objects that can be bound in JNDI. When they are created and bound in JNDI, they may not represent physical destinations in the JMS server yet. Only when the application code <b>uses</b> an administrative object is the object actually turned into a JMS destination specific for the JMS server in use. This happens in a manner that is specific for the type of JMS server. For example, for the RAWL adapter, the name of an administrative Queue is interpreted as a name bound in the same JNDI provider as is specified for the adapter.
+<p>An administrative object has a <tt>Name</tt> attribute. This is a mandatory parameter, and indicates the destination name. This destination name is used to obtain the destination object in a JMS provider specific way. An administrative object also supports an <tt>Options</tt> attribute. This optional parameter specifies additional configuration options for the destination. Usage is specific to the JMS implementation. For an example, see WMQ.
+</p>
+<p>Administrative objects can be used both for inbound and for outbound: the destination in an activation spec can be specified as an administrative object. To indicate that the <tt>destination</tt> parameter in an activation spec denotes an object that should be looked up, prefix the name with <tt>lookup://</tt>.
+</p>
+<p>The destination obtained through <tt>Session.createQueueue()</tt> or <tt>Session.createTopic()</tt> also uses this approach: if the destination name supplied to these methods starts with <tt>lookup://</tt>, the destination is looked up in the container's JNDI instead of calling <tt>Session.createQueue()</tt> or <tt>Session.createTopic()</tt> on the underlying JMS provider. If the looked up destination is an administrative object, this destination is converted into a JMS provider specific destination using an approach specific for that provider. Of course the application code can also lookup the administrative object in JNDI, and pass it to methods such as <tt>createProducer()</tt>.
 </p>
 <h4><a name="section-Test-Example1">Example 1</a></h4>
 A JNDI adapter is configured to use a JNDI provider on server X. An administrative object is created and bound in the application server's JNDI using the name <tt>orders</tt>. The <tt>name</tt> attribute of the administrative object is specified as <tt>jndi://queues/q1234</tt>. Assume the application code looks like this:
@@ -690,39 +754,11 @@ An STCMS adapter is used. An administrative object is created and bound in the a
 This will result in a lookup in the container's jndi of the object with the jndi-name <tt>jms/destinations/orders</tt>. The resulting object is an administrative object containing the name <tt>q1234</tt>. The adapter will call <tt>session.createQueue("q1234")</tt> on the STCMS JMS client, and return the resulting object.
 <p></p>
 <p></p>
-<h2><a name="section-Test-RAOptions">RA Options</a></h2>
-The following RA options can be defined
-<table class="wikitable" border="1">
-<tr><th>Parameter name</th><th>in/out</th><th>Meaning</th></tr>
-<tr><td><tt>JMSJCA.NoXA</tt></td><td>in/out</td><td>if set to <tt>true</tt>, this indicates that the resource adapter should not use XA. This can be used in case the JMS provider is not configured to use XA. This feature can also be used when the resource adapter is used outside of the application server. See the note on <i>transaction control</i> below.</td></tr>
-<tr><td><tt>JMSJCA.LocatorClass</tt></td><td>in/out</td><td>Specifies the Java class name of the class that will be used to access the transaction manager in the application server. The transaction manager is used in case of temporary destinations (in order to delete them when the connection closes) and when messages are moved to the dead letter queue. The default value will most likely suffice.</td></tr>
-<tr><td><tt>JMSJCA.redeliveryredirect</td><td>in</td><td>If set to <tt>true</tt>, in the case of messages being sent to dead letter queue, messages will be redirected rather than copied.</td></tr>
-<tr><td><tt>JMSJCA.redeliveryhandling</tt></td><td>in</td><td>specifies the behavior of the dead letter queue. See below.</td></tr>
-<tr><td><tt>JMSJCA.concurrencymode</tt></td><td>in</td><td>allows the concurrency mode to be overridden. Values are <tt>sync</tt>, <tt>CC</tt>, or <tt>serial</tt>. This is useful in particular cases (e.g. FIFO modes in STCMS) where the default concurrency mode does not suffice.</td></tr>
-<tr><td><tt>JMSJCA.ACC</tt></td><td>out</td><td>if set to <tt>true</tt> this indicates that the resouce adapter should behave as if it is running inside a client container. This means that the resource adapter will not be under the control of a transaction manager. The default is false.  This property can also be set as a system property.</td></tr>
-<tr><td><tt>JMSJCA.IgnoreTx</tt></td><td>out</td><td>if set to <tt>true</tt>, the resource adapter will ignore the <tt>isTransacted</tt> parameter to the method <tt>createSession(isTransacted, ackmode)</tt> and equivalent functions and always change this parameter to <tt>isTransacted=true</tt> and the <tt>ackmode</tt> parameter is set to <tt>TRANSACTED</tt>. The default value is the opposite of <tt>JMSJCA.ACC</tt>.  This property can also be set as a system property.</td></tr>
-<tr><td><tt>JMSJCA.BypassRA</tt></td><td>out</td><td>if set to <tt>true</tt>, this indicates that factories should not delegate to the resource adapter, but will instead delegate to the "native" JMS connection factory directly. The default is false. This property can also be set as a system property.</td></tr>
-<tr><td><tt>JMSJCA.Strict</tt></td><td>out</td><td>if set to <tt>true</tt>, the adapter will behave as close to the J2EE spec as possible. This property can also be set as a system property. See notes of specific adapters.</td></tr>
-<tr><td><tt>JMSJCA.sep</tt></td><td>in/out</td><td>To allow multiple properties to be specified in one single line (useful for some administrative consoles that limit the user input to one line), this options allows for a character to be specified that will be used to delimit multiple options. Example: "<tt>JMSJCA.sep=,JMSJCA.NoXA=true,JMSJCA.ACC=true</tt>" specifies two options: <tt>JMSJCA.NoXA = true</tt> and <tt>JMSJCA.ACC = true</tt>. Note that the separator can be escaped with a backslash in case it needs to be used as part of an option-value. Example: "<tt>JMSJCA.sep=*JMSJCA.NoXA=true*queuepattern=Q.\*</tt>" yields two values: <tt>JMSJCA.NoXA=true</tt> and <tt>queuepattern=Q.*</tt></td></tr>
-<tr><td><tt>JMSJCA.nocfcache</tt></td><td>out</td><td>Determines if connection factories are cached. Default: true, but may depend on particular connector (e.g. WL). Can be set to false for those cases where connection factories constitute live connections. In case of connection failures, these connection factories should not be cached but recreated.</td></tr>
-<tr><td><tt>JMSJCA.messagewrapping</tt></td><td>in</td><td>Always create a message wrapper around a message when it gets delivered to the MDB which allows the application code to associate state with the message in case the message gets redelivered. See Message Wrapping. Possible values: 0=auto, 1=always. Default: 1.</td></tr>
-<tr><td><tt>JMSJCA.selector</tt></td><td>in</td><td>Specifies a default selector for all activations. See Selectors. Default: ""</td></tr>
-<tr><td><tt>JMSJCA.ForceBMT</tt></td><td>in</td><td>When set to true, it will ignore the application server's directive to enlist receiving the message part of the transaction that spans the Message Driven Bean, and will ensure that receiving the message happens in a separate transaction. In other words: it ignores the CMT directive and will behave as if the application server had indicated BMT. Default: false.</td></tr>
-<tr><td>JMSJCA.idletimeout</tt></td><td>out</td><td>This parameter is used for connection validation. If a connection is not used successfully for a period longer than the IdleTimeout period, the connection is marked as invalid. "Successfully" is defined as a msg was sent or received without an exception from the underlying JMS implementation.</td></tr>
-<tr><td><tt>ProducerPooling</tt></td><td>out</td><td>A boolean that indicates if producers are pooled by the connector. For some JMS providers JMS producers (topic-publishers and queue-senders) are expensive to create because it may involve creating a socket connection. When ProducerPooling is turned on, the socket resources of a producer will not be closed when the application closes the producer. Instead, the producer will be returned to a pool that is tied to the session. The next time the application uses a producer on the session, it will be reused from the pool. Default: false, but for some JMS providers this is turned on by default (e.g. STCMS453).</td></tr>
-<tr><td><tt>JMSJCA.minimalreconnectlogging</tt></td><td>in</td><td>If JMSJCA fails to connect to the JMS Provider upon an inbound activation, JMSJCA will retry periodically until the connection can be established. Every time a connection attempt fails, an error is logged. There are cases where it is expected and valid for these connection attempts to fail, for example in a cluster where multiple nodes try to connect to the same durable subscriber. When this option is specifed, and the value is set to 1, i.e. <tt>JMSJCA.minimalreconnectlogging=1</tt>, only a single error is logged upon the first failed connection attempt.</td></tr>
-<tr><td><tt>JMSJCA.minimalreconnectloggingds</tt></td><td>in</td><td>See <tt>JMSJCA.minimalreconnectlogging</tt>. When set to <tt>1</tt>, i.e. <tt>JMSJCA.minimalreconnectloggingds=1</tt>, an <i>informational</i> message will be logged only on the first failed connection attempt if the error is caused by a failure to create a consumer, but failures in making connections and other errors will cause an error to be logged on each failed connection attempt.</td></tr>
-</table>
-<p>Options can be specified in:
-</p>
-<ol>
-<li> the Options field in the general section of the ra.xml; the options field is a serialized Java properties set. In short: this field consists of key-value pairs. One pair per line. A key is separated from the value using a <tt>=</tt> sign. Comments are indicated using <tt>!</tt> or <tt>#</tt>.
-</li>
-<li> the Options field of the connection factory in the ra.xml, or in the activation spec of the ejb-jar.xml. Format: see 1. Takes precedence over 1.
-</li>
-<li> the connection URL in the form of query parameters. Takes precedence over 2.
-</li>
-</ol>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
 <h2><a name="section-Test-JMXManagement">JMX Management</a></h2>
 Each JMSJCA Resource Adapter can specify the name of an MBean. This MBean can be used to access some generic management properties of the adapter.
 <table class="wikitable" border="1">
@@ -889,7 +925,8 @@ simply redirected. In the first case, the payload of the new message is set as f
 Note that copying the payload of an ObjectMessage may cause classloader problems 
 since the context classloader is not properly set. In this case the redelivery 
 handler should be configured to redirect the message instead. 
-The new message will have properties as follows:
+<p>The message properties of the copied message are as follows:
+</p>
 <ul>
 <li> JMS properties
 <ul>
@@ -915,27 +952,31 @@ The new message will have properties as follows:
 </li>
 </ul>
 </li>
+<li> JMSX properties: these are properties that are provider specific, and they are copied as <tt>_JMSJCA_JMSX*</tt>
+</li>
 <li> All user defined properties: copied
 </li>
 <li> Additional properties:
 </li>
 </ul>
 <table class="wikitable" border="1">
-<tr><th>Property</th><th>Meaning</th></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_RedeliveryCount</tt></td><td>number of times the message was seen with the redelivered flag set by JMSJCA. Will accurately reflect the total number of redelivery attempts only if there's one instance of the inbound adapter, and the inbound adapter was not redeployed.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_OriginalDestinationName</tt></td><td>name of the destination as specified in the activation spec</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_OriginalDestinationType</tt></td><td>either "javax.jms.Queue" or "javax.jms.Topic"</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_SubscriberName</tt></td><td>as specified in the activation spec</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_ContextName</tt></td><td>as specified in the activation spec</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_OriginalJMSMessageID</tt></td><td>original msgid as obtained through  <tt>getJMSMessageID()</tt> of the original message</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_OriginalJMSCorrelationID</tt></td><td>original JMS Correlation ID as obtained through <tt>getJMSCorrelationID()</tt> of the original message</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_OriginalClientID</tt></td><td>The ClientID as specified in the activation spec</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_ExceptionClass</tt></td><td>The classname of the exception that was caught by the RA. This is typically a wrapper exception created by the container.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_ExceptionMessage</tt></td><td>The exception message of the exception that was caught by the RA.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_ExceptionStackTrace</tt></td><td>The exception stacktrace of the exception that was caught by the RA.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_UserRollbackData*</tt></td><td>Values specified on the message while being processed in the MDB by the application code. See Message Wrapper.</td></tr>
+<tr><th>Property</th><th>Deprecated property</th><th>Meaning</th></tr>
+<tr><td><tt>_JMSJCA_RedeliveryCount</tt></td><td><tt>JMS_Sun_JMSJCA_RedeliveryCount</tt></td><td>number of times the message was seen with the redelivered flag set by JMSJCA. Will accurately reflect the total number of redelivery attempts only if there's one instance of the inbound adapter, and the inbound adapter was not redeployed.</td></tr>
+<tr><td><tt>_JMSJCA_OriginalDestinationName</tt></td><td><tt>JMS_Sun_JMSJCA_OriginalDestinationName</tt></td><td>name of the destination as specified in the activation spec</td></tr>
+<tr><td><tt>_JMSJCA_OriginalDestinationType</tt></td><td><tt>JMS_Sun_JMSJCA_OriginalDestinationType</tt></td><td>either "javax.jms.Queue" or "javax.jms.Topic"</td></tr>
+<tr><td><tt>_JMSJCA_SubscriberName</tt></td><td><tt>JMS_Sun_JMSJCA_SubscriberName</tt></td><td>as specified in the activation spec</td></tr>
+<tr><td><tt>_JMSJCA_ContextName</tt></td><td><tt>JMS_Sun_JMSJCA_ContextName</tt></td><td>as specified in the activation spec</td></tr>
+<tr><td><tt>_JMSJCA_OriginalJMSMessageID</tt></td><td><tt>JMS_Sun_JMSJCA_OriginalJMSMessageID</tt></td><td>original msgid as obtained through  <tt>getJMSMessageID()</tt> of the original message</td></tr>
+<tr><td><tt>_JMSJCA_OriginalJMSCorrelationID</tt></td><td><tt>JMS_Sun_JMSJCA_OriginalJMSCorrelationID</tt></td><td>original JMS Correlation ID as obtained through <tt>getJMSCorrelationID()</tt> of the original message</td></tr>
+<tr><td><tt>_JMSJCA_OriginalClientID</tt></td><td><tt>JMS_Sun_JMSJCA_OriginalClientID</tt></td><td>The ClientID as specified in the activation spec</td></tr>
+<tr><td><tt>_JMSJCA_ExceptionClass</tt></td><td><tt>JMS_Sun_JMSJCA_ExceptionClass</tt></td><td>The classname of the exception that was caught by the RA. This is typically a wrapper exception created by the container.</td></tr>
+<tr><td><tt>_JMSJCA_ExceptionMessage</tt></td><td><tt>JMS_Sun_JMSJCA_ExceptionMessage</tt></td><td>The exception message of the exception that was caught by the RA.</td></tr>
+<tr><td><tt>_JMSJCA_ExceptionStackTrace</tt></td><td><tt>JMS_Sun_JMSJCA_ExceptionStackTrace</tt></td><td>The exception stacktrace of the exception that was caught by the RA.</td></tr>
+<tr><td><tt>_JMSJCA_UserRollbackData*</tt></td><td><tt>JMS_Sun_JMSJCA_UserRollbackData*</tt></td><td>Values specified on the message while being processed in the MDB by the application code. See Message Wrapper.</td></tr>
+<tr><td><tt>_JMSJCA_JMSX*</tt></td><td>n/a</td><td>Provider specific properties copied from the original message</td></tr>
 </table>
-<p></p>
+<p>This table has a column called "Deprecated property". In JMSJCA versions until 6.0u2, the "old property names" were used. However, these property names were not portable with all JMS providers: MQSeries/WebSphere MQ does not support user defined properties starting with <tt>JMS</tt>. That is why these properties have been renamed and now have the prefix <tt>_JMSJCA</tt>. As not to break existing applications, i.e. for backward compatibility, the old property names are still supported but now have been deprecated. These deprecated property names are <i>not</i> available on JMS providers that do not support them, e.g. MQSeries/WebSphere MQ.
+</p>
 <h4><a name="section-Test-RedirectingMessages">Redirecting messages</a></h4>
 If moving a message fails, the message is redirected instead. This means that the same
 <b>unmodified</b> message is sent to the target destination. This behavior can be 
@@ -961,44 +1002,42 @@ There is a default behavior for message redelivery handling:
 <p></p>
 <h2><a name="section-Test-ExtendedRedeliveryHandling">Extended Redelivery Handling</a></h2>
 Applications can extend the built-in redelivery handling with application code in the MDB. Through functionality exposed by so-called message wrappers, the application can associate state with messages, or can apply specific actions on the message. 
-<p>Arbitrary state can be associated with a message through the <tt>JMS_Sun_JMSJCA_UserRollbackData*</tt> properties. For example, when an MDB calls <tt>message.setStringProperty("JMS_Sun_JMSJCA_UserRollbackData_failuremode", "permanent")</tt> and rolls back the transaction, the next time that the message gets delivered, a call to <tt>message.getStringProperty("JMS_Sun_JMSJCA_UserRollbackData_failuremode")</tt> will yield <tt>"permanent"</tt>.
+<p>Arbitrary state can be associated with a message through the <tt>_JMSJCA_UserRollbackData*</tt> properties. For example, when an MDB calls <tt>message.setStringProperty("_JMSJCA_UserRollbackData_failuremode", "permanent")</tt> and rolls back the transaction, the next time that the message gets delivered, a call to <tt>message.getStringProperty("_JMSJCA_UserRollbackData_failuremode")</tt> will yield <tt>"permanent"</tt>.
 </p>
 <p>Note that this kind of state is not persisted and that its scope is limited to only the MDBs of the activation in which the state was set.
 </p>
-<p>Through functionality exposed in message wrapper, the MDB can also query the number of times the message was seen before by the activation that the MDB is part of. This is done through the <tt>JMS_Sun_JMSJCA_RedeliveryCount</tt> object property which returnes a <tt>java.lang.Integer</tt>. 
+<p>Through functionality exposed in message wrapper, the MDB can also query the number of times the message was seen before by the activation that the MDB is part of. This is done through the <tt>_JMSJCA_RedeliveryCount</tt> object property which returnes a <tt>java.lang.Integer</tt>. 
 </p>
-<p>An MDB can find out what the redelivery handling is for the activation that it is part of: <tt>getStringProperty("JMS_Sun_JMSJCA_RedeliveryHandling")</tt> returns the redelivery string that applies to that message. The MDB can even change the redelivery handling for each particular message using <tt>setStringProperty("JMS_Sun_JMSJCA_RedeliveryHandling", h)</tt> where <tt>h</tt> is the redelivery handling string. This string should be of the same format as redelivery handling strings specified in the activation spec.
+<p>An MDB can find out what the redelivery handling is for the activation that it is part of: <tt>getStringProperty("_JMSJCA_RedeliveryHandling")</tt> returns the redelivery string that applies to that message. The MDB can even change the redelivery handling for each particular message using <tt>setStringProperty("_JMSJCA_RedeliveryHandling", h)</tt> where <tt>h</tt> is the redelivery handling string. This string should be of the same format as redelivery handling strings specified in the activation spec.
 </p>
-<p>An MDB can even stop message delivery altogether by calling <tt>setStringProperty("JMS_Sun_JMSJCA_StopMessageDelivery", reason)</tt> where <tt>reason</tt> is a string that will be printed in the log as the reason why message delivery was stopped. Of course message delivery can only be resumed by an external action such as the call on the activation MBean, disabling/enabling or undeploying/redeploying the application.
+<p>An MDB can even stop message delivery altogether by calling <tt>setStringProperty("_JMSJCA_StopMessageDelivery", reason)</tt> where <tt>reason</tt> is a string that will be printed in the log as the reason why message delivery was stopped. Of course message delivery can only be resumed by an external action such as the call on the activation MBean, disabling/enabling or undeploying/redeploying the application.
 </p>
 <p></p>
 <p></p>
 <h2><a name="section-Test-MessageWrapping">Message wrapping</a></h2>
-Messages that the connector delivers to the MDB may be wrapped in an object that provides additional functionality beyond the functionality provided by the JMS provider. Messages are wrapped in two cases:
-<ul>
-<li> if Hold Until Ack mode or Batch mode is used
-</li>
-<li> if <tt>JMSJCA.messagewrapping</tt> is specified.
-</li>
-</ul>
+Messages that the connector delivers to the MDB may be wrapped in an object that provides additional functionality beyond the functionality provided by the JMS provider. Messages are wrapped by default. They are not wrapped if specified as such using the option: <tt>JMSJCA.messagewrapping</tt>. Wrapping should not be turned off when <i>Hold Until Ack</i> mode or <i>Batch mode</i> is used.
+<p></p>
 <p>The message wrapper implements one of the six <tt>javax.jms</tt> message types. The interface type will be the same as the wrapped message implements. Messages cannot be wrapped if a JMS provider delivers messages that implement more than one of the derived interfaces (TextMessage, BytesMessage, MapMessage, ObjectMessage, StreamMessage). If the JMS provider delivers a proprietary message that implements only <tt>javax.jms.Message</tt>, the wrapper will only expose the <tt>javax.jms.Message</tt> interface.
 </p>
 <p>The message wrapper exposes new functionality through the methods that are declared in the <tt>javax.jms.Message</tt> type, especially the properties methods. A summary of all functionality is listed in the following table. Details on each item can be found in the corresponding sections. 
 </p>
 <p></p>
 <table class="wikitable" border="1">
-<tr><th>Parameter</th><th>Type</th><th>method</th><th>See section on</th><th>Meaning</th></tr>
-<tr><td>-</td><td>-</td><td>acknowledge()</td><td>HUA mode</td><td>To indicate that processing of the message has finished</td></tr>
-<tr><td><tt>JMSJCA.setRollbackOnly</tt></td><td>java.lang.Boolean</td><td>setObjectProperty()</td><td>HUA mode</td><td>To rollback the transaction</td></tr>
-<tr><td><tt>JMSJCA.batchIndex</tt></td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Batch</td><td>Indicates the number of messages that preceded this message</td></tr>
-<tr><td><tt>JMSJCA.batchSize</tt></td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Batch</td><td>Indicates the size of the batch, the same value as in the activation spec</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_UserRollbackData</tt></td><td>java.lang.String</td><td>setStringProperty(), getStringProperty()</td><td>Redelivery</td><td>Gives access to arbitrary data that an application can associate with a message.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_RedeliveryCount</tt></td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Redelivery</td><td>The number of times the message was seen before. A value of zero indicates that the message wasn't seen before.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_RedeliveryHandling</tt></td><td>java.lang.String</td><td>getStringProperty() setStringProperty()</td><td>Redelivery</td><td>The current redelivery handling setting for this message; sets the redelivery handling for this message</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_StopMessageDelivery</tt></td><td>java.lang.String</td><td>setStringProperty()</td><td>Redelivery</td><td>Stops message delivery. The second parameter passed to <tt>setStringProperty</tt> will be printed in the log as the reason for stopping message delivery. Once message delivery is stopped, it can only be resumed by another invocation on the MBean.</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_MBeanServer</tt></td><td>java.lang.Object</td><td>getObjectProperty()</td><td>-</td><td>Returns the MBeanServer used to register the Activation MBean</td></tr>
-<tr><td><tt>JMS_Sun_JMSJCA_MBeanName</tt></td><td>java.lang.String</td><td>getStringProperty()</td><td>-</td><td>Returns the MBean name used to register the Activation MBean</td></tr>
+<tr><th>Parameter</th><th>Deprecated parameter</th><th>Type</th><th>method</th><th>See section on</th><th>Meaning</th></tr>
+<tr><td>-</td><td>-</td><td>-</td><td>acknowledge()</td><td>HUA mode</td><td>To indicate that processing of the message has finished</td></tr>
+<tr><td><tt>JMSJCA.setRollbackOnly</tt></td><td>n/a</td><td>java.lang.Boolean</td><td>setObjectProperty()</td><td>HUA mode</td><td>To rollback the transaction</td></tr>
+<tr><td><tt>JMSJCA.batchIndex</tt></td><td>n/a</td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Batch</td><td>Indicates the number of messages that preceded this message</td></tr>
+<tr><td><tt>JMSJCA.batchSize</tt></td><td>n/a</td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Batch</td><td>Indicates the size of the batch, the same value as in the activation spec</td></tr>
+<tr><td><tt>_JMSJCA_UserRollbackData</tt></td><td><tt>JMS_Sun_JMSJCA_UserRollbackData</tt></td><td>java.lang.String</td><td>setStringProperty(), getStringProperty()</td><td>Redelivery</td><td>Gives access to arbitrary data that an application can associate with a message.</td></tr>
+<tr><td><tt>_JMSJCA_RedeliveryCount</tt></td><td><tt>JMS_Sun_JMSJCA_RedeliveryCount</tt></td><td>java.lang.Integer</td><td>getObjectProperty()</td><td>Redelivery</td><td>The number of times the message was seen before. A value of zero indicates that the message wasn't seen before.</td></tr>
+<tr><td><tt>_JMSJCA_RedeliveryHandling</tt></td><td><tt>JMS_Sun_JMSJCA_RedeliveryHandling</tt></td><td>java.lang.String</td><td>getStringProperty() setStringProperty()</td><td>Redelivery</td><td>The current redelivery handling setting for this message; sets the redelivery handling for this message</td></tr>
+<tr><td><tt>_JMSJCA_StopMessageDelivery</tt></td><td><tt>JMS_Sun_JMSJCA_StopMessageDelivery</tt></td><td>java.lang.String</td><td>setStringProperty()</td><td>Redelivery</td><td>Stops message delivery. The second parameter passed to <tt>setStringProperty</tt> will be printed in the log as the reason for stopping message delivery. Once message delivery is stopped, it can only be resumed by another invocation on the MBean.</td></tr>
+<tr><td><tt>_JMSJCA_MBeanServer</tt></td><td><tt>JMS_Sun_JMSJCA_MBeanServer</tt></td><td>java.lang.Object</td><td>getObjectProperty()</td><td>-</td><td>Returns the MBeanServer used to register the Activation MBean</td></tr>
+<tr><td><tt>_JMSJCA_MBeanName</tt></td><td><tt>JMS_Sun_JMSJCA_MBeanName</tt></td><td>java.lang.String</td><td>getStringProperty()</td><td>-</td><td>Returns the MBean name used to register the Activation MBean</td></tr>
+<tr><td><tt>_JMSJCA_ExceptionClass</tt></td><td><tt>JMS_Sun_JMSJCA_ExceptionClass</tt></td><td>java.lang.String</td><td>getStringProperty()</td><td>Redelivery</td><td>The classname of the exception that was caught by the RA the last time the message was delivered, or null if there is none.</td></tr>
+<tr><td><tt>_JMSJCA_ExceptionMessage</tt></td><td><tt>JMS_Sun_JMSJCA_ExceptionMessage</tt></td><td>java.lang.String</td><td>getStringProperty()</td><td>Redelivery</td><td>The exception message of the exception that was caught by the RA the last time the message was deliverd, or null if there was none.</td></tr>
 </table>
+<p></p>
 <p>Note that the extra properties on the message wrapper do not follow the JMS specification:
 </p>
 <ul>
@@ -1248,7 +1287,7 @@ jmsjca://?distribution=1&amp;subscribername=s[&amp;queue=q][&amp;mbeanname=m][&a
 </table>
 <h4><a name="section-Test-Notes">Notes</a></h4>
 <ul>
-<li> This feature only works with JMS 1.1 compliant servers
+<li> This feature only works with JMS 1.1 compliant servers, not with 1.0.2.
 </li>
 <li> With these feature there are two message consumers: one that reads from the topic and writes to the queue, and another one that reads from the queue. Each MBean has its own MBean. The MBean specified in the activation spec is the one associated with the queue, the one specified in the subscriber name is associated with the topic.
 </li>
@@ -1295,6 +1334,12 @@ To prevent deadlocks in the case of all MDBs rolling back, FIFO mode should ONLY
 
 <p>Run in  <tt>cc</tt>-mode will cause deadlock in the case of any MDB rolling back. This can be fixed either in the client side or the server side. A better solution will be addessed 
 later.
+</p>
+<h3><a name="section-Test-SpecialSupportForGlassFish">Special support for GlassFish</a></h3>
+When creating a connection pool in an application server, the username, password and connection URL must be specified. When doing so in GlassFish, the username can be specified as <span style="font-family:monospace; whitespace:pre;">(reference)</span> where <span style="font-family:monospace; whitespace:pre;">reference</span> is the name of the STCMS instance that is managed by that GlassFish server. For instance, <span style="font-family:monospace; whitespace:pre;">(domain1instance1)</span> refers to the STCMS server managed through the lifecycle listener module with the name <span style="font-family:monospace; whitespace:pre;">domain1instance1</span>. Note the parentheses in <span style="font-family:monospace; whitespace:pre;">(domain1instance1)</span>: they tell jmsjca to interpret the username as an STCMS instance name instead of a verbatim username.
+<p>Likewise, for the connection URL the STCMS instance name can also be specified, e.g. </p>
+<span style="font-family:monospace; whitespace:pre;">stcms://(domain1stcms1)</span>. In this case, the server name will be <span style="font-family:monospace; whitespace:pre;">localhost</span> and the port will be looked up in the lifecycle listener with the name <span style="font-family:monospace; whitespace:pre;">domain1stcms1</span>.
+<p>Since STCMS shares user database and the credentials with GlassFish, the advantage of this is that the credentials don't need to be specified at all, which makes maintenance of the system easier when the password of GlassFish needs to be updated periodically. The same advantage holds true for the port number. Note that the cleartext password cannot be obtained in GlassFish. Instead, a so-called <i>trusted</i> connection is used to connect with STCMS.
 </p>
 <hr />
 <h2><a name="section-Test-SupportForOpenMQJMQSunJavaSystemMessageQueue">Support for OpenMQ / JMQ / Sun Java System Message Queue</a></h2>
@@ -1359,6 +1404,12 @@ The management MBean for management of messages in queues and topics is limited 
 <h4><a name="section-Test-KnownIssueReceiversCannotBeCreatedWhenUsingSyncMode">Known issue: Receivers cannot be created when using <tt>sync</tt> mode</a></h4>
 To enable concurrent processing on queues when using <tt>sync</tt> mode, make sure to provide this option in the configuration of the SJSMQ broker: <tt>imq.autocreate.queue.maxNumActiveConsumers=-1</tt>. The default number of messages sent to one queue-receiver; this is likely too many to have a reasonable concurrency. Therefore it is recommended to set this additional parameter in the broker configuration: <tt>imq.autocreate.queue.consumerFlowLimit=10</tt>
 <p></p>
+<h3><a name="section-Test-SpecialSupportForGlassFish">Special support for GlassFish</a></h3>
+When creating a connection pool in an application server, the username, password and connection URL must be specified. When doing so in GlassFish, the username can be specified as <span style="font-family:monospace; whitespace:pre;">(reference)</span> where <span style="font-family:monospace; whitespace:pre;">reference</span> is the name of the "JMS Host" managed by that GlassFish server. For instance, <span style="font-family:monospace; whitespace:pre;">(default_JMS_host)</span> refers to the default JMS server installed and collocated with GlassFish. Note the parentheses in <span style="font-family:monospace; whitespace:pre;">(default_JMS_host)</span>: they tell jmsjca to interpret the username as a JMQ instance name instead of a verbatim username.
+<p>Likewise, for the connection URL, the </p>
+<span style="font-family:monospace; whitespace:pre;">JMS Host</span> name can also be specified, e.g. <span style="font-family:monospace; whitespace:pre;">mq://(default_JMS_host)</span>. In this case, the server name will be <span style="font-family:monospace; whitespace:pre;">localhost</span> and the port will be looked up in the JMS Host configuration named "<span style="font-family:monospace; whitespace:pre;">default_JMS_host</span>" in GlassFish.
+<p>The advantage of this is that the credentials need to be specified in fewer places in GlassFish and JMQ, which makes maintenance of the system easier. The same advantage holds true for the port number.
+</p>
 <hr />
 <h2><a name="section-Test-SupportForJMSGrid">Support for JMS Grid</a></h2>
 <h4><a name="section-Test-ConnectionURL">ConnectionURL</a></h4>
@@ -1444,6 +1495,12 @@ The following jars should be placed in the application server's classpath:
 </li>
 <li> WebSphere MQ is not the same as Embedded WMQ. The latter is NOT supported.
 </li>
+<li> Destinations can be created with additional information for the <tt>BrokerDurSubQueue</tt> by specifying the parameter <tt>BrokerDurSubQueue</tt> as part of the destination options. Example: <tt>createTopic(jmsjca://name=Topic1&BrokerDurSubQueue=myQueue)</tt> will create <tt>Topic1</tt> with a BrokerDurSubQueue of <tt>myQueue</tt>. The same result can be obtained by creating an administrative object with the <tt>name: Topic1</tt> and <tt>Options: BrokerDurSubQueue=myQueue</tt>.
+</li>
+<li> MQ Series does not exhibit autocommit behavior on an XA Session that is not enlisted in a transaction. This is for instance significant in a  bean managed transaction: when a transaction is not started, calling <tt>producer.send(message)</tt> will cause the message to be sent immediately for most JMS implementations, but for MQSeries this will cause an exception and the queue manager needs to be restarted.
+</li>
+<li> In violation of the JMS Specification, MQ Series does not allow applications to create message properties that start with the string <tt>JMS</tt>. As a result, the <tt>JMS_Sun_JMSJCA_</tt> message property prefix is not used for redelivery handling.
+</li>
 </ul>
 <p></p>
 <hr />
@@ -1487,6 +1544,10 @@ Connection factories and destinations are obtained by connecting to WebLogic's J
 </p>
 <h4><a name="section-Test-XA">XA</a></h4>
 WebLogic JMS 8 and 9 do not support XA on the client side. Hence, XA is emulated (pseudo XA). Pseudo XA supports <tt>commit()</tt> and <tt>rollback()</tt>, but does not support <tt>prepare()</tt> (a no-op) and does not support <tt>recover()</tt>. This limits the reliability. It uses the <tt>LastAgentResource</tt> facility in the Java CAPS Integration Server to increase the reliability. The <tt>LastAgentResource</tt> facility will order the resources in a transaction such the last resource is a WebLogic resource on which a single-phase commit is performed in case of last agent commit optimization.
+<ul>
+<li> As a result of XA emulation, there is no autocommit behavior on an XA Session that is not enlisted in a transaction. This is for instance significant in a  bean managed transaction: when a transaction is not started, calling <tt>producer.send(message)</tt> will cause the message to be sent immediately for most JMS implementations, but for WebLogic JMS the message will not be sent, but will be buffered up until the session is enlisted later and commit is called.
+</li>
+</ul>
 <h4><a name="section-Test-Concurrency">Concurrency</a></h4>
 WebLogic JMS 8 and 9 do not support Connection Consumer mode outside of the WebLogic server; <tt>sync</tt> mode is used instead of Connection Consumer. This implies that concurrent processing is not supported for topics.
 <h4><a name="section-Test-OtherNotes">Other notes</a></h4>
@@ -1609,7 +1670,7 @@ Extending the first example, when the executing this statement: <tt>Session.crea
 In the previous example, if an administrative object had been bound in the container's jndi under the name <tt>jms/q1</tt>, and if the name attribute of this object had been <tt>jndi://queues/Queue1</tt>, then the statement <tt>Session.createQueue("lookup://jms/q1")</tt> would have resulted in a lookup of the name <tt>queues/Queue1</tt> in the JNDI provider with <tt>java.naming.provider.url=stcms://localhost:18007</tt>.
 <h4><a name="section-Test-Example4">Example 4</a></h4>
 The statement <tt>Session.createQueue("Queue1")</tt> would result in calling <tt>Session.createQueue("Queue1")</tt> on the underlying JMS provider.
-<p></p>
+
 
 
 

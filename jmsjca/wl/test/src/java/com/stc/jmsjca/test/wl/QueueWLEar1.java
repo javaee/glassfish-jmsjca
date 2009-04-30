@@ -22,7 +22,7 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class QueueWLEar1 extends QueueEndToEnd {
     /**
@@ -30,5 +30,42 @@ public class QueueWLEar1 extends QueueEndToEnd {
      */
     public JMSProvider getJMSProvider() {
         return new WLProvider();
+    }
+    
+    /**
+     * In WL, a temporaryQueue.delete() does not throw an exception if the destination
+     * is already deleted.
+     */
+    public void skip_testRequestReplyN2() throws Throwable {
+    }
+    
+    /**
+     * In WL, a temporaryQueue.delete() does not throw an exception if the destination
+     * is already deleted.
+     */
+    public void skip_testRequestReplyN3() throws Throwable {
+    }
+
+    /**
+     * In WL, a temporaryQueue.delete() does not throw an exception if the destination
+     * is already deleted.
+     */
+    public void skip_testA() throws Throwable {
+    }
+    
+    /**
+     * Because we're using a PseudoXASession, autocommit outside of a transaction is not
+     * supported (the underlying session is a transacted session, and since the 
+     * session is never committed, the message is never sent)
+     */
+    public void skip_testNoTransaction() {
+    }
+    
+    /**
+     * Because we're using a PseudoXASession, autocommit outside of a transaction is not
+     * supported (the underlying session is a transacted session, and since the 
+     * session is never committed, the message is never sent)
+     */
+    public void skip_testXASessionCommitAllocateOutsideOfTx() {
     }
 }

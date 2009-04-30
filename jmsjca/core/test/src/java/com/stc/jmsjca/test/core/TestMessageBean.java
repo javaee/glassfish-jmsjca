@@ -72,7 +72,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -1419,7 +1419,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             prod.send(message);
             mMdc.getUserTransaction().commit();
         } catch (Exception e) {
-            sLog.debug("Test error: " + e, e);
+            sLog.errorNoloc("Test error: " + e, e);
         } finally {
             safeClose(conn);
         }
@@ -1760,19 +1760,24 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 mMdc.getUserTransaction().begin();
                 message = cons.receive(10000);
                 
+                if (message == null) {
+                    sLog.errorNoloc("Response was not received", null);
+                }
+                
                 // * CLOSE CONNECTION *
                 conn.close();
                 
-                mMdc.getUserTransaction().commit();
+                mMdc.getUserTransaction().commit();  // will actually delete the temp dest
             }
 
             // < TEMPDEST INVALID >>
             {
-                conn.close();
+                
                 try {
                     tempdest.delete();
                     // FAIL!
-                    message = null;
+                    sLog.errorNoloc("tempdest.delete() did not throw an exception", null);
+                    message = null;  // Makes the test fail 
                 } catch (JMSException expected) {
                     
                 }
@@ -1837,6 +1842,9 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 conn.start();
                 mMdc.getUserTransaction().begin();
                 message = cons.receive(10000);
+                if (message == null) {
+                    sLog.errorNoloc("A response was not received", null);
+                }
                 mMdc.getUserTransaction().commit();
                 s.close();
 
@@ -1850,6 +1858,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 try {
                     tempdest.delete();
                     // FAIL!
+                    sLog.errorNoloc("tempdest.delete() did not throw an exception", null);
                     message = null;
                 } catch (JMSException expected) {
                     

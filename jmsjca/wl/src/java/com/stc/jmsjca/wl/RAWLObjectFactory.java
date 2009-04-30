@@ -17,6 +17,8 @@
 package com.stc.jmsjca.wl;
 
 import com.stc.jmsjca.core.AdminDestination;
+import com.stc.jmsjca.core.DestinationCacheEntry;
+import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.PseudoXASession;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
@@ -27,6 +29,7 @@ import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.Connection;
@@ -59,7 +62,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -142,8 +145,8 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
             // && mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
             newMode = RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC;
-            sLog.warn(LOCALE.x("E820: Current delivery mode {0} not supported; "
-                + " not supported; switching to {1}", 
+            sLog.warn(LOCALE.x("E820: Delivery mode ''{0}'' not supported; "
+                + " switching to ''{1}''.", 
                 RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[mode],
                 RAJMSActivationSpec.DELIVERYCONCURRENCY_STRS[newMode]));
         }
@@ -301,45 +304,117 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     }
 
     /**
-     * This is called for inbound. Destinations are looked up in JNDI with an
-     * optional prefix.
-     * 
-     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session,
-     *      boolean, boolean, com.stc.jmsjca.core.RAJMSActivationSpec,
-     *      com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String)
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session, boolean, 
+     * boolean, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.util.Properties, java.lang.Class)
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
-        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact, RAJMSResourceAdapter ra,
-        String destName) throws JMSException {
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
+        String destName, Properties options, Class sessionClass) throws JMSException {
+        
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("createDestination(" + destName + ")");
+        }
 
-        // Check for local JNDI
+        if (Str.empty(destName)) {
+            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
+        }
+
+        // Check for lookup:// destination: this may return an admin destination 
         Destination ret = adminDestinationLookup(destName);
         
-        // Unwrap admin destination
+        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
+        ret = checkGeneric(ret);
+        
+        // Unwrap admin destination if necessary
         if (ret != null && ret instanceof AdminDestination) {
-            destName = ((AdminDestination) ret).retrieveCheckedName();
+            // Ignore properties and use name
+            AdminDestination admindest = (AdminDestination) ret;
+            destName = admindest.retrieveCheckedName();
+            
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(ret + " is an admin object: embedded name: " + destName);
+            }
             ret = null;
+        }
+        
+        // Needs to parse jmsjca:// format?
+        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
+            Properties otherOptions = new Properties();
+            UrlParser u = new UrlParser(destName);
+            otherOptions = u.getQueryProperties();
+
+            // Reset name from options
+            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
+                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
+                    + "specify a destination name. Destination names are specified using " 
+                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
+                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
+            }
+            destName = otherOptions.getProperty(Options.Dest.NAME);
         }
         
         // Create if necessary
         if (ret == null) {
-            // Get the connection properties
-            Properties p = new Properties();
-            UrlParser url = (UrlParser) getProperties(p, ra, activationSpec, fact, null);
-            
-            // JNDI object name
-            String prefix = p.getProperty(RAWLResourceAdapter.PROP_PREFIX, "");
-            if (prefix.length() > 0 && !prefix.endsWith("/")) {
-                prefix += "/";
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(destName + " is a jndi object: looking up [" + destName + "]");
             }
-            String name = prefix + destName;
-
-            ret = (Destination) getJndiObject(url, name);
+            
+            // Check cache
+            if (fact == null) {
+                ret = (Destination) lookupDestination(activationSpec, fact, ra, destName, null, null);
+            } else {
+                DestinationCacheEntry d = isTopic 
+                ? fact.getTopicCache().get(destName) : fact.getQueueCache().get(destName);
+                synchronized (d) {
+                    ret = d.get();
+                    if (ret == null) {
+                        ret = (Destination) lookupDestination(activationSpec, fact, ra, destName, null, null);
+                        d.set(ret);
+                    }
+                }
+            }
         }
-        
+
         return ret;
     }
+    
+    private Destination lookupDestination(
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
+        String destName, Properties options1, Properties options2) throws JMSException {
+        
+        // Get the connection properties
+        Properties options3 = new Properties();
+        UrlParser url = (UrlParser) getProperties(options3, ra, activationSpec, fact, null);
 
+        // Get the prefix to construct a full name
+        String prefix = null;
+        if (options1 != null) {
+            prefix = options1.getProperty(RAWLResourceAdapter.PROP_PREFIX);
+        }
+        if (prefix == null && options2 != null) {
+            prefix = options2.getProperty(RAWLResourceAdapter.PROP_PREFIX);
+        }
+        if (prefix == null) {
+            prefix = options3.getProperty(RAWLResourceAdapter.PROP_PREFIX);
+        }
+        
+        // Not found? Default to empty string: assume that the specified name is the full name
+        if (prefix == null) {
+            prefix = "";
+        }
+        
+        // Add slash if appropriate
+        if (prefix.length() > 0 && !prefix.endsWith("/")) {
+            prefix += "/";
+        }
+        
+        // To lookup:
+        String name = prefix + destName;
+
+        return (Destination) getJndiObject(url, name);
+    }
+    
     /**
      * Returns true if the specified string may be a recognised URL
      *

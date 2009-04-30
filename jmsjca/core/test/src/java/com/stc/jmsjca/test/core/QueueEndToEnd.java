@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1125,11 +1125,11 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         private List mErrors = new ArrayList();
 
         public QueueReplier(QueueConnectionFactory fact, String userid, String password,
-            String dest) throws JMSException {
+            String dest, Passthrough passthrough) throws JMSException {
 
             mConn = fact.createQueueConnection(userid, password);
             mSess = mConn.createQueueSession(true, Session.SESSION_TRANSACTED);
-            Queue dest1 = mSess.createQueue(dest);
+            Queue dest1 = passthrough.createQueue(mSess, dest);
 //            Queue voiddest = mSess.createQueue("voidqueue");
             QueueReceiver sub = mSess.createReceiver(dest1);
 //            mProd = mSess.createSender(voiddest);
@@ -1229,11 +1229,16 @@ public abstract class QueueEndToEnd extends EndToEndBase {
         Passthrough p = createPassthrough(mServerProperties);
         QueueReplier r = null;
         try {
+            if (c.isDeployed(mTestEar.getAbsolutePath())) {
+                c.undeploy(mTestEarName);
+            }
+
             p.drainQueue("Queue1");
             p.drainQueue("QueueReplier");
+            p.drainQueue("Queue2");
             c.redeployModule(mTestEar.getAbsolutePath());
             r = new QueueReplier(p.createQueueConnectionFactory(),
-                p.getUserid(), p.getPassword(), "QueueReplier");
+                p.getUserid(), p.getPassword(), "QueueReplier", p);
             int N = 300;
             p.setNMessagesToSend(N);
             

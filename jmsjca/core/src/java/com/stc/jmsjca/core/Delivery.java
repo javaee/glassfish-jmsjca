@@ -59,7 +59,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -219,7 +219,7 @@ public abstract class Delivery {
                 RAJMSObjectFactory o = mActivation.getObjectFactory();
                 mDest = o.createDestination(getSession(isTopic),
                     mActivation.isCMT() && !mActivation.isXAEmulated(), isTopic, mActivation.getActivationSpec(), null,
-                    mActivation.getRA(), destname);
+                    mActivation.getRA(), destname, null, mIsTopic ? TopicSession.class : QueueSession.class);
                 mDestName = destname;
             }
             return mDest;
@@ -695,7 +695,9 @@ public abstract class Delivery {
                         mActivation.getActivationSpec(),
                         null,
                         mActivation.getRA(),
-                        m.getDestinationName());
+                        m.getDestinationName(), 
+                        null,
+                        (isTopic ? TopicSession.class : QueueSession.class));
                 } finally {
                     try {
                         if (session != null) {

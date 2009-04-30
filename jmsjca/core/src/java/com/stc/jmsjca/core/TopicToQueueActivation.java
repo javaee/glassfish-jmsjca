@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -246,7 +246,9 @@ public class TopicToQueueActivation extends ActivationBase {
                     mActivation.getActivationSpec(),
                     null,
                     mActivation.getRA(),
-                    mQueueName);
+                    mQueueName, 
+                    null, 
+                    getSessionClass());
                 mProducer = o.createMessageProducer(mSession,
                     mActivation.isCMT() && !mActivation.isXAEmulated(),
                     false,

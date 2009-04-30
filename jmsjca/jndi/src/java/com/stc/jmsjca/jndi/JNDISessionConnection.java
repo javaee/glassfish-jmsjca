@@ -16,31 +16,19 @@
 
 package com.stc.jmsjca.jndi;
 
-import com.stc.jmsjca.core.AdminDestination;
-import com.stc.jmsjca.core.AdminQueue;
-import com.stc.jmsjca.core.AdminTopic;
-import com.stc.jmsjca.core.DestinationCache;
-import com.stc.jmsjca.core.DestinationCacheEntry;
 import com.stc.jmsjca.core.GenericSessionConnection;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnection;
 
-import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Queue;
-import javax.jms.Topic;
-
-import java.util.Properties;
 
 /**
- * Provides some JNDI specific features:
- * - looks up destinations in JNDI
- * - pools destinations
+ * (All provider specific code has been moved to the object factory)
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JNDISessionConnection extends GenericSessionConnection {
 
@@ -67,61 +55,4 @@ public class JNDISessionConnection extends GenericSessionConnection {
         super(connectionFactory, objfact, ra, managedConnection, descr, isXa,
             isTransacted, acknowledgmentMode, sessionClass);
     }
-
-    /**
-     * @see com.stc.jmsjca.core.GenericSessionConnection#createDestination(com.stc.jmsjca.core.AdminDestination)
-     */
-    public Destination createDestination(AdminDestination dest) throws JMSException {
-        RAJNDIObjectFactory o = (RAJNDIObjectFactory) getObjFact();
-        Destination ret = null;
-        String name = dest.retrieveCheckedName();
-        if (!name.startsWith(RAJNDIObjectFactory.JNDI_PREFIX)) {
-            // Not a JNDI name
-            if (dest instanceof AdminQueue) {
-                ret = super.createQueue(name, dest.retrieveProperties());
-            } else {
-                ret = super.createTopic(name, dest.retrieveProperties());
-            }
-        } else {
-            // Lookup JNDI name in cache
-            name = name.substring(RAJNDIObjectFactory.JNDI_PREFIX.length());
-            DestinationCache cache = dest instanceof AdminQueue 
-            ? mMC.getManagedConnectionFactory().getQueueCache() 
-                : mMC.getManagedConnectionFactory().getTopicCache();
-
-            DestinationCacheEntry d = cache.get(name);
-            synchronized (d) {
-                Destination realdest; 
-                if (d.get() == null) {
-                    // Cache miss: lookup in JNDI
-                    realdest = (Destination) o.getJndiObject(getRA(), 
-                        null, mMC.getManagedConnectionFactory(), null, name);
-                    // Bind in cache
-                    d.set(realdest);
-                }
-                ret = d.get();
-            }
-        }
-        
-        return ret;
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.SessionConnection#createQueue(java.lang.String)
-     */
-    public Queue createQueue(String name, Properties options) throws JMSException {
-        AdminQueue admindest = new AdminQueue();
-        admindest.setName(name);
-        return (Queue) createDestination(admindest);
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.SessionConnection#createTopic(java.lang.String)
-     */
-    public Topic createTopic(String name, Properties options) throws JMSException {
-        AdminTopic admindest = new AdminTopic();
-        admindest.setName(name);
-        return (Topic) createDestination(admindest);
-    }
-
 }

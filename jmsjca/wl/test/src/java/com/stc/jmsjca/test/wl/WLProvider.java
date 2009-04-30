@@ -23,18 +23,24 @@ import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+import java.util.Hashtable;
 import java.util.Properties;
 
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class WLProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wl.host";
     public static final String PROPNAME_PORT = "jmsjca.jmsimpl.wl.port";
     public static final String PROPNAME_USERID = "jmsjca.jmsimpl.wl.userid";
     public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.wl.password";
+
+    public final static String JNDI_FACTORY = "weblogic.jndi.WLInitialContextFactory";
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
@@ -59,12 +65,12 @@ public class WLProvider extends JMSProvider {
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(TestWLJUStd.getConnectionUrl());
+        cc.setConnectionURL(getConnectionUrl(test));
         cc.setUserName("");
         cc.setPassword("");
 
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(TestWLJUStd.getConnectionUrl());
+        cc.setConnectionURL(getConnectionUrl(test));
         cc.setUserName("");
         cc.setPassword("");
 
@@ -75,11 +81,34 @@ public class WLProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
     public String getConnectionUrl(JMSTestEnv test) {
-        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+        return getConnectionUrl(test.getJmsServerProperties());
+    }
+
+    public String getConnectionUrl(Properties p) {
+        String host = p.getProperty(PROPNAME_HOST);
+        int port = Integer.parseInt(p.getProperty(PROPNAME_PORT));
         return createConnectionUrl(host, port);
     }
 
+    public InitialContext getInitialContext(JMSTestEnv test) throws Exception {
+        return getInitialContext(test.getJmsServerProperties());
+    }
+
+    public InitialContext getInitialContext(Properties p) throws Exception {
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
+        env.put(Context.PROVIDER_URL, getConnectionUrl(p));
+        InitialContext ctx = new InitialContext(env);
+        return ctx;
+    }
+
+    /**
+     * @see com.stc.jmsjca.test.core.JMSProvider#createConnectionUrl(java.lang.String, int)
+     */
+    public String createConnectionUrl(String host, int port) {
+        return "t3://" + host + ":" + port;
+    }
+    
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */

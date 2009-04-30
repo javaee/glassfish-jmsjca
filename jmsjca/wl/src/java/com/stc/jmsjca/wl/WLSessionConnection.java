@@ -16,27 +16,19 @@
 
 package com.stc.jmsjca.wl;
 
-import com.stc.jmsjca.core.DestinationCacheEntry;
 import com.stc.jmsjca.core.GenericSessionConnection;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnection;
 
-import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Queue;
-import javax.jms.Topic;
-
-import java.util.Properties;
 
 /**
- * Provides some WebLogic specific features:
- * - looks up destinations in JNDI
- * - pools destinations
+ * (All provider specific code has been moved to the object factory)
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WLSessionConnection extends GenericSessionConnection {
 
@@ -62,35 +54,5 @@ public class WLSessionConnection extends GenericSessionConnection {
 
         super(connectionFactory, objfact, ra, managedConnection, descr, isXa,
             isTransacted, acknowledgmentMode, sessionClass);
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.GenericSessionConnection#createQueue(java.lang.String)
-     */
-    public Queue createQueue(String name, Properties options) throws JMSException {
-        DestinationCacheEntry d = mMC.getManagedConnectionFactory().getQueueCache().get(name);
-        synchronized (d) {
-            if (d.get() == null) {
-                Destination dest = getObjFact().createDestination(getJmsSession(), false,
-                    false, null, mMC.getManagedConnectionFactory(), getRA(), name);
-                d.set(dest);
-            }
-        }
-        return (Queue) d.get();
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.GenericSessionConnection#createTopic(java.lang.String)
-     */
-    public Topic createTopic(String name, Properties options) throws JMSException {
-        DestinationCacheEntry d = mMC.getManagedConnectionFactory().getTopicCache().get(name);
-        synchronized (d) {
-            if (d.get() == null) {
-                Destination dest = getObjFact().createDestination(getJmsSession(), false,
-                    false, null, mMC.getManagedConnectionFactory(), getRA(), name);
-                d.set(dest);
-            }
-        }
-        return (Topic) d.get();
     }
 }
