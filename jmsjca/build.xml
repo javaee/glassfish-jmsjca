@@ -704,7 +704,7 @@ or type
 	    <emma enabled="${emma.enabled}">	    	
 	    	<report>
 	            <sourcepath>
-	              <dirset dir="${jmsjca.module.dir}" >
+	              <dirset dir="${module.root}" >
 	                <include name="**/java" /> 
 	              </dirset>
 	            </sourcepath>
