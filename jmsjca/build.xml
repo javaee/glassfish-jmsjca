@@ -89,7 +89,7 @@
         <pathelement location="${emma.dir}/emma_ant.jar" />
     </path>
 
-    
+    <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
 <!--===========================================================================
     MAIN TARGET
 -->
