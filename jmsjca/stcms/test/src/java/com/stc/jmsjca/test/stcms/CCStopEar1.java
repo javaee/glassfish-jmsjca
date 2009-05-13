@@ -31,20 +31,21 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class CCStopEar1 extends EndToEndBase {
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
 
     private int getQueueStatsNMsgs(JmsMgt jmsmgt, String queuename) throws Exception {
         long t0 = System.currentTimeMillis();
-        List queueprops = jmsmgt.getQueuesWithHeaders(0);
+        List<?> queueprops = jmsmgt.getQueuesWithHeaders(0);
         System.out.println("Got getQueuesWithHeaders after " + (System.currentTimeMillis() - t0) + " ms, with " + queueprops.size() + " queues");
         Properties stats = SpecialFeaturesEar1.find(queueprops, JmsMgt.Q_QUEUE_NAME, queuename);
         int nmsg = Integer.parseInt(stats.getProperty(JmsMgt.Q_MESSAGE_COUNT));
@@ -54,7 +55,7 @@ public class CCStopEar1 extends EndToEndBase {
     private void validate(JmsMgt jmsmgt) throws Exception {
         assertTrue(jmsmgt.isServerReady());
 
-        List queues = jmsmgt.getQueues();
+        List<?> queues = jmsmgt.getQueues();
         assertTrue(queues.contains("Queue1"));
         assertTrue(queues.contains("Queue2"));
     }

@@ -43,16 +43,17 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RASunOneObjectFactory.class);
-    private static Localizer LOCALE = Localizer.get(); 
+    private static final Localizer LOCALE = Localizer.get(); 
         
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         //return super.adjustDeliveryMode(mode, xa);
         // Sun JMQ 3.6, 3.7 and 3.7 UR1 which JCAPS 5.1.x support have some problem with 
@@ -76,6 +77,7 @@ java.io.Serializable {
      * @param s connectionURL to parse
      * @return parser
      */
+    @Override
     public ConnectionUrl createConnectionUrl(String s) {
         return new SunOneUrlParser(s);
     }
@@ -92,14 +94,46 @@ java.io.Serializable {
     }
     
     private static class ConnectionValues {
-        String host;
-        String port;
-        String username;
-        String password;
+        private String host;
+        private String port;
+        private String username;
+        private String password;
+
+        public final String getHost() {
+            return host;
+        }
+
+        public final void setHost(String host) {
+            this.host = host;
+        }
+
+        public final String getPort() {
+            return port;
+        }
+
+        public final void setPort(String port) {
+            this.port = port;
+        }
+
+        public final String getUsername() {
+            return username;
+        }
+
+        public final void setUsername(String username) {
+            this.username = username;
+        }
+
+        public final String getPassword() {
+            return password;
+        }
+
+        public final void setPassword(String password) {
+            this.password = password;
+        }
     }
 
     private ConnectionValues getConnectionValues(String key) throws Exception {
-        Class c = Class.forName("com.sun.enterprise.admin.common.MBeanServerFactory");
+        Class<?> c = Class.forName("com.sun.enterprise.admin.common.MBeanServerFactory");
         Method m = c.getMethod("getMBeanServer", new Class[] {});
         MBeanServer mBeanServer = (MBeanServer) m.invoke(null, new Object[0]);
         ObjectName objName = new ObjectName("com.sun.appserv:type=jms-host,name=" 
@@ -124,6 +158,7 @@ java.io.Serializable {
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
+    @Override
     public boolean validateAndAdjustURL(ConnectionUrl aurl) throws JMSException {
         SunOneUrlParser urlParser = (SunOneUrlParser) aurl;
         urlParser.validate();
@@ -160,6 +195,7 @@ java.io.Serializable {
      * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter, 
      * java.lang.String, java.lang.String)
      */
+    @Override
     public Connection createConnection(Object fact, int domain,
         RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra, String username,
         String password) throws JMSException {
@@ -192,6 +228,7 @@ java.io.Serializable {
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
         RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
         XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -238,7 +275,7 @@ java.io.Serializable {
         
         try {
             setProperty = basicConnectionFactory.getClass().getMethod("setProperty",
-                new Class[] { String.class, String.class });
+                new Class[] {String.class, String.class });
             setProperty.invoke(basicConnectionFactory,
                 new Object[] {"imqAddressList", urlParser.getSunOneUrlSet()});
             setProperty.invoke(basicConnectionFactory,
@@ -262,11 +299,11 @@ java.io.Serializable {
         // imqReconnectAttempts
         // imqReconnectInterval
         // imqSSLIsHostTrusted
-        Enumeration names = p.propertyNames();
+        Enumeration<?> names = p.propertyNames();
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
             if (name.startsWith("imq")) {
-                String value = (String) p.getProperty(name);
+                String value = p.getProperty(name);
                 try {
                     setProperty.invoke(basicConnectionFactory,
                         new Object[] {name, value});
@@ -285,6 +322,7 @@ java.io.Serializable {
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < SunOneUrlParser.URL_PREFIXES.length; i++) {
@@ -307,6 +345,7 @@ java.io.Serializable {
      * @param ra ra
      * @throws JMSException on failure
      */
+    @Override
     public void setClientID(Connection connection, boolean isTopic,
         RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
         if (isTopic && RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
@@ -337,6 +376,7 @@ java.io.Serializable {
      * com.stc.jmsjca.core.RAJMSResourceAdapter,
      * com.stc.jmsjca.core.RAJMSActivationSpec)
      */
+    @Override
     public Object getServerMgtMBean(RAJMSResourceAdapter ra, RAJMSActivationSpec spec)
     throws JMSException {
         Object ret = null;
@@ -366,10 +406,10 @@ java.io.Serializable {
         
         try {
             // Instantiate mbean
-            Class c = Class.forName("com.stc.jmsmx.sjsmq.ExternalSJSMQMBean");
+            Class<?> c = Class.forName("com.stc.jmsmx.sjsmq.ExternalSJSMQMBean");
             Object mbean = c.newInstance();
             // Initialize this object using this method:
-            Class[] signatures = {Properties.class, String.class, String.class };
+            Class<?>[] signatures = {Properties.class, String.class, String.class };
             Object[] args = {connectionprops, username, password};
             Method method = c.getMethod("setConnectInfo", signatures);
             method.invoke(mbean, args);
@@ -388,7 +428,37 @@ java.io.Serializable {
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "SUNONE";
+    }
+    
+    /**
+     * @param k
+     * @return
+     */
+    public String badMethod(int k) {
+        for (int i = 0; i < 10; i++) {
+            badMethod(10);
+        }
+        for (k = 0; k < 10; k++) {
+            // 
+        }
+        
+        if (4 == 5) {
+            //
+        } else {
+            
+        }
+        
+        try { 
+            
+        } catch (Exception e) {
+            
+        } finally {
+       
+        }
+        
+        return null;
     }
 }

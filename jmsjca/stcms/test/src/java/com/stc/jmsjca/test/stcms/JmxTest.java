@@ -34,12 +34,13 @@ import java.util.Map;
  * Required:
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class JmxTest extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
@@ -106,8 +107,8 @@ public class JmxTest extends EndToEndBase {
         System.out.println(o.getPropertyValue("com.stc"));
     }
 
-    private Map toMap(javax.management.AttributeList attrs) {
-        Map attrm = new HashMap();
+    private Map<String, Object> toMap(javax.management.AttributeList attrs) {
+        Map<String, Object> attrm = new HashMap<String, Object>();
         for (int i = 0; i < attrs.size(); i++) {
             Attribute item = (Attribute) attrs.get(i);
             attrm.put(item.getName(), item.getValue());
@@ -115,7 +116,8 @@ public class JmxTest extends EndToEndBase {
         return attrm;
     }
 
-    private javax.management.AttributeList toList(Map map) {
+    @SuppressWarnings("unchecked")
+    private javax.management.AttributeList toList(Map<String, Object> map) {
         javax.management.AttributeList ret = new javax.management.AttributeList();
         for (Iterator it = map.entrySet().iterator(); it.hasNext(); ) {
 
@@ -139,7 +141,7 @@ public class JmxTest extends EndToEndBase {
         I1 o = (I1) c.getMBeanProxy(DOMAIN1 + S1, I1.class);
 
         javax.management.AttributeList attrs = o.getLogRules();
-        Map attrm = toMap(attrs);
+        Map<String, Object> attrm = toMap(attrs);
 
         // Rules should contain admin, root, saaj
         assertTrue(attrm.containsKey("root"));
@@ -159,7 +161,7 @@ public class JmxTest extends EndToEndBase {
         I1 o = (I1) c.getMBeanProxy(DOMAIN1 + S1, I1.class);
 
         javax.management.AttributeList attrs = o.getLogRules();
-        Map attrm = toMap(attrs);
+        Map<String, Object> attrm = toMap(attrs);
 
         // Store org value
         String org = (String) attrm.get("saaj");
@@ -204,7 +206,7 @@ public class JmxTest extends EndToEndBase {
         I1 o = (I1) c.getMBeanProxy(DOMAIN1 + S1, I1.class);
 
         javax.management.AttributeList attrs = o.getLogRules();
-        Map attrm = toMap(attrs);
+        Map<String, Object> attrm = toMap(attrs);
 
         String cat = "a.b.c.d.e.f";
 
@@ -259,7 +261,7 @@ public class JmxTest extends EndToEndBase {
         I1 o = (I1) c.getMBeanProxy(DOMAIN1 + S1, I1.class);
 
         javax.management.AttributeList attrs = o.getLogRules();
-        Map attrm = toMap(attrs);
+        Map<String, Object> attrm = toMap(attrs);
 
         String cat = "a.b.c.d.e.f";
 
@@ -323,7 +325,7 @@ public class JmxTest extends EndToEndBase {
         I1 o = (I1) c.getMBeanProxy(DOMAIN1 + S1, I1.class);
 
         javax.management.AttributeList attrs = o.getLogLevels();
-        Map attrm = toMap(attrs);
+        Map<String, Object> attrm = toMap(attrs);
 
         // Rules should contain admin, root, saaj
         assertTrue(attrm.containsKey("INFO"));

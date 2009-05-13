@@ -28,12 +28,12 @@ import javax.transaction.xa.Xid;
  * Copied from STCMS
  *
  * @author JMS Team
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public final class XXid implements Xid, Serializable {
-    static byte[] ipAddress;
-    static long counter = 0;
-    static ServerSocket sock;
+    private static byte[] ipAddress;
+    private static long counter;
+    private static ServerSocket sock;
     static {
         try {
             // use local host address + bound ip port as unique
@@ -46,7 +46,7 @@ public final class XXid implements Xid, Serializable {
             ipAddress[ipAddress.length - 2] = (byte) ((port >> 8) & 0xF);
             ipAddress[ipAddress.length - 1] = (byte) (port & 0xF);
         } catch (Exception exc) {
-            exc.printStackTrace();
+            throw new RuntimeException(exc);
         }
     }
 
@@ -153,6 +153,7 @@ public final class XXid implements Xid, Serializable {
      *
      * @return hash code
      */
+    @Override
     public int hashCode() {
         int result = 0;
         for (int i = 0; i < branchQualifier.length; i++) {
@@ -170,6 +171,7 @@ public final class XXid implements Xid, Serializable {
      * @param that other object to compare to
      * @return true if objects are equal
      */
+    @Override
     public boolean equals(Object that) {
         if (this == that) {
             return true;
@@ -191,7 +193,7 @@ public final class XXid implements Xid, Serializable {
         return true;
     }
 
-    static final char hexChar(int c) {
+    static char hexChar(int c) {
         final String hex = "0123456789ABCDEF";
         return hex.charAt(c & 0xF);
     }
@@ -201,6 +203,7 @@ public final class XXid implements Xid, Serializable {
      *
      * @return pretty print string of this object
      */
+    @Override
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append("xid:");

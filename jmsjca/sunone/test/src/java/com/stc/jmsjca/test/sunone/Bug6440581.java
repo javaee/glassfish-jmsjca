@@ -34,6 +34,7 @@ import java.util.Map;
  * @author fkieviet 
  * @version 1.0
  */
+@SuppressWarnings("unchecked")
 public class Bug6440581 {
     /**
      * An implementation of XID; this is used for local transactions that are really based
@@ -42,7 +43,7 @@ public class Bug6440581 {
      * Copied from STCMS
      *
      * @author JMS Team
-     * @version $Revision: 1.4 $
+     * @version $Revision: 1.5 $
      */
     public static final class XXid implements Xid, Serializable {
         static byte[] ipAddress;
@@ -153,6 +154,7 @@ public class Bug6440581 {
          *
          * @return hash code
          */
+        @Override
         public int hashCode() {
             int result = 0;
             for (int i = 0; i < branchQualifier.length; i++) {
@@ -170,6 +172,7 @@ public class Bug6440581 {
          * @param that other object to compare to
          * @return true if objects are equal
          */
+        @Override
         public boolean equals(Object that) {
             if (this == that) {
                 return true;
@@ -201,6 +204,7 @@ public class Bug6440581 {
          *
          * @return pretty print string of this object
          */
+        @Override
         public String toString() {
             StringBuffer result = new StringBuffer();
             result.append("xid:");
@@ -484,6 +488,7 @@ public class Bug6440581 {
                              * 
                              * @see java.lang.Runnable#run()
                              */
+                            @Override
                             public void run() {
                                 try {
                                     xid = new XXid();

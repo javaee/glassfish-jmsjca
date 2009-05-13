@@ -30,7 +30,7 @@ import java.io.UnsupportedEncodingException;
  * service := 
  * path := file?query | ?query | file
  * @author misc
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SunOneConnectionUrl extends ConnectionUrl {
     private String mUrl;
@@ -160,8 +160,6 @@ public class SunOneConnectionUrl extends ConnectionUrl {
 
     /**
      * Changes the server connection service
-     * 
-     * @param host String 
      */
     public void setService(String service) {
        parse();
@@ -174,6 +172,7 @@ public class SunOneConnectionUrl extends ConnectionUrl {
      *
      * @return String
      */
+    @Override
     public String toString() {
         if (mUrl == null) {
             StringBuffer url = new StringBuffer();
@@ -273,6 +272,7 @@ public class SunOneConnectionUrl extends ConnectionUrl {
      *
      * @param toAddTo Properties key-value pairs will be added to this properties set
      */
+    @Override
     public void getQueryProperties(Properties toAddTo) {
         if (mUrl == null) {
             return;
@@ -294,7 +294,7 @@ public class SunOneConnectionUrl extends ConnectionUrl {
         }
         for (StringTokenizer iter = new StringTokenizer(q, "&");
             iter.hasMoreElements();/*-*/) {
-            String pair = (String) iter.nextToken();
+            String pair = iter.nextToken();
             int split = pair.indexOf('=');
             if (split <= 0) {
                 throw Exc.rtexc(LOCALE.x("E184: Invalid pair [{0}] in query string [{1}]"

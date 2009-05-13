@@ -26,7 +26,7 @@ import java.util.*;
  * Tests the URLParser
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class UrlParserJUStd extends TestCase {
 
@@ -353,7 +353,7 @@ public class UrlParserJUStd extends TestCase {
         assertTrue(p.getQuery().equals("a=b&c=d&e=f&a%32s=g%50h&p%26o=2%3D2"));
         Properties set = new Properties();
         for (StringTokenizer iter = new StringTokenizer(s, "&"); iter.hasMoreElements(); ) {
-            String pair = (String) iter.nextToken();
+            String pair = iter.nextToken();
             int split = pair.indexOf('=');
             if (split > 0) {
                 String key = pair.substring(0, split);

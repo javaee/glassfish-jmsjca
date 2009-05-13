@@ -194,7 +194,7 @@ public class WASContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#getMBeanProxy(java.lang.String, java.lang.Class)
     */
-   public Object getMBeanProxy(String objectName, Class itf) throws Exception {
+   public Object getMBeanProxy(String objectName, Class<?> itf) throws Exception {
        //TODO
        return null;
    }

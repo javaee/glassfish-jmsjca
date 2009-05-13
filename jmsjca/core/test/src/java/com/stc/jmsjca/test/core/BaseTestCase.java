@@ -34,15 +34,16 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class BaseTestCase extends TestCase {
-    private List mAsyncErrors = new ArrayList();
+    private List<Throwable> mAsyncErrors = new ArrayList<Throwable>();
     /**
      * Properties of the JMS server and container
      */
     protected Properties mServerProperties;
     
+    @Override
     public void setUp() throws Exception {
         getServerProperties();
     }
@@ -169,7 +170,7 @@ public abstract class BaseTestCase extends TestCase {
             if (!mAsyncErrors.isEmpty()) {
                 throw new Exception("There were " + mAsyncErrors.size()
                     + " async exceptions. The first is: " + mAsyncErrors.get(0),
-                    (Throwable) mAsyncErrors.get(0));
+                    mAsyncErrors.get(0));
             }
         }
     }
@@ -178,6 +179,7 @@ public abstract class BaseTestCase extends TestCase {
      * Runs the test case except if a similarly named method prefixed with
      * skip_ or disabled_ exists.
      */
+    @Override
     public void run(TestResult result) {
         try {
             getClass().getMethod("skip_" + getName(), new Class[] {});

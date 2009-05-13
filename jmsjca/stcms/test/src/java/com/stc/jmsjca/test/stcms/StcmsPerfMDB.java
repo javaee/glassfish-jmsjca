@@ -32,7 +32,7 @@ import javax.naming.NamingException;
  * The MDB
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class StcmsPerfMDB implements MessageDrivenBean, MessageListener {
     private InitialContext mCtx;
@@ -83,7 +83,7 @@ public class StcmsPerfMDB implements MessageDrivenBean, MessageListener {
         try {
             String fname = (String) mCtx.lookup("java:comp/env/Test");
             sLog.infoNoloc("Looking up class name " + fname);
-            Class c = Class.forName(fname);
+            Class<?> c = Class.forName(fname);
             mExecutor = (Executor) c.newInstance();
             mExecutor.init(mCtx);
         } catch (Exception ex) {

@@ -26,15 +26,17 @@ import com.stc.jmsjca.test.core.JMSProvider;
  * Excercises the same tests using Sync mode
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class SyncSendEar1 extends SendEar1 {
 
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider() {
+            @Override
             public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, BaseTestCase.JMSTestEnv test) throws Exception {
             super.changeDD(dd, test);
             dd.findElementByText(RAXML, RASTCMSResourceAdapter.class.getName()).setText(

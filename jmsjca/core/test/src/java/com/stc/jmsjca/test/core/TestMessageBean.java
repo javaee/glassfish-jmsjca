@@ -72,7 +72,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -140,7 +140,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
 
     private void explore(InitialContext ctx, String from,
         PrintWriter out) throws Exception {
-        NamingEnumeration e = ctx.listBindings(from);
+        NamingEnumeration<?> e = ctx.listBindings(from);
         if (e == null) {
             out.println("[" + from + "]: no binding list");
         } else {
@@ -1292,7 +1292,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
     
 //    private TransactionManager getTxMgr() {
 //        try {
-//            Class c1 = Class.forName("com.sun.enterprise.Switch");
+//            Class<?> c1 = Class.forName("com.sun.enterprise.Switch");
 //            Method m1 = c1.getMethod("getSwitch", new Class[0]);
 //            Object theswitch = m1.invoke(null, new Object[0]);
 //            Method m2 = c1.getMethod("getTransactionManager", new Class[0]);
@@ -1441,7 +1441,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             m1 = s.createMessage();
         }
 
-        for (Enumeration iter = message.getPropertyNames(); iter.hasMoreElements();) {
+        for (Enumeration<?> iter = message.getPropertyNames(); iter.hasMoreElements();) {
             String name = (String) iter.nextElement();
             if (name.startsWith("JMSX")) {
                 continue;
@@ -2238,7 +2238,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         }
     }
 
-    private static List sMsgList = new ArrayList();
+    private static List<OnDoneHandler> sMsgList = new ArrayList<OnDoneHandler>();
     private static Thread sHelperThread;
     
     private void postRequest(Message m, OnDoneHandler h) {
@@ -2246,6 +2246,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             sMsgList.add(h);
             if (sHelperThread == null) {
                 sHelperThread = new Thread() {
+                    @Override
                     public void run() {
                         for (;;) {
                             OnDoneHandler h;
@@ -2255,7 +2256,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                                     sHelperThread = null;
                                     break;
                                 } else {
-                                    h = (OnDoneHandler) sMsgList.get(0);
+                                    h = sMsgList.get(0);
                                 }
                             }
 
@@ -2360,6 +2361,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 message.acknowledge();
             } else {
                 new Thread() {
+                    @Override
                     public void run() {
                         try {
                             message.acknowledge();
@@ -2411,6 +2413,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 message.acknowledge();
             } else {
                 new Thread() {
+                    @Override
                     public void run() {
                         try {
                             if (shouldThrow()) {
@@ -2463,10 +2466,11 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 message.acknowledge();
             } else {
                 new Thread() {
+                    @Override
                     public void run() {
                         try {
                             message.acknowledge();
-                        } catch (JMSException e) {
+                        } catch (final JMSException e) {
                             sLog.fatalNoloc("ack exception " + e, e);
                         }
                     }
@@ -2518,6 +2522,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 message.acknowledge();
             } else {
                 new Thread() {
+                    @Override
                     public void run() {
                         try {
                             if (rollback) {

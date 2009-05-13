@@ -36,7 +36,7 @@ import java.util.Enumeration;
  * only messages that are created through Session.createXXXMessage() are wrapped.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WMessageOut implements Message, Unwrappable {
     private Message mDelegate;
@@ -219,7 +219,7 @@ public class WMessageOut implements Message, Unwrappable {
     /**
      * @see javax.jms.Message#getPropertyNames()
      */
-    public Enumeration getPropertyNames() throws JMSException {
+    public Enumeration<?> getPropertyNames() throws JMSException {
         return mDelegate.getPropertyNames();
     }
 

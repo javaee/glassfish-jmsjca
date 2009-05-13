@@ -21,7 +21,7 @@ package com.stc.jmsjca.core;
  * tied to that activation)
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class DeliveryStats {
     private int mNMessages;
@@ -111,7 +111,7 @@ public class DeliveryStats {
             return "n/a";
         }
 
-        return "" + 1000 * (float) n / (float) dt;
+        return "" + 1000 * (float) n / dt;
     }
 
     /**
@@ -119,6 +119,7 @@ public class DeliveryStats {
      *
      * @return String
      */
+    @Override
     public synchronized String toString() {
         long tnow = System.currentTimeMillis();
         return "nMessages=" + mNMessages

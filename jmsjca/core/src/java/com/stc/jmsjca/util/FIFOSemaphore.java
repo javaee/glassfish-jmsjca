@@ -69,16 +69,17 @@ public class FIFOSemaphore extends QueuedSemaphore {
         /**
          * undocumented
          */
-        protected WaitNode head_ = null;
+        protected WaitNode head_;
         /**
          * undocumented
          */
-        protected WaitNode tail_ = null;
+        protected WaitNode tail_;
 
         /**
          * @see com.stc.jmsjca.util.QueuedSemaphore.WaitQueue
          *   #insert(com.stc.jmsjca.util.QueuedSemaphore.WaitQueue.WaitNode)
          */
+        @Override
         protected void insert(WaitNode w) {
             if (tail_ == null) {
                 head_ = w;
@@ -92,6 +93,7 @@ public class FIFOSemaphore extends QueuedSemaphore {
         /**
          * @see com.stc.jmsjca.util.QueuedSemaphore.WaitQueue#extract()
          */
+        @Override
         protected WaitNode extract() {
             if (head_ == null) {
                 return null;

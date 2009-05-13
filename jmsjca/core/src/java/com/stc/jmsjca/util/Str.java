@@ -33,7 +33,7 @@ import java.util.Properties;
  * Provides for easy string formatting
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class Str {
     /**
@@ -167,7 +167,7 @@ public class Str {
      */
     public static boolean isEqual(String a, String b) {
         if (a == null) {
-            return (b == null);
+            return b == null;
         } else {
             return a.equals(b);
         }
@@ -348,8 +348,8 @@ public class Str {
             p.load(inp);
 
             // Copy
-            for (Iterator iter = p.entrySet().iterator(); iter.hasNext();) {
-                Map.Entry element = (Map.Entry) iter.next();
+            for (Iterator<?> iter = p.entrySet().iterator(); iter.hasNext();) {
+                Map.Entry<?, ?> element = (Map.Entry<?, ?>) iter.next();
                 toAdd.put(element.getKey(), element.getValue());
             }
         } catch (Exception e) {
@@ -540,7 +540,7 @@ public class Str {
      * 
      * @author unattributed
      */
-    private static class Base64Coder {
+    private static final class Base64Coder {
         /** Symbol that represents the end of an input stream */
         private static final int END_OF_INPUT = -1;
         
@@ -577,6 +577,10 @@ public class Str {
             for (byte i = 0; i < BASE64CARS.length; i++) {
                 DECODETABLE[BASE64CARS[i]] = i;
             }
+        }
+        
+        private Base64Coder() {
+            
         }
         
         /**
@@ -629,7 +633,7 @@ public class Str {
             int length = bytes.length;
 
             if ((mod = length % 3) != 0) {
-                length += (3 - mod);
+                length += 3 - mod;
             }
 
             length = (length * 4) / 3;
@@ -712,14 +716,14 @@ public class Str {
                         out.write(BASE64CARS[inBuffer[2] & 0x3F]);
                     } else {
                         // C's: last four bits of second byte
-                        out.write(BASE64CARS[((inBuffer[1] << 2) & 0x3c)]);
+                        out.write(BASE64CARS[(inBuffer[1] << 2) & 0x3c]);
                         // an equals sign for a character that is not a Base64 character
                         out.write('=');
                         done = true;
                     }
                 } else {
                     // B's: last two bits of first byte
-                    out.write(BASE64CARS[((inBuffer[0] << 4) & 0x30)]);
+                    out.write(BASE64CARS[(inBuffer[0] << 4) & 0x30]);
                     // an equal signs for characters that is not a Base64 characters
                     out.write('=');
                     out.write('=');
@@ -792,7 +796,7 @@ public class Str {
             int length = bytes.length;
 
             if ((mod = length % 4) != 0) {
-                length += (4 - mod);
+                length += 4 - mod;
             }
 
             length = (length * 3) / 4;
@@ -826,7 +830,7 @@ public class Str {
          * @throws Base64DecodingException if unexpected data is encountered
          *             when throwExceptions is specified.
          */
-        private static final int readBase64(InputStream in, boolean throwExceptions)
+        private static int readBase64(InputStream in, boolean throwExceptions)
         throws IOException {
             int read;
 

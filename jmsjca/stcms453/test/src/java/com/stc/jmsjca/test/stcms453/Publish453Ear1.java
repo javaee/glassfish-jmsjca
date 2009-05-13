@@ -22,12 +22,13 @@ import com.stc.jmsjca.test.core.TopicEndToEnd;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Publish453Ear1 extends TopicEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new Stcms453Provider();
     }

@@ -28,13 +28,14 @@ import com.stc.jmsjca.test.core.TcpProxyNIO;
  * Tests STCMS reconnects on outbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class ReconnectOutboundSunOneEar1 extends ReconnectionTestsOutbound {
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }
@@ -48,15 +49,18 @@ public class ReconnectOutboundSunOneEar1 extends ReconnectionTestsOutbound {
      */
     public void testReconnectOutSendKillProducer() throws Throwable {
         doReconnectTest(new XTestExhaustion() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutXA";
             }
             
             // MUST BE SERIAL
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
             }
 
+            @Override
             public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
                 int N = 50;
                 p.setNMessagesToSend(N);

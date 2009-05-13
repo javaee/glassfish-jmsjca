@@ -27,12 +27,12 @@ import java.lang.reflect.Proxy;
 
 public class XMessageEndpointFactory implements MessageEndpointFactory {
     private Method mMethod;
-    private Class mItf;
+    private Class<?> mItf;
     private MDBFactory mFact; 
     private boolean mTransacted;
     private TransactionManager mTxMgr;
     
-    public XMessageEndpointFactory(Method m, Class itf, MDBFactory fact, TransactionManager txmgr) {
+    public XMessageEndpointFactory(Method m, Class<?> itf, MDBFactory fact, TransactionManager txmgr) {
         mMethod = m;
         mItf = itf;
         mFact = fact;

@@ -32,7 +32,7 @@ import org.jboss.jmx.adaptor.rmi.RMIAdaptor;
 /**
  * JBoss 4.0.2 Deployer 
  * @author cye
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class Deployer extends Container {
 
@@ -60,7 +60,7 @@ public class Deployer extends Container {
              //can be "jmx/invoker/HttpAdaptor", but jboss does not create it by default
              mMBeanServerConnection = (RMIAdaptor) ctx.lookup("jmx/invoker/RMIAdaptor");             
              mDeployerObjectName = new ObjectName("jboss.system:service=MainDeployer");  
-             String  name = (String) mMBeanServerConnection.getAttribute(mDeployerObjectName, new String("Name"));                  
+             String  name = (String) mMBeanServerConnection.getAttribute(mDeployerObjectName, "Name");                  
              if ("MainDeployer".equals(name)) {
                  System.out.println("jboss.system:service=MainDeployer" + " was found");
              } else {
@@ -71,14 +71,15 @@ public class Deployer extends Container {
          }
      }
 
-     public void setProperties(Properties p) throws Exception {
+     @Override
+    public void setProperties(Properties p) throws Exception {
          try {
              mProperties = getContainerProperties(p);
              InitialContext ctx = new InitialContext(mProperties);
              //can be "jmx/invoker/HttpAdaptor", but jboss does not create it by default
              mMBeanServerConnection = (RMIAdaptor) ctx.lookup("jmx/invoker/RMIAdaptor");             
              mDeployerObjectName = new ObjectName("jboss.system:service=MainDeployer");  
-             String  name = (String) mMBeanServerConnection.getAttribute(mDeployerObjectName, new String("Name"));                  
+             String  name = (String) mMBeanServerConnection.getAttribute(mDeployerObjectName, "Name");                  
              if ("MainDeployer".equals(name)) {
                  System.out.println("jboss.system:service=MainDeployer" + " was found");
              } else {
@@ -100,7 +101,8 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#redeployModule(java.lang.String)
       */
-     public void redeployModule(String moduleName) throws Exception {
+     @Override
+    public void redeployModule(String moduleName) throws Exception {
          Object[] params = new Object[]{moduleName};
          String[] signatures = new String[]{String.class.getName()};
          mMBeanServerConnection.invoke(mDeployerObjectName, "redeploy", params, signatures);
@@ -110,7 +112,8 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#undeploy(java.lang.String)
       */
-     public void undeploy(String moduleName) throws Exception {
+     @Override
+    public void undeploy(String moduleName) throws Exception {
          Object[] params = new Object[]{moduleName};
          String[] signatures = new String[]{String.class.getName()};
          mMBeanServerConnection.invoke(mDeployerObjectName, "undeploy", params, signatures);
@@ -120,7 +123,8 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#deployModule(java.lang.String)
       */
-     public void deployModule(String absolutePath) throws Exception {
+     @Override
+    public void deployModule(String absolutePath) throws Exception {
          Object[] params = new Object[]{absolutePath};
          String[] signatures = new String[]{String.class.getName()};         
          mMBeanServerConnection.invoke(mDeployerObjectName, "deploy", params, signatures);
@@ -130,14 +134,16 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#close()
       */
-     public void close() throws Exception {
+     @Override
+    public void close() throws Exception {
          mMBeanServerConnection = null;
      }
 
      /**
       * @see com.stc.jmsjca.container.Container#isDeployed(java.lang.String)
       */
-     public boolean isDeployed(String moduleName) throws Exception {
+     @Override
+    public boolean isDeployed(String moduleName) throws Exception {
          Object[] params = new Object[]{moduleName};
          String[] signatures = new String[]{String.class.getName()};                  
          Boolean b = (Boolean) mMBeanServerConnection.invoke(mDeployerObjectName, "isDeployed", params, signatures);
@@ -152,10 +158,11 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#getMBeanProxy(java.lang.String, java.lang.Class)
       */
-     public Object getMBeanProxy(final String objectName, Class itf) throws Exception {
+     @Override
+    public Object getMBeanProxy(final String objectName, Class<?> itf) throws Exception {
          InvocationHandler h = new InvocationHandler() {
              private String[] createSignatureList(Method m) {
-                 Class[] args = m.getParameterTypes();
+                 Class<?>[] args = m.getParameterTypes();
                  String[] ret = new String[args.length];
                  for (int i = 0; i < args.length; i++) {
                      ret[i] = args[i].getName();
@@ -180,7 +187,8 @@ public class Deployer extends Container {
      /**
       * @see com.stc.jmsjca.container.Container#getAttribute(java.lang.String, java.lang.String)
       */
-     public Object getAttribute(String objName, String name) throws Exception {
+     @Override
+    public Object getAttribute(String objName, String name) throws Exception {
          return mMBeanServerConnection.getAttribute(mDeployerObjectName, name);                           
      }
      

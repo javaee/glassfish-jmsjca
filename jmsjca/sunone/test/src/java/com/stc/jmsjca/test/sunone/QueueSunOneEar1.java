@@ -22,7 +22,7 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class QueueSunOneEar1 extends QueueEndToEnd {
     /**
@@ -62,6 +62,7 @@ public class QueueSunOneEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }

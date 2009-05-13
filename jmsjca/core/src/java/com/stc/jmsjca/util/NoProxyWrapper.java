@@ -22,11 +22,11 @@ import com.stc.jmsjca.localization.Localizer;
  * A baseclass for wrapper managers, i.e. objects that give out wrappers.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class NoProxyWrapper  {
 //    private static Logger sLog = Logger.getLogger(NoProxyWrapper.class);
-    private Class mItf;
+    private Class<?> mItf;
     private Object mWrapper;
     private int mCtExceptions;
     private Exception mFirstException;
@@ -39,7 +39,7 @@ public abstract class NoProxyWrapper  {
      * @param itf interface to expose through the wrapper
      * @param signature String
      */
-    protected void init(Class itf, String signature) {
+    protected void init(Class<?> itf, String signature) {
         mItf = itf;
         mSignature = signature;
 
@@ -51,7 +51,7 @@ public abstract class NoProxyWrapper  {
      *
      * @return class
      */
-    public Class getItfClass() {
+    public Class<?> getItfClass() {
         return mItf;
     }
 
@@ -62,7 +62,7 @@ public abstract class NoProxyWrapper  {
      * @param b Class
      * @return boolean true if class is specified class
      */
-    public static boolean isClass(Class a, Class b) {
+    public static boolean isClass(Class<?> a, Class<?> b) {
         if (a == b || a.getName().equals(b.getName())) {
             return true;
         }
@@ -75,7 +75,7 @@ public abstract class NoProxyWrapper  {
      * @param c Class
      * @return boolean true if class is specified class
      */
-    public boolean isItfClass(Class c) {
+    public boolean isItfClass(Class<?> c) {
         return isClass(c, mItf);
     }
 

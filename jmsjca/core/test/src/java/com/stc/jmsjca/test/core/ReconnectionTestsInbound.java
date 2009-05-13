@@ -32,7 +32,7 @@ import javax.jms.TopicSession;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
     // To test:
@@ -68,6 +68,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         public XTestInboundDisruptOnce(String deliveryMode) {
             super(deliveryMode);
         }
+        @Override
         public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
             int N = 100;
             for (int i = 1; i <= 1; i++) {
@@ -100,6 +101,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         public XTestInboundUndeploy(String deliveryMode) {
             super(deliveryMode);
         }
+        @Override
         public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
             int N = 100;
             for (int i = 1; i <= 1; i++) {
@@ -158,6 +160,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         public XTestInboundRedeploy(String deliveryMode) {
             super(deliveryMode);
         }
+        @Override
         public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
             int N = 100;
             for (int i = 1; i <= 1; i++) {

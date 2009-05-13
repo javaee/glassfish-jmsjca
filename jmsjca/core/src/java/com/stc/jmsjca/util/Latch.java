@@ -45,13 +45,14 @@ package com.stc.jmsjca.util;
  *      doSomethingElse();         // don't let run yet
  *      go.release();              // let all threads proceed
  *    }
+ *  </pre>
  *    
- *  @version $Revision: 1.2 $
+ *  @version $Revision: 1.3 $
  *  @author Doug Lea
  */
 
 public class Latch {
-    private boolean latched_ = false;
+    private boolean latched_;
 
     /*
      * This could use double-check, but doesn't. If the latch is being used as

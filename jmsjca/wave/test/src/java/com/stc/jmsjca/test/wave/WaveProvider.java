@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WaveProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wave.host";
@@ -40,6 +40,7 @@ public class WaveProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #changeDD(com.stc.jmsjca.container.EmbeddedDescriptor, com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
@@ -62,6 +63,7 @@ public class WaveProvider extends JMSProvider {
      * 
      * @return clientId
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return proposedClientId;
     }
@@ -69,6 +71,7 @@ public class WaveProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         WavePassthrough ret = new WavePassthrough(serverProperties, this);
         ret.setCommitSize(1);
@@ -78,6 +81,7 @@ public class WaveProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         return getConnectionUrl(test.getJmsServerProperties());
     }
@@ -85,6 +89,7 @@ public class WaveProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_PASSWORD);
     }
@@ -92,6 +97,7 @@ public class WaveProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
     }
@@ -105,6 +111,7 @@ public class WaveProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "wave";
     }

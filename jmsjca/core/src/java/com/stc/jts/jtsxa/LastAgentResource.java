@@ -32,7 +32,7 @@ public interface LastAgentResource extends XAResource {
      * The resource MUST always be last agent. It's an error to have two such resources
      * enlisted in the same transaction.
      */
-    public static final int NON_XA = 0;
+    int NON_XA = 0;
 
     /**
      * Indicates that this XAResource merely emulates functionality of prepare() and
@@ -41,7 +41,7 @@ public interface LastAgentResource extends XAResource {
      * persistent transaction log. Lower value indicates higher possiblity of error
      * occurency in commit().
      */
-    public static final int PSEUDO_XA_MIN = 1;
+    int PSEUDO_XA_MIN = 1;
 
     /**
      * Indicates that this XAResource merely emulates functionality of prepare() and
@@ -50,7 +50,7 @@ public interface LastAgentResource extends XAResource {
      * relatively safely if running without a persistent transaction log. Lower value
      * indicates higher possiblity of error occurency in commit().
      */
-    public static final int PSEUDO_XA_MAX = 0x40000000;
+    int PSEUDO_XA_MAX = 0x40000000;
 
     /**
      * Indicates that this resource fully implementats the two-phase commit protocol. The
@@ -58,7 +58,7 @@ public interface LastAgentResource extends XAResource {
      * relatively to single-phase commit. Lower values mean higher expenses and will be
      * most likely selected as last agent.
      */
-    public static final int TRUE_XA_MIN = PSEUDO_XA_MAX + 1;
+    int TRUE_XA_MIN = PSEUDO_XA_MAX + 1;
 
     /**
      * Indicates that this resource fully implementats the two-phase commit protocol. The
@@ -66,24 +66,24 @@ public interface LastAgentResource extends XAResource {
      * relatively to single-phase commit. Lower value means higher expenses and will be
      * most likely selected as last agent.
      */
-    public static final int TRUE_XA_MAX = Integer.MAX_VALUE;
+    int TRUE_XA_MAX = Integer.MAX_VALUE;
 
     /**
      * CORBA resources are considered to be true-XA, but they are preferred to be selected
      * as last agent over other resources.
      */
-    public static final int CORBA_XA = 0x50000000;
+    int CORBA_XA = 0x50000000;
 
     /**
      * Default value for XA resources which doesn't implement this interface.
      */
-    public static final int NORMAL_XA = 0x60000000;
+    int NORMAL_XA = 0x60000000;
     
     /**
      * Resource should never be a last agent. It either improperly process
      * single-phase commit in some scenarios or have no performance benefit.  
      */
-    public static final int NEVER = -1; 
+    int NEVER = -1; 
 
     /**
      * This method is used to select which XAResource will be selected as the last agent
@@ -93,6 +93,6 @@ public interface LastAgentResource extends XAResource {
      * @return value for priority
      */
 
-    public int lastAgentPreferenceLevel();
+    int lastAgentPreferenceLevel();
 
 }

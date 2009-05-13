@@ -196,8 +196,8 @@
                destdir="${jmsjca.build-tools.classes.dir}"
                debug="true"
                deprecation="${stc.java.deprecation}"
-               target="1.4"
-               source="1.4"
+               target="1.5"
+               source="1.5"
         >
             <src path="buildtools/src/java" />
             <classpath refid="jmsjca.core.classpath" />
@@ -209,8 +209,8 @@
                destdir="${jmsjca.core.classes.dir}"
                debug="true"
                deprecation="${stc.java.deprecation}"
-               target="1.4"
-               source="1.4"
+               target="1.5"
+               source="1.5"
         >
             <src path="core/src/java" />
             <classpath refid="jmsjca.core.classpath" />
@@ -343,8 +343,8 @@
                destdir="${jmsjca.container.classes.dir}"
                debug="true"
                deprecation="${stc.java.deprecation}"
-               target="1.4"
-               source="1.4"
+               target="1.5"
+               source="1.5"
         >
             <src path="container/src/java"/>
             <src path="container-${jmsjca.container.id}/src/java"/>

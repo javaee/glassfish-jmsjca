@@ -31,7 +31,7 @@ import java.util.Properties;
  * connection, and through that control over message delivery to the MDB.
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class ActivationMBean extends CommonMBean implements EmManagementInterface {
     //private static Logger sLog = Logger.getLogger(ActivationMBean.class);
@@ -89,7 +89,7 @@ public class ActivationMBean extends CommonMBean implements EmManagementInterfac
      * @return Boolean
      */
     public Boolean getSuspended() {
-        return new Boolean(mActivation.isStopped());
+        return Boolean.valueOf(mActivation.isStopped());
     }
     
     /**
@@ -495,16 +495,5 @@ public class ActivationMBean extends CommonMBean implements EmManagementInterfac
      */
     public Boolean isStoppable() {
         return Boolean.TRUE;
-    }
-
-    /**
-     * @see com.stc.jmsjca.core.CommonMBean#main(java.lang.String[])
-     */
-    public static void main(String[] args) {
-        try {
-            new ActivationMBean(null).mbeanTest();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

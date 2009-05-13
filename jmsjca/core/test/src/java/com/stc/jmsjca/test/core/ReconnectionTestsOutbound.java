@@ -26,7 +26,7 @@ import com.stc.jmsjca.util.UrlParser;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class ReconnectionTestsOutbound extends EndToEndBase {
     /**
@@ -56,6 +56,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      * @author fkieviet
      */
     public abstract class XTestExhaustion extends XTest0 {
+        @Override
         public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
             int N = isFastTest() ? 2 : 50;
             p.setNMessagesToSend(N);
@@ -83,6 +84,7 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      * @author fkieviet
      */
     public abstract class XTestReconnect extends XTestExhaustion {
+        @Override
         public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
             int iters = isFastTest() ? 1 : 2;
             for (int i = 1; i <= iters; i++) {
@@ -168,10 +170,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutLeakXACMT() throws Throwable {
         doReconnectTest(new XTestExhaustion() {
+            @Override
             public String getOnMessageMethod() {
                  return "reconnectOutXA";
             }
 
+            @Override
             public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
                 super.test(proxy, p, c);
             }
@@ -187,15 +191,18 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutLeakXABMT() throws Throwable {
         doReconnectTest(new XTestExhaustion() {
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 dd.findElementByName(EJBDD, "transaction-type").setText("Bean");
                 dd.findElementByName(EJBDD, "trans-attribute").setText("NotSupported");
             }
 
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutBMTXA";
             }
 
+            @Override
             public void test(TcpProxyNIO proxy, Passthrough p, Container c) throws Exception {
                 super.test(proxy, p, c);
             }
@@ -210,10 +217,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutXASerial() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutXA";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
             }
@@ -228,10 +237,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutXACC() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutXA";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
             }
@@ -248,10 +259,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutNoTxCC() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutNoTx";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("NoTransaction");
@@ -273,10 +286,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testReconnectOutNoTxSerial() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutNoTx";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("NoTransaction");
@@ -298,10 +313,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testreconnectOutLocalTxBMTLateEnlistmentSerial() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutLocalTxBMTLateEnlistment";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
@@ -321,10 +338,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testreconnectOutLocalTxBMTEarlyEnlistmentSerial() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutLocalTxBMTEarlyEnlistment";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("serial");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
@@ -343,10 +362,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testreconnectOutLocalTxBMTLateEnlistmentCC() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutLocalTxBMTLateEnlistment";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");
@@ -366,10 +387,12 @@ public abstract class ReconnectionTestsOutbound extends EndToEndBase {
      */
     public void testreconnectOutLocalTxBMTEarlyEnlistmentCC() throws Throwable {
         doReconnectTest(new XTestReconnect() {
+            @Override
             public String getOnMessageMethod() {
                 return "reconnectOutLocalTxBMTEarlyEnlistment";
             }
             
+            @Override
             public void modifyDD(EmbeddedDescriptor dd, QueueEndToEnd.ActivationConfig spec) throws Exception {
                 spec.setConcurrencyMode("cc");
                 dd.findElementByText(RAXML, "XATransaction").setText("LocalTransaction");

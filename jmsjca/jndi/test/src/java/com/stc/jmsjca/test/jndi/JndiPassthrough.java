@@ -34,7 +34,7 @@ import java.util.Vector;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JndiPassthrough extends Passthrough {
     private Properties mServerProperties;
@@ -52,7 +52,7 @@ public class JndiPassthrough extends Passthrough {
             int port = Integer.parseInt(mServerProperties.getProperty(
                     JndiProvider.PROPNAME_PORT, null));
 
-            mServer.connect(JndiProvider.PROPNAME_HOST, port,
+            mServer.connect(mServerProperties.getProperty(JndiProvider.PROPNAME_HOST), port,
                     mServerProperties.getProperty(JndiProvider.PROPNAME_USERID),
                     mServerProperties.getProperty(JndiProvider.PROPNAME_PASSWORD));
         }
@@ -64,6 +64,7 @@ public class JndiPassthrough extends Passthrough {
         return findDurableSubscriber(topic, subname) != null;
     }
 
+    @SuppressWarnings("unchecked")
     public SubscriberInfo findDurableSubscriber(String topic, String subname) throws Exception {
         Vector subs = new Vector();
         getServer().getSubscribersOfTopic(subs, topic);
@@ -76,6 +77,7 @@ public class JndiPassthrough extends Passthrough {
         return null;
     }
 
+    @Override
     public void removeDurableSubscriber(String clientID, String dest, String subname) throws Exception {
         SubscriberInfo sub = findDurableSubscriber(dest, subname);
         if (sub != null) {
@@ -88,6 +90,7 @@ public class JndiPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
                 JndiProvider.PROPNAME_PORT, null));
@@ -98,6 +101,7 @@ public class JndiPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
             JndiProvider.PROPNAME_PORT, null));

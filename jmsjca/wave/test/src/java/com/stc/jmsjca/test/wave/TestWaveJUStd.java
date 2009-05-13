@@ -84,6 +84,7 @@ public class TestWaveJUStd extends XTestBase {
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WaveProvider();
     }
@@ -126,6 +127,7 @@ public class TestWaveJUStd extends XTestBase {
         return profile;
     }
 
+    @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
 
@@ -180,20 +182,25 @@ public class TestWaveJUStd extends XTestBase {
         return ((WaveProvider) getJMSProvider()).getConnectionUrl(mServerProperties);
     }
 
+    @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         WaveProfile p = createWaveProfile(getConnectionUrl());
         return new WaveXAQueueConnectionFactory(p);
     }
 
+    @Override
     protected void setClientID(Connection con) throws JMSException {
         con.setClientID("X");
     }
 
+    @Override
     public WireCount getConnectionCount() {
         return new WireCount() {
+            @Override
             public void check(int sessions, int producers, int consumers) {
             }
 
+            @Override
             public void check(int n) {
             }
         };

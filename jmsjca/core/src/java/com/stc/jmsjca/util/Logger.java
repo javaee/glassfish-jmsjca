@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
  * package to the java.util.logging package easier.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public final class Logger {
     private final java.util.logging.Logger mDelegate;
@@ -47,10 +47,10 @@ public final class Logger {
     /**
      * See {@link org.apache.log4j.Logger#}
      *
-     * @param clazz Class whose name is to be used as the logger name
+     * @param clazz Class<?> whose name is to be used as the logger name
      * @return Logger instance
      */
-    public static Logger getLogger(Class clazz) {
+    public static Logger getLogger(Class<?> clazz) {
         return getLogger(clazz.getName());
     }
 
@@ -59,7 +59,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void debug(Object message) {
+    public void debug(Object message) {
         mDelegate.log(java.util.logging.Level.FINE,
             message == null ? null : message.toString());
     }
@@ -70,7 +70,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception
      */
-    public final void debug(Object message, Throwable t) {
+    public void debug(Object message, Throwable t) {
         mDelegate.log(java.util.logging.Level.FINE,
             message == null ? null : message.toString(), t);
     }
@@ -80,7 +80,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void error(LocalizedString message) {
+    public void error(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString());
     }
@@ -91,7 +91,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void error(LocalizedString message, Throwable t) {
+    public void error(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -102,7 +102,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void errorNoloc(String message, Throwable t) {
+    public void errorNoloc(String message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -112,7 +112,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void fatal(LocalizedString message) {
+    public void fatal(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString());
     }
@@ -123,7 +123,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void fatal(LocalizedString message, Throwable t) {
+    public void fatal(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -134,7 +134,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void fatalNoloc(String message, Throwable t) {
+    public void fatalNoloc(String message, Throwable t) {
         mDelegate.log(java.util.logging.Level.SEVERE,
             message == null ? null : message.toString(), t);
     }
@@ -144,7 +144,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void info(LocalizedString message) {
+    public void info(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString());
     }
@@ -154,7 +154,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void infoNoloc(String message) {
+    public void infoNoloc(String message) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString());
     }
@@ -165,7 +165,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void infoNoloc(String message, Throwable t) {
+    public void infoNoloc(String message, Throwable t) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString(), t);
     }
@@ -176,7 +176,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void info(LocalizedString message, Throwable t) {
+    public void info(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.INFO,
             message == null ? null : message.toString(), t);
     }
@@ -186,7 +186,7 @@ public final class Logger {
      *
      * @return if debug logging is enabled
      */
-    public final boolean isDebugEnabled() {
+    public boolean isDebugEnabled() {
         return mDelegate.isLoggable(java.util.logging.Level.FINE);
     }
 
@@ -195,7 +195,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void warn(LocalizedString message) {
+    public void warn(LocalizedString message) {
         mDelegate.log(java.util.logging.Level.WARNING,
             message == null ? null : message.toString());
     }
@@ -206,7 +206,7 @@ public final class Logger {
      * @param message msg to be logged
      * @param t exception to be logged
      */
-    public final void warn(LocalizedString message, Throwable t) {
+    public void warn(LocalizedString message, Throwable t) {
         mDelegate.log(java.util.logging.Level.WARNING,
             message == null ? null : message.toString(), t);
     }
@@ -216,7 +216,7 @@ public final class Logger {
      *
      * @param message msg to be logged
      */
-    public final void warnNoloc(String message) {
+    public void warnNoloc(String message) {
         mDelegate.log(java.util.logging.Level.WARNING,
             message == null ? null : message.toString());
     }
@@ -226,7 +226,7 @@ public final class Logger {
      *
      * @return String
      */
-    public final String getName() {
+    public String getName() {
         return mDelegate.getName();
     }
 
@@ -235,7 +235,7 @@ public final class Logger {
      *
      * @return Level
      */
-    public final java.util.logging.Level getLevel() {
+    public java.util.logging.Level getLevel() {
         return mDelegate.getLevel();
     }
 
@@ -244,7 +244,7 @@ public final class Logger {
      *
      * @return ResourceBundle
      */
-    public final ResourceBundle getResourceBundle() {
+    public ResourceBundle getResourceBundle() {
         return mDelegate.getResourceBundle();
     }
 
@@ -254,7 +254,7 @@ public final class Logger {
      * @param level msg to be logged
      * @return boolean
      */
-    public final boolean isEnabledFor(java.util.logging.Level level) {
+    public boolean isEnabledFor(java.util.logging.Level level) {
         return mDelegate.isLoggable(level);
     }
 
@@ -263,7 +263,7 @@ public final class Logger {
      *
      * @return boolean
      */
-    public final boolean isInfoEnabled() {
+    public boolean isInfoEnabled() {
         return mDelegate.isLoggable(java.util.logging.Level.INFO);
     }
 
@@ -272,7 +272,7 @@ public final class Logger {
      *
      * @param level msg to be logged
      */
-    public final void setLevel(java.util.logging.Level level) {
+    public void setLevel(java.util.logging.Level level) {
         mDelegate.setLevel(level);
     }
 }

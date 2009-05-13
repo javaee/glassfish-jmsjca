@@ -156,6 +156,7 @@ public class BasicWMQTestJUStd extends TestCase {
      * JUnit setup
      * @throws Exception if fails
      */
+    @Override
     public void setUp() throws Exception {
         init();
     }
@@ -307,7 +308,7 @@ public class BasicWMQTestJUStd extends TestCase {
         // Create concreate connection factories and bind them into JNDI
         {
             //non-xa
-            MQConnectionFactory mf = (MQConnectionFactory) new MQQueueConnectionFactory();
+            MQConnectionFactory mf = new MQQueueConnectionFactory();
             mf.setHostName(HOSTNAME);
             mf.setPort(PORT);
             mf.setQueueManager(QUEUE_MANAGER);
@@ -315,7 +316,7 @@ public class BasicWMQTestJUStd extends TestCase {
             mf.setPollingInterval(100);
             ctx.rebind(QUEUE_CF_JNDINAME, mf);
         
-            mf = (MQConnectionFactory) new MQTopicConnectionFactory();
+            mf = new MQTopicConnectionFactory();
             mf.setHostName(HOSTNAME);
             mf.setPort(PORT);
             mf.setQueueManager(QUEUE_MANAGER);
@@ -325,7 +326,7 @@ public class BasicWMQTestJUStd extends TestCase {
             ctx.rebind(TOPIC_CF_JNDINAME, mf);
         
             //xa       
-            mf = (MQConnectionFactory) new MQXAQueueConnectionFactory();        
+            mf = new MQXAQueueConnectionFactory();        
             mf.setHostName(HOSTNAME);
             mf.setPort(PORT);
             mf.setQueueManager(QUEUE_MANAGER);
@@ -335,7 +336,7 @@ public class BasicWMQTestJUStd extends TestCase {
             mf.setSyncpointAllGets(false);
             ctx.rebind(QUEUE_XACF_JNDINAME, mf);
             
-            mf = (MQConnectionFactory) new MQXATopicConnectionFactory();
+            mf = new MQXATopicConnectionFactory();
             mf.setHostName(HOSTNAME);
             mf.setPort(PORT);
             mf.setQueueManager(QUEUE_MANAGER);
@@ -345,7 +346,7 @@ public class BasicWMQTestJUStd extends TestCase {
             //mf.setSyncpointAllGets(false);      
             ctx.rebind(TOPIC_XACF_JNDINAME, mf);
             
-            mf = (MQConnectionFactory) new MQXAConnectionFactory();
+            mf = new MQXAConnectionFactory();
             mf.setHostName(HOSTNAME);
             mf.setPort(PORT);
             mf.setQueueManager(QUEUE_MANAGER);
@@ -418,7 +419,7 @@ public class BasicWMQTestJUStd extends TestCase {
             QueueSender producer = sess.createSender(dest);
 
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess.createTextMessage("This is a test000 message:" + id);
+            Message msg = sess.createTextMessage("This is a test000 message:" + id);
 
             conn.start();
            
@@ -523,7 +524,7 @@ public class BasicWMQTestJUStd extends TestCase {
             }
             
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess.createTextMessage("This is a test001 message:" + id);
+            Message msg = sess.createTextMessage("This is a test001 message:" + id);
 
             producer.send(msg);
             sess.commit();
@@ -596,7 +597,7 @@ public class BasicWMQTestJUStd extends TestCase {
             conn.start();
             
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess1.createTextMessage("This is a test010 message:" + id);
+            Message msg = sess1.createTextMessage("This is a test010 message:" + id);
 
             producer.send(msg);
             sess1.commit();
@@ -678,7 +679,7 @@ public class BasicWMQTestJUStd extends TestCase {
             //create logical queue testqueue1 from MQ Explorer first 
             Queue dest = sess1.createQueue("queue:///Queue1");
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess1.createTextMessage("This is a test020 message:" + id);
+            Message msg = sess1.createTextMessage("This is a test020 message:" + id);
 
             MessageConsumer consumer = sess1.createConsumer(dest);	
             Queue rdest = sess1.createQueue("queue:///rtestqueue2");          
@@ -763,7 +764,7 @@ public class BasicWMQTestJUStd extends TestCase {
             QueueSender producer = sess.createSender(dest);
 
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess.createTextMessage("This is a test002 message:" + id);
+            Message msg = sess.createTextMessage("This is a test002 message:" + id);
 
             conn.start();
 
@@ -836,7 +837,7 @@ public class BasicWMQTestJUStd extends TestCase {
             TopicPublisher producer = sess.createPublisher(dest);
 
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess.createTextMessage("This is a test003 message:" + id);
+            Message msg = sess.createTextMessage("This is a test003 message:" + id);
 
             producer.send(msg);
             sess.commit();
@@ -908,7 +909,7 @@ public class BasicWMQTestJUStd extends TestCase {
              conn.start();
 
              long id = System.currentTimeMillis();
-             Message msg = (Message) sess.createTextMessage("This is a test004 message:" + id);
+             Message msg = sess.createTextMessage("This is a test004 message:" + id);
 
              javax.transaction.xa.Xid xd1 = new MQXid((int) id, "aGlobalTxn".getBytes(),  "JMSbranchRemote".getBytes());
              xa.start(xd1, XAResource.TMNOFLAGS);
@@ -978,7 +979,7 @@ public class BasicWMQTestJUStd extends TestCase {
             TopicPublisher producer = sess.createPublisher(dest);
 
             long id = System.currentTimeMillis();
-            Message msg = (Message) sess.createTextMessage("This is a test005-1 message:" + id);
+            Message msg = sess.createTextMessage("This is a test005-1 message:" + id);
 
             producer.send(msg);
             sess.commit();
@@ -1008,7 +1009,7 @@ public class BasicWMQTestJUStd extends TestCase {
             producer = sess.createPublisher(dest);
 
             id = System.currentTimeMillis();
-            msg = (Message) sess.createTextMessage("This is a test005-2 message:" + id);
+            msg = sess.createTextMessage("This is a test005-2 message:" + id);
 
             producer.send(msg);
             sess.commit();

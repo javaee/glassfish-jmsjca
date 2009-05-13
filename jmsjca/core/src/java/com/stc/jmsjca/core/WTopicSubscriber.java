@@ -24,7 +24,7 @@ import javax.jms.TopicSubscriber;
  * See WConsumer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WTopicSubscriber extends WMessageConsumer implements TopicSubscriber {
     private TopicSubscriber mDelegate;
@@ -83,6 +83,7 @@ public class WTopicSubscriber extends WMessageConsumer implements TopicSubscribe
      *
      * @throws JMSException on failure
      */
+    @Override
     public void close() throws JMSException {
         super.close();
         mDelegate = null;

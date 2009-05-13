@@ -22,7 +22,7 @@ package com.stc.jmsjca.core;
  * to access the wrapped object
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public interface Unwrappable  {
     /**
@@ -30,5 +30,5 @@ public interface Unwrappable  {
      * 
      * @return wrapped object; may be null if the wrapper was deactivated
      */
-    public Object getWrappedObject();
+    Object getWrappedObject();
 }

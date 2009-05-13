@@ -22,12 +22,13 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  *
  * @author fkieviet, cye
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class QueueWaveEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#getMaxConcurrency()
      */
+    @Override
     protected int getMaxConcurrency() {
         // set to the value of maxQueuePresend 
         return 10;
@@ -66,6 +67,7 @@ public class QueueWaveEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WaveProvider();
     }

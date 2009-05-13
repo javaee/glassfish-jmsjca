@@ -76,11 +76,10 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
-
     /**
      * Capability
      */
@@ -311,7 +310,7 @@ public abstract class RAJMSObjectFactory {
      * @return Session Session
      * @throws JMSException failure
      */
-    public Session createSession(Connection conn, boolean isXA, Class sessionClass,
+    public Session createSession(Connection conn, boolean isXA, Class<?> sessionClass,
         RAJMSResourceAdapter ra, RAJMSActivationSpec activationSpec, boolean transacted,
         int ackmode) throws JMSException {
         if (isXA) {
@@ -328,7 +327,7 @@ public abstract class RAJMSObjectFactory {
             } else if (sessionClass == QueueSession.class) {
                 return ((QueueConnection) conn).createQueueSession(transacted, ackmode);
             } else if (sessionClass == Session.class) {
-                return ((Connection) conn).createSession(transacted, ackmode);
+                return conn.createSession(transacted, ackmode);
             }
         }
         throw Exc.rtexc(LOCALE.x("E131: Unknown class: {0}", sessionClass));
@@ -393,7 +392,7 @@ public abstract class RAJMSObjectFactory {
      */
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class sessionClass) throws JMSException {
+        String destName, Properties options, Class<?> sessionClass) throws JMSException {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");
@@ -483,7 +482,7 @@ public abstract class RAJMSObjectFactory {
                 }
 
                 // Setup substitution parameters
-                final Map map = new HashMap();
+                final Map<String, String> map = new HashMap<String, String>();
                 map.put(Options.Selector.SUB_NAME, subname == null ? "" : subname);
                 map.put(Options.Selector.SELECTOR, specsel);
                 if (Str.empty(spec.getMessageSelector())) {
@@ -499,7 +498,7 @@ public abstract class RAJMSObjectFactory {
                 int[] nUnresolved = new int[1];
                 Str.Translator t = new Str.Translator() {
                     public String get(String key) {
-                        String ret = (String) map.get(key);
+                        String ret = map.get(key);
                         if (ret == null) {
                             ret = System.getProperty(key);
                         }
@@ -641,23 +640,21 @@ public abstract class RAJMSObjectFactory {
                         return ((XAConnection) conn).createDurableConnectionConsumer((Topic)
                             dest, subscriptionName, selector, pool, batchsize);
                     } else {
-                        return ((XAConnection) conn).createConnectionConsumer((Topic)
-                            dest, selector, pool, batchsize);
+                        return ((XAConnection) conn).createConnectionConsumer(dest, selector, pool, batchsize);
                     }
                 } else {
-                    return ((XAConnection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
+                    return ((XAConnection) conn).createConnectionConsumer(dest, selector, pool, batchsize);
                 }
             } else {
                 if (isTopic) {
                     if (isDurable) {
-                        return ((Connection) conn).createDurableConnectionConsumer((Topic)
+                        return conn.createDurableConnectionConsumer((Topic)
                             dest, subscriptionName, selector, pool, batchsize);                    
                     } else {
-                        return ((Connection) conn).createConnectionConsumer((Topic)
-                            dest, selector, pool, batchsize);                    
+                        return conn.createConnectionConsumer(dest, selector, pool, batchsize);                    
                     }
                 } else {
-                    return ((Connection) conn).createConnectionConsumer((Queue) dest, selector, pool, batchsize);
+                    return conn.createConnectionConsumer(dest, selector, pool, batchsize);
                 }
             }
         } catch (JMSException ex) {
@@ -697,7 +694,7 @@ public abstract class RAJMSObjectFactory {
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc,
         XConnectionRequestInfo descr, boolean isXa, boolean isTransacted,
-        int acknowledgmentMode, Class sessionClass)
+        int acknowledgmentMode, Class<?> sessionClass)
     throws JMSException {
         return new GenericSessionConnection(connectionFactory, objfact, ra,
             mc, descr, isXa, isTransacted, acknowledgmentMode, sessionClass);
@@ -823,7 +820,7 @@ public abstract class RAJMSObjectFactory {
      * @return the non-XA sessioin
      * @throws JMSException propagated
      */
-    public Session getNonXASession(Session session, boolean isXA, Class sessionClass) throws JMSException {
+    public Session getNonXASession(Session session, boolean isXA, Class<?> sessionClass) throws JMSException {
         if (!isXA) {
             return session;
         } else {
@@ -986,7 +983,7 @@ public abstract class RAJMSObjectFactory {
         } else if (toCopy instanceof MapMessage) {
             MapMessage in = (MapMessage) toCopy;
             MapMessage out = s.createMapMessage();
-            for (Enumeration en = in.getMapNames(); en.hasMoreElements();/*-*/) {
+            for (Enumeration<?> en = in.getMapNames(); en.hasMoreElements();/*-*/) {
                 String name = (String) en.nextElement();
                 Object o = in.getObject(name);
                 out.setObject(name, o);
@@ -1016,7 +1013,7 @@ public abstract class RAJMSObjectFactory {
         }
         
         // Copy user properties
-        for (Enumeration en = toCopy.getPropertyNames(); en.hasMoreElements();/*-*/) {
+        for (Enumeration<?> en = toCopy.getPropertyNames(); en.hasMoreElements();/*-*/) {
             String name = (String) en.nextElement();
             Object o = toCopy.getObjectProperty(name);
             String originalName = name;
@@ -1113,14 +1110,14 @@ public abstract class RAJMSObjectFactory {
             return null;
         }
         
-        Class c = d.getClass();
+        Class<?> c = d.getClass();
         String classname = c.getName();
         boolean isGenQueue = classname.equals("com.sun.genericra.outbound.QueueProxy");
         boolean isGenTopic = !isGenQueue && classname.equals("com.sun.genericra.outbound.TopicProxy"); 
         if (isGenQueue || isGenTopic) { 
             try {
-                Method m = c.getMethod("getDestinationJndiName", null);
-                String jndiname = (String) m.invoke(d, null);
+                Method m = c.getMethod("getDestinationJndiName", (Class<?>[]) null);
+                String jndiname = (String) m.invoke(d, (Object[]) null);
                 if (isGenQueue) {
                     AdminQueue ret = new AdminQueue();
                     ret.setName("jndi://" + jndiname);

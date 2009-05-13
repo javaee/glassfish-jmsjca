@@ -28,7 +28,7 @@ import javax.jms.JMSException;
  * (All provider specific code has been moved to the object factory)
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class WLSessionConnection extends GenericSessionConnection {
 
@@ -49,7 +49,7 @@ public class WLSessionConnection extends GenericSessionConnection {
     public WLSessionConnection(Object connectionFactory, RAJMSObjectFactory objfact,
         RAJMSResourceAdapter ra, XManagedConnection managedConnection,
         XConnectionRequestInfo descr, boolean isXa,
-        boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         super(connectionFactory, objfact, ra, managedConnection, descr, isXa,

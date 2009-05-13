@@ -63,7 +63,7 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public abstract class ActivationBase {
     /**
@@ -197,6 +197,7 @@ public abstract class ActivationBase {
      *
      * @return String
      */
+    @Override
     public String toString() {
         return getName();
     }

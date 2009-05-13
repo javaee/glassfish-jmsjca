@@ -56,7 +56,7 @@ public class TcpProxyNIO implements Runnable {
     private int mNPassThroughsCreated;
     private int mNPipes;
     private Receptor mReceptor;
-    private Map mChannelToPipes = new IdentityHashMap();
+    private Map<SocketChannel, PipeEnd> mChannelToPipes = new IdentityHashMap<SocketChannel, PipeEnd>();
     private Selector selector;
     private int mCmd;
     private Semaphore mAck = new Semaphore(0);
@@ -149,6 +149,7 @@ public class TcpProxyNIO implements Runnable {
             this.name = "{" + name + "}";
         }
         
+        @Override
         public String toString() {
             StringBuffer ret = new StringBuffer();
             ret.append(name);
@@ -330,8 +331,8 @@ public class TcpProxyNIO implements Runnable {
                 if (nEvents == 0) {
                     continue;
                 }
-                Set keySet = selector.selectedKeys();
-                for (Iterator iter = keySet.iterator(); iter.hasNext();) {
+                Set<?> keySet = selector.selectedKeys();
+                for (Iterator<?> iter = keySet.iterator(); iter.hasNext();) {
                     SelectionKey key = (SelectionKey) iter.next();
                     iter.remove();
 
@@ -372,7 +373,7 @@ public class TcpProxyNIO implements Runnable {
                     // client needs to be closed immediately.
                     if (key != null && key.isValid() && key.isConnectable()) {
                         SocketChannel c = (SocketChannel) key.channel();
-                        PipeEnd p = (PipeEnd) mChannelToPipes.get(c); // SERVER-SIDE
+                        PipeEnd p = mChannelToPipes.get(c); // SERVER-SIDE
                         if (sLog.isDebugEnabled()) {
                             sLog.debug(">CONNECT event on " + p + " -- other: " + p.other);
                         }
@@ -402,7 +403,7 @@ public class TcpProxyNIO implements Runnable {
                     // in the key are toggled back and forth. Ofcourse the same holds
                     // true for data from the server to the client.
                     if (key != null && key.isValid() && key.isReadable()) {
-                        PipeEnd p = (PipeEnd) mChannelToPipes.get(key.channel());
+                        PipeEnd p = mChannelToPipes.get(key.channel());
                         if (sLog.isDebugEnabled()) {
                             sLog.debug(">READ event on " + p + " -- other: " + p.other);
                         }
@@ -464,7 +465,7 @@ public class TcpProxyNIO implements Runnable {
                     // the buffer and must be read and sent to the client before the
                     // client connection is closed.
                     if (key != null && key.isValid() && key.isWritable()) {
-                        PipeEnd p = (PipeEnd) mChannelToPipes.get(key.channel());
+                        PipeEnd p = mChannelToPipes.get(key.channel());
                         
                         if (sLog.isDebugEnabled()) {
                             sLog.debug(">WRITE event on " + p + " -- other: " + p.other);
@@ -556,7 +557,7 @@ public class TcpProxyNIO implements Runnable {
     }
     
     private PipeEnd[] toPipeArray() {
-        return (PipeEnd[]) mChannelToPipes.values().toArray(
+        return mChannelToPipes.values().toArray(
         new PipeEnd[mChannelToPipes.size()]);
     }
 
@@ -615,7 +616,7 @@ public class TcpProxyNIO implements Runnable {
     public void restart() throws Exception {
         close();
         
-        mChannelToPipes = new IdentityHashMap();
+        mChannelToPipes = new IdentityHashMap<SocketChannel, PipeEnd>();
         mAck = new Semaphore(0);
         mStartupFailure = null;
         mUnexpectedThreadFailure = null;

@@ -23,7 +23,7 @@ import com.stc.jmsjca.util.Logger;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RASTCMSObjectFactorySync extends RASTCMSObjectFactory implements
     java.io.Serializable {
@@ -34,6 +34,7 @@ public class RASTCMSObjectFactorySync extends RASTCMSObjectFactory implements
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         int newMode = mode;
         if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {

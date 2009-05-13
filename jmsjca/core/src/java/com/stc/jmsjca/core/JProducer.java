@@ -33,7 +33,7 @@ import javax.jms.TopicPublisher;
 * to the JMS Producer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class JProducer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JProducer.class);
@@ -53,7 +53,7 @@ public class JProducer extends NoProxyWrapper {
      * @param signature String
      * @param isTemp boolean
      */
-    public JProducer(Class itf, JSession session, MessageProducer delegate,
+    public JProducer(Class<?> itf, JSession session, MessageProducer delegate,
         String signature, boolean isTemp) {
         mSession = session;
         mDelegate = delegate;
@@ -73,13 +73,14 @@ public class JProducer extends NoProxyWrapper {
     /**
      * Creates a new wrapper and invalidates any existing current wrapper.
      */
+    @Override
     public void createNewWrapper() {
         if (getWrapper() != null) {
             ((WMessageProducer) getWrapper()).setClosed();
         }
 
         if (getItfClass() == javax.jms.MessageProducer.class) {
-            setWrapper(new WMessageProducer(this, (MessageProducer) mDelegate));
+            setWrapper(new WMessageProducer(this, mDelegate));
         } else if (getItfClass() == javax.jms.TopicPublisher.class) {
             setWrapper(new WTopicPublisher(this, (TopicPublisher) mDelegate));
         } else if (getItfClass() == javax.jms.QueueSender.class) {
@@ -123,6 +124,7 @@ public class JProducer extends NoProxyWrapper {
      *
      * @param ex Throwable
      */
+    @Override
     public void exceptionOccurred(Throwable ex) {
         super.exceptionOccurred(ex);
         if (mSession != null) {
@@ -133,6 +135,7 @@ public class JProducer extends NoProxyWrapper {
     /**
      * Close the physical object
      */
+    @Override
     public void physicalClose() {
         createNewWrapper();
         try {

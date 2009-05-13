@@ -130,7 +130,7 @@ public abstract class Container {
      * @return an instance with the specified interface
      * @throws Exception fault
      */
-    public abstract Object getMBeanProxy(String objectName, Class itf) throws Exception;
+    public abstract Object getMBeanProxy(String objectName, Class<?> itf) throws Exception;
 
     /**
      * Get an attribute from the specified MBean

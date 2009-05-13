@@ -56,12 +56,12 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
-    private List mConnectionEventListeners;
-    private List mHandles = new ArrayList();
+    private List<ConnectionEventListener> mConnectionEventListeners;
+    private List<WSession> mHandles = new ArrayList<WSession>();
     private transient PrintWriter mLogWriter;
     private XConnectionRequestInfo mConnectionDescription;
     private XManagedConnectionFactory mManagedConnectionFactory;
@@ -191,7 +191,7 @@ public class XManagedConnection implements ManagedConnection {
 
         // Make all session handles look like they are closed
         for (int i = 0; i < mHandles.size(); i++) {
-            WSession w = (WSession) mHandles.get(i);
+            WSession w = mHandles.get(i);
             w.setClosed();
         }
         mHandles.clear();
@@ -502,7 +502,7 @@ public class XManagedConnection implements ManagedConnection {
      */
     public synchronized void addConnectionEventListener(ConnectionEventListener connectionEventListener) {
         if (mConnectionEventListeners == null) {
-            mConnectionEventListeners = new ArrayList();
+            mConnectionEventListeners = new ArrayList<ConnectionEventListener>();
         }
         mConnectionEventListeners.add(connectionEventListener);
     }
@@ -515,8 +515,8 @@ public class XManagedConnection implements ManagedConnection {
      */
     public synchronized void removeConnectionEventListener(ConnectionEventListener
         connectionEventListener) {
-        for (Iterator it = mConnectionEventListeners.iterator(); it.hasNext();/*-*/) {
-            ConnectionEventListener o = (ConnectionEventListener) it.next();
+        for (Iterator<ConnectionEventListener> it = mConnectionEventListeners.iterator(); it.hasNext();/*-*/) {
+            ConnectionEventListener o = it.next();
             if (connectionEventListener == o) {
                 it.remove();
             }
@@ -569,7 +569,7 @@ public class XManagedConnection implements ManagedConnection {
 
         ConnectionEventListener[] listeners;
         synchronized (this) {
-            listeners = (ConnectionEventListener[]) mConnectionEventListeners.
+            listeners = mConnectionEventListeners.
                 toArray(new ConnectionEventListener[] {});
         }
 

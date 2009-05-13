@@ -25,7 +25,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
  * is required to be a JavaBean</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMS453ResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
 
@@ -38,6 +38,7 @@ public class RASTCMS453ResourceAdapter extends com.stc.jmsjca.core.RAJMSResource
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String urlstr) {
         return new RASTCMS453ObjectFactory();
     }

@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -134,7 +134,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             "JMSC_MQJMS_TP_CLIENT_MQ_TCPIP",
         };
 
-    private static Localizer LOCALE = Localizer.get();    
+    private static final Localizer LOCALE = Localizer.get();    
     
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
@@ -144,6 +144,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
+    @Override
     public boolean validateAndAdjustURL(ConnectionUrl connectionUrl) throws JMSException {
         boolean hasChanged = false;
         UrlParser url = (UrlParser) connectionUrl;
@@ -187,6 +188,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         int newMode = mode;
         if (xa) {
@@ -232,6 +234,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @return url parser
      * @throws JMSException on incorrect URL
      */
+    @Override
     public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter ra, RAJMSActivationSpec spec,
            XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
 
@@ -266,6 +269,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
            RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
            XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -358,7 +362,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         }
         
         //Set MQ properties
-        Class clazz = cf.getClass();
+        Class<?> clazz = cf.getClass();
         try {
             clazz.getMethod("setHostName", new Class[] {String.class}).invoke(
                 cf, new Object[] {cfp.getProperty(HOSTNAME)});
@@ -389,6 +393,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -408,6 +413,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @param s Session
      * @return XAResource
      */
+    @Override
     public XAResource getXAResource(boolean isXA, Session s) {
         return !isXA ? null : new WMQXAResource(((XASession) s).getXAResource());        
     }
@@ -416,6 +422,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * Gets JMSServerType 
      * @return String
      */    
+    @Override
     public String getJMSServerType() {
         return "WMQ";
     }
@@ -424,6 +431,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#setClientID(javax.jms.Connection, 
      *   boolean, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter)
      */
+    @Override
     public void setClientID(Connection connection, boolean isTopic,
             RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
         setClientIDIfNotSpecified(connection, isTopic, spec, ra);
@@ -434,6 +442,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * 
      * WMQ does not allow message properties to be named beginning with JMS_
      */
+    @Override
     public boolean isMsgPrefixOK() {
         return false;
     }
@@ -445,10 +454,11 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * com.stc.jmsjca.core.XManagedConnection, 
      * com.stc.jmsjca.core.XConnectionRequestInfo, boolean, boolean, int, java.lang.Class)
      */
+    @Override
     public SessionConnection createSessionConnection(Object connectionFactory,
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc, XConnectionRequestInfo descr,
-        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         return new WMQSessionConnection(connectionFactory, objfact, ra,
@@ -471,9 +481,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
      * @return Destination
      * @throws JMSException failure
      */
+    @Override
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class sessionClass) throws JMSException {
+        String destName, Properties options, Class<?> sessionClass) throws JMSException {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");

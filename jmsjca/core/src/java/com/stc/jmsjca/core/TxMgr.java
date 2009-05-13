@@ -34,7 +34,7 @@ import java.util.Properties;
  * ManagedConnection will have one instance of this class and will reuse it.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TxMgr {
     private TxMgrAdapter mTxMgrAdapter;
@@ -211,9 +211,10 @@ public class TxMgr {
     private class SJSAS extends TxMgrAdapter {
         private TransactionManager mTransactionManager;
         
+        @Override
         public TxMgrAdapter init() {
             try {
-                Class c1 = Class.forName("com.sun.enterprise.Switch");
+                Class<?> c1 = Class.forName("com.sun.enterprise.Switch");
                 Method m1 = c1.getMethod("getSwitch", new Class[0]);
                 Object theswitch = m1.invoke(null, new Object[0]);
                 Method m2 = c1.getMethod("getTransactionManager", new Class[0]);
@@ -229,6 +230,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#getTransactionManager()
          */
+        @Override
         public TransactionManager getTransactionManager() {
             return mTransactionManager;
         }
@@ -242,10 +244,11 @@ public class TxMgr {
     private class WAS6a extends TxMgrAdapter {
         private TransactionManager mTransactionManager;
         
+        @Override
         public TxMgrAdapter init() {
 
             try {
-                Class c1 = Class.forName("com.ibm.ws.Transaction.TransactionManagerFactory");
+                Class<?> c1 = Class.forName("com.ibm.ws.Transaction.TransactionManagerFactory");
                 Method m1 = c1.getMethod("getTransactionManager", new Class[0]);
                 Object ret = m1.invoke(null, new Object[0]);
                 mTransactionManager = (TransactionManager) ret;
@@ -259,6 +262,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#getTransactionManager()
          */
+        @Override
         public TransactionManager getTransactionManager() {
             return mTransactionManager;
         }
@@ -272,10 +276,11 @@ public class TxMgr {
     private class WL9 extends TxMgrAdapter {
         private TransactionManager mTransactionManager;
         
+        @Override
         public TxMgrAdapter init() {
 
             try {
-                Class c1 = Class.forName("weblogic.transaction.TransactionHelper");
+                Class<?> c1 = Class.forName("weblogic.transaction.TransactionHelper");
                 Method m1 = c1.getMethod("getTransactionManager", new Class[0]);
                 Object ret = m1.invoke(null, new Object[0]);
                 mTransactionManager = (TransactionManager) ret;
@@ -289,6 +294,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#getTransactionManager()
          */
+        @Override
         public TransactionManager getTransactionManager() {
             return mTransactionManager;
         }
@@ -303,6 +309,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#init()
          */
+        @Override
         public TxMgrAdapter init() {
             return sUnitTestTxMgr != null ? this : null;
         }
@@ -310,6 +317,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#getTransactionManager()
          */
+        @Override
         public TransactionManager getTransactionManager() {
             return sUnitTestTxMgr;
         }
@@ -331,7 +339,7 @@ public class TxMgr {
 //    private class WAS6 extends TxMgrAdapter {
 //        private Method mGetGlobalIdMethod;
 //        private Method mRegisterMethod;
-//        private Class mSynchronizationCallbackClass;
+//        private Class<?> mSynchronizationCallbackClass;
 //        
 //        private Object getTxMgr() throws Exception {
 //            Context ctx = new InitialContext();
@@ -399,6 +407,7 @@ public class TxMgr {
             mName = name;
         }
         
+        @Override
         public TxMgrAdapter init() {
             Context ctx = null;
             try {
@@ -416,6 +425,7 @@ public class TxMgr {
         /**
          * @see com.stc.jmsjca.core.TxMgr.TxMgrAdapter#getTransactionManager()
          */
+        @Override
         public TransactionManager getTransactionManager() {
             return mTransactionManager;
         }
@@ -433,6 +443,7 @@ public class TxMgr {
             mName = name;
         }
         
+        @Override
         public TxMgrAdapter init() {
             Context ctx = null;
             try {
@@ -447,6 +458,7 @@ public class TxMgr {
             return null;
         }
 
+        @Override
         public TransactionManager getTransactionManager() throws Exception {
             Context ctx = null;
             try {

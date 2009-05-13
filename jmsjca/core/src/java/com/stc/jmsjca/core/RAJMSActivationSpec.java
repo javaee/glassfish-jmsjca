@@ -29,7 +29,7 @@ import javax.resource.spi.InvalidPropertyException;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
@@ -79,7 +79,7 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     protected static final String TOPIC = "javax.jms.Topic";
 
     /** The resource adapter instance that this instance is bound to */
-    private javax.resource.spi.ResourceAdapter mRA = null;
+    private javax.resource.spi.ResourceAdapter mRA;
 
     // ActivationSpec attributes recommended for JMS RAs
     private String mDestinationType;
@@ -845,6 +845,7 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @return String
      */
+    @Override
     public String toString() {
         return getClass().getName();
     }
@@ -855,7 +856,7 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * @return String
      */
     public String dumpConfiguration() {
-        return ("ActivationSpec configuration=\n"
+        return "ActivationSpec configuration=\n"
             + "\tDestinationType                     =" + mDestinationType + "\n"
             + "\tDestination                         =" + mDestination + "\n"
             + "\tMessageSelector                     =" + mMessageSelector + "\n"
@@ -879,6 +880,6 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
             + "\tContextName                         =" + mContextName + "\n"
             + "\tMBeanName                           =" + mMBeanName + "\n"
             + "\tOptionsStr                          =" + mOptionsStr + "\n"
-            + "\tRedeliveryHandling                  =" + mRedeliveryActions);
+            + "\tRedeliveryHandling                  =" + mRedeliveryActions;
     }
 }

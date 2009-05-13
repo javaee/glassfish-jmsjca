@@ -75,7 +75,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -184,6 +184,7 @@ public class Activation extends ActivationBase {
      *
      * @return RAJMSObjectFactory
      */
+    @Override
     public RAJMSObjectFactory getObjectFactory() {
         return mObjFactory;
     }
@@ -193,12 +194,13 @@ public class Activation extends ActivationBase {
      * 
      * @throws Exception on failure
      */
+    @Override
     public void activate() throws Exception {
         try {
             // Cache the onMessage-method
             try {
-                Class msgListenerClass = javax.jms.MessageListener.class;
-                Class[] paramTypes = {javax.jms.Message.class };
+                Class<?> msgListenerClass = javax.jms.MessageListener.class;
+                Class<?>[] paramTypes = {javax.jms.Message.class };
                 mOnMessageMethod = msgListenerClass.getMethod("onMessage", paramTypes);
             } catch (NoSuchMethodException ex) {
                 LocalizedString msg = LOCALE.x("E008: {0}: could not locate onMessage() function: {1}", getName(), ex);
@@ -356,6 +358,7 @@ public class Activation extends ActivationBase {
                 throw new Exception(LOCALE.x("E118: Internal error: " 
                     + "Invalid state: cannot call start() when state is DISCONNECTING").toString());
             }
+            default: throw new IllegalStateException("State=" + mState);
             }
         }
     }
@@ -460,6 +463,7 @@ public class Activation extends ActivationBase {
                 + "The reason for the shutdown is: {1}", getName(), msg));
 
             Thread t = new Thread("JMSJCA shutdown by MDB") {
+                @Override
                 public void run() {
                     try {
                         if (sLog.isDebugEnabled()) {
@@ -636,6 +640,7 @@ public class Activation extends ActivationBase {
      * Halts message delivery
      * Should NOT throw an exception
      */
+    @Override
     public void deactivate() {
         try {
             internalStop();
@@ -750,6 +755,7 @@ public class Activation extends ActivationBase {
      *
      * @return FarkResourceAdapter
      */
+    @Override
     public RAJMSResourceAdapter getRA() {
         return mRA;
     }
@@ -759,6 +765,7 @@ public class Activation extends ActivationBase {
      *
      * @return MessageEndpointFactory
      */
+    @Override
     public MessageEndpointFactory getMessageEndpointFactory() {
         return mEndpointFactory;
     }
@@ -768,6 +775,7 @@ public class Activation extends ActivationBase {
      *
      * @return RAJMSActivationSpec
      */
+    @Override
     public RAJMSActivationSpec getActivationSpec() {
         return mSpec;
     }
@@ -780,6 +788,7 @@ public class Activation extends ActivationBase {
      * @param spec JavaMailActivationSpec
      * @return boolean
      */
+    @Override
     public boolean is(MessageEndpointFactory epf, RAJMSActivationSpec spec) {
         return mEndpointFactory.equals(epf) && mSpec.equals(spec);
     }
@@ -789,6 +798,7 @@ public class Activation extends ActivationBase {
      *
      * @return String
      */
+    @Override
     public String toString() {
         return getName();
     }
@@ -852,6 +862,7 @@ public class Activation extends ActivationBase {
     /**
      * @return a human friendly name
      */
+    @Override
     public String getName() {
         String consumertype;
         if (Queue.class.getName().equals(mSpec.getDestinationType())) {

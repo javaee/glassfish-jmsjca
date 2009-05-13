@@ -28,14 +28,14 @@ import java.lang.reflect.Proxy;
  * reflection code
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
-public class Undep implements InvocationHandler {
-    private Class mItf;
+public final class Undep implements InvocationHandler {
+    private Class<?> mItf;
     private Object mTarget;
     private String mClassname;
         
-    private Undep(Class itf, Object target) {
+    private Undep(Class<?> itf, Object target) {
         mTarget = target;
         mItf = itf;
         
@@ -57,15 +57,15 @@ public class Undep implements InvocationHandler {
             if (mTarget != null) {
                 throw new RuntimeException("Object already exists");
             }
-            Class c = Class.forName(mClassname);
-            Class[] argtypes = method.getParameterTypes();
+            Class<?> c = Class.forName(mClassname);
+            Class<?>[] argtypes = method.getParameterTypes();
             // TODO: do argument type conversions
-            Constructor constructor = c.getConstructor(argtypes);
+            Constructor<?> constructor = c.getConstructor(argtypes);
             // TODO: do argument conversions
             mTarget = constructor.newInstance(args);
             return null;
         } else {
-            Class[] argtypes = method.getParameterTypes();
+            Class<?>[] argtypes = method.getParameterTypes();
             // TODO: do argument type conversions
             Method m = mTarget.getClass().getMethod(method.getName(), argtypes);
             
@@ -81,7 +81,7 @@ public class Undep implements InvocationHandler {
      * @param cl classloader to use
      * @return proxy with specified interface
      */
-    public static Object create(Class itf, ClassLoader cl) {
+    public static Object create(Class<?> itf, ClassLoader cl) {
         return Proxy.newProxyInstance(cl,
             new Class[] {itf}, new Undep(itf, null));
     }
@@ -93,7 +93,7 @@ public class Undep implements InvocationHandler {
      * @param target object to wrap
      * @return proxy with specified interface
      */
-    public static Object create(Class itf, Object target) {
+    public static Object create(Class<?> itf, Object target) {
         return Proxy.newProxyInstance(target.getClass().getClassLoader(),
             new Class[] {itf}, new Undep(itf, target));
     }

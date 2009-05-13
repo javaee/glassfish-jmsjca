@@ -26,10 +26,10 @@ import java.util.Map;
  * is an example.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class DestinationCache  {
-    private Map mEntries = new HashMap();
+    private Map<String, DestinationCacheEntry> mEntries = new HashMap<String, DestinationCacheEntry>();
     
     /**
      * Looks up a destination cache entry by name; the returned cache entry is NEVER
@@ -40,7 +40,7 @@ public class DestinationCache  {
      * @return never null
      */
     public synchronized DestinationCacheEntry get(String name) {
-        DestinationCacheEntry ret = (DestinationCacheEntry) mEntries.get(name);
+        DestinationCacheEntry ret = mEntries.get(name);
         if (ret == null) {
             ret = new DestinationCacheEntry();
             mEntries.put(name, ret);

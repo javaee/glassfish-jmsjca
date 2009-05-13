@@ -22,7 +22,7 @@ import com.stc.jmsjca.util.MBeanBase;
  * Base class for RAMBean and ActivationMBean
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class CommonMBean extends MBeanBase {
     //private static Logger sLog = Logger.getLogger(ActivationMBean.class);
@@ -85,18 +85,5 @@ public class CommonMBean extends MBeanBase {
      */
     public String[] mbmgetJMSServerType() {
         return new String[] {"Type of JMS server serviced by this RA" };
-    }
-    
-    /**
-     * For MBean testing only
-     * 
-     * @param args args
-     */
-    public static void main(String[] args) {
-        try {
-            new CommonMBean(null, "").mbeanTest();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

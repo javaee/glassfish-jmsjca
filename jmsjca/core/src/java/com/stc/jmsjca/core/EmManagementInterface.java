@@ -28,43 +28,43 @@ public interface EmManagementInterface {
     /**
      * Status
      */
-    public static final String DISCONNECTED = "Down";
+    String DISCONNECTED = "Down";
 
     /**
      * Status
      */
-    public static final String CONNECTED = "Up";
+    String CONNECTED = "Up";
 
     /**
      * Status
      */
-    public static final String CONNECTING = "Connecting";
+    String CONNECTING = "Connecting";
 
     /**
      * Status
      */
-    public static final String DISCONNECTING = "Disconnecting";
+    String DISCONNECTING = "Disconnecting";
 
     /**
      * start method
      *    start the component- the semantics of this operation is left to implementation
      * @throws Exception on failure
      */
-    public void start() throws Exception;
+    void start() throws Exception;
 
     /**
      * restart method
      *    restart the component- the semantics of this operation is left to implementation
      * @throws Exception on failure
      */
-    public void restart() throws Exception;
+    void restart() throws Exception;
 
     /**
      * stop method
      *   stop the component - the semantics of this operation is left to implementation 
      * @throws Exception on failure
      */
-    public void stop() throws Exception;
+    void stop() throws Exception;
 
     /**
      * get status method
@@ -72,14 +72,14 @@ public interface EmManagementInterface {
      * @return the status of the component e.g. Up/Down/Unknown
      * @throws Exception on failure
      */
-    public String getStatus() throws Exception;
+    String getStatus() throws Exception;
 
     /**
      * get properties method
      * 
      * @return a list of properties: name-value pairs
      */
-    public Properties getProperties();
+    Properties getProperties();
 
     /**
      * isStartable method
@@ -87,7 +87,7 @@ public interface EmManagementInterface {
      * 
      * @return true if the component can be started (remotely)
      */
-    public Boolean isStartable();
+    Boolean isStartable();
 
     /**
      * isRestartable method
@@ -95,7 +95,7 @@ public interface EmManagementInterface {
      * 
      * @return true if the componennt can be restarted
      */
-    public Boolean isRestartable();
+    Boolean isRestartable();
 
     /**
      * isStoppable method
@@ -103,5 +103,5 @@ public interface EmManagementInterface {
      * 
      * @return true if the component can be stopped
      */
-    public Boolean isStoppable();
+    Boolean isStoppable();
 }

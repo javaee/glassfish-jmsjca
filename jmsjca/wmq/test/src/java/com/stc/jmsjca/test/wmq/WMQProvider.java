@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -41,6 +41,7 @@ public class WMQProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #changeDD(com.stc.jmsjca.container.EmbeddedDescriptor, com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         
@@ -65,6 +66,7 @@ public class WMQProvider extends JMSProvider {
      * @param proposedClientId String
      * @return String 
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return proposedClientId;
     }
@@ -72,6 +74,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         WMQPassthrough passthrough = new WMQPassthrough(serverProperties, this);
         passthrough.setCommitSize(10);
@@ -81,6 +84,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
         int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
@@ -90,6 +94,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_PASSWORD);
     }
@@ -97,6 +102,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
     }
@@ -104,6 +110,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "wmq";
     }
@@ -111,6 +118,7 @@ public class WMQProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#isMsgPrefixOK()
      */
+    @Override
     public boolean isMsgPrefixOK() {
         return false;
     }

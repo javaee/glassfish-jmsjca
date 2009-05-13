@@ -29,7 +29,7 @@ import javax.jms.JMSException;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMSSessionConnection extends GenericSessionConnection {
 //    private static Logger sLog = Logger.getLogger(RASTCMSSessionConnection.class);
@@ -51,7 +51,7 @@ public class RASTCMSSessionConnection extends GenericSessionConnection {
     public RASTCMSSessionConnection(Object connectionFactory, RAJMSObjectFactory objfact,
         RAJMSResourceAdapter ra, XManagedConnection mc,
         XConnectionRequestInfo descr, boolean isXa,
-        boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         super(connectionFactory, objfact, ra, mc, descr, isXa,

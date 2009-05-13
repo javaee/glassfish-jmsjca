@@ -30,7 +30,7 @@ import javax.management.ReflectionException;
  * invoke.
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class MBeanBase extends MBeanHelper {
 //    private static Logger sLog = Logger.getLogger(MBeanBase.class);
@@ -56,6 +56,7 @@ public abstract class MBeanBase extends MBeanHelper {
     /**
      * @see com.stc.jmsjca.util.MBeanHelper#getMBeanDescription()
      */
+    @Override
     protected String getMBeanDescription() {
         return mDescription;
     }
@@ -63,6 +64,7 @@ public abstract class MBeanBase extends MBeanHelper {
     /**
      * @see com.stc.jmsjca.util.MBeanHelper#getMetaObject()
      */
+    @Override
     protected Object getMetaObject() {
         return this;
     }
@@ -70,6 +72,7 @@ public abstract class MBeanBase extends MBeanHelper {
     /**
      * @see com.stc.jmsjca.util.MBeanHelper#getDelegate()
      */
+    @Override
     protected Object getDelegate() {
         return this;
     }
@@ -77,6 +80,7 @@ public abstract class MBeanBase extends MBeanHelper {
     /**
      * @see com.stc.jmsjca.util.MBeanHelper#invoke(java.lang.String, java.lang.Object[], java.lang.String[])
      */
+    @Override
     public Object invoke(String opName, Object[] opArgs, String[] sig) throws MBeanException, ReflectionException {
         boolean cclIsSet = false;
         ClassLoader ccl = null;

@@ -19,11 +19,14 @@ package com.stc.jmsjca.util;
 import java.util.Properties;
 
 /**
- *
  * Handy class full of static functions.
+ * 
  * @author cye
  */
 public final class Utility {
+    private Utility() {
+        
+    }
 
     /**
      * 

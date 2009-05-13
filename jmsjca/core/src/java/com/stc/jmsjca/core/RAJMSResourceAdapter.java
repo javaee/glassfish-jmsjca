@@ -61,7 +61,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -83,7 +83,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private String mProjectInfo;
     
     // For closing connections associated with getXAResources()
-    private transient List mRecoveryConnections;
+    private transient List<Connection> mRecoveryConnections;
 
     /**
      * BC
@@ -93,7 +93,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * All current activations
      */
-    protected transient List mActivations = new ArrayList();
+    protected transient List<ActivationBase> mActivations = new ArrayList<ActivationBase>();
 
     private transient RAMBean mAdapterMBean;
     private transient ObjectName mServerMgtMBeanName;
@@ -102,11 +102,12 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private transient int mCtMCFCreated;
     
     // For diagnostics purposes: keeps track of all MCFs created
-    private transient Map mMCFCreated = Collections.synchronizedMap(new WeakHashMap());
+    private transient Map<XManagedConnectionFactory, Date> mMCFCreated 
+    = Collections.synchronizedMap(new WeakHashMap<XManagedConnectionFactory, Date>());
     
     private transient MBeanServer mMBeanServer;
     
-    private transient Map mStopListeners;
+    private transient Map<RAStopListener, Object> mStopListeners;
 
     private static final Localizer LOCALE = Localizer.get();
     //flag for ldap MBean initialization
@@ -223,8 +224,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             checkRecoveryConnections();
             if (mActivations != null) {
                 synchronized (mActivations) {
-                    for (Iterator i = mActivations.iterator(); i.hasNext();/*-*/) {
-                        ActivationBase a = (ActivationBase) i.next();
+                    for (Iterator<ActivationBase> i = mActivations.iterator(); i.hasNext();/*-*/) {
+                        ActivationBase a = i.next();
                         if (sLog.isDebugEnabled()) {
                             sLog.debug("Stopping " + a);
                         }
@@ -240,7 +241,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         
         // Notify stop-listeners
         if (mStopListeners != null) {
-            RAStopListener[] listeners = (RAStopListener[]) mStopListeners.keySet().toArray(
+            RAStopListener[] listeners = mStopListeners.keySet().toArray(
                 new RAStopListener[mStopListeners.keySet().size()]);
             for (int i = 0; i < listeners.length; i++) {
                 try {
@@ -269,7 +270,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         ActivationSpec spec) throws ResourceException {
         checkRecoveryConnections();
         if (mActivations == null) {
-            mActivations = new ArrayList();
+            mActivations = new ArrayList<ActivationBase>();
         }
         
         // Preamble
@@ -385,7 +386,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     String temp;
                     if (ra != this) {
                         temp = (String) invokeMethod(ra, "getConnectionURL");
-                        if (!Str.empty((temp))) {
+                        if (!Str.empty(temp)) {
                             _url = temp;
                         }
                         temp = (String) invokeMethod(ra, "getUserName");
@@ -496,7 +497,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                     String temp;
                     if (ra != this) {
                         temp = (String) invokeMethod(ra, "getConnectionURL");
-                        if (!Str.empty((temp))) {
+                        if (!Str.empty(temp)) {
                             _url = temp;
                         }
                         temp = (String) invokeMethod(ra, "getUserName");
@@ -568,7 +569,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         return m.invoke(o, new Object[0]);
     }
     
-    private boolean isInstanceOf(Class c, String actualClassName) {
+    private boolean isInstanceOf(Class<?> c, String actualClassName) {
         if (c == null) {
             return false;
         }
@@ -581,7 +582,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             return true;
         }
 
-        Class[] interfaces = c.getInterfaces();
+        Class<?>[] interfaces = c.getInterfaces();
         if (interfaces == null) { 
             return false;
         }
@@ -706,7 +707,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     public ActivationBase findActivation(MessageEndpointFactory endpointFactory,
         ActivationSpec spec, boolean remove) {
         if (mActivations == null) {
-            mActivations = new ArrayList();
+            mActivations = new ArrayList<ActivationBase>();
         }
         
         // Assert type is correct
@@ -721,8 +722,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         // Find the activation
         ActivationBase a = null;
         synchronized (mActivations) {
-            for (Iterator iter = mActivations.iterator(); iter.hasNext();/*-*/) {
-                ActivationBase candidate = (ActivationBase) iter.next();
+            for (Iterator<ActivationBase> iter = mActivations.iterator(); iter.hasNext();/*-*/) {
+                ActivationBase candidate = iter.next();
                 if (candidate.is(endpointFactory, (RAJMSActivationSpec) spec)) {
                     a = candidate;
                     if (remove) {
@@ -751,8 +752,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         throws ResourceException {
 
         // Reduce the set of specs to ones that point to different servers
-        ArrayList uniqueSpecs = new ArrayList();
-        Set signatures = new HashSet();
+        ArrayList<RAJMSActivationSpec> uniqueSpecs = new ArrayList<RAJMSActivationSpec>();
+        Set<String> signatures = new HashSet<String>();
         for (int i = 0; i < specs.length; i++) {
             RAJMSActivationSpec spec = (RAJMSActivationSpec) specs[i];
             String urlstr = spec.getConnectionURL();
@@ -780,10 +781,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         }
 
         // Get an XAConnection for each spec
-        ArrayList connections = new ArrayList();
-        ArrayList ret = new ArrayList();
+        ArrayList<Connection> connections = new ArrayList<Connection>();
+        ArrayList<XAResource> ret = new ArrayList<XAResource>();
         for (int i = 0; i < uniqueSpecs.size(); i++) {
-            RAJMSActivationSpec s = (RAJMSActivationSpec) uniqueSpecs.get(i);
+            RAJMSActivationSpec s = uniqueSpecs.get(i);
             try {
                 String  urlstr = s.getConnectionURL();
                 RAJMSObjectFactory fact = createObjectFactory(urlstr);
@@ -809,11 +810,11 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
 
         // Store connections to close so that they can be stored explicitly
         if (mRecoveryConnections == null) {
-            mRecoveryConnections = new ArrayList();
+            mRecoveryConnections = new ArrayList<Connection>();
         }
         mRecoveryConnections.addAll(connections);
 
-        return (XAResource[]) ret.toArray(new XAResource[ret.size()]);
+        return ret.toArray(new XAResource[ret.size()]);
     }
 
     /**
@@ -822,8 +823,8 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      */
     private void checkRecoveryConnections() {
         if (mRecoveryConnections != null) {
-            for (Iterator iter = mRecoveryConnections.iterator(); iter.hasNext();) {
-                Connection c = (Connection) iter.next();
+            for (Iterator<Connection> iter = mRecoveryConnections.iterator(); iter.hasNext();) {
+                Connection c = iter.next();
                 try {
                     c.close();
                 } catch (Exception e) {
@@ -839,6 +840,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * 
      * @return String
      */
+    @Override
     public String toString() {
         return "[" + this.getClass().getName() + ":with "
             + (mActivations != null ? mActivations.size() : 0) + " activations]";
@@ -865,11 +867,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * setConnectionURL
      *
-     * @param ConnectionURL
-     *            String
+     * @param connectionURL String
      */
-    public void setConnectionURL(String ConnectionURL) {
-        this.mConnectionURL = ConnectionURL;
+    public void setConnectionURL(String connectionURL) {
+        this.mConnectionURL = connectionURL;
     }
 
     /**
@@ -884,10 +885,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * setUserName
      * 
-     * @param UserName String
+     * @param userName String
      */
-    public final void setUserName(String UserName) {
-        this.mUserName = UserName;
+    public final void setUserName(String userName) {
+        this.mUserName = userName;
     }
 
     /**
@@ -911,10 +912,10 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * setPassword
      * 
-     * @param Password String
+     * @param password String
      */
-    public final void setPassword(String Password) {
-        this.mPassword = Password;
+    public final void setPassword(String password) {
+        this.mPassword = password;
     }
     
     /**
@@ -957,6 +958,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      * @param other Object
      * @return boolean
      */
+    @Override
     public boolean equals(Object other) {
         if (other == this) {
             return true;
@@ -976,6 +978,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         int ret = 37;
         ret = Str.hash(ret, mConnectionURL);
@@ -1164,7 +1167,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             if (mbeanServer == null) {
                 // Find last mbean server in list, or first that matches the specified 
                 // domain
-                Iterator i = MBeanServerFactory.findMBeanServer(null).iterator();
+                Iterator<?> i = MBeanServerFactory.findMBeanServer(null).iterator();
                 do {
                     if (!i.hasNext()) {
                         break;
@@ -1212,7 +1215,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 
                 // check if MBean is available due to the indefinite ordering of 
                 // components deployment, need a better solution 
-                Set objectNames = mbeanServer.queryNames(mbeanName, null);
+                Set<?> objectNames = mbeanServer.queryNames(mbeanName, null);
                 int reTryCount = 0;
                 while (objectNames.isEmpty()) {
                     if (reTryCount++ >= RETRY_COUNT) {
@@ -1260,7 +1263,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
      */
     public synchronized void addStopListener(RAStopListener listener) {
         if (mStopListeners == null) {
-            mStopListeners = Collections.synchronizedMap(new WeakHashMap());
+            mStopListeners = Collections.synchronizedMap(new WeakHashMap<RAStopListener, Object>());
         }
         mStopListeners.put(listener, null);
     }

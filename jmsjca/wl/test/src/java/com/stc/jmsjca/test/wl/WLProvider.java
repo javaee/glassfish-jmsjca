@@ -32,7 +32,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class WLProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wl.host";
@@ -45,6 +45,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new WLPassthrough(serverProperties, this);
     }
@@ -54,6 +55,7 @@ public class WLProvider extends JMSProvider {
      * 
      * @return clientId
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return proposedClientId;
     }
@@ -62,6 +64,7 @@ public class WLProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #changeDD(com.stc.jmsjca.container.EmbeddedDescriptor, com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
@@ -80,6 +83,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         return getConnectionUrl(test.getJmsServerProperties());
     }
@@ -95,7 +99,7 @@ public class WLProvider extends JMSProvider {
     }
 
     public InitialContext getInitialContext(Properties p) throws Exception {
-        Hashtable env = new Hashtable();
+        Hashtable<String, String> env = new Hashtable<String, String>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
         env.put(Context.PROVIDER_URL, getConnectionUrl(p));
         InitialContext ctx = new InitialContext(env);
@@ -105,6 +109,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createConnectionUrl(java.lang.String, int)
      */
+    @Override
     public String createConnectionUrl(String host, int port) {
         return "t3://" + host + ":" + port;
     }
@@ -112,6 +117,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_PASSWORD);
     }
@@ -119,6 +125,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
     }
@@ -126,6 +133,7 @@ public class WLProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "wl";
     }

@@ -107,10 +107,12 @@ import java.util.Set;
  * @author Frank Kieviet
  * @version 1.0
  */
+@SuppressWarnings("unchecked")
 public class BaseJUStd extends XTestBase {
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
@@ -131,10 +133,12 @@ public class BaseJUStd extends XTestBase {
         super(name);
     }
 
+    @Override
     public WireCount getConnectionCount() {
         return new WireCount() {
             private int s0 = getWireCount();;
 
+            @Override
             public void check(int sessions, int producers, int consumers) {
                 int n = sessions + producers + consumers;
                 int now = getWireCount();
@@ -145,6 +149,7 @@ public class BaseJUStd extends XTestBase {
                 }
             }
 
+            @Override
             public void check(int n) {
                 int now = getWireCount();
                 if (s0 + n != now) {
@@ -215,6 +220,7 @@ public class BaseJUStd extends XTestBase {
         return "stcmss://" + mServerProperties.getProperty(StcmsProvider.PROPNAME_HOST);
     }
 
+    @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
 
@@ -255,6 +261,7 @@ public class BaseJUStd extends XTestBase {
      * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
      * @throws JMSException propagatd 
      */
+    @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         UrlParser p = new UrlParser(getFullConnectionUrl());
         return new com.stc.jms.client.STCXAQueueConnectionFactory(p.getHost(), p.getPort());
@@ -655,6 +662,7 @@ public class BaseJUStd extends XTestBase {
     public static class TestObjectFactory extends RAJMSObjectFactory implements
         java.io.Serializable {
 
+        @Override
         public ConnectionFactory createConnectionFactory(int domain,
             RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
             XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -662,10 +670,12 @@ public class BaseJUStd extends XTestBase {
             return new QueueCF();
         }
 
+        @Override
         public boolean isUrl(String url) {
             return false;
         }
 
+        @Override
         public String getJMSServerType() {
             return "Test";
         }
@@ -1109,6 +1119,7 @@ public class BaseJUStd extends XTestBase {
         
         // Block
         new Thread() {
+            @Override
             public void run() {
                 try {
                     QueueConnection c = f.createQueueConnection();
@@ -1187,6 +1198,7 @@ public class BaseJUStd extends XTestBase {
         
         // Block
         new Thread() {
+            @Override
             public void run() {
                 try {
                     QueueConnection c = f.createQueueConnection();
@@ -1571,6 +1583,7 @@ public class BaseJUStd extends XTestBase {
 
             public XManagedConnection createConnection(XManagedConnectionFactory factory, Subject subject, XConnectionRequestInfo descr) throws ResourceException {
                 return new XManagedConnection(factory, subject, descr) {
+                    @Override
                     public XAResource getXAResource() {
                         return null;
                     }
@@ -1641,6 +1654,7 @@ public class BaseJUStd extends XTestBase {
         XManagedConnectionFactory.TestAllocator allocator = new XManagedConnectionFactory.TestAllocator() {
             public XManagedConnection createConnection(XManagedConnectionFactory factory, Subject subject, XConnectionRequestInfo descr) throws ResourceException {
                 return new XManagedConnection(factory, subject, descr) {
+                    @Override
                     public boolean isInvalid() {
                         return invalid[0];
                     }
@@ -1706,6 +1720,7 @@ public class BaseJUStd extends XTestBase {
         XManagedConnectionFactory.TestAllocator allocator = new XManagedConnectionFactory.TestAllocator() {
             public XManagedConnection createConnection(XManagedConnectionFactory factory, Subject subject, XConnectionRequestInfo descr) throws ResourceException {
                 return new XManagedConnection(factory, subject, descr) {
+                    @Override
                     public void cleanup() throws ResourceException {
                         if (invalid[0]) {
                             throw new ResourceException("Intentional");
@@ -1796,6 +1811,7 @@ public class BaseJUStd extends XTestBase {
         public MDBFactory getMDBFactory() { 
             if (mMDBFact == null) {
                 mMDBFact = new MDBFactory() {
+                    @Override
                     public Object createMDB() {
                         return mMDB;
                     }
@@ -1871,6 +1887,7 @@ public class BaseJUStd extends XTestBase {
                 try {
                     final Transaction tx = c.getTransactionManager().suspend();
                     new Thread() {
+                        @Override
                         public void run() {
                             try {
                                 System.out.println(((TextMessage) msg).getText());

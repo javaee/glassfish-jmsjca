@@ -32,7 +32,7 @@ import java.util.Random;
  * Duplicated from stcms
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TcpProxy {
     // private static Logger sLog = Logger.getLogger(TcpProxy.class);
@@ -42,7 +42,7 @@ public class TcpProxy {
     private ServerSocket mServer;
     private String mRelayServer;
     private int mRelayPort;
-    private LinkedList mSockets = new LinkedList();
+    private LinkedList<Socket> mSockets = new LinkedList<Socket>();
     private int mNPassThroughsCreated;
 
     public TcpProxy(String relayToServer, int relayToPort) throws Exception {
@@ -97,6 +97,7 @@ public class TcpProxy {
         }
 
         new Thread("testserver") {
+            @Override
             public void run() {
                 try {
                     int ctSockets = 0;
@@ -148,8 +149,8 @@ public class TcpProxy {
     }
     
     private void closeAllSockets() {
-        for (Iterator it = mSockets.iterator(); it.hasNext(); /*-*/) {
-            Socket s = (Socket) it.next();
+        for (Iterator<Socket> it = mSockets.iterator(); it.hasNext(); /*-*/) {
+            Socket s = it.next();
             try {
                 s.close();
             } catch (IOException ex) {
@@ -161,6 +162,7 @@ public class TcpProxy {
     private void passthrough(final Socket client, final Socket server,
         final int socketIdx, final char side) {
         new Thread("passthrough " + socketIdx + side) {
+            @Override
             public void run() {
                 try {
                     InputStream inp = client.getInputStream();
@@ -236,14 +238,14 @@ public class TcpProxy {
     }
 
     public void killLastConnection() {
-        Socket s = (Socket) mSockets.removeLast();
+        Socket s = mSockets.removeLast();
         try {
             s.close();
         } catch (Exception e) {
             // Ignore
         }
 
-        s = (Socket) mSockets.removeLast();
+        s = mSockets.removeLast();
         try {
             s.close();
         } catch (Exception e) {
@@ -252,8 +254,8 @@ public class TcpProxy {
     }
 
     public void killAllConnections() {
-        for (Iterator it = mSockets.iterator(); it.hasNext();) {
-            Socket s = (Socket) it.next();
+        for (Iterator<Socket> it = mSockets.iterator(); it.hasNext();) {
+            Socket s = it.next();
             try {
                 s.shutdownInput();
                 s.shutdownOutput();

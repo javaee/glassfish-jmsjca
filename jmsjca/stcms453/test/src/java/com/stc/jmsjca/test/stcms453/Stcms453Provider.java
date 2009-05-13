@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class Stcms453Provider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms453.host";
@@ -37,6 +37,7 @@ public class Stcms453Provider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new Stcms453Passthrough(serverProperties, this);
     }
@@ -46,6 +47,7 @@ public class Stcms453Provider extends JMSProvider {
      * 
      * @return clientId
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return "";
     }
@@ -54,6 +56,7 @@ public class Stcms453Provider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #changeDD(com.stc.jmsjca.container.EmbeddedDescriptor, com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
         throws Exception {
 
@@ -75,6 +78,7 @@ public class Stcms453Provider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
         int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
@@ -84,6 +88,7 @@ public class Stcms453Provider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return "";
     }
@@ -91,6 +96,7 @@ public class Stcms453Provider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return "";
     }
@@ -98,6 +104,7 @@ public class Stcms453Provider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "stcms453";
     }

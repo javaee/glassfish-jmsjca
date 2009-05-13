@@ -52,8 +52,8 @@
             destdir="${jmsjca.xxx.rar.classes.dir}"
             debug="true"
             deprecation="${stc.java.deprecation}"
-            target="1.4"
-            source="1.4"
+            target="1.5"
+            source="1.5"
         >
             <src path="${jcaid}/src/java" />
             <classpath refid="jmsjca.xxx.classpath"/>
@@ -116,8 +116,8 @@
                destdir="${jmsjca.xxx.test.classes.dir}"
                debug="true"
                deprecation="${stc.java.deprecation}"
-               target="1.4"
-               source="1.4"
+               target="1.5"
+               source="1.5"
         >
             <src path="core/test/src/java" />
             <src path="${jcaid}/test/src/java" />

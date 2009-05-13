@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class JBossPassthrough extends Passthrough {
 
@@ -45,6 +45,7 @@ public class JBossPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         try {
             return (TopicConnectionFactory) TestJBossJUStd.getInitialContext().lookup(
@@ -57,6 +58,7 @@ public class JBossPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         return (QueueConnectionFactory) createTopicConnectionFactory();
     }
@@ -64,6 +66,7 @@ public class JBossPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#removeDurableSubscriber(java.lang.String, java.lang.String, java.lang.String)
      */
+    @Override
     public void removeDurableSubscriber(String clientID, String destname,
         String subscriptionName) throws Exception {
         TopicConnectionFactory cf = createTopicConnectionFactory();

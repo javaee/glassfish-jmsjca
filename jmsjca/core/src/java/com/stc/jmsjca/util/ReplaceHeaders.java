@@ -33,9 +33,12 @@ import java.util.regex.Pattern;
  * Updates all SeeBeyond headers to CDDL headers
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
-public class ReplaceHeaders {
+public final class ReplaceHeaders {
+    private ReplaceHeaders() {
+        
+    }
     
     /**
      * To close a stream without an exception
@@ -126,14 +129,14 @@ public class ReplaceHeaders {
         }
     }
 
-    private static Pattern SEEBEYONDPATTERN 
+    private static final Pattern SEEBEYONDPATTERN 
     = Pattern.compile("(.*?)(\\/\\*.*?SEEBEYOND.*?\\*\\/)(.*)"
         , Pattern.DOTALL);
-    private static Pattern CONCURRENTPATTERN 
+    private static final Pattern CONCURRENTPATTERN 
     = Pattern.compile("(.*)(\\/\\*.*Doug Lea and released into the public domain.*\\*\\/)(.*)"
         , Pattern.DOTALL);
     
-    private static Pattern CDDLPATTERN 
+    private static final Pattern CDDLPATTERN 
     = Pattern.compile("(.*)(\\/\\*.*Common Development and Distribution License.*\\*\\/)(.*)"
         , Pattern.DOTALL);
     
@@ -160,15 +163,15 @@ public class ReplaceHeaders {
 //    private static String REPLACE2 = ""
 //    + "/*\n"
 //    + " * $RCSfile: ReplaceHeaders.java,v $\n"
-//    + " * $Revision: 1.5 $\n"
-//    + " * $Date: 2008-05-22 20:01:54 $\n"
+//    + " * $Revision: 1.6 $\n"
+//    + " * $Date: 2009-05-13 22:32:22 $\n"
 //    + " *\n"
 //    + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.  \n"
 //    + " */";
 
-    private static String CR = System.getProperty("line.separator");    
+    private static final String CR = System.getProperty("line.separator");    
     
-    private static String REPLACE1 = 
+    private static final String REPLACE1 = 
     "/*" + CR
     + " * The contents of this file are subject to the terms of the Common Development and Distribution License" + CR
     + " * (the \"License\"). You may not use this file except in compliance with the License." + CR
@@ -182,7 +185,7 @@ public class ReplaceHeaders {
     + " * information: Portions Copyright [year] [name of copyright owner]" + CR
     + " */" + CR;
     
-    private static String REPLACE2 = "" 
+    private static final String REPLACE2 = "" 
         + "/*" + CR
         + " * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved." + CR
         + " */";
@@ -269,7 +272,7 @@ public class ReplaceHeaders {
         try {
             new ReplaceHeaders().recurse(new File(dir)).report();
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
         
     }

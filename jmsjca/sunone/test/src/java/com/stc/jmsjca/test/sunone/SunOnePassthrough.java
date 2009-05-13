@@ -33,7 +33,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SunOnePassthrough extends Passthrough {
     private Properties mServerProperties;
@@ -61,6 +61,7 @@ public class SunOnePassthrough extends Passthrough {
         return true;
     }
 
+    @Override
     public void removeDurableSubscriber(String clientID, String t12, String subscriptionName) throws Exception {
         TopicConnectionFactory cf = createTopicConnectionFactory();
         TopicConnection conn = cf.createTopicConnection(getUserid(), getPassword());
@@ -96,6 +97,7 @@ public class SunOnePassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         return createTopicConnectionFactory(getConnectionUrl());
     }
@@ -121,6 +123,7 @@ public class SunOnePassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         return createQueueConnectionFactory(getConnectionUrl());
     }

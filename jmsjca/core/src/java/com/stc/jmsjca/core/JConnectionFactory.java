@@ -60,7 +60,7 @@ import java.util.WeakHashMap;
  * ManagedConnectionFactory</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class JConnectionFactory implements javax.jms.ConnectionFactory,
     java.io.Serializable, javax.resource.Referenceable, javax.naming.spi.ObjectFactory {
@@ -73,7 +73,7 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
     private int mUniqueID;
 
     // For getReference(), need to be able to lookup connection factories by a String ID
-    private static Map sAllFactories = new WeakHashMap();  // key: JConnectionFactory, value: null
+    private static Map<JConnectionFactory, Object> sAllFactories = new WeakHashMap<JConnectionFactory, Object>();
     private static int sIdGenerator;
     private static String sBaseId = (new UID()).toString();
 
@@ -83,7 +83,7 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
     public JConnectionFactory() {
     }
     
-    private static final boolean isWebLogic(ConnectionManager cm) {
+    private static boolean isWebLogic(ConnectionManager cm) {
         if (cm != null) {
             return "weblogic.connector.outbound.ConnectionManagerImpl".equals(cm.getClass().getName());
         } else {
@@ -193,8 +193,8 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
     
     private JConnectionFactory getByID(String id) {
         synchronized (sAllFactories) {
-            for (Iterator iter = sAllFactories.keySet().iterator(); iter.hasNext();) {
-                JConnectionFactory cand = (JConnectionFactory) iter.next();
+            for (Iterator<JConnectionFactory> iter = sAllFactories.keySet().iterator(); iter.hasNext();) {
+                JConnectionFactory cand = iter.next();
                 if (id.equals(cand.getUniqueID())) {
                     return cand;
                 }
@@ -251,7 +251,7 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
      * @return Object
      */
     public Object getObjectInstance(Object obj, Name name, Context ctx,
-        Hashtable env) throws Exception {
+        Hashtable<?, ?> env) throws Exception {
 
         if (obj instanceof Reference) {
             Reference ref = (Reference) obj;
@@ -343,7 +343,7 @@ public class JConnectionFactory implements javax.jms.ConnectionFactory,
             username, password);
     }
 
-    private Object createConnection(Class c, String username, String password) throws JMSException {
+    private Object createConnection(Class<?> c, String username, String password) throws JMSException {
         if (!mManagedConnectionFactory.getOptionBypassRA()) {
             return new JConnection(mManagedConnectionFactory, mConnectionManager, c,
                 username, password).getWrapper();

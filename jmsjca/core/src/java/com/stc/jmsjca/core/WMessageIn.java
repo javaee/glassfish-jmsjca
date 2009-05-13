@@ -33,7 +33,7 @@ import java.util.Enumeration;
  * method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WMessageIn implements Message, Unwrappable {
     private Message mDelegate;
@@ -321,7 +321,7 @@ public class WMessageIn implements Message, Unwrappable {
     /**
      * @see javax.jms.Message#getPropertyNames()
      */
-    public Enumeration getPropertyNames() throws JMSException {
+    public Enumeration<?> getPropertyNames() throws JMSException {
         return mDelegate.getPropertyNames();
     }
 

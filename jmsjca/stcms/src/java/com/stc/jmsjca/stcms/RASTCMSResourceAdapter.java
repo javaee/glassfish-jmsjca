@@ -26,7 +26,7 @@ import com.stc.jmsjca.util.UrlParser;
  * is required to be a JavaBean</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class RASTCMSResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
     private RAJMSObjectFactory mFactory;
@@ -57,6 +57,7 @@ public class RASTCMSResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAda
      *
      * @param connectionURL String
      */
+    @Override
     public void setConnectionURL(String connectionURL) {
         UrlParser u = new UrlParser(connectionURL);
         try {
@@ -70,6 +71,7 @@ public class RASTCMSResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAda
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String urlstr) {
         return mFactory;
     }

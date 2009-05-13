@@ -21,7 +21,7 @@ import com.stc.jmsjca.core.RAJMSActivationSpec;
 /**
  * Encapsulates the configuration of a MessageEndpoint.
  *
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * @author misc
  */
 public class RAWLActivationSpec extends RAJMSActivationSpec {
@@ -34,6 +34,7 @@ public class RAWLActivationSpec extends RAJMSActivationSpec {
      * @param name String
      * @return boolean
      */
+    @Override
     public boolean isValidDestinationName(String name) {
         return !empty(name);
     }

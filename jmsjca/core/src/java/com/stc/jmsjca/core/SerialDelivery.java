@@ -33,7 +33,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -67,6 +67,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
      *
      * @throws Exception Any error, e.g. connection errors to the JMS.
      */
+    @Override
     public void start() throws Exception {
         mObjFactory = mActivation.getObjectFactory();
         final int domain = XConnectionRequestInfo.guessDomain(
@@ -142,6 +143,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
      *
      * <P>__Is called from service thread__
      */
+    @Override
     public void deactivate() {
         if (sLog.isDebugEnabled()) {
             sLog.debug("SerialDelivery.deactivate() -- begin");
@@ -273,6 +275,7 @@ public class SerialDelivery extends Delivery implements MessageListener,
     /**
      * @see com.stc.jmsjca.core.Delivery#getConfiguredEndpoints()
      */
+    @Override
     public int getConfiguredEndpoints() {
         return 1;
     }

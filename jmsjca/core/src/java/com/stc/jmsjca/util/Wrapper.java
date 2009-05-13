@@ -44,14 +44,14 @@ import java.util.Set;
  * exception if that is the desired behavior.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class Wrapper implements InvocationHandler {
     private static Logger sLog = Logger.getLogger(Wrapper.class);
-    private Class mItf;
+    private Class<?> mItf;
     private Object mInterceptor;
     private Object mWrapper;
-    private Set mInterceptedMethods;
+    private Set<String> mInterceptedMethods;
     private ClassLoader mClassloader;
     private Object mDelegate;
     private int mCtExceptions;
@@ -70,11 +70,11 @@ public abstract class Wrapper implements InvocationHandler {
      *   interface; these methods will be called rather than the ones in the interface.
      * @param signature String
      */
-    protected void init(ClassLoader classloader, Class itf, Object delegate,
+    protected void init(ClassLoader classloader, Class<?> itf, Object delegate,
         Object interceptor, String signature) {
         mItf = itf;
         mInterceptor = interceptor;
-        mInterceptedMethods = new HashSet();
+        mInterceptedMethods = new HashSet<String>();
         mClassloader = classloader;
         mDelegate = delegate;
         mSignature = signature;
@@ -93,7 +93,7 @@ public abstract class Wrapper implements InvocationHandler {
      *
      * @return class
      */
-    public Class getItfClass() {
+    public Class<?> getItfClass() {
         return mItf;
     }
 
@@ -104,7 +104,7 @@ public abstract class Wrapper implements InvocationHandler {
      * @param b Class
      * @return boolean true if class is specified class
      */
-    public static boolean isClass(Class a, Class b) {
+    public static boolean isClass(Class<?> a, Class<?> b) {
         if (a == b || a.getName().equals(b.getName())) {
             return true;
         }
@@ -117,7 +117,7 @@ public abstract class Wrapper implements InvocationHandler {
      * @param c Class
      * @return boolean true if class is specified class
      */
-    public boolean isItfClass(Class c) {
+    public boolean isItfClass(Class<?> c) {
         return isClass(c, mItf);
     }
 
@@ -262,6 +262,7 @@ public abstract class Wrapper implements InvocationHandler {
      * @param other object to compare to
      * @return true if identical
      */
+    @Override
     public boolean equals(Object other) {
         if (other == this || other == mWrapper) {
             return true;
@@ -272,6 +273,7 @@ public abstract class Wrapper implements InvocationHandler {
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         int ret = 37;
         ret = Str.hash(ret, mDelegate);

@@ -24,11 +24,11 @@ import com.stc.jmsjca.util.Str;
  * <p>Describes how to create a JMS connection</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequestInfo {
-    private Class mConnectionClass;
-    private Class mSessionClass;
+    private Class<?> mConnectionClass;
+    private Class<?> mSessionClass;
     private String mUsername;
     private String mPassword;
     private String mClientID;
@@ -50,7 +50,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
      * @param transacted boolean
      * @param acknowledgeMode int
      */
-    public XConnectionRequestInfo(Class connectionClass, Class sessionClass,
+    public XConnectionRequestInfo(Class<?> connectionClass, Class<?> sessionClass,
         String username, String password, String overrideUrl, String clientID, 
         boolean transacted, int acknowledgeMode) {
         mConnectionClass = connectionClass;
@@ -68,7 +68,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
      *
      * @return Class
      */
-    public Class getConnectionClass() {
+    public Class<?> getConnectionClass() {
         return mConnectionClass;
     }
 
@@ -95,7 +95,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
      *
      * @return Class
      */
-    public Class getSessionClass() {
+    public Class<?> getSessionClass() {
         return mSessionClass;
     }
     
@@ -165,6 +165,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
      * @param other the object to compare to
      * @return true if this object is compatible with rhs
      */
+    @Override
     public boolean equals(java.lang.Object other) {
         if (other == this) {
             return true;
@@ -185,6 +186,7 @@ public class XConnectionRequestInfo implements javax.resource.spi.ConnectionRequ
      *
      * @return hashcode
      */
+    @Override
     public int hashCode() {
         int result = 17;
         result = Str.hash(result, mSessionClass.getName());

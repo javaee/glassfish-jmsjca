@@ -43,11 +43,12 @@ import java.util.Map;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
+@SuppressWarnings("unchecked")
 public class EmbeddedDescriptor {
     private Archive mArchive;
-    private Map mDocuments = new HashMap(); // key=path, value=Document
+    private Map<String, Document> mDocuments = new HashMap<String, Document>(); // key=path, value=Document
 
     /**
      * Tool function: ensures that the specified stream is closed
@@ -78,7 +79,7 @@ public class EmbeddedDescriptor {
     }
 
     public Document getDocument(String path) throws Exception {
-        Document ret = (Document) mDocuments.get(path);
+        Document ret = mDocuments.get(path);
         if (ret == null) {
             byte[] payload = mArchive.fetchFile(path);
             ret = load(payload);
@@ -89,7 +90,7 @@ public class EmbeddedDescriptor {
 
     public void update() throws Exception {
         Map payloads = new HashMap();
-        for (Iterator iter = mDocuments.entrySet().iterator();  iter.hasNext(); ) {
+        for (Iterator iter = mDocuments.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry item = (Map.Entry) iter.next();
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -133,7 +134,7 @@ public class EmbeddedDescriptor {
 
     public Element findElementText(Document doc, String path, String text) throws Exception {
         for (Iterator iter = doc.getRootElement().getDescendants(); iter.hasNext(); ) {
-            Object item = (Object) iter.next();
+            Object item = iter.next();
             if (item instanceof Element) {
                 Element e = (Element) item;
                 if (text.equals(e.getText())) {
@@ -165,7 +166,7 @@ public class EmbeddedDescriptor {
     public Element findElementByName(String ddpath, String elname) throws Exception {
         Document doc = getDocument(ddpath);
         for (Iterator iter = doc.getRootElement().getDescendants(); iter.hasNext(); ) {
-            Object item = (Object) iter.next();
+            Object item = iter.next();
             if (item instanceof Element) {
                 Element e = (Element) item;
                 if (e.getName().equals(elname)) {
@@ -179,7 +180,7 @@ public class EmbeddedDescriptor {
     public Element findElementByText(String ddpath, String text) throws Exception {
         Document doc = getDocument(ddpath);
         for (Iterator iter = doc.getRootElement().getDescendants(); iter.hasNext(); ) {
-            Object item = (Object) iter.next();
+            Object item = iter.next();
             if (item instanceof Element) {
                 Element e = (Element) item;
                 if (text.equals(e.getText())) {
@@ -204,7 +205,7 @@ public class EmbeddedDescriptor {
      */
     public class ActivationSpec {
         private Element mRoot;
-        private Map mValues;  // key=name (String); value=value (Element)
+        private Map<String, Element> mValues;  // key=name (String); value=value (Element)
 
         /**
          * Constructor 
@@ -241,7 +242,7 @@ public class EmbeddedDescriptor {
                 throw new Exception("Element not found; name=[activation-config]");
             }
             
-            mValues = new HashMap();
+            mValues = new HashMap<String, Element>();
             
             // Find values
             for (Iterator iter = mRoot.getDescendants(new ElementFilter()); iter.hasNext(); ) {
@@ -275,7 +276,7 @@ public class EmbeddedDescriptor {
          * @throws Exception misc errors
          */
         public void setParam(String name, String newValue) throws Exception {
-            Element e = (Element) mValues.get(name.toUpperCase());
+            Element e = mValues.get(name.toUpperCase());
             if (e == null) {
                 Element configEl = new Element("activation-config-property", mRoot.getNamespace());
                 Element nameEl = new Element("activation-config-property-name", mRoot.getNamespace());
@@ -296,7 +297,7 @@ public class EmbeddedDescriptor {
          * @param itf
          * @return instance
          */
-        public Object createActivation(Class itf) {
+        public Object createActivation(Class<?> itf) {
             InvocationHandler h = new InvocationHandler() {
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     if (method.getName().startsWith("set")) {
@@ -331,7 +332,7 @@ public class EmbeddedDescriptor {
         /**
          * All parameters
          */
-        protected Map mValues = new HashMap();  // key=name (String); value=value (Element)
+        protected Map<String, Element> mValues = new HashMap<String, Element>();
         
         protected void findValues() throws Exception {
             for (Iterator iter = mRoot.getDescendants(new ElementFilter()); iter.hasNext(); ) {
@@ -380,7 +381,7 @@ public class EmbeddedDescriptor {
          * @throws Exception misc errors
          */
         public void setParam(String name, String newValue) throws Exception {
-            Element e = (Element) mValues.get(name.toUpperCase());
+            Element e = mValues.get(name.toUpperCase());
             if (e == null) {
                 Element configEl = new Element("config-property", mRoot.getNamespace());
                 Element nameEl = new Element("config-property-name", mRoot.getNamespace());
@@ -401,7 +402,7 @@ public class EmbeddedDescriptor {
          * @throws Exception on failure
          */
         public String getParam(String name) throws Exception {
-            Element e = (Element) mValues.get(name.toUpperCase());
+            Element e = mValues.get(name.toUpperCase());
             if (e == null) {
                 return null;
             } else {
@@ -417,7 +418,7 @@ public class EmbeddedDescriptor {
          * @param itf
          * @return instance
          */
-        public Object createSettable(Class itf) {
+        public Object createSettable(Class<?> itf) {
             InvocationHandler h = new InvocationHandler() {
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     if (method.getName().startsWith("set")) {
@@ -453,7 +454,7 @@ public class EmbeddedDescriptor {
             for (Iterator iter = doc.getRootElement().getDescendants(new ElementFilter()); iter.hasNext(); ) {
                 Element e = (Element) iter.next();
                 if (e.getName().equals("resourceadapter")) {
-                    root = (Element) e;
+                    root = e;
                     break;
                 }
             }
@@ -475,7 +476,7 @@ public class EmbeddedDescriptor {
          * @param itf
          * @return instance
          */
-        public Object createConnector(Class itf) {
+        public Object createConnector(Class<?> itf) {
             return createSettable(itf);
         }
     }

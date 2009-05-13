@@ -90,6 +90,7 @@ public class TestWLJUStd extends EndToEndBase {
         qcon.close();
     }
 
+    @SuppressWarnings("unchecked")
     public void test002() throws Throwable {
         Context ctx = getInitialContext();
         
@@ -186,6 +187,7 @@ public class TestWLJUStd extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WLProvider();
     }

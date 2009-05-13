@@ -44,6 +44,7 @@ public class JBossContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#setProperties(java.util.Properties)
      */
+    @Override
     public void setProperties(Properties p) throws Exception {        
         mDelegate = (Container) Class.forName("com.stc.jmsjca.container.jboss.Deployer").newInstance();
         mDelegate.setProperties(p); 
@@ -52,7 +53,8 @@ public class JBossContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#redeployModule(java.lang.String)
     */
-   public void redeployModule(String absolutePath) throws Exception {
+   @Override
+public void redeployModule(String absolutePath) throws Exception {
        long t0 = System.currentTimeMillis();
        System.out.println("Redeploying " + "file:/" + absolutePath);
        mDelegate.redeployModule("file:/" + absolutePath);
@@ -62,7 +64,8 @@ public class JBossContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#undeploy(java.lang.String)
     */
-   public void undeploy(String moduleName) throws Exception {
+   @Override
+public void undeploy(String moduleName) throws Exception {
        long t0 = System.currentTimeMillis();
        System.out.println("Undeploying " + "file:/" + moduleName);
        mDelegate.undeploy("file:/" + moduleName);
@@ -72,7 +75,8 @@ public class JBossContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#deployModule(java.lang.String)
     */
-   public void deployModule(String absolutePath) throws Exception {
+   @Override
+public void deployModule(String absolutePath) throws Exception {
        long t0 = System.currentTimeMillis();
        System.out.println("Deploying " + absolutePath);
        mDelegate.deployModule(absolutePath);
@@ -82,7 +86,8 @@ public class JBossContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#close()
     */
-   public void close() throws Exception {
+   @Override
+public void close() throws Exception {
        if (mDelegate != null) {
            mDelegate.close();
            mDelegate = null;
@@ -92,21 +97,24 @@ public class JBossContainer extends Container {
    /**
     * @see com.stc.jmsjca.container.Container#isDeployed(java.lang.String)
     */
-   public boolean isDeployed(String absolutePath) throws Exception {
+   @Override
+public boolean isDeployed(String absolutePath) throws Exception {
        return mDelegate.isDeployed("file:/" + absolutePath);       
    }
 
    /**
     * @see com.stc.jmsjca.container.Container#getMBeanProxy(java.lang.String, java.lang.Class)
     */
-   public Object getMBeanProxy(String objectName, Class itf) throws Exception {
+   @Override
+public Object getMBeanProxy(String objectName, Class<?> itf) throws Exception {
        return mDelegate.getMBeanProxy(objectName, itf);       
    }
 
    /**
     * @see com.stc.jmsjca.container.Container#getAttribute(java.lang.String, java.lang.String)
     */
-   public Object getAttribute(String objName, String name) throws Exception {
+   @Override
+public Object getAttribute(String objName, String name) throws Exception {
        return mDelegate.getAttribute(objName, name);
    }
 }

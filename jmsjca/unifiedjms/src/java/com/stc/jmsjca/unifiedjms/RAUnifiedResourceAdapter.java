@@ -28,19 +28,21 @@ import java.util.Map;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * @author misc
  */
 public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
     private static Logger sLog = Logger.getLogger(RAUnifiedResourceAdapter.class);
-    private Map mObjFactories = Collections.synchronizedMap(new HashMap()); // key: urlstr; value=objfactory
-    private static Localizer LOCALE = Localizer.get();
+    private Map<String, RAJMSObjectFactory> mObjFactories 
+    = Collections.synchronizedMap(new HashMap<String, RAJMSObjectFactory>());
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String url) {
-        RAJMSObjectFactory alreadyset = (RAJMSObjectFactory) mObjFactories.get(url);
+        RAJMSObjectFactory alreadyset = mObjFactories.get(url);
         if (alreadyset != null) {
             return alreadyset;
         }
@@ -62,7 +64,7 @@ public class RAUnifiedResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceA
         
         for (int i = 0; i < classnames.length; i++) {
             try {
-                Class c = Class.forName(classnames[i], true, this.getClass().getClassLoader());
+                Class<?> c = Class.forName(classnames[i], true, this.getClass().getClassLoader());
                 RAJMSObjectFactory o = (RAJMSObjectFactory) c.newInstance();
                 if (o.isUrl(url)) {
                     mObjFactories.put(url, o);

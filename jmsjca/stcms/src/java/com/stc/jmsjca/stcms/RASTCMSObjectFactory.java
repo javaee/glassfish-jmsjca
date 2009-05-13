@@ -41,7 +41,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -108,6 +108,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
+    @Override
     public boolean validateAndAdjustURL(ConnectionUrl aurl) throws JMSException {
         UrlParser url = (UrlParser) aurl;
         boolean hasChanged = false;
@@ -177,6 +178,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.RAJMSResourceAdapter, 
      * java.lang.String, java.lang.String)
      */
+    @Override
     public Connection createConnection(Object fact, int domain,
         RAJMSActivationSpec activationSpec, RAJMSResourceAdapter ra, String username,
         String password) throws JMSException {
@@ -209,6 +211,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @return url parser
      * @throws JMSException on incorrect URL
      */
+    @Override
     public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter ra,
         RAJMSActivationSpec spec, XManagedConnectionFactory fact, String overrideUrl)
         throws JMSException {
@@ -248,6 +251,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
         RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
         XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -281,8 +285,8 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
         }
         
         try {
-            Class clazz = ClassLoaderHelper.loadClass(classname);
-            Constructor constructor = clazz.getConstructor(new Class[] {Properties.class});
+            Class<?> clazz = ClassLoaderHelper.loadClass(classname);
+            Constructor<?> constructor = clazz.getConstructor(new Class[] {Properties.class});
             return (ConnectionFactory) constructor.newInstance(new Object[] {p});
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALIZER.x("E301: Could not instantiate STCMS connection factory: {0}", e), e);
@@ -304,10 +308,11 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @throws JMSException failure
      * @return SessionConnection
      */
+    @Override
     public SessionConnection createSessionConnection(Object connectionFactory,
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc, XConnectionRequestInfo descr,
-        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         return new RASTCMSSessionConnection(connectionFactory, objfact, ra,
@@ -321,6 +326,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -342,6 +348,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getServerMgtMBean(com.stc.jmsjca.core.RAJMSResourceAdapter,
      *      com.stc.jmsjca.core.RAJMSActivationSpec)
      */
+    @Override
     public Object getServerMgtMBean(RAJMSResourceAdapter ra, RAJMSActivationSpec spec)
         throws JMSException {
         Object ret = null;
@@ -409,12 +416,12 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
 
             try {
                 // Instantiate mbean
-                Class c = Class.forName("com.stc.jmsmx.stcms.ExternalStcmsMBean");
+                Class<?> c = Class.forName("com.stc.jmsmx.stcms.ExternalStcmsMBean");
                 Object stcmsMBean = c.newInstance();
                 // Initialize this object using this method:
                 // public void setConnectInfo(Properties connectionProperties, 
                 // String username, String password) {
-                Class[] signatures = {Properties.class, String.class,
+                Class<?>[] signatures = {Properties.class, String.class,
                     String.class };
                 Object[] args = {connectionProperties, username, password};
                 Method method = c.getMethod("setConnectInfo", signatures);
@@ -434,6 +441,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "STCMS";
     }

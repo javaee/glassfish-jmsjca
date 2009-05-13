@@ -28,12 +28,13 @@ import com.stc.jmsjca.test.core.TopicEndToEnd;
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class TopicJBossEar1 extends TopicEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new JBossProvider();
     }

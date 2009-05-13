@@ -37,12 +37,13 @@ import javax.naming.InitialContext;
  * Required:
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Perf1 extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
@@ -51,7 +52,9 @@ public class Perf1 extends EndToEndBase {
      * Empty onMessage
      */
     public static class MDB1 extends StcmsPerfMDB.Executor {
+        @Override
         public void init(InitialContext ctx) {}
+        @Override
         public void onMessage(Message message, InitialContext ctx) {
         }
     }
@@ -60,7 +63,9 @@ public class Perf1 extends EndToEndBase {
      * Nothing cached
      */
     public static class MDB2 extends StcmsPerfMDB.Executor {
+        @Override
         public void init(InitialContext ctx) {}
+        @Override
         public void onMessage(Message message, InitialContext ctx) throws Exception {
             QueueConnection conn = null;
             try {
@@ -87,7 +92,9 @@ public class Perf1 extends EndToEndBase {
      * Only lookup qcf
      */
     public static class MDB3 extends StcmsPerfMDB.Executor {
+        @Override
         public void init(InitialContext ctx) {}
+        @Override
         public void onMessage(Message message, InitialContext ctx) throws Exception {
             QueueConnection conn = null;
             try {
@@ -108,9 +115,11 @@ public class Perf1 extends EndToEndBase {
      */
     public static class MDB4 extends StcmsPerfMDB.Executor {
         QueueConnectionFactory fact;
+        @Override
         public void init(InitialContext ctx) throws Exception {
             fact = (QueueConnectionFactory) ctx.lookup("java:comp/env/queuefact");
         }
+        @Override
         public void onMessage(Message message, InitialContext ctx) throws Exception {
             QueueConnection conn = null;
             try {
@@ -132,7 +141,7 @@ public class Perf1 extends EndToEndBase {
      * @param listener Class
      * @throws Throwable
      */
-    public void exec(Class listener) throws Throwable {
+    public void exec(Class<?> listener) throws Throwable {
         int N = 20000;
 
         // Adjust DD

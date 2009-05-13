@@ -31,13 +31,15 @@ import java.util.Properties;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
+@SuppressWarnings("unchecked")
 public class SpecialFeaturesEar1 extends EndToEndBase {
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#setUp()
      */
+    @Override
     public void setUp() throws Exception {
         super.setUp();
     }
@@ -45,6 +47,7 @@ public class SpecialFeaturesEar1 extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }

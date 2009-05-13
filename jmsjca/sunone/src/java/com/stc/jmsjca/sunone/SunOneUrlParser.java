@@ -34,7 +34,7 @@ import javax.jms.JMSException;
  *   options  := key=value[&key=value]*       
  *
  * @author misc
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SunOneUrlParser extends ConnectionUrl {
     private SunOneConnectionUrl[] mConnectionUrls;
@@ -92,26 +92,23 @@ public class SunOneUrlParser extends ConnectionUrl {
      * @param s connection url string
      */
     public SunOneUrlParser(String s) {
-        ArrayList urls = new ArrayList();
-        if (s != null && s.startsWith(PROT_LDAP))
-        {
-        	// this is a ldap reference, do not tokenize using ","
-        	urls.add(new SunOneConnectionUrl(s));
+        ArrayList<SunOneConnectionUrl> urls = new ArrayList<SunOneConnectionUrl>();
+        if (s != null && s.startsWith(PROT_LDAP)) {
+            // this is a ldap reference, do not tokenize using ","
+            urls.add(new SunOneConnectionUrl(s));
+        } else {
+            for (StringTokenizer it = new StringTokenizer(s, ","); it.hasMoreTokens();) {
+                String url = it.nextToken();
+                urls.add(new SunOneConnectionUrl(url));
+            }
         }
-        else
-        {
-        	for (StringTokenizer it = new StringTokenizer(s, ","); it.hasMoreTokens();) 
-        	{
-        		String url = it.nextToken();
-        		urls.add(new SunOneConnectionUrl(url));
-        	}
-        }
-        mConnectionUrls = (SunOneConnectionUrl[]) urls.toArray(new SunOneConnectionUrl[urls.size()]);
+        mConnectionUrls = urls.toArray(new SunOneConnectionUrl[urls.size()]);
     }
 
     /**
      * @see com.stc.jmsjca.util.ConnectionUrl#getQueryProperties(java.util.Properties)
      */
+    @Override
     public void getQueryProperties(Properties toAddTo) {
         SunOneConnectionUrl[] urls = getConnectionUrls();
         for (int i = 0; i < urls.length; i++) {
@@ -122,14 +119,12 @@ public class SunOneUrlParser extends ConnectionUrl {
     /**
      * Checks the validity of the URL; adjusts the port number if necessary
      * 
-     * @param aurl UrlParser
      * @throws javax.jms.JMSException on format failure
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
     public boolean validate() throws JMSException {
-        
-        if (mConnectionUrls.length ==0) {
+        if (mConnectionUrls.length == 0) {
             throw new JMSException("URL should be a comma delimited set of URLs");            
         }        
         for (int j = 0; j < mConnectionUrls.length; j++) {
@@ -188,11 +183,11 @@ public class SunOneUrlParser extends ConnectionUrl {
                 buf.append(",");
             }            
             if ("jms".equals(urls[i].getService())) {
-                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/admin");                
+                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/admin");
             } else if ("jssljms".equals(urls[i].getService())) {
-                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/ssladmin");                                
+                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/ssladmin");
             } else {
-                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/admin");                
+                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/admin");
             }
         }
         return buf.toString();
@@ -204,6 +199,7 @@ public class SunOneUrlParser extends ConnectionUrl {
      * 
      * @return String close match to original string passed in constructor
      */
+    @Override
     public String toString() {
         SunOneConnectionUrl[] urls = getConnectionUrls();
         StringBuffer buf = new StringBuffer();

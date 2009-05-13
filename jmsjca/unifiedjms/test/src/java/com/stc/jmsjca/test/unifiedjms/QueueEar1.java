@@ -31,7 +31,7 @@ import javax.jms.Session;
  * Required:
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class QueueEar1 extends EndToEndBase {
     
@@ -99,7 +99,8 @@ public class QueueEar1 extends EndToEndBase {
         try {
             c.redeployModule(mTestEar.getAbsolutePath());
             p.setMessageGenerator(new Passthrough.MessageGenerator() {
-                public Message createMessage(Session s, Class type) throws JMSException {
+                @Override
+                public Message createMessage(Session s, Class<?> type) throws JMSException {
                     Message ret = super.createMessage(s, type);
                     ret.setStringProperty("cf", FACTURL);
                     return ret;
@@ -117,6 +118,7 @@ public class QueueEar1 extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }

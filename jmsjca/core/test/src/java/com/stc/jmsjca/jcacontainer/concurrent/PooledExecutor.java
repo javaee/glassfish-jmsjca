@@ -377,7 +377,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
      * may also be useful in subclasses that need to perform other
      * thread management chores.
      **/
-    protected final Map threads_;
+    protected final Map<Worker, Thread> threads_;
     
     /** The current handler for unserviceable requests. **/
     protected BlockedExecutionHandler blockedExecutionHandler_;
@@ -417,7 +417,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
         maximumPoolSize_ = maxPoolSize;
         handOff_ = channel;
         runWhenBlocked();
-        threads_ = new HashMap();
+        threads_ = new HashMap<Worker, Thread>();
     }
     
     /**
@@ -543,8 +543,8 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
      * themselves respond to interrupts.
      **/
     public synchronized void interruptAll() {
-        for (Iterator it = threads_.values().iterator(); it.hasNext(); ) {
-            Thread t = (Thread)(it.next());
+        for (Iterator<Thread> it = threads_.values().iterator(); it.hasNext(); ) {
+            Thread t = (it.next());
             t.interrupt();
         }
     }
@@ -663,9 +663,9 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
      *     ( (Runnable)(it.next()) ).run();
      * </pre>
      **/
-    public List drain() {
+    public List<Object> drain() {
         boolean wasInterrupted = false;
-        Vector tasks = new Vector();
+        Vector<Object> tasks = new Vector<Object>();
         for (;;) {
             try {
                 Object x = handOff_.poll(0);
@@ -711,7 +711,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
     
     
     /**
-     * Class defining the basic run loop for pooled threads.
+     * Class<?> defining the basic run loop for pooled threads.
      **/
     protected class Worker implements Runnable {
         protected Runnable firstTask_;
@@ -741,7 +741,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
     }
     
     /**
-     * Class for actions to take when execute() blocks. Uses Strategy
+     * Class<?> for actions to take when execute() blocks. Uses Strategy
      * pattern to represent different actions. You can add more in
      * subclasses, and/or create subclasses of these. If so, you will
      * also want to add or modify the corresponding methods that set the
@@ -755,7 +755,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
         boolean blockedAction(Runnable command) throws InterruptedException;
     }
     
-    /** Class defining Run action. **/
+    /** Class<?> defining Run action. **/
     protected class RunWhenBlocked implements BlockedExecutionHandler {
         public boolean blockedAction(Runnable command) {
             command.run();
@@ -772,7 +772,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
         setBlockedExecutionHandler(new RunWhenBlocked());
     }
     
-    /** Class defining Wait action. **/
+    /** Class<?> defining Wait action. **/
     protected class WaitWhenBlocked implements BlockedExecutionHandler {
         public boolean blockedAction(Runnable command) throws InterruptedException{
             handOff_.put(command);
@@ -788,7 +788,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
         setBlockedExecutionHandler(new WaitWhenBlocked());
     }
     
-    /** Class defining Discard action. **/
+    /** Class<?> defining Discard action. **/
     protected class DiscardWhenBlocked implements BlockedExecutionHandler {
         public boolean blockedAction(Runnable command) {
             return true;
@@ -804,7 +804,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
     }
     
     
-    /** Class defining Abort action. **/
+    /** Class<?> defining Abort action. **/
     protected class AbortWhenBlocked implements BlockedExecutionHandler {
         public boolean blockedAction(Runnable command) {
             throw new RuntimeException("Pool is blocked");
@@ -821,7 +821,7 @@ public class PooledExecutor extends ThreadFactoryUser implements Executor {
     
     
     /**
-     * Class defining DiscardOldest action.  Under this policy, at most
+     * Class<?> defining DiscardOldest action.  Under this policy, at most
      * one old unhandled task is discarded.  If the new task can then be
      * handed off, it is.  Otherwise, the new task is run in the current
      * thread (i.e., RunWhenBlocked is used as a backup policy.)

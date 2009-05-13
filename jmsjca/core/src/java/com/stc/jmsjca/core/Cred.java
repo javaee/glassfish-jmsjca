@@ -28,9 +28,12 @@ import java.util.Set;
  * Utilities that have to do with password credentials
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
-public class Cred {
+public final class Cred {
+    private Cred() {
+    }
+
     /**
      * Checks two objects for equality
      *
@@ -40,7 +43,7 @@ public class Cred {
      */
     public static boolean isEqual(Object a, Object b) {
         if (a == null) {
-            return (b == null);
+            return b == null;
         } else {
             return a.equals(b);
         }
@@ -68,11 +71,11 @@ public class Cred {
             
             // Subject is specified; find a matching PasswordCredential
             PasswordCredential ret = (PasswordCredential) AccessController.doPrivileged(
-                new PrivilegedAction() {
+                new PrivilegedAction<Object>() {
                 public Object run() {
-                    Set creds = subject.getPrivateCredentials(PasswordCredential.class);
-                    for (Iterator iter = creds.iterator(); iter.hasNext();/*-*/) {
-                        PasswordCredential pc = (PasswordCredential) iter.next();
+                    Set<PasswordCredential> creds = subject.getPrivateCredentials(PasswordCredential.class);
+                    for (Iterator<PasswordCredential> iter = creds.iterator(); iter.hasNext();/*-*/) {
+                        PasswordCredential pc = iter.next();
                         if (pc.getManagedConnectionFactory() != null
                             && pc.getManagedConnectionFactory().equals(mcf)) {
                             return pc;

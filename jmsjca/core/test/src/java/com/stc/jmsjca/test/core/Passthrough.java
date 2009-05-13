@@ -52,11 +52,11 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
-    private List mThings = new ArrayList();
+    private List<Endpoint> mThings = new ArrayList<Endpoint>();
     private int mNMsgsToSend = 1000;
     private int mCommitSize  = 1000;
     private int mDrainTimeout = 1000;
@@ -64,7 +64,7 @@ public abstract class Passthrough {
     private int mBatchId;
     private String mMethodname;
     private MessageGenerator mMessageGenerator = new MessageGenerator();
-    private Class mMsgType = TextMessage.class;
+    private Class<?> mMsgType = TextMessage.class;
     private boolean mStrictOrder;
     private String mQueue1Name = "Queue1";
     private String mQueue2Name = "Queue2";
@@ -143,7 +143,7 @@ public abstract class Passthrough {
      * 
      * @param type JMS type
      */
-    public void setMsgType(Class type) {
+    public void setMsgType(Class<?> type) {
         mMsgType = type;
     }
 
@@ -354,7 +354,7 @@ public abstract class Passthrough {
     public static Exception setCause(Exception toSetOn, Throwable cause) {
         if (cause != null) {
             try {
-                Class c = toSetOn.getClass();
+                Class<?> c = toSetOn.getClass();
                 Method m = c.getMethod("initCause", new Class[] {Throwable.class});
                 m.invoke(toSetOn, new Object[] {cause});
             } catch (Exception ex) {
@@ -422,7 +422,7 @@ public abstract class Passthrough {
          * @param type one of the message types
          * @throws JMSException fault
          */
-        public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+        public void setMsgPayload(Message m, int i, int iBatch, Class<?> type) throws JMSException {
             if (type == BytesMessage.class) {
                 // nothing
             } else if (type == MapMessage.class) {
@@ -458,7 +458,7 @@ public abstract class Passthrough {
          * @return msg
          * @throws JMSException fault
          */
-        public Message createMessage(Session s, Class type) throws JMSException {
+        public Message createMessage(Session s, Class<?> type) throws JMSException {
             Message msg;
             if (type == BytesMessage.class) {
                 msg = s.createBytesMessage();
@@ -580,7 +580,7 @@ public abstract class Passthrough {
             }
         }
         
-        private void checkResults(long t0, List failures, int nReceived, int nExpected,
+        private void checkResults(long t0, List<String> failures, int nReceived, int nExpected,
             int[] readbackCount, int[] readbackOrder) throws Exception {
             boolean failure = false;
             
@@ -638,8 +638,8 @@ public abstract class Passthrough {
                 failure = true;
                 int k = 0;
                 otherFailures = "[Other failures: ";
-                for (Iterator iter = failures.iterator(); iter.hasNext();) {
-                    String f = (String) iter.next();
+                for (Iterator<String> iter = failures.iterator(); iter.hasNext();) {
+                    String f = iter.next();
                     if (k != 0) {
                         otherFailures += ", ";
                     }
@@ -672,7 +672,7 @@ public abstract class Passthrough {
             int[] readbackCount = new int[n];
             int[] readbackOrder = new int[n];
             int nFailures = 0;
-            List failures = new ArrayList();
+            List<String> failures = new ArrayList<String>();
 
             System.out.println("Waiting to receive " + n + " msgs from "
                 + getName());
@@ -801,7 +801,7 @@ public abstract class Passthrough {
          * @param type type of messages to send
          * @throws JMSException fault
          */
-        public void sendBatch(int n, int iBatch, String start, Class type) throws JMSException {
+        public void sendBatch(int n, int iBatch, String start, Class<?> type) throws JMSException {
             sendBatch(n, iBatch, type, mMessageGenerator);
         }
 
@@ -814,7 +814,7 @@ public abstract class Passthrough {
          * @param gen how to create and populate messages
          * @throws JMSException fault
          */
-        private void sendBatch(int n, int iBatch, Class type, MessageGenerator gen) throws JMSException {
+        private void sendBatch(int n, int iBatch, Class<?> type, MessageGenerator gen) throws JMSException {
             System.out.println("Sending " + n + " msgs of type " + type + " to "
                 + getName() + "; batch " + iBatch);
             
@@ -913,6 +913,7 @@ public abstract class Passthrough {
          * @return number of messages in a queue as measured through a queue browser
          * @throws JMSException fault
          */
+        @SuppressWarnings("unchecked")
         public int queueSize() throws JMSException {
             QueueBrowser qb = mSession.createBrowser(createQueue(mSession, getName()));
             int count = 0;
@@ -927,6 +928,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#close()
          */
+        @Override
         public void close() {
             safeClose(mCon);
         }
@@ -934,6 +936,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#receive(int)
          */
+        @Override
         public Message receive(int timeout) throws JMSException {
             return mConsumer.receive(timeout);
         }
@@ -941,6 +944,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#getSession()
          */
+        @Override
         public Session getSession() {
             return mSession;
         }
@@ -963,6 +967,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.QueueEndpoint#connect()
          */
+        @Override
         public void connect() throws Exception {
             super.connect();
             mSource = createQueue(mSession, getName());
@@ -972,6 +977,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#send(javax.jms.Message)
          */
+        @Override
         public void send(Message m) throws JMSException {
             mProducer.send(m);
         }
@@ -979,6 +985,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#drain()
          */
+        @Override
         public int drain() throws JMSException {
             mConsumer = mSession.createReceiver(mSource);
             int ret = super.drain();
@@ -1004,11 +1011,13 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.QueueEndpoint#connect()
          */
+        @Override
         public void connect() throws Exception {
             super.connect();
             mDest = createQueue(mSession, getName());
             mConsumer = mSession.createReceiver(mDest);
         }
+        @Override
         public void close() {
             try {
               if (mConsumer != null) {
@@ -1070,6 +1079,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#close()
          */
+        @Override
         public void close() {
             safeClose(mCon);
         }
@@ -1077,6 +1087,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#receive(int)
          */
+        @Override
         public Message receive(int timeout) throws JMSException {
             return mConsumer.receive(timeout);
         }
@@ -1084,6 +1095,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#getSession()
          */
+        @Override
         public Session getSession() {
             return mSession;
         }
@@ -1109,6 +1121,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.TopicEndpoint#connect()
          */
+        @Override
         public void connect() throws Exception {
             super.connect();
             mSource = createTopic(mSession, getName());
@@ -1118,6 +1131,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#send(javax.jms.Message)
          */
+        @Override
         public void send(Message m) throws JMSException {
             mProducer.publish(m);
         }
@@ -1125,6 +1139,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.Endpoint#drain()
          */
+        @Override
         public int drain() throws JMSException {
             if (mDurableName != null) {
                 mConsumer = mSession.createDurableSubscriber(mSource, mDurableName);
@@ -1154,6 +1169,7 @@ public abstract class Passthrough {
         /**
          * @see com.stc.jmsjca.test.core.Passthrough.TopicEndpoint#connect()
          */
+        @Override
         public void connect() throws Exception {
             super.connect();
             mDest = createTopic(mSession, getName());
@@ -1193,8 +1209,8 @@ public abstract class Passthrough {
      * Closes all resources associated with this endpoint test
      */
     public void close() {
-        for (Iterator iter = mThings.iterator(); iter.hasNext();/*-*/) {
-            Endpoint t = (Endpoint) iter.next();
+        for (Iterator<Endpoint> iter = mThings.iterator(); iter.hasNext();/*-*/) {
+            Endpoint t = iter.next();
             t.close();
             iter.remove();
         }
@@ -1208,8 +1224,8 @@ public abstract class Passthrough {
      * @throws Exception fault
      */
     public Endpoint get(String name) throws Exception {
-        for (Iterator iter = mThings.iterator(); iter.hasNext();/*-*/) {
-            Endpoint q = (Endpoint) iter.next();
+        for (Iterator<Endpoint> iter = mThings.iterator(); iter.hasNext();/*-*/) {
+            Endpoint q = iter.next();
             if (q.getName().equals(name)) {
                 return q;
             }
@@ -1297,7 +1313,7 @@ public abstract class Passthrough {
 
         dest.drain();
         
-        Class[] types = new Class[] {
+        Class<?>[] types = new Class[] {
             TextMessage.class, BytesMessage.class,
             MapMessage.class, ObjectMessage.class, StreamMessage.class, Message.class };
         for (int i = 0; i < types.length; i++) {

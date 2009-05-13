@@ -68,14 +68,14 @@ import java.util.Map;
  * read-only.    
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
     private static Logger sLog = Logger.getLogger(MBeanHelper.class);
-    private static String MBM = "mbm";
-    private static String MBA = "mba";
-    private ArrayList mServers = new ArrayList();
-    private ArrayList mNames = new ArrayList();
+    private static final String MBM = "mbm";
+    private static final String MBA = "mba";
+    private ArrayList<MBeanServer> mServers = new ArrayList<MBeanServer>();
+    private ArrayList<ObjectName> mNames = new ArrayList<ObjectName>();
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -84,9 +84,9 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      */
     public void destroy() {
         for (int i = 0; i < mServers.size(); i++) {
-            MBeanServer s = (MBeanServer) mServers.get(i);
+            MBeanServer s = mServers.get(i);
             try {
-                s.unregisterMBean((ObjectName) mNames.get(i));
+                s.unregisterMBean(mNames.get(i));
             } catch (Exception ex) {
                 sLog.warn(LOCALE.x("E089: Exception unregistering activation MBean [{0}]" 
                     + " on server [{1}]", mNames.get(i), mServers.get(i)));
@@ -196,7 +196,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      * @return non null array
      */
     protected MBeanAttributeInfo[] getAttributeInfo(boolean throwFailures) {
-        ArrayList attrinfos = new ArrayList();
+        ArrayList<MBeanAttributeInfo> attrinfos = new ArrayList<MBeanAttributeInfo>();
 
         Object target = getDelegate();
         Method[] targetmethods = target.getClass().getMethods();
@@ -209,7 +209,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     String attrname = m.getName().substring(MBA.length());
 
                     // Try to get description: invoke the mba method.
-                    Class[] types = m.getParameterTypes();
+                    Class<?>[] types = m.getParameterTypes();
                     Object[] args = new Object[types.length];
                     for (int j = 0; j < types.length; j++) {
                         args[i] = null;
@@ -224,7 +224,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     // Verify getters and setters
                     boolean getter = false;
                     boolean setter = false;
-                    Class attrType = null;
+                    Class<?> attrType = null;
                     for (int j = 0; j < targetmethods.length; j++) {
                         Method cand = targetmethods[j];
                         if (cand.getName().equals("get" + attrname)) {
@@ -265,8 +265,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                 }
             }
         }
-        MBeanAttributeInfo[] attrs = (MBeanAttributeInfo[]) 
-            attrinfos.toArray(new MBeanAttributeInfo[attrinfos.size()]);
+        MBeanAttributeInfo[] attrs = attrinfos.toArray(new MBeanAttributeInfo[attrinfos.size()]);
         return attrs;
     }
 
@@ -277,7 +276,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      * @return non null array
      */
     protected MBeanOperationInfo[] getOperationsInfo(boolean throwFailures) {
-        ArrayList opinfos = new ArrayList();
+        ArrayList<MBeanOperationInfo> opinfos = new ArrayList<MBeanOperationInfo>();
         Object target = getDelegate();
         Method[] targetmethods = target.getClass().getMethods();
         Object meta = getMetaObject();
@@ -316,7 +315,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                     }
 
                     // Invoke method to get description
-                    Class[] types = m.getParameterTypes();
+                    Class<?>[] types = m.getParameterTypes();
                     Object[] args = new Object[types.length];
                     for (int j = 0; j < types.length; j++) {
                         args[j] = getReasonableDummyValue(types[j]);
@@ -355,17 +354,17 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
                 }
             }
         }
-        return (MBeanOperationInfo[]) opinfos.toArray(
+        return opinfos.toArray(
             new MBeanOperationInfo[opinfos.size()]);
     }
 
-    private Object getReasonableDummyValue(Class c) {
+    private Object getReasonableDummyValue(Class<?> c) {
         if (c.equals(int.class)) {
             return new Integer(0);
         } else if (c.equals(long.class)) {
             return new Long(0);
         } else if (c.equals(boolean.class)) {
-            return new Boolean(false);
+            return Boolean.FALSE;
         } else if (c.equals(double.class)) {
             return new Double(0);
         } else if (c.equals(float.class)) {
@@ -412,7 +411,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      * @return method null if not found
      * @throws ReflectionException
      */
-    private static Method resolveMethod(Class targetClass, String opMethodName,
+    private static Method resolveMethod(Class<? extends Object> targetClass, String opMethodName,
         String[] sig) throws ReflectionException {
         
         if (sLog.isDebugEnabled()) {
@@ -421,14 +420,14 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
         }
         
         // Find parameter classes
-        final Class[] argClasses;
+        final Class<?>[] argClasses;
         if (sig == null) {
             argClasses = null;
         } else {
             final ClassLoader targetClassLoader = targetClass.getClassLoader();
             argClasses = new Class[sig.length];
             for (int i = 0; i < sig.length; i++) {
-                argClasses[i] = (Class) PRIMITIVECLASSMAP.get(sig[i]);
+                argClasses[i] = PRIMITIVECLASSMAP.get(sig[i]);
                 if (argClasses[i] == null) {
                     try {
                         argClasses[i] =
@@ -452,16 +451,16 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
         }
     }
     
-    private static final Class[] PRIMITIVECLASSES = {
+    private static final Class<?>[] PRIMITIVECLASSES = {
         int.class, long.class, boolean.class, double.class,
         float.class, short.class, byte.class, char.class,
     };
     
-    private static final Map/*<String,Class>*/ PRIMITIVECLASSMAP = new HashMap();
+    private static final Map/*<String,Class>*/<String, Class<?>> PRIMITIVECLASSMAP = new HashMap<String, Class<?>>();
 
     static {
         for (int i = 0; i < PRIMITIVECLASSES.length; i++) {
-            final Class c = PRIMITIVECLASSES[i];
+            final Class<?> c = PRIMITIVECLASSES[i];
             PRIMITIVECLASSMAP.put(c.getName(), c);
         }
     }

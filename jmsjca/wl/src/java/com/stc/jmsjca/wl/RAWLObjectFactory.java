@@ -62,7 +62,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -118,7 +118,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
         PROT_T3 + "://",
     };
 
-    private static Localizer LOCALE = Localizer.get();
+    private static final Localizer LOCALE = Localizer.get();
     
     private transient Method mSpecialISORBMethod;
     private transient Method mSpecialISORBMethodIsOn;
@@ -128,7 +128,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      */
     public RAWLObjectFactory() {
         try {
-            Class c = Class.forName(IS_ORBCLASS);
+            Class<?> c = Class.forName(IS_ORBCLASS);
             mSpecialISORBMethod = c.getMethod(IS_ORBMETHOD, new Class[] {});
             c = Class.forName(IS_ORBCLASS2);
             mSpecialISORBMethodIsOn = c.getMethod(IS_ORBMETHOD_ISON, new Class[] {});
@@ -140,6 +140,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         int newMode = mode;
         if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
@@ -160,10 +161,11 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * com.stc.jmsjca.core.XManagedConnection, 
      * com.stc.jmsjca.core.XConnectionRequestInfo, boolean, boolean, int, java.lang.Class)
      */
+    @Override
     public SessionConnection createSessionConnection(Object connectionFactory,
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc, XConnectionRequestInfo descr,
-        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         return new WLSessionConnection(connectionFactory, objfact, ra,
@@ -176,7 +178,8 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * boolean, java.lang.Class, com.stc.jmsjca.core.RAJMSResourceAdapter, 
      * com.stc.jmsjca.core.RAJMSActivationSpec, boolean, int)
      */
-    public Session createSession(Connection conn, boolean isXA, Class sessionClass,
+    @Override
+    public Session createSession(Connection conn, boolean isXA, Class<?> sessionClass,
         RAJMSResourceAdapter ra, RAJMSActivationSpec activationSpec, boolean transacted,
         int ackmode) throws JMSException {
         if (isXA) {
@@ -196,7 +199,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
             } else if (sessionClass == QueueSession.class) {
                 return ((QueueConnection) conn).createQueueSession(transacted, ackmode);
             } else if (sessionClass == Session.class) {
-                return ((Connection) conn).createSession(transacted, ackmode);
+                return conn.createSession(transacted, ackmode);
             }
         }
         throw Exc.rtexc(LOCALE.x("E824: Unknown class {0}", sessionClass));
@@ -255,7 +258,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
                     + '#' + name); 
             } else {
                 // Will be executed on other application servers than the IS
-                Hashtable env = new Hashtable();
+                Hashtable<String, String> env = new Hashtable<String, String>();
                 env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
                 env.put(Context.PROVIDER_URL, "t3://" + url.getHost() + ":" + url.getPort());
                 ctx = new InitialContext(env);
@@ -280,6 +283,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
             RAJMSResourceAdapter resourceAdapter,
             RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,
@@ -308,9 +312,10 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * boolean, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
      * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.util.Properties, java.lang.Class)
      */
+    @Override
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class sessionClass) throws JMSException {
+        String destName, Properties options, Class<?> sessionClass) throws JMSException {
         
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");
@@ -362,14 +367,14 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
             
             // Check cache
             if (fact == null) {
-                ret = (Destination) lookupDestination(activationSpec, fact, ra, destName, null, null);
+                ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
             } else {
                 DestinationCacheEntry d = isTopic 
                 ? fact.getTopicCache().get(destName) : fact.getQueueCache().get(destName);
                 synchronized (d) {
                     ret = d.get();
                     if (ret == null) {
-                        ret = (Destination) lookupDestination(activationSpec, fact, ra, destName, null, null);
+                        ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
                         d.set(ret);
                     }
                 }
@@ -421,6 +426,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -444,6 +450,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * @param ra ra
      * @throws JMSException on failure
      */
+    @Override
     public void setClientID(Connection connection, boolean isTopic,
         RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
         setClientIDIfNotSpecified(connection, isTopic, spec, ra);
@@ -452,6 +459,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "WL";
     }
@@ -462,6 +470,7 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
      * 
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#shouldCacheConnectionFactories()
      */
+    @Override
     public boolean shouldCacheConnectionFactories() {
         return false;
     }

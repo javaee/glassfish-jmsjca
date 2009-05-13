@@ -90,12 +90,14 @@ import java.util.logging.Logger;
  * @author 
  * @version 1.0
  */
+@SuppressWarnings("unchecked")
 public class TestSunOneJUStd extends XTestBase {
     Logger sLog = Logger.getLogger(TestSunOneJUStd.class.getName());
 
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }
@@ -145,6 +147,7 @@ public class TestSunOneJUStd extends XTestBase {
     protected static String jndinameUnifiedDelegateXA = "jnditest-unifiedfact-provider-xa";
 
     
+    @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
 
@@ -205,6 +208,7 @@ public class TestSunOneJUStd extends XTestBase {
         }
     }
 
+    @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         SunOneUrlParser urlParser = new SunOneUrlParser(getConnectionUrl());
         com.sun.messaging.XAQueueConnectionFactory fact = new com.sun.messaging.XAQueueConnectionFactory();
@@ -212,15 +216,19 @@ public class TestSunOneJUStd extends XTestBase {
         return fact;
     }
 
+    @Override
     protected void setClientID(Connection con) throws JMSException {
         con.setClientID("X");
     }
 
+    @Override
     public WireCount getConnectionCount() {
         return new WireCount() {
+            @Override
             public void check(int sessions, int producers, int consumers) {
             }
 
+            @Override
             public void check(int n) {
             }
         };
@@ -263,6 +271,7 @@ public class TestSunOneJUStd extends XTestBase {
         public void setFormatId(int value) {
             formatId = value;
         }
+        @Override
         public int hashCode() {
             int result = 0;
             for (int i = 0; i < branchQualifier.length; i++) {
@@ -273,6 +282,7 @@ public class TestSunOneJUStd extends XTestBase {
             }
             return result;
         }
+        @Override
         public boolean equals(Object that) {
             if (this == that) {
                 return true;
@@ -482,6 +492,7 @@ public class TestSunOneJUStd extends XTestBase {
                     }
                     public void start() throws JMSException {
                         new Thread() {
+                            @Override
                             public void run() {
                                 try {
                                     xid = new XXid();
@@ -548,6 +559,7 @@ public class TestSunOneJUStd extends XTestBase {
                     }
                     public void start() throws JMSException {
                         new Thread() {
+                            @Override
                             public void run() {
                                 try {
                                     xs.run();
@@ -853,6 +865,7 @@ public class TestSunOneJUStd extends XTestBase {
                              * 
                              * @see java.lang.Runnable#run()
                              */
+                            @Override
                             public void run() {
                                 try {
 //                                    /////////////
@@ -1175,6 +1188,7 @@ public class TestSunOneJUStd extends XTestBase {
      * is invoked. In the end there should be as many messages in the queue as was
      * sent to this queue.
      */
+    @Override
     public int doTestXACCStopCloseRolback() throws Throwable {
         final int POOLSIZE = 32;
 
@@ -1333,6 +1347,7 @@ public class TestSunOneJUStd extends XTestBase {
                              * 
                              * @see java.lang.Runnable#run()
                              */
+                            @Override
                             public void run() {
                                 try {
                                     xid = new XXid();
@@ -1449,6 +1464,7 @@ public class TestSunOneJUStd extends XTestBase {
         return inUse.getMax();
     }
     
+    @Override
     public void testXACCStopCloseRolback() throws Throwable {
         doTestXACCStopCloseRolback();
     }

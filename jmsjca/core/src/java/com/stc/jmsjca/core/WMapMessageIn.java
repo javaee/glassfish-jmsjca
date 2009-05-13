@@ -25,7 +25,7 @@ import java.util.Enumeration;
  * See WMessage
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WMapMessageIn extends WMessageIn implements MapMessage {
     private MapMessage mDelegate;
@@ -99,7 +99,7 @@ public class WMapMessageIn extends WMessageIn implements MapMessage {
     /**
      * @see javax.jms.MapMessage#getMapNames()
      */
-    public Enumeration getMapNames() throws JMSException {
+    public Enumeration<?> getMapNames() throws JMSException {
         return mDelegate.getMapNames();
     }
 

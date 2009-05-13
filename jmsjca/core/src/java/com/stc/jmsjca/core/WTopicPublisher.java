@@ -25,7 +25,7 @@ import javax.jms.TopicPublisher;
  * See WProducer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WTopicPublisher extends WMessageProducer implements TopicPublisher {
     private TopicPublisher mDelegate;
@@ -46,6 +46,7 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
      *
      * @throws JMSException on failure
      */
+    @Override
     public void close() throws JMSException {
         super.close();
         mDelegate = null;

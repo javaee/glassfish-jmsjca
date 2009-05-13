@@ -35,7 +35,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WLPassthrough extends Passthrough {
     private WLProvider mProvider;
@@ -50,6 +50,7 @@ public class WLPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         try {
             return (TopicConnectionFactory) mProvider.getInitialContext(mProperties).lookup(
@@ -62,6 +63,7 @@ public class WLPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         return (QueueConnectionFactory) createTopicConnectionFactory();
     }
@@ -69,6 +71,7 @@ public class WLPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#removeDurableSubscriber(java.lang.String, java.lang.String, java.lang.String)
      */
+    @Override
     public void removeDurableSubscriber(String clientID, String destname,
         String subscriptionName) throws Exception {
         TopicConnectionFactory cf = createTopicConnectionFactory();
@@ -88,6 +91,7 @@ public class WLPassthrough extends Passthrough {
         conn.close(); 
     }
 
+    @Override
     public Queue createQueue(Session s, String name) throws JMSException {
         try {
             return (Queue) mProvider.getInitialContext(mProperties).lookup(name);
@@ -96,6 +100,7 @@ public class WLPassthrough extends Passthrough {
         }
     }
 
+    @Override
     public Topic createTopic(Session s, String name) throws JMSException {
         try {
             return (Topic) mProvider.getInitialContext(mProperties).lookup(name);

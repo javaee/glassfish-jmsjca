@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WavePassthrough extends Passthrough {
 
@@ -50,6 +50,7 @@ public class WavePassthrough extends Passthrough {
         return true;
     }
 
+    @Override
     public void removeDurableSubscriber(String clientID, String dest, String subname) throws JMSException {
         TopicConnectionFactory cf = createTopicConnectionFactory();
         TopicConnection conn = cf.createTopicConnection();
@@ -66,6 +67,7 @@ public class WavePassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         WaveProfile p = TestWaveJUStd.createWaveProfile(getConnectionUrl());
         return new WaveTopicConnectionFactory(p);
@@ -74,6 +76,7 @@ public class WavePassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         WaveProfile p = TestWaveJUStd.createWaveProfile(getConnectionUrl());
         return new WaveQueueConnectionFactory(p);

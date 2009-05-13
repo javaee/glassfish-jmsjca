@@ -23,13 +23,14 @@ import com.stc.jmsjca.test.core.ReconnectionTestsInbound;
  * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class ReconnectInboundSunOneEar1 extends ReconnectionTestsInbound {
     
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }

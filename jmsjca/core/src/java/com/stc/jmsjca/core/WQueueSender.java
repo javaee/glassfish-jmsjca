@@ -28,7 +28,7 @@ import javax.jms.QueueSender;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WQueueSender extends WMessageProducer implements QueueSender {
     private QueueSender mDelegate;
@@ -49,6 +49,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
      *
      * @throws JMSException on failure
      */
+    @Override
     public void close() throws JMSException {
         super.close();
         mDelegate = null;

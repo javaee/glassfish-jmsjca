@@ -22,7 +22,7 @@ import com.stc.jmsjca.core.RAJMSActivationSpec;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RASTCMSActivationSpec extends RAJMSActivationSpec {
 
@@ -32,6 +32,7 @@ public class RASTCMSActivationSpec extends RAJMSActivationSpec {
      * @param name String
      * @return boolean
      */
+    @Override
     public boolean isValidDestinationName(String name) {
         return !empty(name);
     }

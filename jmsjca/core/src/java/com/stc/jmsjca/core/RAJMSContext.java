@@ -46,7 +46,7 @@ import javax.naming.NamingException;
  * and use this configuration information in the getDelegate() method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class RAJMSContext implements Context, java.io.Serializable {
 //    private static Logger sLog = Logger.getLogger(RAJMSActivationSpec.class);
@@ -99,7 +99,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
     /**
      * @see javax.naming.Context#getEnvironment()
      */
-    public Hashtable getEnvironment() throws NamingException {
+    public Hashtable<?, ?> getEnvironment() throws NamingException {
         return getDelegate().getEnvironment();
     }
 
@@ -225,6 +225,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
     /**
      * @see javax.naming.Context#list(java.lang.String)
      */
+    @SuppressWarnings("unchecked")
     public NamingEnumeration list(String name) throws NamingException {
         return getDelegate().list(name);
     }
@@ -232,6 +233,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
     /**
      * @see javax.naming.Context#listBindings(java.lang.String)
      */
+    @SuppressWarnings("unchecked")
     public NamingEnumeration listBindings(String name) throws NamingException {
         return getDelegate().listBindings(name);
     }
@@ -239,6 +241,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
     /**
      * @see javax.naming.Context#list(javax.naming.Name)
      */
+    @SuppressWarnings("unchecked")
     public NamingEnumeration list(Name name) throws NamingException {
         return getDelegate().list(name);
     }
@@ -246,6 +249,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
     /**
      * @see javax.naming.Context#listBindings(javax.naming.Name)
      */
+    @SuppressWarnings("unchecked")
     public NamingEnumeration listBindings(Name name) throws NamingException {
         return getDelegate().listBindings(name);
     }

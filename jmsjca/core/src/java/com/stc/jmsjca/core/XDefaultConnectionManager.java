@@ -161,14 +161,15 @@ import java.util.Set;
  * </pre>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class XDefaultConnectionManager implements ConnectionManager, RAStopListener {
     private static Logger sLog = Logger.getLogger(XDefaultConnectionManager.class);
     private ConnectionEventListener mConnectionEventListener;
     
     // key: managedconnection, value=ConnectionState
-    private Map mAll = Collections.synchronizedMap(new IdentityHashMap());  
+    private Map<ManagedConnection, ConnectionState> mAll 
+    = Collections.synchronizedMap(new IdentityHashMap<ManagedConnection, ConnectionState>());  
     
     // Keeps track of connections created and about to be created.
     // May not be equal to mAll.size() while a connection is being created
@@ -184,15 +185,17 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
     private int mWaiters;
 
     // key: managedconnection, value=null
-    private Map mIdle = Collections.synchronizedMap(new IdentityHashMap());  
+    private Map<ManagedConnection, Object> mIdle 
+    = Collections.synchronizedMap(new IdentityHashMap<ManagedConnection, Object>());  
 
     // key=Transaction, value=Set of managedconnection
-    private Map mIdleEnlisted = Collections.synchronizedMap(new IdentityHashMap()); 
+    private Map<Transaction, Set<ManagedConnection>> mIdleEnlisted 
+    = Collections.synchronizedMap(new IdentityHashMap<Transaction, Set<ManagedConnection>>()); 
     
     private Subject mTestSubject; // for testing purposes
     private XManagedConnectionFactory mFact;
     private int mMaxSize = 32;
-    private int mMinSize = 0;
+    private int mMinSize;
     private int mTimeout = -1;
     private boolean mIsInitialized;
     private boolean mStopped;
@@ -280,7 +283,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         ManagedConnection[] mcsToDestroy;
         synchronized (this) {
             // Get all idle connections for destruction
-            mcsToDestroy = (ManagedConnection[]) mIdle.keySet().toArray(new ManagedConnection[mIdle.size()]);
+            mcsToDestroy = mIdle.keySet().toArray(new ManagedConnection[mIdle.size()]);
             mIdle.clear();
             
             // Notify waiters about stopped state
@@ -306,7 +309,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         
         ManagedConnection mc = null;
 
-        Set candidates = (Set) mIdleEnlisted.get(tx);
+        Set<ManagedConnection> candidates = mIdleEnlisted.get(tx);
         
         if (candidates != null) {
             mc = managedConnectionFactory.matchManagedConnections(candidates, mTestSubject,
@@ -330,7 +333,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         ManagedConnectionFactory mcf, ConnectionRequestInfo descr) throws ResourceException {
 
         ManagedConnection mc = null;
-        Set candidates = mIdle.keySet();
+        Set<ManagedConnection> candidates = mIdle.keySet();
         mc = mcf.matchManagedConnections(candidates, mTestSubject, descr);
         if (mc != null) {
             mIdle.remove(mc);
@@ -348,10 +351,10 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             ValidatingManagedConnectionFactory vmcf = (ValidatingManagedConnectionFactory) mcf;
 
             // check if connection is valid
-            Set validtest = new HashSet();
+            Set<ManagedConnection> validtest = new HashSet<ManagedConnection>();
             validtest.add(mc);
             try {
-                Set invalid = vmcf.getInvalidConnections(validtest);
+                Set<?> invalid = vmcf.getInvalidConnections(validtest);
                 ret = invalid.size() > 0;
             } catch (ResourceException e) {
                 sLog.warn(LOCALE.x("E068: Unexpected error while checking a connection for validity: {0}", e), e);
@@ -469,7 +472,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
 
                 // Can and need to sacrifice an idle connection?
                 if (!done && !mIdle.isEmpty()) {
-                    toDestroy = (ManagedConnection) mIdle.keySet().iterator().next();
+                    toDestroy = mIdle.keySet().iterator().next();
                     mIdle.remove(toDestroy);
                     // substitute the idle one by a new one (no change to size setting)
                     mAll.remove(toDestroy);
@@ -658,7 +661,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
         public void afterCompletion(int status) {
             ManagedConnection toBeDestroyed = null;
             synchronized (XDefaultConnectionManager.this) {
-                ConnectionState state = (ConnectionState) mAll.get(mMC);
+                ConnectionState state = mAll.get(mMC);
                 state.setTxDeferredReleaseRegistered(false);
                 if (state.isBad() || mStopped) {
                     toBeDestroyed = mMC;
@@ -666,7 +669,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                     mIdle.put(mMC, null);
                     mSemaphore.release();
                 }
-                Set candidates = (Set) mIdleEnlisted.get(mTx);
+                Set<ManagedConnection> candidates = mIdleEnlisted.get(mTx);
                 if (candidates != null) {
                     candidates.remove(mMC);
                     if (candidates.isEmpty()) {
@@ -737,7 +740,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
             // Put in TxIdle pool
             boolean isAlreadyRegistered;
             synchronized (this) {
-                ConnectionState state = (ConnectionState) mAll.get(mc);
+                ConnectionState state = mAll.get(mc);
 
                 // Update state if cleanup failed
                 if (!state.isBad()) {
@@ -745,9 +748,9 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
                 }
                 
                 // Add to idleInTx pool
-                Set idleInTx = (Set) mIdleEnlisted.get(tx);
+                Set<ManagedConnection> idleInTx = mIdleEnlisted.get(tx);
                 if (idleInTx == null) {
-                    idleInTx = new HashSet();
+                    idleInTx = new HashSet<ManagedConnection>();
                     mIdleEnlisted.put(tx, idleInTx);
                 }
                 idleInTx.add(mc);
@@ -867,8 +870,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
      */
     public void clear() throws ResourceException {
         testConsistency();
-        for (Iterator iter = mIdle.keySet().iterator(); iter.hasNext();/*-*/) {
-            ManagedConnection mc = (ManagedConnection) iter.next();
+        for (Iterator<ManagedConnection> iter = mIdle.keySet().iterator(); iter.hasNext();/*-*/) {
+            ManagedConnection mc = iter.next();
             mc.destroy();
         }
         mIdle.clear();
@@ -881,8 +884,8 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
      */
     public void clearAll() throws ResourceException {
         testConsistency();
-        for (Iterator iter = mAll.keySet().iterator(); iter.hasNext();/*-*/) {
-            ManagedConnection mc = (ManagedConnection) iter.next();
+        for (Iterator<ManagedConnection> iter = mAll.keySet().iterator(); iter.hasNext();/*-*/) {
+            ManagedConnection mc = iter.next();
             mc.destroy();
         }
         mAll.clear();
@@ -905,7 +908,7 @@ public class XDefaultConnectionManager implements ConnectionManager, RAStopListe
      * @throws ResourceException failure
      */
     public void cleanInvalid() throws ResourceException {
-        for (Iterator iter = mIdle.keySet().iterator(); iter.hasNext();/*-*/) {
+        for (Iterator<ManagedConnection> iter = mIdle.keySet().iterator(); iter.hasNext();/*-*/) {
             XManagedConnection mc = (XManagedConnection) iter.next();
             if (mc.isInvalid()) {
                 mc.destroy();

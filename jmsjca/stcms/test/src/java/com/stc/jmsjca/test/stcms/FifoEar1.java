@@ -32,12 +32,13 @@ import java.util.Properties;
  * Tests FIFO mode concurrency in stcms
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class FifoEar1 extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
@@ -75,7 +76,7 @@ public class FifoEar1 extends EndToEndBase {
         Properties p = mb.getConfiguration();
         String f = p.getProperty(PropMBean.FIFO, "");
         System.out.println("Check property: [" + f + "]");
-        Map config = parseFifoConf(f);
+        Map<String, Integer> config = parseFifoConf(f);
         if (config.get(PROTCONC) == null || config.get(PROTFULLSER) == null) {
             // Change config
             config.put(PROTCONC, new Integer(1));
@@ -178,8 +179,8 @@ public class FifoEar1 extends EndToEndBase {
      * @return map: key=queue name; value=0,1,2 (Integer)
      * @throws Exception 
      */
-    private Map parseFifoConf(String val) throws Exception {
-        Map ret = new HashMap();
+    private Map<String, Integer> parseFifoConf(String val) throws Exception {
+        Map<String, Integer> ret = new HashMap<String, Integer>();
         
         if (!val.startsWith("{") || !val.endsWith("}")) {
             throw new Exception("Invalid value: [" + val + "]");
@@ -208,7 +209,8 @@ public class FifoEar1 extends EndToEndBase {
      * @param m Map key=destname; value=mode
      * @return
      */
-    private String createFifoConfig(Map m) {
+    @SuppressWarnings("unchecked")
+    private String createFifoConfig(Map<String, Integer> m) {
         StringBuffer ret = new StringBuffer();
         ret.append("{");
         int k = 0;

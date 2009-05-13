@@ -20,7 +20,6 @@ import com.stc.jmsjca.core.XXid;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 
-import javax.jms.ConnectionFactory;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
@@ -59,6 +58,7 @@ public class TestJBossJUStd extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new JBossProvider();
     }
@@ -78,7 +78,7 @@ public class TestJBossJUStd extends EndToEndBase {
     }
 
     public static Context getInitialContext() throws Exception {
-        Hashtable env = new Hashtable();
+        Hashtable<String, String> env = new Hashtable<String, String>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, JNDI_FACTORY);
         env.put(Context.PROVIDER_URL, getJNDIUrl());
         env.put(Context.URL_PKG_PREFIXES, PKGS);
@@ -92,11 +92,9 @@ public class TestJBossJUStd extends EndToEndBase {
 
         QueueConnectionFactory qconFactory = (QueueConnectionFactory) ctx.lookup(FACT);
         System.out.println("fact = " + qconFactory);
-        System.out.println("fact instance of   qcf = " + (qconFactory instanceof QueueConnectionFactory));
         System.out.println("fact instance of   tcf = " + (qconFactory instanceof TopicConnectionFactory));
         System.out.println("fact instance of xaqcf = " + (qconFactory instanceof XAQueueConnectionFactory));
         System.out.println("fact instance of xatcf = " + (qconFactory instanceof XATopicConnectionFactory));
-        System.out.println("fact instance of    cf = " + (qconFactory instanceof ConnectionFactory));
         System.out.println("fact instance of  xacf = " + (qconFactory instanceof XAConnectionFactory));
 
         QueueConnection qcon = qconFactory.createQueueConnection();
@@ -108,7 +106,7 @@ public class TestJBossJUStd extends EndToEndBase {
         TextMessage msg = qsession.createTextMessage("hello Queue1 " + (new Date(System.currentTimeMillis())));
         qsender.send(msg);
     
-        queue = (Queue) qsession.createQueue("Queue2");
+        queue = qsession.createQueue("Queue2");
         qsender = qsession.createSender(queue);
         msg = qsession.createTextMessage("hello Queue2 " + (new Date(System.currentTimeMillis())));
         qsender.send(msg);

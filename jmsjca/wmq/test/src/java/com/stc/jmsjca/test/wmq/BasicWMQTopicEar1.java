@@ -29,6 +29,7 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WMQProvider();
     }
@@ -42,17 +43,19 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
      *
      * @throws Throwable
      */
-    public void SetBrokerDurSubQueue() throws Throwable {
+    public void testSetBrokerDurSubQueue() throws Throwable {
         Passthrough p = createPassthrough(mServerProperties);
                
         EmbeddedDescriptor dd = getDD();
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("setBrokerDurSubQueue");
+        p.setTopic1Name("SportsTopic1");
         // If not using ".*" at the end of the name, the queue has to be created in MQSeries manually.
-        spec.setDestination("jmsjca://?name=Topic1&BrokerDurSubQueue=SYSTEM.JMS.D.BASEBALL");
+        spec.setDestination("jmsjca://?name=" + p.getTopic1Name() + "&BrokerDurSubQueue=SYSTEM.JMS.D.BASEBALL.*");
         spec.setDestinationType(javax.jms.Topic.class.getName());
         spec.setConcurrencyMode("cc");
         spec.setSubscriptionDurability("Durable");
+        p.setDurableTopic1Name("BASEBALLSUB");
         String subscriptionName = p.getDurableTopic1Name1();
         spec.setSubscriptionName(subscriptionName);
         String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");

@@ -36,7 +36,7 @@ import java.io.UnsupportedEncodingException;
  *
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class UrlParser extends ConnectionUrl {
     private String mUrl;
@@ -150,6 +150,7 @@ public class UrlParser extends ConnectionUrl {
      *
      * @return String
      */
+    @Override
     public String toString() {
         if (mUrl == null) {
             StringBuffer url = new StringBuffer();
@@ -236,6 +237,7 @@ public class UrlParser extends ConnectionUrl {
      *
      * @param toAddTo Properties key-value pairs will be added to this properties set
      */
+    @Override
     public void getQueryProperties(Properties toAddTo) {
         String q = getQuery();
         getQueryProperties(q, toAddTo);
@@ -255,7 +257,7 @@ public class UrlParser extends ConnectionUrl {
         q = q.replaceAll("&amp;" , "&");
         for (StringTokenizer iter = new StringTokenizer(q, "&");
             iter.hasMoreElements();/*-*/) {
-            String pair = (String) iter.nextToken();
+            String pair = iter.nextToken();
             int split = pair.indexOf('=');
             if (split <= 0) {
                 throw Exc.rtexc(LOCALE.x("E184: Invalid pair [{0}] in query string [{1}]"

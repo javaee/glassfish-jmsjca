@@ -22,7 +22,7 @@ import java.util.Properties;
  * A URL parser base class
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class ConnectionUrl {
     /**
@@ -46,5 +46,6 @@ public abstract class ConnectionUrl {
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public abstract String toString();
 }

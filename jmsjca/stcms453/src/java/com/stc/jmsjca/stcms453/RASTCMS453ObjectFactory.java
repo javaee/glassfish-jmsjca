@@ -35,7 +35,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -47,6 +47,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         int newMode = mode;
         if (mode != RAJMSActivationSpec.DELIVERYCONCURRENCY_SYNC) {
@@ -67,6 +68,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
+    @Override
     public boolean validateAndAdjustURL(ConnectionUrl aurl) throws JMSException {
         boolean hasChanged = false;
         UrlParser url = (UrlParser) aurl;
@@ -99,6 +101,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
         RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
         XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -140,7 +143,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
                 throw Exc.jmsExc(LOCALE.x("E309: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
         
-        Class clazz;
+        Class<?> clazz;
         try {
             clazz = ClassLoaderHelper.loadClass(classname);
             return (ConnectionFactory) clazz.getConstructor(
@@ -156,6 +159,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             if (url.startsWith(PROT)) {
@@ -168,6 +172,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "STCMS453";
     }
@@ -175,6 +180,7 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#shouldUseProducerPooling()
      */
+    @Override
     public boolean shouldUseProducerPooling() {
         return true;
     }

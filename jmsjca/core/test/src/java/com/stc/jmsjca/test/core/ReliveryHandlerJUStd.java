@@ -161,6 +161,7 @@ public class ReliveryHandlerJUStd extends TestCase {
     }
 
     private class Spec extends RAJMSActivationSpec {
+        @Override
         public boolean isValidDestinationName(String name) {
             return false;
         }
@@ -262,7 +263,7 @@ public class ReliveryHandlerJUStd extends TestCase {
         public Object getObjectProperty(String arg0) throws JMSException {
             return null;
         }
-        public Enumeration getPropertyNames() throws JMSException {
+        public Enumeration<?> getPropertyNames() throws JMSException {
             return null;
         }
         public void setBooleanProperty(String arg0, boolean arg1) throws JMSException {
@@ -296,20 +297,25 @@ public class ReliveryHandlerJUStd extends TestCase {
         // 1*10 + 4*15 + 5*30 = 215
         final long[] delay = new long[1];
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            @Override
             protected void delayMessageDelivery(Message m, Encounter e, long howLong
                 , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 delay[0] += howLong;
             }
 
+            @Override
             protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             }
 
+            @Override
             protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             }
 
+            @Override
             protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
             }
 
+            @Override
             protected void stopConnector(String s) {
             }
         };
@@ -355,21 +361,26 @@ public class ReliveryHandlerJUStd extends TestCase {
         final StringBuffer observed = new StringBuffer();
         
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            @Override
             protected void delayMessageDelivery(Message m, Encounter e, long howLong
                 , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 observed.append(howLong).append(" ");
             }
 
+            @Override
             protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 observed.append(howLong).append("Long ");
             }
 
+            @Override
             protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             }
 
+            @Override
             protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
             }
 
+            @Override
             protected void stopConnector(String s) {
             }
         };
@@ -411,21 +422,26 @@ public class ReliveryHandlerJUStd extends TestCase {
         final StringBuffer observed = new StringBuffer();
         
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            @Override
             protected void delayMessageDelivery(Message m, Encounter e, long howLong
                 , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 observed.append(howLong).append(" ");
             }
 
+            @Override
             protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 observed.append(howLong).append("Long ");
             }
 
+            @Override
             protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             }
 
+            @Override
             protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
             }
 
+            @Override
             protected void stopConnector(String s) {
             }
         };
@@ -470,20 +486,25 @@ public class ReliveryHandlerJUStd extends TestCase {
         final long[] movedat = new long[1];
         final boolean[] shutdown = new boolean[1];
         RedeliveryHandler c = new RedeliveryHandler(act, new DeliveryStats(), 5) {
+            @Override
             protected void delayMessageDelivery(Message m, Encounter e, long howLong
                 , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
                 delay[0] += howLong;
             }
+            @Override
             protected void longDelayMessageDelivery(Message m, Encounter e, long howLong, LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             }
+            @Override
             protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             }
 
+            @Override
             protected void move(Message m, Encounter e, boolean isTopic, String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
                 if (movedat[0] == 0) {
                     movedat[0] = e.getNEncountered();
                 }
             }
+            @Override
             protected void stopConnector(String s) {
                 shutdown[0] = true;
             }

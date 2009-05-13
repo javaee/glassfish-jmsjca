@@ -53,18 +53,18 @@ import java.util.List;
  * the JMS runtime client.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public class JSession {
     private static Logger sLog = Logger.getLogger(JSession.class);
     private SessionConnection mSessionConnection;
-    private List mPooledProducers;
-    private List mActiveProducers;
-    private List mActiveConsumers;
+    private List<JProducer> mPooledProducers;
+    private List<JProducer> mActiveProducers;
+    private List<JConsumer> mActiveConsumers;
     private XManagedConnection mManagedConnection;
     private int mCtExceptions;
     private Exception mFirstException;
-    private Class mSessionClass;
+    private Class<?> mSessionClass;
     private int mSpecifiedAcknowledgeMode;
 
     private static final Localizer LOCALE = Localizer.get();
@@ -80,7 +80,7 @@ public class JSession {
      * @throws JMSException failure
      */
     public JSession(boolean xa, boolean isTransacted, int acknowledgeMode,
-        Class sessionClass, XManagedConnection mc) throws JMSException {
+        Class<?> sessionClass, XManagedConnection mc) throws JMSException {
         mManagedConnection = mc;
         mSessionClass = sessionClass;
 
@@ -96,9 +96,9 @@ public class JSession {
             objfact, ra, mc, descr, xa,
             isTransacted, acknowledgeMode, sessionClass);
 
-        mPooledProducers = new ArrayList();
-        mActiveProducers = new ArrayList();
-        mActiveConsumers = new ArrayList();
+        mPooledProducers = new ArrayList<JProducer>();
+        mActiveProducers = new ArrayList<JProducer>();
+        mActiveConsumers = new ArrayList<JConsumer>();
     }
 
     /**
@@ -151,8 +151,8 @@ public class JSession {
         boolean producersInvalidated = false;
 
         // Close producers (add them to cache if necessary)
-        for (Iterator it = mActiveProducers.iterator(); it.hasNext();/*-*/) {
-            JProducer p = (JProducer) it.next();
+        for (Iterator<JProducer> it = mActiveProducers.iterator(); it.hasNext();/*-*/) {
+            JProducer p = it.next();
 
             if (mManagedConnection.useProducerPooling()
                 && p.canBePooled()
@@ -166,8 +166,8 @@ public class JSession {
         }
 
         // Close consumers
-        for (Iterator it = mActiveConsumers.iterator(); it.hasNext();/*-*/) {
-            JConsumer m = (JConsumer) it.next();
+        for (Iterator<JConsumer> it = mActiveConsumers.iterator(); it.hasNext();/*-*/) {
+            JConsumer m = it.next();
             try {
                 m.physicalClose();
             } catch (Exception ex) {
@@ -296,8 +296,8 @@ public class JSession {
      */
     private JProducer getFromPool(String signature) {
         JProducer ret = null;
-        for (Iterator it = mPooledProducers.iterator(); it.hasNext();/*-*/) {
-            JProducer p = (JProducer) it.next();
+        for (Iterator<JProducer> it = mPooledProducers.iterator(); it.hasNext();/*-*/) {
+            JProducer p = it.next();
             if (p.getSignature().equals(signature)) {
                 ret = p;
                 it.remove();
@@ -327,7 +327,7 @@ public class JSession {
          * @throws JMSException failure
          * @return MessageProducer
          */
-        public MessageProducer createProducer() throws JMSException;
+        MessageProducer createProducer() throws JMSException;
     }
 
     /**
@@ -341,7 +341,7 @@ public class JSession {
      * @return new or reused session
      * @throws JMSException on failure
      */
-    public MessageProducer createProducer(String signature, Class producerClass,
+    public MessageProducer createProducer(String signature, Class<?> producerClass,
         boolean isTemp, ProducerCreator creator, JConnection connection) throws JMSException {
         JProducer wrapped = null;
 
@@ -654,7 +654,7 @@ public class JSession {
                 name = ((Topic) destination).getTopicName();
             }
         }
-        return (MessageProducer) createProducer("MessageProducer:" + name,
+        return createProducer("MessageProducer:" + name,
             MessageProducer.class,
             destination != null && (destination instanceof TemporaryQueue
             || destination instanceof TemporaryTopic),

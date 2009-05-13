@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
  *   options := key=value[&key=value]*       
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WaveUrlParser extends ConnectionUrl {
     private UrlParser[] mParsers;
@@ -42,17 +42,18 @@ public class WaveUrlParser extends ConnectionUrl {
      * @param s connection url string
      */
     public WaveUrlParser(String s) {
-        ArrayList urls = new ArrayList();
+        ArrayList<UrlParser> urls = new ArrayList<UrlParser>();
         for (StringTokenizer it = new StringTokenizer(s, ","); it.hasMoreTokens();) {
             String url = it.nextToken();
             urls.add(new UrlParser(url));
         }
-        mParsers = (UrlParser[]) urls.toArray(new UrlParser[urls.size()]);
+        mParsers = urls.toArray(new UrlParser[urls.size()]);
     }
 
     /**
      * @see com.stc.jmsjca.util.ConnectionUrl#getQueryProperties(java.util.Properties)
      */
+    @Override
     public void getQueryProperties(Properties toAddTo) {
         UrlParser[] urls = getUrlParsers();
         for (int i = 0; i < urls.length; i++) {
@@ -89,6 +90,7 @@ public class WaveUrlParser extends ConnectionUrl {
     /**
      * @see com.stc.jmsjca.util.ConnectionUrl#toString()
      */
+    @Override
     public String toString() {
         UrlParser[] urls = getUrlParsers();
         StringBuffer buf = new StringBuffer();

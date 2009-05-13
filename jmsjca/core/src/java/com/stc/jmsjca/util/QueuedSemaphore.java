@@ -38,7 +38,7 @@ package com.stc.jmsjca.util;
  * href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">
  * Introduction to this package. </a>]
  * 
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * @author Doug Lea
  */
 public abstract class QueuedSemaphore extends Semaphore {
@@ -56,6 +56,7 @@ public abstract class QueuedSemaphore extends Semaphore {
     /**
      * @see com.stc.jmsjca.util.Semaphore#acquire()
      */
+    @Override
     public void acquire() throws InterruptedException {
         if (Thread.interrupted()) {
             throw new InterruptedException();
@@ -70,6 +71,7 @@ public abstract class QueuedSemaphore extends Semaphore {
     /**
      * @see com.stc.jmsjca.util.Semaphore#attempt(long)
      */
+    @Override
     public boolean attempt(long msecs) throws InterruptedException {
         if (Thread.interrupted()) {
             throw new InterruptedException();
@@ -89,7 +91,7 @@ public abstract class QueuedSemaphore extends Semaphore {
      * @return undocumented
      */
     protected synchronized boolean precheck() {
-        boolean pass = (permits_ > 0);
+        boolean pass = permits_ > 0;
         if (pass) {
             --permits_;
         }
@@ -101,7 +103,7 @@ public abstract class QueuedSemaphore extends Semaphore {
      * @return undocumented
      */
     protected synchronized boolean recheck(WaitQueue.WaitNode w) {
-        boolean pass = (permits_ > 0);
+        boolean pass = permits_ > 0;
         if (pass) {
             --permits_;
         } else {
@@ -124,6 +126,7 @@ public abstract class QueuedSemaphore extends Semaphore {
     /**
      * @see com.stc.jmsjca.util.Semaphore#release()
      */
+    @Override
     public void release() {
         for (;;) {
             WaitQueue.WaitNode w = getSignallee();
@@ -139,6 +142,7 @@ public abstract class QueuedSemaphore extends Semaphore {
     /**
      * @see com.stc.jmsjca.util.Semaphore#release(long)
      */
+    @Override
     public void release(long n) {
         if (n < 0) {
             throw new IllegalArgumentException("Negative argument");
@@ -174,8 +178,11 @@ public abstract class QueuedSemaphore extends Semaphore {
             /**
              * undocumented
              */
-            boolean waiting = true;
-            WaitNode next = null;
+            protected boolean waiting = true;
+            /**
+             * undocumented
+             */
+            protected WaitNode next;
 
             /**
              * @return undocumented

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Tools for obtaining localized messages
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class LocalizationSupport {
     private PropertyResourceBundle mBundle;
@@ -43,7 +43,7 @@ public abstract class LocalizationSupport {
     /**
      * Default pattern to parse a message with
      */
-    public static Pattern DEFAULTPATTERN = Pattern.compile("([A-Z]\\d\\d\\d)(: )(.*)", Pattern.DOTALL); 
+    public static final Pattern DEFAULTPATTERN = Pattern.compile("([A-Z]\\d\\d\\d)(: )(.*)", Pattern.DOTALL); 
     
     /**
      * @param idpattern pattern to parse message

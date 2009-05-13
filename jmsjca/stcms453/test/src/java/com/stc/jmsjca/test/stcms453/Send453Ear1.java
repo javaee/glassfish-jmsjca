@@ -27,13 +27,14 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
  *
  * @author fkieviet
  * @author cye
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class Send453Ear1 extends QueueEndToEnd {
     /**
      * Test OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testBeanManaged()
      */
+    @Override
     public void testBeanManaged() throws Throwable {
         super.testBeanManaged();
     }
@@ -42,6 +43,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testCloseInTranactionXA()
      */
+    @Override
     public void testCloseInTranactionXA() throws Throwable {
         super.testCloseInTranactionXA();
     }
@@ -50,6 +52,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testCloseInTransactionLT()
      */
+    @Override
     public void testCloseInTransactionLT() throws Throwable {
         super.testCloseInTransactionLT();
     }
@@ -58,6 +61,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * Test OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testConcurrency()
      */
+    @Override
     public void testConcurrency() throws Throwable {
         super.testConcurrency();
     }
@@ -66,6 +70,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testContainerManaged()
      */
+    @Override
     public void testContainerManaged() throws Throwable {
         super.testContainerManaged();
     }
@@ -74,6 +79,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * Test OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testExceptionBMTCC()
      */
+    @Override
     public void testExceptionBMTCC() throws Throwable {
         super.testExceptionBMTCC();
     }
@@ -82,6 +88,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testExceptionBMTSerial()
      */
+    @Override
     public void testExceptionBMTSerial() throws Throwable {
         super.testExceptionBMTSerial();
     }
@@ -90,6 +97,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * Test OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testExceptionCMTCC()
      */
+    @Override
     public void testExceptionCMTCC() throws Throwable {
         super.testExceptionCMTCC();
     }
@@ -98,6 +106,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testExceptionCMTSerial()
      */
+    @Override
     public void testExceptionCMTSerial() throws Throwable {
         super.testExceptionCMTSerial();
     }
@@ -122,6 +131,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testReuseLTResources()
      */
+    @Override
     public void testReuseLTResources() throws Throwable {
         super.testReuseLTResources();
     }
@@ -143,6 +153,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testSharedLTResources()
      */
+    @Override
     public void testSharedLTResources() throws Throwable {
         super.testSharedLTResources();
     }
@@ -151,6 +162,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testSharedXAResources()
      */
+    @Override
     public void testSharedXAResources() throws Throwable {
         super.testSharedXAResources();
     }
@@ -159,6 +171,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testSuspendCC()
      */
+    @Override
     public void testSuspendCC() throws Throwable {
         super.testSuspendCC();
     }
@@ -167,6 +180,7 @@ public class Send453Ear1 extends QueueEndToEnd {
      * TEST OK
      * @see com.stc.jmsjca.test.core.QueueEndToEnd#testSuspendSerial()
      */
+    @Override
     public void testSuspendSerial() throws Throwable {
         super.testSuspendSerial();
     }
@@ -215,6 +229,7 @@ public class Send453Ear1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new Stcms453Provider();
     }

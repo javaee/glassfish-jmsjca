@@ -25,7 +25,7 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author cye
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 
 public class QueueJBossEar1 extends QueueEndToEnd {
@@ -33,6 +33,7 @@ public class QueueJBossEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new JBossProvider();
     }

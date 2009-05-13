@@ -21,7 +21,9 @@ package com.stc.jmsjca.util;
  * 
  * @author Vivek
  */
-public class ClassLoaderHelper {
+public final class ClassLoaderHelper {
+    private ClassLoaderHelper() {
+    }
     
     /**
      * Loads a class through the specified classloader or -if that fails- through 
@@ -30,10 +32,10 @@ public class ClassLoaderHelper {
      * @param name classname to load, @See Class.forName()
      * @param initialize @See Class.forName()
      * @param cls @See Class.forName()
-     * @return Class object
+     * @return Class<?> object
      * @throws ClassNotFoundException propagated
      */
-    public static Class loadClass(String name, boolean initialize, ClassLoader cls) throws ClassNotFoundException {
+    public static Class<?> loadClass(String name, boolean initialize, ClassLoader cls) throws ClassNotFoundException {
         try {
             return Class.forName(name, initialize, cls);
         } catch (ClassNotFoundException ex) {
@@ -50,21 +52,21 @@ public class ClassLoaderHelper {
     /**
      * @see loadClass(String name, boolean initialize, ClassLoader cls)
      */
-    public static Class loadClass(String name, ClassLoader cls) throws ClassNotFoundException {
+    public static Class<?> loadClass(String name, ClassLoader cls) throws ClassNotFoundException {
         return loadClass(name, true, cls);
     }
 
     /**
      * @see loadClass(String name, boolean initialize, ClassLoader cls)
      */
-    public static Class loadClass(String name) throws ClassNotFoundException {
+    public static Class<?> loadClass(String name) throws ClassNotFoundException {
         return loadClass(name, true, ClassLoaderHelper.class.getClassLoader());
     }
     
     /**
      * @see loadClass(String name, boolean initialize, ClassLoader cls)
      */
-    public static Class loadClass(String name,  boolean initialize) throws ClassNotFoundException {
+    public static Class<?> loadClass(String name,  boolean initialize) throws ClassNotFoundException {
         return loadClass(name, initialize, ClassLoaderHelper.class.getClassLoader());
     }
 }

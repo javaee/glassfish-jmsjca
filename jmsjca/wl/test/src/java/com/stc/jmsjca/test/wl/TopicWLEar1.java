@@ -23,12 +23,13 @@ import com.stc.jmsjca.test.core.TopicEndToEnd;
  * Required:
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class TopicWLEar1 extends TopicEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WLProvider();
     }

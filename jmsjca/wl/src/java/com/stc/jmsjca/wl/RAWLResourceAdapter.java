@@ -21,7 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  * @author misc
  */
 public class RAWLResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
@@ -40,6 +40,7 @@ public class RAWLResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapte
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String urlstr) {
         return new RAWLObjectFactory();
     }

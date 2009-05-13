@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public interface Options {
     /**
@@ -514,5 +514,9 @@ public interface Options {
          * evaluates to an empty string "" if selector is an empty string
          */
         String SELECTORAND = "selectorand";
+    }
+    
+    public interface Interceptor {
+        String SERVICENAME = "jmsjca.interceptor";
     }
 }

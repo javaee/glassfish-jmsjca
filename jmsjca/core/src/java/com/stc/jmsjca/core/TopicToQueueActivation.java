@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -114,13 +114,16 @@ public class TopicToQueueActivation extends ActivationBase {
         mTopicToQueue = new Activation(ra, topicEPF, topicSpec) {
             private String queueName = mQueue.getName();
 
+            @Override
             public Delivery createDelivery() throws Exception {
                 TopicToQueueDelivery ret = new TopicToQueueDelivery(this, getStats(), mQueuename);
                 return ret;
             }
+            @Override
             public String getName() {
               return super.getName() + " >> [" + queueName + "]";
             }
+            @Override
             protected void logDeliveryInitiationException(int attemptPlusOne, int dt, Exception e) {
                 if (e instanceof Exc.ConsumerCreationException) {
                     if (attemptPlusOne == 1) {
@@ -154,6 +157,7 @@ public class TopicToQueueActivation extends ActivationBase {
      * 
      * @throws Exception on failure
      */
+    @Override
     public void activate() throws Exception {
         try {
             mTopicToQueue.activate();
@@ -169,6 +173,7 @@ public class TopicToQueueActivation extends ActivationBase {
      * Halts message delivery
      * Should NOT throw an exception
      */
+    @Override
     public void deactivate() {
         mTopicToQueue.deactivate();
         mQueue.deactivate();
@@ -202,6 +207,7 @@ public class TopicToQueueActivation extends ActivationBase {
         /**
          * @see com.stc.jmsjca.core.Delivery#createMessageEndpoint(javax.transaction.xa.XAResource, javax.jms.Session)
          */
+        @Override
         protected MessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
             return new Copier(s);
         }
@@ -212,7 +218,8 @@ public class TopicToQueueActivation extends ActivationBase {
          * 
          * @see com.stc.jmsjca.core.SyncDelivery#getSessionClass()
          */
-        protected Class getSessionClass() {
+        @Override
+        protected Class<?> getSessionClass() {
             return Session.class;        
         }
 
@@ -222,6 +229,7 @@ public class TopicToQueueActivation extends ActivationBase {
          * 
          * @see com.stc.jmsjca.core.SyncDelivery#getDomain()
          */
+        @Override
         protected int getDomain() {
             return XConnectionRequestInfo.DOMAIN_UNIFIED_NONXA;        
         }

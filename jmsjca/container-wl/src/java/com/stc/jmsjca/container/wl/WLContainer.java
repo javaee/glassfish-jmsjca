@@ -90,7 +90,7 @@ public class WLContainer extends Container {
         String jndiroot = "/jndi/";      
         String mserver = "weblogic.management.mbeanservers.runtime";
         JMXServiceURL serviceURL = new JMXServiceURL(protocol, getHost(), port, jndiroot + mserver);
-        Hashtable h = new Hashtable();
+        Hashtable<String, String> h = new Hashtable<String, String>();
         h.put(Context.SECURITY_PRINCIPAL, getUsername());
         h.put(Context.SECURITY_CREDENTIALS, getPassword());
         h.put(JMXConnectorFactory.PROTOCOL_PROVIDER_PACKAGES, "weblogic.management.remote");
@@ -99,8 +99,8 @@ public class WLContainer extends Container {
         mConnection = mConnector.getMBeanServerConnection();       
     }
 
-    private List cmdLine() {
-        ArrayList ret = new ArrayList();
+    private List<String> cmdLine() {
+        ArrayList<String> ret = new ArrayList<String>();
         ret.add("-adminurl");
         ret.add(getAdminUrl());
         ret.add("-username");
@@ -129,6 +129,7 @@ public class WLContainer extends Container {
     /**
      * @see com.stc.tafw.core.AppServ#redeployModule(java.lang.String)
      */
+    @Override
     public void redeployModule(String absolutePath) throws Exception {
         System.out.println("Redeploying " + absolutePath);
         
@@ -142,6 +143,7 @@ public class WLContainer extends Container {
     /**
      * @see com.tafw.appserv.AppServ#undeploy(java.lang.String)
      */
+    @Override
     public void undeploy(String moduleName) throws Exception {
         //install();
 
@@ -149,7 +151,7 @@ public class WLContainer extends Container {
         System.out.println("Undeploying " + moduleName);
 
         try {        
-            List args = cmdLine();
+            List<String> args = cmdLine();
             args.add("-undeploy");
             args.add("-name");
             args.add(getModuleName(moduleName));
@@ -166,6 +168,7 @@ public class WLContainer extends Container {
     /**
      * @see com.tafw.appserv.AppServ#deployModule(java.lang.String)
      */
+    @Override
     public void deployModule(String absolutePath) throws Exception {
         //Need to call install() earlier.
         //install();
@@ -176,7 +179,7 @@ public class WLContainer extends Container {
         String modulename = getModuleName(absolutePath);
         
         try {
-            List args = cmdLine();
+            List<String> args = cmdLine();
             args.add("-deploy");
             args.add("-source");
             args.add(absolutePath);
@@ -190,11 +193,11 @@ public class WLContainer extends Container {
         System.out.println("Deployment complete: " + (System.currentTimeMillis() - t0) + " ms");
     }
 
-    private void execCmd(List as) throws Exception {
+    private void execCmd(List<String> as) throws Exception {
 //        ClassLoader currentcl = Thread.currentThread().getContextClassLoader();
         try {
 //            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            String[] args = (String[]) as.toArray(new String[as.size()]);
+            String[] args = as.toArray(new String[as.size()]);
             Object wlsDelegate = getDelegate(args);
             Method m = wlsDelegate.getClass().getMethod("run", new Class[0]);
             m.invoke(wlsDelegate, new Object[0]);
@@ -204,8 +207,8 @@ public class WLContainer extends Container {
     }
     
     private Object getDelegate(String[] as) throws Exception {
-        Class class1 = Class.forName(DeployerClass);
-        Constructor constructor = class1.getDeclaredConstructor(new Class[] {as.getClass()});
+        Class<?> class1 = Class.forName(DeployerClass);
+        Constructor<?> constructor = class1.getDeclaredConstructor(new Class[] {as.getClass()});
         return constructor.newInstance(new Object[] {as});
     }
     
@@ -225,6 +228,7 @@ public class WLContainer extends Container {
     /**
      * @see com.tafw.appserv.AppServ#isDeployed(java.lang.String)
      */
+    @Override
     public boolean isDeployed(String absolutePath) throws Exception {
 //        String modulename = getModuleName(absolutePath);
 //        String state = mState.getProperty(DEPLOYED_PROP, modulename, null);
@@ -243,7 +247,7 @@ public class WLContainer extends Container {
             //System.out.println("##### in isDeployed(), module: '" + moduleName + "' has deployed! Return True!!! #####");     
             return true;
         }
-        //System.out.println("##### in isDeployed(), module: '" + moduleName + "' has NOT deployed! Return False!!! #####");        
+        //System.out.println("##### in isDeployed(), module: '" + moduleName + "' has NOT deployed! Return False!!! #####");
         return false;        
     }
 
@@ -275,10 +279,11 @@ public class WLContainer extends Container {
     /**
      * @see com.tafw.appserv.AppServ#getMBeanProxy(java.lang.String, java.lang.Class)
      */
-    public Object getMBeanProxy(final String objectName, Class itf) throws Exception {
+    @Override
+    public Object getMBeanProxy(final String objectName, Class<?> itf) throws Exception {
         InvocationHandler h = new InvocationHandler() {
             private String[] createSignatureList(Method m) {
-                Class[] args = m.getParameterTypes();
+                Class<?>[] args = m.getParameterTypes();
                 String[] ret = new String[args.length];
                 for (int i = 0; i < args.length; i++) {
                     ret[i] = args[i].getName();
@@ -304,6 +309,7 @@ public class WLContainer extends Container {
     /**
      * @see com.tafw.appserv.AppServ#getAttribute(java.lang.String, java.lang.String)
      */
+    @Override
     public Object getAttribute(String objName, String name) throws Exception {
         try {
             ObjectName objectName = new ObjectName(objName);
@@ -387,10 +393,12 @@ public class WLContainer extends Container {
         return false;
     }
 
+    @Override
     public void setProperties(Properties p) throws Exception {
         setProperties(null, p);
     }
 
+    @Override
     public void close() throws Exception {
         closeimpl();
     }

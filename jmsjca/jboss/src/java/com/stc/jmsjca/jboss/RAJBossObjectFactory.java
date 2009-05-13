@@ -37,7 +37,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJBossObjectFactory.class);
@@ -78,6 +78,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
      * Serial delivery + non-transacted rollback through throw exception does not work
      * Hence, replace all serial delivery with SYNC
      */
+    @Override
     public int adjustDeliveryMode(int mode, boolean xa) {
         int newMode = mode;
         if (mode == RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
@@ -146,6 +147,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
             RAJMSResourceAdapter resourceAdapter,
             RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,
@@ -186,6 +188,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -208,6 +211,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
      * @param ra ra
      * @throws JMSException on failure
      */
+    @Override
     public void setClientID(Connection connection, boolean isTopic,
         RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {
         if (isTopic && RAJMSActivationSpec.DURABLE.equals(spec.getSubscriptionDurability())) {
@@ -236,6 +240,7 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "JBOSS";
     }

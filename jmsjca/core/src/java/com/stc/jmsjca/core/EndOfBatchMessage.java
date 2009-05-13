@@ -30,7 +30,7 @@ import java.util.Enumeration;
  * Signals the end of a batch of messages
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class EndOfBatchMessage implements Message {
     private static final Localizer LOCALE = Localizer.get();
@@ -197,7 +197,7 @@ public class EndOfBatchMessage implements Message {
     /**
      * @see javax.jms.Message#getPropertyNames()
      */
-    public Enumeration getPropertyNames() throws JMSException {
+    public Enumeration<?> getPropertyNames() throws JMSException {
         //TODO
         throw Exc.jmsExc(LOCALE.x("E125: Method not implemented"));
     }

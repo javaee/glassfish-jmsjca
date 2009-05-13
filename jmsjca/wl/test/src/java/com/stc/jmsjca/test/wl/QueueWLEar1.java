@@ -22,12 +22,13 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class QueueWLEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WLProvider();
     }

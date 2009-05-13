@@ -23,10 +23,14 @@ import com.stc.jmsjca.localization.Localizer;
  * Tools
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
-public class XAssert {
+public final class XAssert {
     private static Logger sLog = Logger.getLogger(XAssert.class);
+    
+    private XAssert() {
+        
+    }
 
     /**
      * Throws a RT exception if false

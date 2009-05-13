@@ -32,12 +32,14 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
+@SuppressWarnings("unchecked")
 public class SpecialFeaturesEar1 extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }

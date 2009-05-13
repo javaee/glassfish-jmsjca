@@ -45,6 +45,7 @@ import java.util.zip.ZipOutputStream;
  * @author fkieviet
  * @version 1.0
  */
+@SuppressWarnings("unchecked")
 public class Archive {
     private File mInput;
     private int mLog;
@@ -198,7 +199,7 @@ public class Archive {
         }
     }
 
-    private void getFiles(String root, File dir, ArrayList files) {
+    private void getFiles(String root, File dir, ArrayList<FileReplacement> files) {
         File[] fs = dir.listFiles();
         for (int i = 0; i < fs.length; i++) {
             if (fs[i].isDirectory()) {
@@ -221,9 +222,9 @@ public class Archive {
      */
     public void updateByDir(File dir, boolean mustExist) throws Exception {
         // Find all files
-        ArrayList tmp = new ArrayList();
+        ArrayList<FileReplacement> tmp = new ArrayList<FileReplacement>();
         getFiles(dir.getAbsolutePath(), dir, tmp);
-        FileReplacement[] files = (FileReplacement[]) tmp.toArray(new FileReplacement[tmp.size()]);
+        FileReplacement[] files = tmp.toArray(new FileReplacement[tmp.size()]);
         for (int i = 0; i < files.length; i++) {
             files[i].mustExist(mustExist);
         }
@@ -377,6 +378,7 @@ public class Archive {
             this.overwrite = overwrite;
         }
 
+        @Override
         public void process(InputStream inp, String path, String name) throws Exception {
             File out = new File(outdir.getAbsolutePath() + File.separator + path);
             if (!overwrite && out.exists()) {
@@ -404,6 +406,7 @@ public class Archive {
             mOut = new ByteArrayOutputStream(4096);
         }
 
+        @Override
         public void process(InputStream inp, String path, String name) throws Exception {
             copy(inp, mOut);
         }
@@ -430,6 +433,7 @@ public class Archive {
         public ExtensionMatcher(String ext) {
             mExt = ext;
         }
+        @Override
         public boolean matches(String path) {
             return path.endsWith(mExt);
         }
@@ -446,11 +450,13 @@ public class Archive {
             mPayload = payload;
         }
 
+        @Override
         public void write(OutputStream o) throws IOException {
             o.write(mPayload);
             mPayload = null;
         }
 
+        @Override
         public void check() {
             check(mPayload == null);
         }
@@ -468,6 +474,7 @@ public class Archive {
             mFile = f;
         }
 
+        @Override
         public void write(OutputStream o) throws IOException {
             InputStream inp = null;
             try {
@@ -479,6 +486,7 @@ public class Archive {
             mFile = null;
         }
 
+        @Override
         public void check() {
             check(!mMustExist || mFile == null);
         }

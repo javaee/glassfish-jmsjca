@@ -151,14 +151,14 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
     private DeliveryStats mStats;
     private int mLookbackSize;
-    private HashMap mOldMsgs;
-    private HashMap mNewMsgs;
+    private HashMap<String, Encounter> mOldMsgs;
+    private HashMap<String, Encounter> mNewMsgs;
     private boolean mLoggedOnce;
     private final ActionInstruction[] mImmutableActions;
     private final ExecutableAction[] mExecutables;
@@ -255,18 +255,18 @@ public abstract class RedeliveryHandler {
          * @return true if the msg should be delivered to the endpoint
          * @throws Exception on failure
          */
-        public abstract boolean shouldDeliver(RedeliveryHandler owner, Message m, 
+        boolean shouldDeliver(RedeliveryHandler owner, Message m, 
             Encounter e, BaseCookie cookie) throws Exception;
         
         /**
          * @return true if the action cursor should NOT advance to the next action
          */
-        public boolean shouldExecuteAgain();
+        boolean shouldExecuteAgain();
         
         /**
          * @return the instruction that is tied to this (has created this) objet
          */
-        public ActionInstruction getInstruction();
+        ActionInstruction getInstruction();
     }
     
     /**
@@ -283,6 +283,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return "Void";
         }
@@ -302,6 +303,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
          */
+        @Override
         public ExecutableAction getInstance() {
             return this;
         }
@@ -332,7 +334,7 @@ public abstract class RedeliveryHandler {
         /**
          * Compiled regex pattern
          */
-        public static Pattern sPattern = Pattern.compile(PATTERN);
+        public static final Pattern P_PATTERN = Pattern.compile(PATTERN);
         private final long mDelay;
         private static final long MAX = 5000;
         
@@ -363,6 +365,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return "At " + getAt() + ": delay for " + mDelay + " ms";
         }
@@ -390,6 +393,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
          */
+        @Override
         public ExecutableAction getInstance() {
             return this;
         }
@@ -437,6 +441,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return "At " + getAt() + ": long delay for " + mDelay + " ms";
         }
@@ -444,6 +449,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
          */
+        @Override
         public ExecutableAction getInstance() {
             return new LongDelayExecutable(this);
         }
@@ -531,6 +537,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return mInstruction  + "; isdone=" + mIsDone + "; left=" + mLeftToSleep;
         }
@@ -548,16 +555,16 @@ public abstract class RedeliveryHandler {
         /**
          * Compiled version
          */
-        public static Pattern sPattern = Pattern.compile(PATTERN);
+        public static final Pattern P_PATTERN = Pattern.compile(PATTERN);
         
         /**
          * The argument pattern
          */
-        public static String ARGPATTERN =  "(queue|same|topic)\\s?:\\s?(.+)";
+        public static final String ARGPATTERN =  "(queue|same|topic)\\s?:\\s?(.+)";
         /**
          * Compiled version
          */
-        public static Pattern sArgPattern = Pattern.compile(ARGPATTERN);
+        public static final Pattern P_ARGPATTERN = Pattern.compile(ARGPATTERN);
         
         private final String mType; // either javax.jms.Queue or javax.jms.Topic
         private final String mName;
@@ -617,6 +624,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return "At " + getAt() + ": move to " + mType + " with name [" + mName + "]";
         }
@@ -636,6 +644,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
          */
+        @Override
         public ExecutableAction getInstance() {
             return this;
         }
@@ -666,7 +675,7 @@ public abstract class RedeliveryHandler {
         /**
          * Compiled
          */
-        public static Pattern sPattern = Pattern.compile(PATTERN);
+        public static final Pattern P_PATTERN = Pattern.compile(PATTERN);
         
         /**
          * Constructor
@@ -681,6 +690,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see java.lang.Object#toString()
          */
+        @Override
         public String toString() {
             return "At " + getAt() + ": delete";
         }
@@ -699,6 +709,7 @@ public abstract class RedeliveryHandler {
         /**
          * @see com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction#getInstance()
          */
+        @Override
         public ExecutableAction getInstance() {
             return this;
         }
@@ -772,7 +783,7 @@ public abstract class RedeliveryHandler {
         int lastAt = 0;
         for (int i = 0; i < actions.length; i++) {
             if (sLog.isDebugEnabled()) {
-                sLog.debug(("Now parsing [" + actions[i] + "]"));
+                sLog.debug("Now parsing [" + actions[i] + "]");
             }
 
             try {
@@ -780,7 +791,7 @@ public abstract class RedeliveryHandler {
                 boolean last = i == (actions.length - 1);
                 
                 // Delay
-                m = Delay.sPattern.matcher(actions[i]);
+                m = Delay.P_PATTERN.matcher(actions[i]);
                 if (m.matches()) {
                     String at = m.group(1);
                     String delay = m.group(2);
@@ -798,7 +809,7 @@ public abstract class RedeliveryHandler {
                 }
                 
                 // Delete
-                m = Delete.sPattern.matcher(actions[i]);
+                m = Delete.P_PATTERN.matcher(actions[i]);
                 if (m.matches()) {
                     String at = m.group(1);
 
@@ -815,11 +826,11 @@ public abstract class RedeliveryHandler {
                 }
                 
                 // Move
-                m = Move.sPattern.matcher(actions[i]);
+                m = Move.P_PATTERN.matcher(actions[i]);
                 if (m.matches()) {
                     String at = m.group(1);
                     String guts = m.group(2);
-                    Matcher g = Move.sArgPattern.matcher(guts);
+                    Matcher g = Move.P_ARGPATTERN.matcher(guts);
                     if (!g.matches()) {
                         throw Exc.jmsExc(LOCALE.x("E104: Wrong arguments: should match {0}", Move.ARGPATTERN));
                     }
@@ -870,7 +881,7 @@ public abstract class RedeliveryHandler {
         private int mNEncountered;
         private int mActionCursor;
         private String mMsgid;
-        private Map mStatefulRedeliveryProperties;
+        private Map<String, String> mStatefulRedeliveryProperties;
         private ExecutableAction[] mEncActions;
         private String mEncActionString;
         private boolean mEncActionsHaveChanged;
@@ -928,9 +939,9 @@ public abstract class RedeliveryHandler {
         /**
          * @return properties that the user can set on a msg
          */
-        public Map getStatefulRedeliveryProperties() {
+        public Map<String, String> getStatefulRedeliveryProperties() {
             if (mStatefulRedeliveryProperties == null) {
-                mStatefulRedeliveryProperties = new HashMap();
+                mStatefulRedeliveryProperties = new HashMap<String, String>();
             }
             return mStatefulRedeliveryProperties;
         }
@@ -978,8 +989,8 @@ public abstract class RedeliveryHandler {
         mStats = stats;
         mLookbackSize = lookbackSize;
         mActivationSpec = spec;
-        mOldMsgs = new HashMap();
-        mNewMsgs = new HashMap(mLookbackSize);
+        mOldMsgs = new HashMap<String, Encounter>();
+        mNewMsgs = new HashMap<String, Encounter>(mLookbackSize);
         
         // Setup actions
         ActionInstruction[] actions = new ActionInstruction[0];
@@ -1133,7 +1144,7 @@ public abstract class RedeliveryHandler {
             if (Options.MessageProperties.REDELIVERY_HANDLING.equals(key)) {
                 return mEncounter.getEncActionString();
             } else {
-                return (String) mEncounter.getStatefulRedeliveryProperties().get(key);
+                return mEncounter.getStatefulRedeliveryProperties().get(key);
             }
         }
 
@@ -1295,10 +1306,10 @@ public abstract class RedeliveryHandler {
         if (redelivered) {
             mStats.msgRedelivered();
         }
-        Encounter enc = (Encounter) mNewMsgs.get(msgid);
+        Encounter enc = mNewMsgs.get(msgid);
         if (enc == null) {
             // Check old msgs
-            enc = (Encounter) mOldMsgs.get(msgid);
+            enc = mOldMsgs.get(msgid);
             if (enc == null) {
                 // First encounter
 
@@ -1325,7 +1336,7 @@ public abstract class RedeliveryHandler {
             if (mNewMsgs.size() > mLookbackSize) {
                 // Discard the old segment, create a new segment
                 mOldMsgs = mNewMsgs;
-                mNewMsgs = new HashMap(mLookbackSize);
+                mNewMsgs = new HashMap<String, Encounter>(mLookbackSize);
             }
         }
         return enc;

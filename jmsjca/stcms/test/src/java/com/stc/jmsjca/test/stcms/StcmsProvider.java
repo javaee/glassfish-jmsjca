@@ -29,7 +29,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class StcmsProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms.host";
@@ -42,6 +42,7 @@ public class StcmsProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #changeDD(com.stc.jmsjca.container.EmbeddedDescriptor, com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, BaseTestCase.JMSTestEnv test)
         throws Exception {
         // The ra.xml does not contain a URL by default, which is fine in
@@ -68,6 +69,7 @@ public class StcmsProvider extends JMSProvider {
      * 
      * @return clientId
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return "";
     }
@@ -76,6 +78,7 @@ public class StcmsProvider extends JMSProvider {
      * @see com.stc.jmsjca.test.core.JMSProvider
      * #createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new StcmsPassthrough(serverProperties, this);
     }
@@ -83,6 +86,7 @@ public class StcmsProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createConnectionUrl(java.lang.String, int)
      */
+    @Override
     public String createConnectionUrl(String host, int port) {
         return "stcms://" + host + ":" + port;
     }
@@ -90,6 +94,7 @@ public class StcmsProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
         int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
@@ -99,6 +104,7 @@ public class StcmsProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_PASSWORD);
     }
@@ -106,6 +112,7 @@ public class StcmsProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
     }
@@ -113,6 +120,7 @@ public class StcmsProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "stcms";
     }

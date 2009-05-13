@@ -22,7 +22,7 @@ package com.stc.jmsjca.localization;
  * force the caller to make a localized string.
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class LocalizedString {
     private String mString;
@@ -41,6 +41,7 @@ public class LocalizedString {
      * 
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return mString;
     }

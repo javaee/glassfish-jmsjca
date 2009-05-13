@@ -22,7 +22,7 @@ import com.stc.jmsjca.test.core.QueueEndToEnd;
 /**
  * Queue Tests for WMQ
  * @author  fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class BasicWMQQueueEar1 extends QueueEndToEnd {
 
@@ -41,6 +41,7 @@ public class BasicWMQQueueEar1 extends QueueEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WMQProvider();
     }

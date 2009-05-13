@@ -57,15 +57,15 @@ import java.util.List;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
     private static Logger sLog = Logger.getLogger(CCDelivery.class);
 
     private WorkManager mWorkManager;
-    private ArrayList mEmptyWorkContainers = new ArrayList();
-    private ArrayList mAllWorkContainers = new ArrayList();
+    private ArrayList<WorkContainer> mEmptyWorkContainers = new ArrayList<WorkContainer>();
+    private ArrayList<WorkContainer> mAllWorkContainers = new ArrayList<WorkContainer>();
     private Object mStateLock = new Object();
     private int mNMaxWorkContainers;
     private Semaphore mEmptyWorkContainerSemaphore = new Semaphore(0);
@@ -96,6 +96,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      *
      * @throws Exception Any error, e.g. connection errors to the JMS.
      */
+    @Override
     public void start() throws Exception {
         RAJMSObjectFactory o = mActivation.getObjectFactory();
         final int domain = XConnectionRequestInfo.guessDomain(mActivation.isCMT() && !mActivation.isXAEmulated()
@@ -324,7 +325,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 }
             } else {
                 synchronized (mStateLock) {
-                    ret = (WorkContainer) mEmptyWorkContainers.remove(mEmptyWorkContainers.size() - 1);
+                    ret = mEmptyWorkContainers.remove(mEmptyWorkContainers.size() - 1);
                 }
                 
                 // Check if endpoint needs to be refreshed
@@ -365,9 +366,9 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 sLog.debug("Trying to destroy all WorkContainer-s");
             }
             int nNotDestroyed = 0;
-            List threads = new ArrayList();
-            for (Iterator it = mAllWorkContainers.iterator(); it.hasNext();/*-*/) {
-                WorkContainer w = (WorkContainer) it.next();
+            List<Thread> threads = new ArrayList<Thread>();
+            for (Iterator<WorkContainer> it = mAllWorkContainers.iterator(); it.hasNext();/*-*/) {
+                WorkContainer w = it.next();
                 if (!w.destroy(threads)) {
                     nNotDestroyed++;
                 }
@@ -413,6 +414,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
      * <P>
      * __Is called from service thread__
      */
+    @Override
     public void deactivate() {
         if (sLog.isDebugEnabled()) {
             sLog.debug("CCDelivery.deactivate() -- begin");
@@ -442,6 +444,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     /**
      * @see com.stc.jmsjca.core.Delivery#getConfiguredEndpoints()
      */
+    @Override
     public int getConfiguredEndpoints() {
         return mNMaxWorkContainers;
     }

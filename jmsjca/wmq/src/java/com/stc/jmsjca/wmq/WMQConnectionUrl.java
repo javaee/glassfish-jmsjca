@@ -31,7 +31,7 @@ import java.util.Properties;
  *              JMSC.MQJMS_TP_BINDINGS_MQ(0)           
  *
  * @author  cye
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WMQConnectionUrl extends ConnectionUrl {
     private UrlParser mUrlParser;
@@ -48,6 +48,7 @@ public class WMQConnectionUrl extends ConnectionUrl {
     /**
      * @see com.stc.jmsjca.util.ConnectionUrl#getQueryProperties(java.util.Properties)
      */
+    @Override
     public void getQueryProperties(Properties props) {
         mUrlParser.getQueryProperties(props);
     }
@@ -64,6 +65,7 @@ public class WMQConnectionUrl extends ConnectionUrl {
     /**
      * @see com.stc.jmsjca.util.ConnectionUrl#toString()
      */
+    @Override
     public String toString() {
         return mUrlParser.toString();
     }

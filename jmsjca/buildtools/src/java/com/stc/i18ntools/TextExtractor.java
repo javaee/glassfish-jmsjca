@@ -60,6 +60,7 @@ public class TextExtractor extends Task {
     /**
      * @see org.apache.tools.ant.Task#execute()
      */
+    @Override
     public void execute() {
        if (classesDir == null) {
             throw new BuildException("Directory must be specified");
@@ -139,7 +140,7 @@ public class TextExtractor extends Task {
     * @param    nibble  the nibble to convert.
     */
    private static char toHex(int nibble) {
-        return HEXDIGIT[(nibble & 0xF)];
+        return HEXDIGIT[nibble & 0xF];
    }
 
    /** A table of hex digits */
@@ -162,7 +163,7 @@ public class TextExtractor extends Task {
                effectiveprefix = "";
            }
             
-            List list = new ArrayList();
+            List<TextEntry> list = new ArrayList<TextEntry>();
             readDir(list, new File(dir).getAbsolutePath(), dir);
 
             StringWriter outbuf = new StringWriter();
@@ -172,38 +173,36 @@ public class TextExtractor extends Task {
             out.println("# THIS FILE IS GENERATED AUTOMATICALLY FROM JAVA SOURCES/CLASSES");
             out.println();
             
-            TextEntry[] entries = (TextEntry[]) list.toArray(new TextEntry[list.size()]);
-            Set sortedByText = new TreeSet(new Comparator() {
-                public int compare(Object arg0, Object arg1) {
-                    TextEntry lhs = (TextEntry) arg0;
-                    TextEntry rhs = (TextEntry) arg1;
+            TextEntry[] entries = list.toArray(new TextEntry[list.size()]);
+            Set<TextEntry> sortedByText = new TreeSet<TextEntry>(new Comparator<TextEntry>() {
+                public int compare(TextEntry lhs, TextEntry rhs) {
                     return lhs.getText().compareTo(rhs.getText());
                 }
             });
             sortedByText.addAll(Arrays.asList(entries));
             
             // Build BY-ID and BY-CONTENT maps
-            Map byId = new HashMap();
-            Map byContent = new HashMap();
+            Map<String, List<TextEntry>> byId = new HashMap<String, List<TextEntry>>();
+            Map<String, List<TextEntry>> byContent = new HashMap<String, List<TextEntry>>();
             for (int i = 0; i < entries.length; i++) {
                 TextEntry c = entries[i];
                 if (byId.get(c.getID()) == null) {
-                    byId.put(c.getID(), new ArrayList());
+                    byId.put(c.getID(), new ArrayList<TextEntry>());
                 }
-                ((List) byId.get(c.getID())).add(c);
+                byId.get(c.getID()).add(c);
 
                 if (byContent.get(c.getContent()) == null) {
-                    byContent.put(c.getContent(), new ArrayList());
+                    byContent.put(c.getContent(), new ArrayList<TextEntry>());
                 }
-                ((List) byContent.get(c.getContent())).add(c);
+                byContent.get(c.getContent()).add(c);
             }
             
             // Print
-            for (Iterator iter = sortedByText.iterator(); iter.hasNext();) {
-                TextEntry e = (TextEntry) iter.next();
-                List sources = (List) byId.get(e.getID());
-                for (Iterator iterator = sources.iterator(); iterator.hasNext();) {
-                    TextEntry e2 = (TextEntry) iterator.next();
+            for (Iterator<TextEntry> iter = sortedByText.iterator(); iter.hasNext();) {
+                TextEntry e = iter.next();
+                List<TextEntry> sources = byId.get(e.getID());
+                for (Iterator<TextEntry> iterator = sources.iterator(); iterator.hasNext();) {
+                    TextEntry e2 = iterator.next();
                    String clname = e2.getClassname();
                    clname = clname.replace(File.separatorChar, '.');
                    clname = clname.replace('$', '.') + '\t';
@@ -225,13 +224,11 @@ public class TextExtractor extends Task {
             }
             
             // Check for duplicate texts with different IDs
-            for (Iterator iter = byContent.entrySet().iterator(); iter.hasNext();) {
-                Map.Entry e = (Map.Entry) iter.next();
-                List dups = (List) e.getValue();
-                Set ids = new TreeSet(new Comparator() {
-                    public int compare(Object arg0, Object arg1) {
-                        TextEntry lhs = (TextEntry) arg0;
-                        TextEntry rhs = (TextEntry) arg1;
+            for (Iterator<Map.Entry<String, List<TextEntry>>> iter = byContent.entrySet().iterator(); iter.hasNext();) {
+                Map.Entry<String, List<TextEntry>> e = iter.next();
+                List<TextEntry> dups = e.getValue();
+                Set<TextEntry> ids = new TreeSet<TextEntry>(new Comparator<TextEntry>() {
+                    public int compare(TextEntry lhs, TextEntry rhs) {
                         return lhs.getID().compareTo(rhs.getID());
                     }
                 });
@@ -239,9 +236,9 @@ public class TextExtractor extends Task {
                 if (ids.size() > 1) {
                     System.err.println();
                     System.err.println("SAME TEXTS, DIFFERENT IDS");
-                    for (Iterator iterator = dups.iterator(); iterator.hasNext();) {
+                    for (Iterator<TextEntry> iterator = dups.iterator(); iterator.hasNext();) {
                         couldBeImproved = true;
-                        TextEntry dup = (TextEntry) iterator.next();
+                        TextEntry dup = iterator.next();
                         System.err.println(dup.getClassname());
                         System.err.println(dup.getText());
                     }
@@ -297,7 +294,7 @@ public class TextExtractor extends Task {
                     + "see console output for details"); 
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         } 
     }
     
@@ -548,7 +545,7 @@ public class TextExtractor extends Task {
 
     private static String[] mArchiveExtensions = new String[] {".jar", ".zip", ".nbm", ".war", ".ear", ".rar", ".sar"};
     
-    private void readDir(List list, String root, String currentPath) throws Exception {
+    private void readDir(List<TextEntry> list, String root, String currentPath) throws Exception {
         File[] entries = new File(currentPath).listFiles();
         for (int i = 0; i < entries.length; i++) {
             if (entries[i].isDirectory()) {
@@ -559,9 +556,9 @@ public class TextExtractor extends Task {
                 
                     try {
                         inp = new FileInputStream(entries[i]);
-                        List strings = readStrings(inp);
-                        for (Iterator iter = strings.iterator(); iter.hasNext();) {
-                            String s = (String) iter.next();
+                        List<String> strings = readStrings(inp);
+                        for (Iterator<String> iter = strings.iterator(); iter.hasNext();) {
+                            String s = iter.next();
                             Matcher m = splitter.matcher(s);
                             if (m.matches()) {
                                 list.add(new TextEntry(currentPath, 
@@ -584,7 +581,7 @@ public class TextExtractor extends Task {
      * @param currentPath Path prefix
      * @throws Exception on fault
      */
-    public void readJar(List list, InputStream jar, String currentPath) throws Exception {
+    public void readJar(List<TextEntry> list, InputStream jar, String currentPath) throws Exception {
         ZipInputStream inp = new ZipInputStream(jar);
         for (;;) {
             ZipEntry entry = inp.getNextEntry();
@@ -598,9 +595,9 @@ public class TextExtractor extends Task {
             } else {
                 if (entry.getName().endsWith(".class")) {
                     try {
-                        List strings = readStrings(inp);
-                        for (Iterator iter = strings.iterator(); iter.hasNext();) {
-                            String s = (String) iter.next();
+                        List<String> strings = readStrings(inp);
+                        for (Iterator<String> iter = strings.iterator(); iter.hasNext();) {
+                            String s = iter.next();
                             Matcher m = splitter.matcher(s);
                             if (m.matches()) {
                                 list.add(new TextEntry(currentPath, entry.getName(), s));
@@ -621,7 +618,7 @@ public class TextExtractor extends Task {
      * @return list of strings
      * @throws Exception on failure
      */
-    public static List readStrings(InputStream s) throws Exception {
+    public static List<String> readStrings(InputStream s) throws Exception {
         DataInputStream inp = new DataInputStream(s);
         
         // Sentinel
@@ -638,7 +635,7 @@ public class TextExtractor extends Task {
 
         // Constant pool
         int nEntries = inp.readShort();
-        List strings = new ArrayList();
+        List<String> strings = new ArrayList<String>();
         for (int i = 1; i < nEntries; i++) {
             byte tagByte  = inp.readByte();
 

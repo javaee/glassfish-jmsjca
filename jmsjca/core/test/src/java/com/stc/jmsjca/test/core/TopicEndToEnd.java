@@ -21,6 +21,7 @@ import com.stc.jmsjca.container.EmbeddedDescriptor;
 import com.stc.jmsjca.core.EmManagementInterface;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.test.core.Passthrough.TopicDest;
+import com.stc.jmsjca.util.Exc;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -39,7 +40,7 @@ import java.net.URLEncoder;
  *     ${workspace_loc:e-jmsjca/build}
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 abstract public class TopicEndToEnd extends EndToEndBase {
     public void waitUntilRunning(Container c) throws Exception {
@@ -74,22 +75,20 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      * @throws Throwable
      */
     public void testNonDurableTopicToQueueSerial() throws Throwable {
-        EmbeddedDescriptor dd = getDD();
+        Passthrough p = createPassthrough(mServerProperties);
+        Container c = createContainer();
 
+        EmbeddedDescriptor dd = getDD();
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
                 "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setConcurrencyMode("serial");
-        spec.setDestination("Topic1");
+        spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
         dd.update();
 
-        // Deploy
-        Container c = createContainer();
-        Passthrough p = createPassthrough(mServerProperties);
-        p.drainQ2();
-
         try {
+            p.drainQ2();
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
@@ -118,20 +117,20 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      * @throws Throwable
      */
     public void testNonDurableTopicToQueueCC() throws Throwable {
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+
         EmbeddedDescriptor dd = getDD();
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
                 EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
-        spec.setDestination("Topic1");
+        spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
         dd.update();
 
-        // Deploy
-        Container c = createContainer();
-        Passthrough p = createPassthrough(mServerProperties);
-        p.drainQ2();
         
         try {
+            p.drainQ2();
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
             }
@@ -414,18 +413,18 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      * @throws Throwable
      */
     public void xtestTopicNonDurableSerial() throws Throwable {
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+        
         EmbeddedDescriptor dd = getDD();
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(EJBDD,
                 "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
         spec.setConcurrencyMode("serial");
-        spec.setDestination("Topic1");
+        spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
         dd.update();
 
-        // Deploy
-        Container c = createContainer();
-        Passthrough p = createPassthrough(mServerProperties);
         try {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
@@ -455,17 +454,17 @@ abstract public class TopicEndToEnd extends EndToEndBase {
      * @throws Throwable
      */
     public void xtestTopicNonDurableCC() throws Throwable {
+        Container c = createContainer();
+        Passthrough p = createPassthrough(mServerProperties);
+
         EmbeddedDescriptor dd = getDD();
         ActivationConfig spec = (ActivationConfig) dd.new ActivationSpec(
                 EJBDD, "mdbtest").createActivation(ActivationConfig.class);
         spec.setContextName("j-testTTXAXA");
-        spec.setDestination("Topic1");
+        spec.setDestination(p.getTopic1Name());
         spec.setDestinationType(javax.jms.Topic.class.getName());
         dd.update();
 
-        // Deploy
-        Container c = createContainer();
-        Passthrough p = createPassthrough(mServerProperties);
         try {
             if (c.isDeployed(mTestEar.getAbsolutePath())) {
                 c.undeploy(mTestEarName);
@@ -806,7 +805,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 // send messages to T1 - these should be stored in the durable subscription
                 // a) should not be selected
                 p.setMessageGenerator(new Passthrough.MessageGenerator() {
-                    public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+                    @Override
+                    public void setMsgPayload(Message m, int i, int iBatch, Class<?> type) throws JMSException {
                         super.setMsgPayload(m, i, iBatch, type);
                         m.setIntProperty("a", 1);
                         m.setStringProperty("sub", subscriptionName + "wrong");
@@ -816,7 +816,8 @@ abstract public class TopicEndToEnd extends EndToEndBase {
 
                 // b) should be selected
                 p.setMessageGenerator(new Passthrough.MessageGenerator() {
-                    public void setMsgPayload(Message m, int i, int iBatch, Class type) throws JMSException {
+                    @Override
+                    public void setMsgPayload(Message m, int i, int iBatch, Class<?> type) throws JMSException {
                         super.setMsgPayload(m, i, iBatch, type);
                         m.setIntProperty("a", 1);
                         m.setStringProperty("sub", subscriptionName);
@@ -837,7 +838,9 @@ abstract public class TopicEndToEnd extends EndToEndBase {
                 c.undeploy(mTestEarName);
                 //p.removeDurableSubscriber(p.getTopic1Name(),subscriptionName);
             }
-            
+        } catch (Exception e) {
+            Exc.checkLinkedException(e);
+            throw e;
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);

@@ -69,6 +69,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#setProperties(java.util.Properties)
      */
+    @Override
     public void setProperties(Properties p) throws Exception {
         String host = p.getProperty(PROP_HOST);
         String port = p.getProperty(PROP_PORT);
@@ -83,7 +84,7 @@ public class GlassFishContainer extends Container {
         try {
             final JMXServiceURL url = new JMXServiceURL("service:jmx:s1ashttp://" + host
                 + ":" + port);
-            final Map env = new HashMap();
+            final Map<String, String> env = new HashMap<String, String>();
             final String PKGS = "com.sun.enterprise.admin.jmx.remote.protocol";
 
             env.put(JMXConnectorFactory.PROTOCOL_PROVIDER_PACKAGES, PKGS);
@@ -135,6 +136,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#redeployModule(java.lang.String)
      */
+    @Override
     public void redeployModule(String absolutePath) throws Exception {
         
         deployModule(absolutePath);
@@ -144,6 +146,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#undeploy(java.lang.String)
      */
+    @Override
     public void undeploy(String moduleName) throws Exception {
         
         stopModule(moduleName);
@@ -185,6 +188,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#deployModule(java.lang.String)
      */
+    @Override
     public void deployModule(String absolutePath) throws Exception {
         
         String moduleName = getModuleName(absolutePath);
@@ -346,6 +350,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#close()
      */
+    @Override
     public void close() throws Exception {
         dm.release();
         mConnector.close();
@@ -356,6 +361,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#isDeployed(java.lang.String)
      */
+    @Override
     public boolean isDeployed(String absolutePath) throws Exception {
         
         String moduleName = getModuleName(absolutePath);
@@ -378,10 +384,11 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#getMBeanProxy(java.lang.String, java.lang.Class)
      */
-    public Object getMBeanProxy(final String objectName, Class itf) throws Exception {
+    @Override
+    public Object getMBeanProxy(final String objectName, Class<?> itf) throws Exception {
         InvocationHandler h = new InvocationHandler() {
             private String[] createSignatureList(Method m) {
-                Class[] args = m.getParameterTypes();
+                Class<?>[] args = m.getParameterTypes();
                 String[] ret = new String[args.length];
                 for (int i = 0; i < args.length; i++) {
                     ret[i] = args[i].getName();
@@ -406,6 +413,7 @@ public class GlassFishContainer extends Container {
     /* (non-Javadoc)
      * @see com.stc.jmsjca.container.Container#getAttribute(java.lang.String, java.lang.String)
      */
+    @Override
     public Object getAttribute(String objName, String name) throws Exception {
         try {
             ObjectName objectName = new ObjectName(objName);

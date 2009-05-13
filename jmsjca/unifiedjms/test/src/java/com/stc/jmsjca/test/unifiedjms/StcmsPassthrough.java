@@ -34,7 +34,7 @@ import java.util.Vector;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class StcmsPassthrough extends Passthrough {
     private Properties mServerProperties;
@@ -68,6 +68,7 @@ public class StcmsPassthrough extends Passthrough {
         return mServer;
     }
 
+    @SuppressWarnings("unchecked")
     public SubscriberInfo findDurableSubscriber(String topic, String subname) throws Exception {
         Vector subs = new Vector();
         getServer().getSubscribersOfTopic(subs, topic);
@@ -80,6 +81,7 @@ public class StcmsPassthrough extends Passthrough {
         return null;
     }
 
+    @Override
     public void removeDurableSubscriber(String clientID, String dest, String subname) throws Exception {
         SubscriberInfo sub = findDurableSubscriber(dest, subname);
         if (sub != null) {
@@ -90,6 +92,7 @@ public class StcmsPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
             StcmsProvider.PROPNAME_PORT, null));
@@ -100,6 +103,7 @@ public class StcmsPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         int port = Integer.parseInt(mServerProperties.getProperty(
             StcmsProvider.PROPNAME_PORT, null));

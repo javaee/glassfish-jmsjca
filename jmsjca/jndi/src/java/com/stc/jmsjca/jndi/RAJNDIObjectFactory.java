@@ -53,7 +53,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -120,7 +120,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
                         + ", factoryclassname" + ref.getFactoryClassName()
                         + ", FactoryClassLocation" + ref.getFactoryClassLocation());
                     int i = 0;
-                    for (Enumeration iter = ((Reference) ret).getAll(); iter.hasMoreElements();) {
+                    for (Enumeration<?> iter = ((Reference) ret).getAll(); iter.hasMoreElements();) {
                         RefAddr element = (RefAddr) iter.nextElement();
                         sLog.debug("RefAddr #" + i++ + ": tostring=[" + element 
                             + "]\r\ncontent=[" + element.getContent() 
@@ -171,6 +171,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
             RAJMSResourceAdapter resourceAdapter,
             RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,
@@ -213,6 +214,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * @return url parser
      * @throws JMSException on incorrect URL
      */
+    @Override
     public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec spec,
             XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
         ConnectionUrl url = super.getProperties(p, resourceAdapter, spec, fact, overrideUrl);
@@ -247,10 +249,11 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * com.stc.jmsjca.core.XManagedConnection, 
      * com.stc.jmsjca.core.XConnectionRequestInfo, boolean, boolean, int, java.lang.Class)
      */
+    @Override
     public SessionConnection createSessionConnection(Object connectionFactory,
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc, XConnectionRequestInfo descr,
-        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         return new JNDISessionConnection(connectionFactory, objfact, ra,
@@ -264,9 +267,10 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * com.stc.jmsjca.core.XManagedConnectionFactory, 
      * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, Properties, Class)
      */
+    @Override
     public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class sessionClass) throws JMSException {
+        String destName, Properties options, Class<?> sessionClass) throws JMSException {
 
         if (sLog.isDebugEnabled()) {
             sLog.debug("createDestination(" + destName + ")");
@@ -354,6 +358,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -368,6 +373,7 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "GENERIC";
     }

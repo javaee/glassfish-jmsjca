@@ -29,7 +29,7 @@ import javax.jms.JMSException;
  * - Destination creation
  *
  * @author Frank Kieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class WMQSessionConnection extends GenericSessionConnection {
     /**
@@ -49,7 +49,7 @@ public class WMQSessionConnection extends GenericSessionConnection {
     public WMQSessionConnection(Object connectionFactory, RAJMSObjectFactory objfact,
         RAJMSResourceAdapter ra, XManagedConnection managedConnection,
         XConnectionRequestInfo descr, boolean isXa,
-        boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         super(connectionFactory, objfact, ra, managedConnection, descr, isXa,

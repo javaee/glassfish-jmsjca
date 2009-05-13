@@ -41,7 +41,7 @@ import java.util.logging.Level;
  * Passthrough for MQSeries
  * 
  * @author  fkieviet (rewrite April 2009)
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WMQPassthrough extends Passthrough {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -78,6 +78,7 @@ public class WMQPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#removeDurableSubscriber(java.lang.String, java.lang.String, java.lang.String)
      */
+    @Override
     public void removeDurableSubscriber(String clientId, String dest, String subname) throws Exception {
         TopicConnectionFactory cf = createTopicConnectionFactory();
         TopicConnection conn = cf.createTopicConnection(getUserid(), getPassword());
@@ -129,6 +130,7 @@ public class WMQPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
      */
+    @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {        
         MQTopicConnectionFactory cf = new MQTopicConnectionFactory();        
         cf.setHostName(getHost(mServerProperties));
@@ -143,6 +145,7 @@ public class WMQPassthrough extends Passthrough {
     /**
      * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
      */
+    @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         MQQueueConnectionFactory cf = new MQQueueConnectionFactory();        
         cf.setHostName(getHost(mServerProperties));

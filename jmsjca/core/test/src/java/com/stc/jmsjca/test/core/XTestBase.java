@@ -142,6 +142,7 @@ import java.util.logging.Logger;
  * @author Frank Kieviet
  * @version 1.0
  */
+@SuppressWarnings("unchecked")
 abstract public class XTestBase extends BaseTestCase {
     private static Logger sLog = Logger.getLogger(XTestBase.class.getName());
 
@@ -149,6 +150,7 @@ abstract public class XTestBase extends BaseTestCase {
     /**
      * @see com.stc.jmsjca.test.core.BaseTestCase#setUp()
      */
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         USERID = getJMSProvider().getUserName(mServerProperties);
@@ -159,6 +161,7 @@ abstract public class XTestBase extends BaseTestCase {
     /**
      * @see junit.framework.TestCase#tearDown()
      */
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
     }
@@ -3193,7 +3196,6 @@ abstract public class XTestBase extends BaseTestCase {
 
         // This will get an object that can turn into an XA connection, or a non-XA connection
         QueueConnection conn1 = f.createQueueConnection(USERID, PASSWORD);
-        assertTrue(conn1 instanceof QueueConnection);
         assertTrue(!(conn1 instanceof XAQueueConnection));
 
         // Which one is determined by a call to getXAResource()
@@ -4236,7 +4238,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             // open a new connection, create Session and Sender
             TestUtil.logTrace("Creating new Connection");
-            TopicConnection newTConn = (TopicConnection) f.createTopicConnection(USERID, PASSWORD);
+            TopicConnection newTConn = f.createTopicConnection(USERID, PASSWORD);
 
             TestUtil.logTrace("Create new Session");
             TopicSession    newTSess = newTConn.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -4312,7 +4314,7 @@ abstract public class XTestBase extends BaseTestCase {
 
             // open a new connection, create Session and Sender
             TestUtil.logTrace("Creating new Connection");
-            TopicConnection newTConn = (TopicConnection) f.createTopicConnection(USERID, PASSWORD);
+            TopicConnection newTConn = f.createTopicConnection(USERID, PASSWORD);
 
             TestUtil.logTrace("Create new Session");
             TopicSession    newTSess = newTConn.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -4672,7 +4674,7 @@ abstract public class XTestBase extends BaseTestCase {
 
         try {
             try {
-                qc = (QueueConnection) f.createQueueConnection(USERID, PASSWORD);
+                qc = f.createQueueConnection(USERID, PASSWORD);
 
                 logTrace("Setting clientID!");
                 qc.setClientID("ctstest");
@@ -5528,6 +5530,7 @@ abstract public class XTestBase extends BaseTestCase {
                     }
                     public void start() throws JMSException {
                         new Thread() {
+                            @Override
                             public void run() {
                                 try {
                                     xid = new XXid();
@@ -5739,6 +5742,7 @@ abstract public class XTestBase extends BaseTestCase {
                              * 
                              * @see java.lang.Runnable#run()
                              */
+                            @Override
                             public void run() {
                                 try {
                                     xid = new XXid();

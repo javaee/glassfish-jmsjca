@@ -35,7 +35,7 @@ import java.util.Vector;
 /**
 *
 * @author fkieviet
-* @version $Revision: 1.5 $
+* @version $Revision: 1.6 $
 */
 public class Stcms453Passthrough extends Passthrough {
    private Properties mServerProperties;
@@ -63,6 +63,7 @@ public class Stcms453Passthrough extends Passthrough {
        return findDurableSubscriber(topic, subname) != null;
    }
 
+   @SuppressWarnings("unchecked")
    public SubscriberInfo findDurableSubscriber(String topic, String subname) throws Exception {
        Vector subs = new Vector();
        getServer().getSubscribersOfTopic(subs, topic);
@@ -75,7 +76,8 @@ public class Stcms453Passthrough extends Passthrough {
        return null;
    }
 
-   public void removeDurableSubscriber(String clientID, String dest, String subname) throws Exception {
+   @Override
+public void removeDurableSubscriber(String clientID, String dest, String subname) throws Exception {
        SubscriberInfo sub = findDurableSubscriber(dest, subname);
        if (sub != null) {
            if (!getServer().deleteSubscriber(dest, subname, sub.ClientId)) {
@@ -87,7 +89,8 @@ public class Stcms453Passthrough extends Passthrough {
    /**
     * @see com.stc.jmsjca.test.core.Passthrough#createTopicConnectionFactory()
     */
-   public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
+   @Override
+public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {
        int port = Integer.parseInt(mServerProperties.getProperty(
            Stcms453Provider.PROPNAME_PORT, null));
        return new STCTopicConnectionFactory(mServerProperties.
@@ -97,7 +100,8 @@ public class Stcms453Passthrough extends Passthrough {
    /**
     * @see com.stc.jmsjca.test.core.Passthrough#createQueueConnectionFactory()
     */
-   public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
+   @Override
+public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
        int port = Integer.parseInt(mServerProperties.getProperty(
            Stcms453Provider.PROPNAME_PORT, null));
        return new STCQueueConnectionFactory(mServerProperties.

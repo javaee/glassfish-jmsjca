@@ -31,7 +31,7 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
@@ -82,6 +82,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
      * Runs the test case except if a similarly named method prefixed with
      * skip_ or disabled_ exists.
      */
+    @Override
     public void run(TestResult result) {
         if (!getContainerID().equals(RTS_ID) && getName().indexOf("RTS_ONLY") > 0) {
             System.out.println("*** Skipping " + getName() + ": not an RTS container");
@@ -162,7 +163,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     public Container createContainer() throws Exception {
         String containerid = getContainerID();
         
-        Class clz = null;
+        Class<?> clz = null;
         if (RTS_ID.equals(containerid) || RTS_ALT_ID.equals(containerid)) {
             clz = Class.forName("com.stc.jmsjca.container.rts.RTSContainer");
         } else if (WL_ID.equals(containerid)) {
@@ -219,6 +220,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
      *
      * @throws Exception
      */
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         

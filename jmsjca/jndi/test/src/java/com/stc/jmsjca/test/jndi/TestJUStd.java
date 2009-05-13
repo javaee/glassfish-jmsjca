@@ -57,6 +57,7 @@ public class TestJUStd extends XTestBase {
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new JndiProvider();
     }
@@ -77,10 +78,12 @@ public class TestJUStd extends XTestBase {
         super(name);
     }
 
+    @Override
     public WireCount getConnectionCount() {
         return new WireCount() {
             private int s0 = getWireCount();;
 
+            @Override
             public void check(int sessions, int producers, int consumers) {
                 int n = sessions + producers + consumers;
                 int now = getWireCount();
@@ -91,6 +94,7 @@ public class TestJUStd extends XTestBase {
                 }
             }
 
+            @Override
             public void check(int n) {
                 int now = getWireCount();
                 if (s0 + n != now) {
@@ -141,6 +145,7 @@ public class TestJUStd extends XTestBase {
         return ret;
     }
 
+    @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
 
@@ -198,6 +203,7 @@ public class TestJUStd extends XTestBase {
      * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
      * @throws JMSException propagatd 
      */
+    @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         return new com.stc.jms.client.STCXAQueueConnectionFactory(getConnectionProperties());
     }
@@ -214,6 +220,7 @@ public class TestJUStd extends XTestBase {
         return com.stc.jms.sockets.Wire.sObjectCount - com.stc.jms.sockets.WirePool.sObjectCount;
     }
 
+    @Override
     public void testTemporaryTopicConnectionClosesTestRA() {
         // Invalid test for JNDI
         // Should work for STCMS only

@@ -52,6 +52,7 @@ public class BaseJUStd extends XTestBase {
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WMQProvider();
     }
@@ -63,6 +64,7 @@ public class BaseJUStd extends XTestBase {
         this(null);
     }
     
+    @Override
     public void tearDown() throws Exception {
         TxMgr.setUnitTestTxMgr(null);
         super.tearDown();
@@ -77,11 +79,14 @@ public class BaseJUStd extends XTestBase {
         super(name);
     }
 
+    @Override
     public WireCount getConnectionCount() {
         return new WireCount() {
+            @Override
             public void check(int sessions, int producers, int consumers) {
             }
 
+            @Override
             public void check(int n) {
             }
         };
@@ -120,6 +125,7 @@ public class BaseJUStd extends XTestBase {
         
     }
 
+    @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
 
@@ -156,6 +162,7 @@ public class BaseJUStd extends XTestBase {
         }
     }
     
+    @Override
     protected void setClientID(Connection con) throws JMSException {
         con.setClientID("myclientid");
     }
@@ -182,12 +189,14 @@ public class BaseJUStd extends XTestBase {
     /**
      * MQSeries does NOT allow messages to be sent outside of a transaction on an XASession
      */
+    @Override
     public void testXAOutOfTx() {
     }
     
     /**
      * MQSeries does NOT allow messages to be sent outside of a transaction on an XASession
      */
+    @Override
     public void testCTSFailure5() {
     }
 
@@ -202,6 +211,7 @@ public class BaseJUStd extends XTestBase {
      * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
      * @throws JMSException propagatd 
      */
+    @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         RAWMQObjectFactory o = new RAWMQObjectFactory();
         

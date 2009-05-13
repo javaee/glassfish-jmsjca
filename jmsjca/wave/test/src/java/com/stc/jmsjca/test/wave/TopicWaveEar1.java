@@ -23,12 +23,13 @@ import com.stc.jmsjca.test.core.TopicEndToEnd;
  * Required:
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TopicWaveEar1 extends TopicEndToEnd {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new WaveProvider();
     }

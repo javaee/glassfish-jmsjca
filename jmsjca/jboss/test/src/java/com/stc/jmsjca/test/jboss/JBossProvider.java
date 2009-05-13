@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class JBossProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jboss.host";
@@ -36,6 +36,7 @@ public class JBossProvider extends JMSProvider {
     public static final String PROPNAME_USERID = "jmsjca.jmsimpl.jboss.userid";
     public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.jboss.password";
 
+    @Override
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
     throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
@@ -54,6 +55,7 @@ public class JBossProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#createPassthrough(java.util.Properties)
      */
+    @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new JBossPassthrough(serverProperties, this);
     }
@@ -63,6 +65,7 @@ public class JBossProvider extends JMSProvider {
      * 
      * @return clientId
      */
+    @Override
     public String getClientId(String proposedClientId) {
         return proposedClientId;
     }
@@ -70,6 +73,7 @@ public class JBossProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
+    @Override
     public String getConnectionUrl(JMSTestEnv test) {
         String host = test.getJmsServerProperties().getProperty(JBossProvider.PROPNAME_HOST);
         int port = Integer.parseInt(test.getJmsServerProperties().getProperty(JBossProvider.PROPNAME_PORT));
@@ -79,6 +83,7 @@ public class JBossProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getPassword(java.util.Properties)
      */
+    @Override
     public String getPassword(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_PASSWORD);
     }
@@ -86,6 +91,7 @@ public class JBossProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getUserName(java.util.Properties)
      */
+    @Override
     public String getUserName(Properties serverProperties) {
         return serverProperties.getProperty(PROPNAME_USERID);
     }
@@ -93,6 +99,7 @@ public class JBossProvider extends JMSProvider {
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getProviderID()
      */
+    @Override
     public String getProviderID() {
         return "jboss";
     }

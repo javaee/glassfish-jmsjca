@@ -33,7 +33,7 @@ import javax.jms.TopicSubscriber;
  * to the JMS Consumer object, and some of them to the JConsumer.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class JConsumer extends NoProxyWrapper {
     private static Logger sLog = Logger.getLogger(JConsumer.class);
@@ -50,13 +50,13 @@ public class JConsumer extends NoProxyWrapper {
      * @param session JSession
      * @param delegate MessageConsumer
      * @param signature String
-     * @param connection JConnection that was used to create the session that created
+     * @param c JConnection that was used to create the session that created
      * this consumer
      */
-    public JConsumer(Class itf, JSession session, MessageConsumer delegate, String signature, JConnection connection) {
+    public JConsumer(Class<?> itf, JSession session, MessageConsumer delegate, String signature, JConnection c) {
         mSession = session;
         mDelegate = delegate;
-        mConnection = connection;
+        mConnection = c;
         init(itf, signature);
     }
     
@@ -72,13 +72,14 @@ public class JConsumer extends NoProxyWrapper {
     /**
      * Creates a new wrapper and invalidates any existing current wrapper.
      */
+    @Override
     public void createNewWrapper() {
         if (getWrapper() != null) {
             ((WMessageConsumer) getWrapper()).setClosed();
         }
 
         if (getItfClass() == javax.jms.MessageConsumer.class) {
-            setWrapper(new WMessageConsumer(this, (MessageConsumer) mDelegate));
+            setWrapper(new WMessageConsumer(this, mDelegate));
         } else if (getItfClass() == javax.jms.TopicSubscriber.class) {
             setWrapper(new WTopicSubscriber(this, (TopicSubscriber) mDelegate));
         } else if (getItfClass() == javax.jms.QueueReceiver.class) {
@@ -91,6 +92,7 @@ public class JConsumer extends NoProxyWrapper {
     /**
      * Close the physical object
      */
+    @Override
     public void physicalClose() {
         createNewWrapper();
         try {
@@ -106,6 +108,7 @@ public class JConsumer extends NoProxyWrapper {
      *
      * @param ex Throwable
      */
+    @Override
     public void exceptionOccurred(Throwable ex) {
         super.exceptionOccurred(ex);
         if (mSession != null) {

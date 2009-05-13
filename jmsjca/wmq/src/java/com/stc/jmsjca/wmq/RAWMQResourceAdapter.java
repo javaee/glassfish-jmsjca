@@ -24,10 +24,10 @@ import com.stc.jmsjca.util.UrlParser;
  * Specializes the core resource adapter for IBM WebSphere Message Server
  *
  * @author cye
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
-    private static Localizer LOCALE = Localizer.get();    
+    private static final Localizer LOCALE = Localizer.get();    
 
     /**
      * Default constructor (required by spec)
@@ -38,6 +38,7 @@ public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapt
     /**
      * @param connectionURL String
      */
+    @Override
     public void setConnectionURL(String connectionURL) {
         UrlParser u = new UrlParser(connectionURL);
         try {
@@ -52,6 +53,7 @@ public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapt
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String urlstr) {
         return new RAWMQObjectFactory();
     }

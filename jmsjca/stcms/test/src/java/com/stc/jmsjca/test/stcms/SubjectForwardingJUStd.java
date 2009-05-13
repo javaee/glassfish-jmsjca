@@ -35,12 +35,13 @@ import java.util.Map;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class SubjectForwardingJUStd extends EndToEndBase {
     /**
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
+    @Override
     public JMSProvider getJMSProvider() {
         return new StcmsProvider();
     }
@@ -65,6 +66,7 @@ public class SubjectForwardingJUStd extends EndToEndBase {
             return mName;
         }
 
+        @Override
         public String toString() {
             return this.getClass().getName() + ": [" + mName + "]";
         }
@@ -96,9 +98,9 @@ public class SubjectForwardingJUStd extends EndToEndBase {
     public void testSubjNoRoles_RTS_ONLY() throws Throwable {
         Subject s = new Subject();
         s.getPrincipals().add(new PrincipalX("Lilly", "xyzrealm", new String[0]));
-        Subject.doAs(s, new PrivilegedExceptionAction() {
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
             public Object run() throws Exception {
-                Map m = getEcho();
+                Map<String, Object> m = getEcho();
                 assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
@@ -121,9 +123,9 @@ public class SubjectForwardingJUStd extends EndToEndBase {
     public void testSubj_RTS_ONLY() throws Throwable {
         Subject s = new Subject();
         s.getPrincipals().add(new PrincipalX("Lilly", "xyzrealm", new String[] {"a", "b", "c" }));
-        Subject.doAs(s, new PrivilegedExceptionAction() {
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
             public Object run() throws Exception {
-                Map m = getEcho();
+                Map<String, Object> m = getEcho();
                 assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
@@ -148,9 +150,9 @@ public class SubjectForwardingJUStd extends EndToEndBase {
     public void testSubjNoRealm_RTS_ONLY() throws Throwable {
         Subject s = new Subject();
         s.getPrincipals().add(new PrincipalX("Lilly", null, new String[] {"a", "b", "c" }));
-        Subject.doAs(s, new PrivilegedExceptionAction() {
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
             public Object run() throws Exception {
-                Map m = getEcho();
+                Map<String, Object> m = getEcho();
                 assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
                 assertTrue(m.get(Realm1).equals("file"));
                 assertTrue(m.get(Roles1).equals(""));
@@ -174,7 +176,7 @@ public class SubjectForwardingJUStd extends EndToEndBase {
      * @throws Throwable
      */
     public void testNoSubj_RTS_ONLY() throws Throwable {
-        Map m = getEcho();
+        Map<String, Object> m = getEcho();
 	    assertTrue(m.get(Name1).equals(getJMSProvider().getUserName(mServerProperties)));
 	    assertTrue(m.get(Realm1).equals("file"));
 	    assertTrue(m.get(Roles1).equals(""));
@@ -193,9 +195,10 @@ public class SubjectForwardingJUStd extends EndToEndBase {
      * @return map of values
      * @throws Exception
      */
-    private Map getEcho() throws Exception {
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getEcho() throws Exception {
         Container c = createContainer();
-        Map ret = new HashMap();
+        Map<String, Object> ret = new HashMap<String, Object>();
 
 	    try {
 	        LogMBean o = (LogMBean) c.getMBeanProxy("com.sun.appserv:name=logmanager,category=runtime", LogMBean.class);
@@ -219,7 +222,7 @@ public class SubjectForwardingJUStd extends EndToEndBase {
     public void testDeploy() throws Throwable {
         Subject s = new Subject();
         s.getPrincipals().add(new PrincipalX("Lilly", "xyzrealm", new String[0]));
-        Subject.doAs(s, new PrivilegedExceptionAction() {
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
             public Object run() throws Exception {
                 EmbeddedDescriptor dd = new EmbeddedDescriptor(mTestEarOrg, mTestEar);
                 dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
@@ -252,7 +255,7 @@ public class SubjectForwardingJUStd extends EndToEndBase {
      * The MBean interface exposed by the LogMBean
      */
     public interface LogMBean {
-        List getLoggerNames() throws Exception;
+        List<String> getLoggerNames() throws Exception;
         AttributeList getSubjectInfo() throws Exception;
     }
 

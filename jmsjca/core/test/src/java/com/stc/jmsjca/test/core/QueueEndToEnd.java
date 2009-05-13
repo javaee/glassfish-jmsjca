@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -1122,7 +1122,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
 //        private QueueSender mProd;
         private QueueSession mSess;
         private int mCtProcessed;
-        private List mErrors = new ArrayList();
+        private List<Exception> mErrors = new ArrayList<Exception>();
 
         public QueueReplier(QueueConnectionFactory fact, String userid, String password,
             String dest, Passthrough passthrough) throws JMSException {
@@ -1153,7 +1153,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 m1 = s.createMessage();
             }
 
-            for (Enumeration iter = message.getPropertyNames(); iter.hasMoreElements();) {
+            for (Enumeration<?> iter = message.getPropertyNames(); iter.hasMoreElements();) {
                 String name = (String) iter.nextElement();
                 if (name.startsWith("JMSX")) {
                     continue;

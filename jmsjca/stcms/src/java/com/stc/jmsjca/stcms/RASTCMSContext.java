@@ -28,8 +28,9 @@ import java.util.Properties;
  * See {@see com.stc.jmsjca.core.RAJMSContext}
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
+@SuppressWarnings("unchecked")
 public class RASTCMSContext extends RAJMSContext {
     private String mConnectionURL;
     private String mUserName;
@@ -46,6 +47,7 @@ public class RASTCMSContext extends RAJMSContext {
     /**
      * @see com.stc.jmsjca.core.RAJMSContext#getDelegate()
      */
+    @Override
     protected synchronized Context getDelegate() throws NamingException {
         if (mDelegate == null) {
             Properties p = new Properties();

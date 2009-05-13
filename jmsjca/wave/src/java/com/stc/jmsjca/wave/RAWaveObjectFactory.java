@@ -45,7 +45,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -91,7 +91,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
     public static final String WAVECONTAINERMBEAN 
     = "com.sun.appserv:type=messaging-server-admin-mbean,jmsservertype=wave,name=JMS_Grid_IQ_Manager";
     
-    private static Localizer LOCALE = Localizer.get();
+    private static final Localizer LOCALE = Localizer.get();
     
     /**
      * Creates a provider specific UrlParser
@@ -99,6 +99,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @param s connectionURL to parse
      * @return parser
      */
+    @Override
     public ConnectionUrl createConnectionUrl(String s) {
         return new WaveUrlParser(s);
     }
@@ -111,6 +112,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      *
      * @param con XManagedConnection
      */
+    @Override
     public void cleanup(XManagedConnection con) {
         try {
             if (sLog.isDebugEnabled()) {
@@ -159,6 +161,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @param con XManagedConnection
      * @return boolean true if the coonnection is invalid
      */
+    @Override
     public boolean isInvalid(XManagedConnection con) {
         boolean isInvalid = true;
         try {
@@ -187,6 +190,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @return boolean true if the url specified url object was changed by this
      *         validation
      */
+    @Override
     public boolean validateAndAdjustURL(ConnectionUrl aurl) throws JMSException {
         boolean hasChanged = false;
         
@@ -225,6 +229,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @return ConnectionFactory
      * @throws JMSException failure
      */
+    @Override
     public ConnectionFactory createConnectionFactory(int domain,
         RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
         XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
@@ -313,7 +318,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
         }
         
         try {
-            Class clazz = ClassLoaderHelper.loadClass(classname);
+            Class<?> clazz = ClassLoaderHelper.loadClass(classname);
             return (ConnectionFactory) clazz.getConstructor(
                 new Class[] {Properties.class}).newInstance(
                     new Object[] {profileprops});
@@ -337,11 +342,12 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @throws JMSException failure
      * @return SessionConnection
      */
+    @Override
     public SessionConnection createSessionConnection(Object connectionFactory,
         RAJMSObjectFactory objfact, RAJMSResourceAdapter ra,
         XManagedConnection mc,
         XConnectionRequestInfo descr, boolean isXa, boolean isTransacted,
-        int acknowledgmentMode, Class sessionClass)
+        int acknowledgmentMode, Class<?> sessionClass)
     throws JMSException {
   
         SessionConnection result = super.createSessionConnection(connectionFactory,
@@ -358,6 +364,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @param url String
      * @return true if may be URL
      */
+    @Override
     public boolean isUrl(String url) {
         if (url != null && url.length() > 0) {
             for (int i = 0; i < URL_PREFIXES.length; i++) {
@@ -394,6 +401,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @param ra ra
      * @throws JMSException on failure
      */
+    @Override
     public void setClientID(Connection connection, boolean isTopic,
         RAJMSActivationSpec spec, RAJMSResourceAdapter ra) throws JMSException {  
         // See Work ticket 96445
@@ -483,6 +491,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#getJMSServerType()
      */
+    @Override
     public String getJMSServerType() {
         return "WAVE";
     }
@@ -499,6 +508,7 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
      * @return null, a string, or an mbean object.
      * @throws JMSException on failure
      */
+    @Override
     public Object getServerMgtMBean(RAJMSResourceAdapter ra, RAJMSActivationSpec spec)
     throws JMSException {
         Object ret = null;
@@ -581,12 +591,12 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
             
             try {
                 // Instantiate mbean
-                Class c = Class.forName("com.stc.jmsmx.wave.ExternalWaveMBean");
+                Class<?> c = Class.forName("com.stc.jmsmx.wave.ExternalWaveMBean");
                 Object waveMBean = c.newInstance();
                 // Initialize this object using this method:
                 // public void setConnectInfo(Properties connectionProperties, 
                 // String username, String password) {
-                Class[] signatures = {Properties.class, String.class,
+                Class<?>[] signatures = {Properties.class, String.class,
                     String.class };
                 Object[] args = {connectionProperties, username, password};
                 Method method = c.getMethod("setConnectInfo", signatures);

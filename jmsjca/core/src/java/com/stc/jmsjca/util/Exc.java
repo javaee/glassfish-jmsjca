@@ -38,9 +38,12 @@ import java.lang.reflect.Method;
  * on JDK1.4</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
-public class Exc {
+public final class Exc {
+    private Exc() {
+        
+    }
 
     /**
      * Creates a new exception
@@ -256,7 +259,7 @@ public class Exc {
      */
     public static void checkLinkedException(Throwable cause) {
         try {
-            Class c = cause.getClass();
+            Class<?> c = cause.getClass();
             Method m = c.getMethod("getLinkedException", new Class[] {});
             Exception linked = (Exception) m.invoke(cause, new Object[] {});
             
@@ -287,7 +290,7 @@ public class Exc {
             checkLinkedException(cause);
 
             try {
-                Class c = toSetOn.getClass();
+                Class<?> c = toSetOn.getClass();
                 Method m = c.getMethod("initCause", new Class[] {Throwable.class});
                 m.invoke(toSetOn, new Object[] {cause});
             } catch (Exception ex) {

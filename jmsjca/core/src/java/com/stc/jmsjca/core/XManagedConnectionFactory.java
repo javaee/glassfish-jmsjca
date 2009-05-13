@@ -52,7 +52,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -60,7 +60,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private static Logger sLog = Logger.getLogger(XManagedConnectionFactory.class);
     private transient PrintWriter mLogWriter;
     private RAJMSResourceAdapter mRA;
-    private Map mConnectionFactories; // key=overrideURL, value=Object[]=connection factories
+    private Map<String, Object[]> mConnectionFactories; // key=overrideURL, value=Object[]=connection factories
     private Object[] mDefaultConnectionFactories;
     private boolean mProducerPoolingOn;
     private String mConnectionURL;
@@ -97,13 +97,13 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     // For diagnostics: counts how many MCs were destroyed
     private transient int mCtMCDestroyed;
     // For diagnostics purposes: keeps track of all MCs created
-    private transient Map mMCCreated;
+    private transient Map<XManagedConnection, Date> mMCCreated;
     // For unit testing
     private transient boolean mIsTestModeInvalidConnections;
     private transient TestAllocator mAllocator;
     
     // Caching password credentials; key=Subject; value=PasswordCredential 
-    private transient IdentityHashMap mCredentialCache; 
+    private transient IdentityHashMap<Subject, PasswordCredential> mCredentialCache; 
     private static final int MAXCREDENTIALCACHE = 50;
 
     private static final Localizer LOCALE = Localizer.get();
@@ -143,9 +143,9 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         return mRA;
     }
     
-    private Map getActiveManagedConnections() {
+    private Map<XManagedConnection, Date> getActiveManagedConnections() {
         if (mMCCreated == null) {
-            mMCCreated = Collections.synchronizedMap(new WeakHashMap());        
+            mMCCreated = Collections.synchronizedMap(new WeakHashMap<XManagedConnection, Date>());        
         }
         return mMCCreated;
     }
@@ -197,7 +197,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         
         if (getOptionDoNotCacheConnectionFactories()) {
             Object o = getObjFactory().createConnectionFactory(domain, 
-                (RAJMSResourceAdapter) mRA, null, this, overrideUrl);
+                mRA, null, this, overrideUrl);
             return o;
         } else {
             Object[] factories;
@@ -210,11 +210,11 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
             } else {
                 // Lazy init
                 if (mConnectionFactories == null) {
-                    mConnectionFactories = new HashMap();
+                    mConnectionFactories = new HashMap<String, Object[]>();
                 }
 
                 // Lookup factories with lazy init
-                factories = (Object[]) mConnectionFactories.get(overrideUrl);
+                factories = mConnectionFactories.get(overrideUrl);
                 if (factories == null) {
                     factories = new Object[XConnectionRequestInfo.NDOMAINS];
                     mConnectionFactories.put(overrideUrl, factories);
@@ -223,7 +223,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
 
             // Find proper factory type with lazy init
             if (factories[domain] == null) {
-                RAJMSResourceAdapter ra = (RAJMSResourceAdapter) mRA;
+                RAJMSResourceAdapter ra = mRA;
                 Object o = getObjFactory().createConnectionFactory(domain, ra, null, this, overrideUrl);
                 factories[domain] = o;
             }
@@ -325,10 +325,10 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         // is also expensive: therefore use an IdentityHashMap.
         synchronized (this) {
             if (mCredentialCache == null) {
-                mCredentialCache = new IdentityHashMap();
+                mCredentialCache = new IdentityHashMap<Subject, PasswordCredential>();
             }
             if (mCredentialCache.containsKey(subject)) {
-                return (PasswordCredential) mCredentialCache.get(subject);
+                return mCredentialCache.get(subject);
             }
         }
         
@@ -361,6 +361,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @return ManagedConnection if resource adapter finds an acceptable match otherwise null
      * @throws ResourceException generic exception
      */
+    @SuppressWarnings("unchecked")
     public ManagedConnection matchManagedConnections(java.util.Set connectionSet,
         javax.security.auth.Subject subject,
         ConnectionRequestInfo cxRequestInfo) throws ResourceException {
@@ -416,8 +417,9 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @throws ResourceException on failure
      * @return Set
      */
-    public Set getInvalidConnections(Set toCheck) throws ResourceException {
-        Set ret = new HashSet();
+    @SuppressWarnings("unchecked")
+    public Set<XManagedConnection> getInvalidConnections(Set toCheck) throws ResourceException {
+        Set<XManagedConnection> ret = new HashSet<XManagedConnection>();
         for (Iterator  iter = toCheck.iterator(); iter.hasNext();/*-*/) {
             ManagedConnection cmc = (ManagedConnection) iter.next();
             if (cmc instanceof XManagedConnection) {
@@ -478,7 +480,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         }
         
         String urlstr = mConnectionURL == null ? mRA.getConnectionURL() : mConnectionURL;
-        mObjFactory =  ((RAJMSResourceAdapter) mRA).createObjectFactory(urlstr);
+        mObjFactory =  mRA.createObjectFactory(urlstr);
 
         Properties p = new Properties();
         mRAUrl = mRA.lookUpLDAP(mRA.getConnectionURL());
@@ -530,6 +532,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      *
      * @return hash code for the ManagedConnectionFactory
      */
+    @Override
     public int hashCode() {
         int h = 7;
         h = Str.hash(h, mUserName);
@@ -586,6 +589,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      *            Object
      * @return true if two instances are equal
      */
+    @Override
     public boolean equals(java.lang.Object rhs) {
         if (rhs == this) {
             return true;
@@ -915,7 +919,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     public synchronized TxMgr getTxMgr() {
         if (mTxMgr == null) {
             try {
-                Class c = Class.forName(mTxMgrLocatorClass, false, this.getClass().getClassLoader()); 
+                Class<?> c = Class.forName(mTxMgrLocatorClass, false, this.getClass().getClassLoader()); 
                 TxMgr txmgr = (TxMgr) c.newInstance();
                 extractOptions();
                 txmgr.init(mOptions);

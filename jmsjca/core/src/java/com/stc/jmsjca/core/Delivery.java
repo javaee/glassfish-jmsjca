@@ -59,7 +59,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -110,7 +110,7 @@ public abstract class Delivery {
     private TransactionManager mTxMgr;
     private Object mTxMgrCacheLock = new Object();
     private boolean mTxFailureLoggedOnce;
-    private IdentityHashMap mThreadsCurrentlyInOnMessage = new IdentityHashMap();
+    private IdentityHashMap<Thread, String> mThreadsCurrentlyInOnMessage = new IdentityHashMap<Thread, String>();
     
     
     private static final Localizer LOCALE = Localizer.get();
@@ -316,8 +316,8 @@ public abstract class Delivery {
      * @author fkieviet
      */
     private class LegacyProperties {
-        Message mDelegate;
-        boolean mSupportsLegacy;
+        private Message mDelegate;
+        private boolean mSupportsLegacy;
         
         public LegacyProperties(Message msg, boolean supportsLegacy) {
             mDelegate = msg;
@@ -373,6 +373,7 @@ public abstract class Delivery {
             super(spec, stats, lookbackSize);
         }
         
+        @Override
         protected void delayMessageDelivery(Message m, Encounter e, long delay
             , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             if (delay == 0) {
@@ -384,6 +385,7 @@ public abstract class Delivery {
             mActivation.sleepAndMonitorStatus(delay);
         }
 
+        @Override
         protected void longDelayMessageDelivery(Message m, Encounter e, long delay
             , LocalizedString logmsg, RedeliveryHandler.BaseCookie cookie) {
             if (logmsg != null) {
@@ -394,12 +396,14 @@ public abstract class Delivery {
             mActivation.sleepAndMonitorStatus(delay);
         }
 
+        @Override
         protected void deleteMessage(Message m, Encounter e, RedeliveryHandler.BaseCookie cookie) {
             sLog.info(LOCALE.x("E026: Message with msgid=[{0}] was seen {1} times. It "
                 + "will be acknowledged without being delivered.", 
                 e.getMsgid(), Integer.toString(e.getNEncountered())));
         }
 
+        @Override
         protected void move(Message m, Encounter e, boolean isTopic, 
             String destinationName, RedeliveryHandler.BaseCookie cookie) throws Exception {
             
@@ -460,11 +464,12 @@ public abstract class Delivery {
                     prop.setStringProperty(Options.MessageProperties.ORIGINAL_CLIENTID, spec.getClientId());
                     
                     // Copy stateful redelivery properties
-                    Map statefulRedeliveryProperties = e.getStatefulRedeliveryProperties();
-                    for (Iterator iterator = statefulRedeliveryProperties.entrySet().iterator(); iterator.hasNext();) {
-                        Map.Entry kv = (Map.Entry) iterator.next();
-                        String key = (String) kv.getKey();
-                        prop.setStringProperty(key, (String) kv.getValue());
+                    Map<String, String> statefulRedeliveryProperties = e.getStatefulRedeliveryProperties();
+                    for (Iterator<Map.Entry<String, String>> iterator 
+                        = statefulRedeliveryProperties.entrySet().iterator(); iterator.hasNext();) {
+                        Map.Entry<String, String> kv = iterator.next();
+                        String key = kv.getKey();
+                        prop.setStringProperty(key, kv.getValue());
                     }
                     
                     // Send msg
@@ -475,7 +480,7 @@ public abstract class Delivery {
                         + " times. It will be forwarded (moved) to {2} {3}"  
                         + " with msgid [{4}]", 
                         e.getMsgid(), Integer.toString(e.getNEncountered()), 
-                        (isTopic ? "topic" : "queue"), destinationName, 
+                        isTopic ? "topic" : "queue", destinationName, 
                         newMsg.getJMSMessageID()));
                 } catch (Exception ex) {
                     copyException = ex;
@@ -493,7 +498,7 @@ public abstract class Delivery {
                         sLog.info(LOCALE.x("E028: Message with msgid=[{0}] was seen {1}"
                             + " times. It will be redirected to {2} {3}." , 
                             e.getMsgid(), Integer.toString(e.getNEncountered()), 
-                            (isTopic ? "topic" : "queue"), destinationName)); 
+                            isTopic ? "topic" : "queue", destinationName)); 
                     } else {
                         sLog.info(LOCALE.x("E029: Message with msgid=[{0}] was seen {1} "
                             + "times. It will be redirected to {2} {3}. An attempt was "
@@ -501,7 +506,7 @@ public abstract class Delivery {
                             + "in the message''s properties, but this attempt was "
                             + "unsuccessful due to the following error: [{4}].", 
                             e.getMsgid(), Integer.toString(e.getNEncountered()), 
-                            (isTopic ? "topic" : "queue"), destinationName, copyException)
+                            isTopic ? "topic" : "queue", destinationName, copyException)
                             , copyException); 
                     }
                     copyException = null;
@@ -525,6 +530,7 @@ public abstract class Delivery {
             x.setBusy(false);
         }
 
+        @Override
         protected void stopConnector(String s) {
             mActivation.stopConnectorByMDB(s);
         }
@@ -562,7 +568,7 @@ public abstract class Delivery {
             String txMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
             txMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, txMgrLocatorClass);
             try {
-                Class c = Class.forName(txMgrLocatorClass, false, this.getClass().getClassLoader()); 
+                Class<?> c = Class.forName(txMgrLocatorClass, false, this.getClass().getClassLoader()); 
                 TxMgr txmgr = (TxMgr) c.newInstance();
                 txmgr.init(p);
                 mTxMgr = txmgr.getTransactionManager();
@@ -676,14 +682,14 @@ public abstract class Delivery {
                         domain,
                         mActivation.getActivationSpec(),
                         mActivation.getRA(),
-                        (mActivation.getUserName() == null 
-                            ? mActivation.getRA().getUserName() : mActivation.getUserName()),
-                        (mActivation.getPassword() == null 
-                            ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword()));
+                        mActivation.getUserName() == null 
+                            ? mActivation.getRA().getUserName() : mActivation.getUserName(),
+                        mActivation.getPassword() == null 
+                            ? mActivation.getRA().getClearTextPassword() : mActivation.getPassword());
                     session = o.createSession(
                         connection,
                         isXa,
-                        (isTopic ? TopicSession.class : QueueSession.class),
+                        isTopic ? TopicSession.class : QueueSession.class,
                         mActivation.getRA(),
                         mActivation.getActivationSpec(),
                         true,
@@ -697,7 +703,7 @@ public abstract class Delivery {
                         mActivation.getRA(),
                         m.getDestinationName(), 
                         null,
-                        (isTopic ? TopicSession.class : QueueSession.class));
+                        isTopic ? TopicSession.class : QueueSession.class);
                 } finally {
                     try {
                         if (session != null) {
@@ -1377,10 +1383,10 @@ public abstract class Delivery {
     }
     
     class DeactivationWaiter {
-        long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
-        long tdump = System.currentTimeMillis() + DESTROY_DUMP_INTERVAL_MS;
+        private long tlog = System.currentTimeMillis() + DESTROY_LOG_INTERVAL_MS;
+        private long tdump = System.currentTimeMillis() + DESTROY_DUMP_INTERVAL_MS;
         
-        public boolean isDone(int nNotDestroyed, List threads) {
+        public boolean isDone(int nNotDestroyed, List<?> threads) {
             // Wait if not all were destroyed
             if (nNotDestroyed == 0) {
                 if (sLog.isDebugEnabled()) {
@@ -1397,15 +1403,15 @@ public abstract class Delivery {
 
             // Dump out threads that are holding work containers captive
             if (System.currentTimeMillis() > tdump) {
-                Map allStackTraces = Thread.getAllStackTraces();
+                Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
                 StringBuffer dump = new StringBuffer();
-                for (Iterator it = threads.iterator(); it.hasNext();) {
+                for (Iterator<?> it = threads.iterator(); it.hasNext();) {
                     Thread th = (Thread) it.next();
                     if (th == null) {
                         dump.append("Unexpected: thread is null");
                     } else {
                         dump.append("* Thread " + th.getName() + "\r\n");
-                        StackTraceElement[] stack = (StackTraceElement[]) allStackTraces.get(th);
+                        StackTraceElement[] stack = allStackTraces.get(th);
                         for (int i = 0; i < stack.length; i++) {
                             dump.append(stack[i]).append("\r\n");
                         }

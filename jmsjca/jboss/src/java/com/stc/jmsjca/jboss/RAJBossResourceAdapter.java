@@ -21,7 +21,7 @@ import com.stc.jmsjca.core.RAJMSObjectFactory;
 /**
  * Specializes the core resource adapter for JBoss Messageserver
  *
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * @author fkieviet
  */
 public class RAJBossResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
@@ -40,6 +40,7 @@ public class RAJBossResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAda
     /**
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
+    @Override
     public RAJMSObjectFactory createObjectFactory(String urlstr) {
         return new RAJBossObjectFactory();
     }

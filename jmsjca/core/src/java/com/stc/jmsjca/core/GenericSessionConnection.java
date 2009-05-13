@@ -33,7 +33,7 @@ import java.util.Properties;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class GenericSessionConnection extends SessionConnection {
     private static final Localizer LOCALE = Localizer.get();
@@ -46,7 +46,7 @@ public class GenericSessionConnection extends SessionConnection {
     private boolean mIsXA;
     private boolean mIsTransacted;
     private int mAcknowledgMode;
-    private Class mSessionClass;
+    private Class<?> mSessionClass;
     private XConnectionRequestInfo mDescr;
     private RAJMSResourceAdapter mRA;
 
@@ -75,7 +75,7 @@ public class GenericSessionConnection extends SessionConnection {
     public GenericSessionConnection(Object connectionFactory, RAJMSObjectFactory objfact,
         RAJMSResourceAdapter ra, XManagedConnection mc,
         XConnectionRequestInfo descr, boolean isXa,
-        boolean isTransacted, int acknowledgmentMode, Class sessionClass)
+        boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
 
         mConFact = connectionFactory;
@@ -103,6 +103,7 @@ public class GenericSessionConnection extends SessionConnection {
      * @return Session
      * @throws JMSException failure
      */
+    @Override
     public Session getJmsSession() throws JMSException {
         return mObjFact.getNonXASession(mSession, mIsXA, mSessionClass);
     }
@@ -112,6 +113,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @throws JMSException failure
      */
+    @Override
     public void start() throws JMSException {
         mConnection.start();
     }
@@ -121,6 +123,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @throws JMSException failure
      */
+    @Override
     public void stop() throws JMSException {
         if (mConnection != null) {
             mConnection.stop();
@@ -133,6 +136,7 @@ public class GenericSessionConnection extends SessionConnection {
      * @return XAResource
      * @throws JMSException failure
      */
+    @Override
     public XAResource getXAResource() throws JMSException {
         if (!mIsXA) {
             throw Exc.jmsExc(LOCALE.x("E127: Logic fault: cannot return XAResource from non-XA session"));
@@ -146,6 +150,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @throws JMSException failure
      */
+    @Override
     public void destroy() throws JMSException {
         try {
             // Closing the session is necessary for MQSeries: for that JMS server it's
@@ -171,6 +176,7 @@ public class GenericSessionConnection extends SessionConnection {
      * @return ConnectionMetaData
      * @throws JMSException on failure
      */
+    @Override
     public ConnectionMetaData getConnectionMetaData() throws JMSException {
         return mConnection.getMetaData();
     }
@@ -181,6 +187,7 @@ public class GenericSessionConnection extends SessionConnection {
      * @param clientID String
      * @throws JMSException on failure
      */
+    @Override
     public void setClientID(String clientID) throws JMSException {
         mConnection.setClientID(clientID);
     }
@@ -190,6 +197,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @return boolean true if transacted
      */
+    @Override
     public boolean getTransacted() {
         return mIsTransacted;
     }
@@ -199,6 +207,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @return int ack mode
      */
+    @Override
     public int getAcknowledgeMode() {
         return mAcknowledgMode;
     }
@@ -208,6 +217,7 @@ public class GenericSessionConnection extends SessionConnection {
      *
      * @return boolean
      */
+    @Override
     public boolean isXA() {
         return mIsXA;
     }
@@ -215,6 +225,7 @@ public class GenericSessionConnection extends SessionConnection {
     /**
      * @see com.stc.jmsjca.core.SessionConnection#checkGeneric(javax.jms.Destination)
      */
+    @Override
     public Destination checkGeneric(Destination d) throws JMSException {
         return mObjFact.checkGeneric(d);
     }
@@ -240,6 +251,7 @@ public class GenericSessionConnection extends SessionConnection {
     /**
      * @see com.stc.jmsjca.core.SessionConnection#createDestination(boolean, java.lang.String, java.util.Properties)
      */
+    @Override
     public Destination createDestination(boolean isTopic, String name, Properties options) throws JMSException {
         return mObjFact.createDestination(mSession, mIsXA, isTopic, null, mMC.getManagedConnectionFactory(), 
             mRA, name, options, mSessionClass);

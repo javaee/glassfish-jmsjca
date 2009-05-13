@@ -73,7 +73,6 @@ import java.util.Properties;
  * <li>each Worker has a flag if it is running; this flag is
  * synchronized (D)</li>
  * </ul>
- * </pre>
  * 
  * Error handling:
  * for() {
@@ -110,7 +109,7 @@ public class SyncDelivery extends Delivery {
     private static Logger sLog = Logger.getLogger(SyncDelivery.class);
     private javax.jms.Connection mConnection;
     private int mNThreads;
-    private List mWorkers = new ArrayList();
+    private List<SyncWorker> mWorkers = new ArrayList<SyncWorker>();
     private boolean mIsStopped = true;
     private Object mIsStoppedLock = new Object();
     
@@ -149,6 +148,7 @@ public class SyncDelivery extends Delivery {
     /**
      * @see com.stc.jmsjca.core.Delivery#deactivate()
      */
+    @Override
     public void deactivate() {
         stop();
     }
@@ -156,6 +156,7 @@ public class SyncDelivery extends Delivery {
     /**
      * @see com.stc.jmsjca.core.Delivery#start()
      */
+    @Override
     public synchronized void start() throws JMSException {
         // Guard against redundant calls to start
         synchronized (mIsStoppedLock) {
@@ -209,8 +210,8 @@ public class SyncDelivery extends Delivery {
             }
     
             // Start sync workers
-            for (Iterator iter = mWorkers.iterator(); iter.hasNext();) {
-                SyncWorker w = (SyncWorker) iter.next();
+            for (Iterator<SyncWorker> iter = mWorkers.iterator(); iter.hasNext();) {
+                SyncWorker w = iter.next();
                 w.start();
             }
         } catch (JMSException e) {
@@ -252,8 +253,8 @@ public class SyncDelivery extends Delivery {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Trying to destroy all Workers");
             }
-            for (Iterator it = mWorkers.iterator(); it.hasNext();/*-*/) {
-                SyncWorker w = (SyncWorker) it.next();
+            for (Iterator<SyncWorker> it = mWorkers.iterator(); it.hasNext();/*-*/) {
+                SyncWorker w = it.next();
                 if (!w.isRunning()) {
                     w.close();
                     it.remove();
@@ -285,6 +286,7 @@ public class SyncDelivery extends Delivery {
 
         public abstract void setRollbackOnly(Exception e);
         
+        @Override
         public abstract void ack(boolean isRollbackOnly, Message m) throws JMSException;
         
         public abstract boolean isRollbackOnly();
@@ -305,10 +307,12 @@ public class SyncDelivery extends Delivery {
         private boolean mNeedsToDiscardEndpoint;
         private int mNMsgsDelivered;
         
+        @Override
         public void setRollbackOnly() {
             mIsRollbackOnly = true;
         }
         
+        @Override
         public void setRollbackOnly(Exception e) {
             if (e != null) {
                 setRollbackOnly();
@@ -316,9 +320,11 @@ public class SyncDelivery extends Delivery {
             }
         }
         
+        @Override
         public void ack(boolean isRollbackOnly, Message m) throws JMSException {
         }
         
+        @Override
         public boolean isRollbackOnly() {
             return mIsRollbackOnly;
         }
@@ -326,23 +332,28 @@ public class SyncDelivery extends Delivery {
         public void msgDelivered(Exception e) {
         }
         
+        @Override
         public void msgDelivered(boolean wasDelivered) {
             if (wasDelivered) {
                 mNMsgsDelivered++;
             }
         }
         
+        @Override
         public void waitForAcks() throws InterruptedException {
         }
 
+        @Override
         public boolean needsToDiscardEndpoint() {
             return mNeedsToDiscardEndpoint;
         }
 
+        @Override
         public int getNMsgsDelivered() {
             return mNMsgsDelivered;
         }
 
+        @Override
         public void setNeedsToDiscardEndpoint() {
             mNeedsToDiscardEndpoint = true;
             
@@ -356,10 +367,12 @@ public class SyncDelivery extends Delivery {
         private boolean mNeedsToDiscardEndpoint;
         private int mNMsgsDelivered;
         
+        @Override
         public synchronized void setRollbackOnly() {
             mIsRollbackOnly = true;
         }
         
+        @Override
         public void setRollbackOnly(Exception e) {
             if (e != null) {
                 setRollbackOnly();
@@ -367,6 +380,7 @@ public class SyncDelivery extends Delivery {
             }
         }
         
+        @Override
         public void ack(boolean isRollbackOnly, Message m) throws JMSException {
             if (isRollbackOnly) {
                 setRollbackOnly();
@@ -374,10 +388,12 @@ public class SyncDelivery extends Delivery {
             mSemaphore.release();
         }
         
+        @Override
         public synchronized boolean isRollbackOnly() {
             return mIsRollbackOnly;
         }
         
+        @Override
         public void msgDelivered(boolean wasDelivered) {
             if (wasDelivered) {
                 mNAcksToExpect++;
@@ -385,6 +401,7 @@ public class SyncDelivery extends Delivery {
             }
         }
         
+        @Override
         public void waitForAcks() throws InterruptedException {
             done: for (int i = 0; i < mNAcksToExpect; i++) {
                 for (;;) {
@@ -400,14 +417,17 @@ public class SyncDelivery extends Delivery {
             }
         }
 
+        @Override
         public boolean needsToDiscardEndpoint() {
             return mNeedsToDiscardEndpoint;
         }
 
+        @Override
         public int getNMsgsDelivered() {
             return mNMsgsDelivered;
         }
 
+        @Override
         public void setNeedsToDiscardEndpoint() {
             mNeedsToDiscardEndpoint = true;
         }
@@ -425,7 +445,7 @@ public class SyncDelivery extends Delivery {
      * @return TopicSession or QueueSession class, can be overriden for TopicToQueue
      *  delivery wich requires a unified session
      */
-    protected Class getSessionClass() {
+    protected Class<?> getSessionClass() {
         return mActivation.isTopic() ? TopicSession.class : QueueSession.class;        
     }
     
@@ -531,6 +551,7 @@ public class SyncDelivery extends Delivery {
         /**
          * @see java.lang.Thread#start()
          */
+        @Override
         public void start() {
             // Mark as running
             synchronized (this) {
@@ -751,6 +772,7 @@ public class SyncDelivery extends Delivery {
          * 
          * @see java.lang.Runnable#run()
          */
+        @Override
         public void run() {
             mActivation.enterContext();
             
@@ -839,6 +861,7 @@ public class SyncDelivery extends Delivery {
     /**
      * @see com.stc.jmsjca.core.Delivery#getConfiguredEndpoints()
      */
+    @Override
     public int getConfiguredEndpoints() {
         return mNThreads;
     }
