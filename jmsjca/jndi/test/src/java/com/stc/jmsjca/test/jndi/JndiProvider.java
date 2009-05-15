@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.jndi;
 
 import com.stc.jms.jndispi.InitialContextFactory;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.jndi.RAJNDIResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
@@ -33,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class JndiProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jndi.host";
@@ -132,5 +133,10 @@ public class JndiProvider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "jndi";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RAJNDIResourceAdapter();
     }
 }

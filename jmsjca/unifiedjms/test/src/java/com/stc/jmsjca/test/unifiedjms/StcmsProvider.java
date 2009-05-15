@@ -17,18 +17,20 @@
 package com.stc.jmsjca.test.unifiedjms;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
+import com.stc.jmsjca.unifiedjms.RAUnifiedResourceAdapter;
 
 import java.util.Properties;
 
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class StcmsProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.unified.host";
@@ -108,5 +110,10 @@ public class StcmsProvider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "unifiedjms";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RAUnifiedResourceAdapter();
     }
 }

@@ -17,18 +17,20 @@
 package com.stc.jmsjca.test.wmq;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
+import com.stc.jmsjca.wmq.RAWMQResourceAdapter;
 
 import java.util.Properties;
 
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
@@ -121,5 +123,10 @@ public class WMQProvider extends JMSProvider {
     @Override
     public boolean isMsgPrefixOK() {
         return false;
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RAWMQResourceAdapter();
     }
 }

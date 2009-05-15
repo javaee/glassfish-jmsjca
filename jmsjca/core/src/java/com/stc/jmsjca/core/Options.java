@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public interface Options {
     /**
@@ -516,7 +516,20 @@ public interface Options {
         String SELECTORAND = "selectorand";
     }
     
+    /**
+     * Options to configure interceptors
+     * 
+     * @author fkieviet
+     */
     public interface Interceptor {
+        /**
+         * Service locator file name (normally equates  
+         */
         String SERVICENAME = "jmsjca.interceptor";
+        
+        /**
+         * Prefix for service name locator file
+         */
+        String SERVICEPREFIX = "META-INF/services/";
     }
 }

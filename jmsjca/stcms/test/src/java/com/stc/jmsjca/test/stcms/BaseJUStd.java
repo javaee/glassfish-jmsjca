@@ -30,14 +30,11 @@ import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
-import com.stc.jmsjca.jcacontainer.MDBFactory;
-import com.stc.jmsjca.jcacontainer.XBootstrapContext;
-import com.stc.jmsjca.jcacontainer.XMessageEndpointFactory;
-import com.stc.jmsjca.jcacontainer.XWorkManager;
 import com.stc.jmsjca.stcms.RASTCMSActivationSpec;
 import com.stc.jmsjca.stcms.RASTCMSObjectFactory;
 import com.stc.jmsjca.stcms.RASTCMSResourceAdapter;
 import com.stc.jmsjca.test.core.JMSProvider;
+import com.stc.jmsjca.test.core.MockContainer;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Str;
@@ -79,11 +76,8 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.resource.ResourceException;
 import javax.resource.spi.ActivationSpec;
-import javax.resource.spi.BootstrapContext;
 import javax.resource.spi.ConnectionManager;
-import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.resource.spi.security.PasswordCredential;
-import javax.resource.spi.work.WorkManager;
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -91,7 +85,6 @@ import javax.transaction.xa.XAResource;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -678,6 +671,11 @@ public class BaseJUStd extends XTestBase {
         @Override
         public String getJMSServerType() {
             return "Test";
+        }
+
+        @Override
+        public RAJMSActivationSpec createActivationSpec() {
+            return null;
         }
     }
     
@@ -1777,78 +1775,6 @@ public class BaseJUStd extends XTestBase {
         w0.check(0, 0, 0);
     }
 
-    public class Container {
-        MessageListener mMDB;
-        private XWorkManager mWorkManager;
-        private XBootstrapContext mBC;
-        private MDBFactory mMDBFact;
-        private TestTransactionManager mTxMgr;
-        private MessageEndpointFactory mMEF;
-        private boolean mNoTx;
-
-        public Container(MessageListener mdb) {
-            mMDB = mdb;
-        }
-        
-        public void setMDB(MessageListener mdb) {
-            mMDB = mdb;
-        }
-        
-        public WorkManager getWorkManager() {
-            if (mWorkManager == null) {
-                mWorkManager = new XWorkManager(1);
-            }
-            return mWorkManager;
-        }
-        
-        public BootstrapContext getBootstrapContext() {
-            if (mBC == null) {
-                mBC = new XBootstrapContext(getWorkManager());
-            }
-            return mBC;
-        }
-        
-        public MDBFactory getMDBFactory() { 
-            if (mMDBFact == null) {
-                mMDBFact = new MDBFactory() {
-                    @Override
-                    public Object createMDB() {
-                        return mMDB;
-                    }
-                };
-            }
-            return mMDBFact;
-        }
-        
-        public TestTransactionManager getTransactionManager() {
-            if (mTxMgr == null && !mNoTx) {
-                mTxMgr = new TestTransactionManager();
-                TxMgr.setUnitTestTxMgr(mTxMgr);
-            }
-            return mTxMgr;
-        }
-        
-        public MessageEndpointFactory getMessageEndpointFactory() {
-            if (mMEF == null) {
-                Method m;
-                try {
-                    m = MessageListener.class.getMethod("onMessage",
-                        new Class[] { javax.jms.Message.class });
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                
-                mMEF = new XMessageEndpointFactory(m, MessageListener.class, getMDBFactory(), getTransactionManager());
-            }
-            return mMEF;
-        }
-
-        public void setNoTx() {
-            mNoTx = true;
-        }
-        
-    }
-    
     /**
      * Without batch and with HUA, use a different thread to process a message
      * 
@@ -1878,7 +1804,7 @@ public class BaseJUStd extends XTestBase {
         mcf.setResourceAdapter(ra);
         final QueueConnectionFactory fact = (QueueConnectionFactory) mcf.createConnectionFactory(null);
 
-        final Container c = new Container(null);
+        final MockContainer c = new MockContainer(null);
         
         // An MDB
         final MessageListener mdb = new MessageListener() {
@@ -1935,13 +1861,13 @@ public class BaseJUStd extends XTestBase {
         Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
 
         // RA
-        RASTCMSResourceAdapter ra = new RASTCMSResourceAdapter();
+        RAJMSResourceAdapter ra = new RASTCMSResourceAdapter();
         ra.setConnectionURL(getConnectionURL());
         ra.setUserName(getJMSProvider().getUserName(mServerProperties));
         ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
-        RASTCMSActivationSpec spec = new RASTCMSActivationSpec();
+        RAJMSActivationSpec spec = new RASTCMSActivationSpec();
         spec.setUserName(p.getUserid());
         spec.setPassword(p.getPassword());
         spec.setConcurrencyMode("sync");
@@ -1984,7 +1910,7 @@ public class BaseJUStd extends XTestBase {
         };
 
         try {
-            Container c = new Container(mdb);
+            MockContainer c = new MockContainer(mdb);
             ra.start(c.getBootstrapContext());
             ra.endpointActivation(c.getMessageEndpointFactory(), spec);
             p.setNMessagesToSend(50);
@@ -2065,7 +1991,7 @@ public class BaseJUStd extends XTestBase {
         };
 
         try {
-            Container c = new Container(mdb);
+            MockContainer c = new MockContainer(mdb);
             ra.start(c.getBootstrapContext());
             ra.endpointActivation(c.getMessageEndpointFactory(), spec);
             p.setNMessagesToSend(150);
@@ -2120,7 +2046,7 @@ public class BaseJUStd extends XTestBase {
         };
 
         try {
-            Container c = new Container(mdb);
+            MockContainer c = new MockContainer(mdb);
             ra.start(c.getBootstrapContext());
             ra.endpointActivation(c.getMessageEndpointFactory(), spec);
             p.setNMessagesToSend(150);
@@ -2189,7 +2115,7 @@ public class BaseJUStd extends XTestBase {
         };
 
         try {
-            Container c = new Container(mdb);
+            MockContainer c = new MockContainer(mdb);
             c.setNoTx();
             ra.start(c.getBootstrapContext());
             ra.endpointActivation(c.getMessageEndpointFactory(), spec);

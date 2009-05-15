@@ -41,7 +41,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -446,13 +446,8 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
         return "STCMS";
     }
 
-//    /**
-//     * STCMS *can* enlist in onMessage(), but there are advantages to enlisting in
-//     * run()
-//     * 
-//     * @see com.stc.jmsjca.core.RAJMSObjectFactory#canCCEnlistInOnMessage()
-//     */
-//    public boolean canCCEnlistInOnMessage() {
-//        return false;
-//    }
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RASTCMSActivationSpec();
+    }
 }

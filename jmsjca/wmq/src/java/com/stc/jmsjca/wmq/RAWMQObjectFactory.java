@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -560,5 +560,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         }
         
         return ret;
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RAWMQActivationSpec();
     }
 }

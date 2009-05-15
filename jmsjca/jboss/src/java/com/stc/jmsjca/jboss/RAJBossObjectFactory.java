@@ -37,7 +37,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJBossObjectFactory.class);
@@ -243,5 +243,10 @@ public class RAJBossObjectFactory extends RAJMSObjectFactory implements java.io.
     @Override
     public String getJMSServerType() {
         return "JBOSS";
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RAJBossActivationSpec();
     }
 }

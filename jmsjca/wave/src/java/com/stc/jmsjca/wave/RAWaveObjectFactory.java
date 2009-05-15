@@ -45,7 +45,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  *  
  * @author misc
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWaveObjectFactory.class);
@@ -688,5 +688,10 @@ public class RAWaveObjectFactory extends RAJMSObjectFactory implements java.io.S
         }
         
         return result;
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RAWaveActivationSpec();
     }
 }

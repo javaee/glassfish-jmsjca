@@ -17,7 +17,6 @@
 package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.core.Delivery.ConnectionForMove;
-import com.stc.jmsjca.core.Delivery.DeliveryResults;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -27,7 +26,6 @@ import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
-import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
@@ -43,14 +41,14 @@ import java.util.List;
  * After work is done, it will call back into the originating Delivery to notify
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public class WorkContainer implements javax.resource.spi.work.Work,
     javax.jms.ServerSession, javax.jms.MessageListener {
 
     private static Logger sLog = Logger.getLogger(WorkContainer.class);
     private javax.jms.Session mSession;
-    private MessageEndpoint mEndpoint;
+    private XMessageEndpoint mEndpoint;
     private CCDelivery mDelivery;
     private Object mStateLock = new Object();
     private static final int STATE_IDLE = 0;
@@ -76,7 +74,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * @param conn connection used to create
      * @param mdb mdb
      */
-    public WorkContainer(CCDelivery delivery, MessageEndpoint endpoint, Method method,
+    public WorkContainer(CCDelivery delivery, XMessageEndpoint endpoint, Method method,
         javax.jms.Session session, Connection conn, Delivery.MDB mdb) {
         mDelivery = delivery;
         mEndpoint = endpoint;
@@ -118,7 +116,7 @@ public class WorkContainer implements javax.resource.spi.work.Work,
      * 
      * @param mep new endpoint
      */
-    void setEndpoint(MessageEndpoint mep) {
+    void setEndpoint(XMessageEndpoint mep) {
         mEndpoint = mep;
     }
     

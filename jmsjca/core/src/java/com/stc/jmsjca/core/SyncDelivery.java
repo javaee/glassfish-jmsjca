@@ -26,7 +26,6 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.QueueSession;
 import javax.jms.TopicSession;
-import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAResource;
@@ -463,7 +462,7 @@ public class SyncDelivery extends Delivery {
         private javax.jms.Session mSess;
         private XAResource mXA;
         private MDB mMDB;
-        private MessageEndpoint mEndpoint;
+        private XMessageEndpoint mEndpoint;
         private boolean mRunning;
         private ConnectionForMove mMessageMoveConnection;
         

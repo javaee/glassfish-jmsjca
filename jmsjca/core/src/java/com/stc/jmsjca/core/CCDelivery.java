@@ -28,7 +28,6 @@ import javax.jms.QueueSession;
 import javax.jms.ServerSession;
 import javax.jms.Session;
 import javax.jms.TopicSession;
-import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.resource.spi.work.Work;
 import javax.resource.spi.work.WorkException;
 import javax.resource.spi.work.WorkManager;
@@ -57,7 +56,7 @@ import java.util.List;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -273,7 +272,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                     }
                 }
                 
-                MessageEndpoint m = createMessageEndpoint(xa, s);
+                XMessageEndpoint m = createMessageEndpoint(xa, s);
 
                 if (m == null) {
                     // Stopping
@@ -330,7 +329,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 
                 // Check if endpoint needs to be refreshed
                 if (!ret.hasEndpoint()) {
-                    MessageEndpoint mep = createMessageEndpoint(ret.getXAResource(), ret.getSession());
+                    XMessageEndpoint mep = createMessageEndpoint(ret.getXAResource(), ret.getSession());
                     ret.setEndpoint(mep);
                     if (mep == null) {
                         throw Exc.exc(LOCALE.x("E115: Cannot create endpoint: connector is shutting down"));

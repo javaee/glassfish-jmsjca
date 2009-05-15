@@ -400,6 +400,15 @@
             This file should be in the classpath so that the tests can find the ear files
         </echo>
 
+        <mkdir dir="${jmsjca.module.dir}/META-INF/services"/>
+        <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.interceptor">
+            com.stc.jmsjca.test.core.InterceptorTests$Interceptor1
+            com.stc.jmsjca.test.core.InterceptorTests$Interceptor2
+        </echo>
+        <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.faulty1">
+            com.stc.jmsjca.test.core.nonEx
+        </echo>
+
         <ant antfile="build-${jmsjca.jmsimpl.id}.xml"
              target="compile-test2"
              inheritall="false"

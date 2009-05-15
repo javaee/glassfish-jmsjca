@@ -53,7 +53,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -376,5 +376,10 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
     @Override
     public String getJMSServerType() {
         return "GENERIC";
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RAJNDIActivationSpec();
     }
 }

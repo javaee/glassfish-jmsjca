@@ -43,7 +43,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -460,5 +460,10 @@ java.io.Serializable {
         }
         
         return null;
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RASunOneActivationSpec();
     }
 }

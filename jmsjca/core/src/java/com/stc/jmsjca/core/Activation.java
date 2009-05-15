@@ -19,6 +19,7 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.InterceptorChainBuilder;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -75,7 +76,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -130,6 +131,7 @@ public class Activation extends ActivationBase {
     private RAJMSObjectFactory mObjFactory;
     private String mURL;
     private boolean mStopByConnectorInProgress;
+    private Exception mFailureAtStart;
 
     /**
      * Activation constructor
@@ -420,8 +422,9 @@ public class Activation extends ActivationBase {
                     + "while the connector is in DISCONNECTED mode: {1}", getName(), ex), ex);
                 return;
             } else if (mState == CONNECTING) {
-                sLog.warn(LOCALE.x("E013: [{0}]: the following exception was encountered while initiating or "
-                    + "during message delivery: [{1}]; adapter is already in reconnect mode.", getName(), ex), ex);
+                mFailureAtStart = ex;
+//                sLog.warn(LOCALE.x("E013: [{0}]: the following exception was encountered while initiating or "
+//                    + "during message delivery: [{1}]; adapter is already in reconnect mode.", getName(), ex), ex);
                 return;
             } else if (mState == CONNECTED) {
                 sLog.warn(LOCALE.x("E014: [{0}]: the following exception was encountered while initiating or "
@@ -538,9 +541,31 @@ public class Activation extends ActivationBase {
                 if (System.currentTimeMillis() > tryAgainAt) {
                     try {
                         mDelivery = createDelivery();
+                        
+                        // Problems may occur right after start: capture those in a flag
+                        // Reset the flag first
+                        synchronized (mLock) {
+                            mFailureAtStart = null;
+                        }
+                        
+                        // Start... async errors may occur during or right after start()
                         mDelivery.start();
-                        sLog.info(LOCALE.x("E015: [{0}]: message delivery initiation was successful.", getName()));
-                        setState(CONNECTED);
+
+                        // Give some time for immediate async errors to occur
+                        // Since this is a thread dedicated to starting, this is not
+                        // wastful. This will limit the cycle time of a situation where 
+                        // where an internalDistress systematically happens immediately 
+                        // after start.
+                        Thread.sleep(1000);
+                        
+                        synchronized (mLock) {
+                            // Check for async errors during or right after start 
+                            if (mFailureAtStart != null) {
+                                throw mFailureAtStart;
+                            }
+                            sLog.info(LOCALE.x("E015: [{0}]: message delivery initiation was successful.", getName()));
+                            setState(CONNECTED);
+                        }
                         break;
                     } catch (Exception e) {
                         Exc.checkLinkedException(e);
@@ -898,8 +923,19 @@ public class Activation extends ActivationBase {
             contextname = "{" + mSpec.getContextName() + "}";
         }
         
+        String interceptorStr = "";
+        InterceptorChainBuilder interceptors = null;
+        synchronized (mLock) {
+            if (mDelivery != null) {
+                interceptors = mDelivery.getInterceptors();
+            }
+        }
+        if (interceptors != null && interceptors.hasInterceptors()) {
+            interceptorStr = " <<" + interceptors + ">>";
+        }
+        
         return deliveryType + "-" + consumertype + "(" + mSpec.getDestination() + ")" 
-        + selector + contextname + " @ [" + mURL + "]"; 
+        + selector + contextname + " @ [" + mURL + "]" + interceptorStr; 
     }
     
     /**

@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -1142,4 +1142,9 @@ public abstract class RAJMSObjectFactory {
     public boolean isMsgPrefixOK() {
         return true;
     }
+
+    /**
+     * @return a new and empty activation spec
+     */
+    public abstract RAJMSActivationSpec createActivationSpec();
 }

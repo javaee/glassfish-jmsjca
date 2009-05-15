@@ -17,18 +17,20 @@
 package com.stc.jmsjca.test.wave;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
+import com.stc.jmsjca.wave.RAWaveResourceAdapter;
 
 import java.util.Properties;
 
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WaveProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wave.host";
@@ -114,5 +116,10 @@ public class WaveProvider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "wave";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RAWaveResourceAdapter();
     }
 }

@@ -18,6 +18,8 @@ package com.stc.jmsjca.test.sunone;
 
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.sunone.RASunOneResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
@@ -29,7 +31,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
@@ -120,5 +122,10 @@ public class SunOneProvider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "sunone";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RASunOneResourceAdapter();
     }
 }

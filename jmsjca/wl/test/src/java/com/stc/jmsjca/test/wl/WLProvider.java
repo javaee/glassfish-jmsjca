@@ -17,11 +17,13 @@
 package com.stc.jmsjca.test.wl;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
+import com.stc.jmsjca.wl.RAWLResourceAdapter;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -32,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WLProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wl.host";
@@ -136,5 +138,10 @@ public class WLProvider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "wl";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RAWLResourceAdapter();
     }
 }

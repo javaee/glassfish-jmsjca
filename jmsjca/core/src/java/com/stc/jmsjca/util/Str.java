@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -33,7 +34,7 @@ import java.util.Properties;
  * Provides for easy string formatting
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class Str {
     /**
@@ -402,6 +403,24 @@ public class Str {
                 ret.append(delim);
             }
             ret.append(strs[i]);
+        }
+        return ret.toString();
+    }
+    
+    /**
+     * Concatenates string components
+     * 
+     * @param strs components
+     * @param delim delimeter, e.g. ", "
+     * @return concatenated string
+     */
+    public static String concat(Collection<? extends Object> strs, String delim) {
+        StringBuilder ret = new StringBuilder();
+        for (Object object : strs) {
+            if (ret.length() > 0) {
+                ret.append(delim);
+            }
+            ret.append(object);
         }
         return ret.toString();
     }

@@ -26,26 +26,25 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.QueueSession;
 import javax.jms.TopicSession;
-import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.xa.XAResource;
 
 /**
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
     private static Logger sLog = Logger.getLogger(SerialDelivery.class);
     private javax.jms.Connection mConnection;
     private javax.jms.Session mSession;
-    private MessageEndpoint mEndpoint;
+    private XMessageEndpoint mEndpoint;
     private XAResource mXA;
     private RAJMSObjectFactory mObjFactory;
     private ConnectionForMove mMessageMoveConnection;
     private Delivery.MDB mMDB;
-    private Delivery.DeliveryResults mResult = new DeliveryResults();
+    private DeliveryResults mResult = new DeliveryResults();
 
     private static final Localizer LOCALE = Localizer.get();
 

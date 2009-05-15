@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.3//EN" "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!--
+    This configuration file was written by the eclipse-cs plugin configuration editor
+-->
+<!--
+    Checkstyle-Configuration: jmsjca
+    Description: none
+-->
+<module name="Checker">
+  <property name="severity" value="warning"/>
+  <module name="TreeWalker">
+    <module name="JavadocType">
+      <property name="scope" value="protected"/>
+    </module>
+    <module name="MissingOverride"/>
+    <module name="AnnotationUseStyle"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
+    <module name="LineLength">
+      <property name="max" value="130"/>
+    </module>
+    <module name="JavadocMethod">
+      <property name="scope" value="protected"/>
+      <property name="allowUndeclaredRTE" value="true"/>
+      <property name="allowThrowsTagsForSubclasses" value="true"/>
+      <property name="allowMissingParamTags" value="true"/>
+      <property name="allowMissingThrowsTags" value="true"/>
+      <property name="allowMissingReturnTag" value="true"/>
+      <property name="allowMissingPropertyJavadoc" value="true"/>
+      <property name="logLoadErrors" value="true"/>
+      <property name="suppressLoadErrors" value="true"/>
+    </module>
+    <module name="JavadocStyle">
+      <property name="scope" value="protected"/>
+      <property name="checkFirstSentence" value="false"/>
+    </module>
+    <module name="JavadocVariable">
+      <property name="scope" value="protected"/>
+    </module>
+    <module name="MemberName">
+      <property name="format" value="^[_a-z][a-zA-Z0-9_]*$"/>
+    </module>
+    <module name="LocalVariableName">
+      <property name="format" value="^[_a-z][a-zA-Z0-9_]*$"/>
+    </module>
+    <module name="ConstantName"/>
+    <module name="MethodName"/>
+    <module name="MethodTypeParameterName"/>
+    <module name="PackageName"/>
+    <module name="ParameterName"/>
+    <module name="StaticVariableName"/>
+    <module name="TypeName"/>
+    <module name="AvoidStarImport"/>
+    <module name="GenericWhitespace"/>
+    <module name="NoWhitespaceAfter"/>
+    <module name="NoWhitespaceBefore"/>
+    <module name="MethodParamPad"/>
+    <module name="ParenPad"/>
+    <module name="TypecastParenPad">
+      <property name="tokens" value="RPAREN,TYPECAST"/>
+    </module>
+    <module name="WhitespaceAfter"/>
+    <module name="WhitespaceAround"/>
+    <module name="ModifierOrder"/>
+    <module name="RedundantModifier"/>
+    <module name="LeftCurly">
+      <property name="maxLineLength" value="130"/>
+    </module>
+    <module name="NeedBraces"/>
+    <module name="RightCurly">
+      <property name="option" value="alone"/>
+      <property name="tokens" value="LITERAL_FINALLY,LITERAL_ELSE"/>
+    </module>
+    <module name="RightCurly">
+      <property name="tokens" value="LITERAL_TRY,LITERAL_CATCH,LITERAL_IF"/>
+    </module>
+    <module name="CovariantEquals"/>
+    <module name="DefaultComesLast"/>
+    <module name="EqualsHashCode"/>
+    <module name="ExplicitInitialization"/>
+    <module name="FallThrough"/>
+    <module name="IllegalInstantiation">
+      <property name="classes" value="Boolean, Integer"/>
+    </module>
+    <module name="JUnitTestCase"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="NoClone"/>
+    <module name="NoFinalizer"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="StringLiteralEquality"/>
+    <module name="SuperClone"/>
+    <module name="SuperFinalize"/>
+    <module name="UnnecessaryParentheses"/>
+    <module name="FinalClass"/>
+    <module name="HideUtilityClassConstructor"/>
+    <module name="VisibilityModifier">
+      <property name="protectedAllowed" value="true"/>
+    </module>
+    <module name="ArrayTypeStyle"/>
+  </module>
+  <module name="Header">
+    <property name="header" value="/*\n * The contents of this file are subject to the terms of the Common Development and Distribution License\n * (the &quot;License&quot;). You may not use this file except in compliance with the License.\n *\n * You can obtain a copy of the license at https://glassfish.dev.java.net/public/CDDLv1.0.html.\n * See the License for the specific language governing permissions and limitations under the License.\n *\n * When distributing Covered Code, include this CDDL HEADER in each file and include the License file at\n * https://glassfish.dev.java.net/public/CDDLv1.0.html. If applicable add the following below this\n * CDDL HEADER, with the fields enclosed by brackets &quot;[]&quot; replaced with your own identifying\n * information: Portions Copyright [year] [name of copyright owner]\n */\n"/>
+    <property name="ignoreLines" value="1,2,3,14,15"/>
+  </module>
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
+  </module>
+  <module name="RegexpSingleline">
+    <property name="format" value="\.printStackTrace\(\)"/>
+    <property name="message" value="Not allowed"/>
+  </module>
+  <module name="Translation"/>
+</module>

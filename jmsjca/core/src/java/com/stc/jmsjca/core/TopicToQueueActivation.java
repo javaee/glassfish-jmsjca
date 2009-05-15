@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -208,8 +208,8 @@ public class TopicToQueueActivation extends ActivationBase {
          * @see com.stc.jmsjca.core.Delivery#createMessageEndpoint(javax.transaction.xa.XAResource, javax.jms.Session)
          */
         @Override
-        protected MessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
-            return new Copier(s);
+        protected XMessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
+            return new XMessageEndpoint(new Copier(s), null);
         }
         
         /**
@@ -307,5 +307,15 @@ public class TopicToQueueActivation extends ActivationBase {
                 }
             }
         }
+    }
+
+    @Override
+    public String getName() {
+        String url = getActivationSpec().getConnectionURL();
+        if (url == null || url.length() == 0) {
+            url = getRA().getConnectionURL();
+        }
+        return getActivationSpec().getDestinationType() + " [" + getActivationSpec().getDestination() + "] on [" 
+        + url + "]"; 
     }
 }

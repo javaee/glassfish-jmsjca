@@ -17,6 +17,7 @@
 package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
 
 import java.util.Properties;
 
@@ -85,4 +86,9 @@ public abstract class JMSProvider {
     public boolean isMsgPrefixOK() {
         return true;
     }
+
+    /**
+     * @return a new RA instance
+     */
+    public abstract RAJMSResourceAdapter createRA();
 }

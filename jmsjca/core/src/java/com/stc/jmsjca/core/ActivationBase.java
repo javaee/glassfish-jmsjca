@@ -63,7 +63,7 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class ActivationBase {
     /**
@@ -79,7 +79,6 @@ public abstract class ActivationBase {
     private RAJMSResourceAdapter mRA;
     private MessageEndpointFactory mEndpointFactory;
     private RAJMSActivationSpec mSpec;
-    private String mName;
 
     /**
      * All states in string format (for diagnostics)
@@ -126,8 +125,6 @@ public abstract class ActivationBase {
             url = ra.getConnectionURL();
         }
         mObjFactory = ra.createObjectFactory(url);
-        mName = spec.getDestinationType() + " [" + spec.getDestination() + "] on [" 
-        + url + "]"; 
     }
     
     /**
@@ -205,9 +202,7 @@ public abstract class ActivationBase {
     /**
      * @return a human friendly name
      */
-    public String getName() {
-        return mName;
-    }
+    public abstract String getName();
     
     /**
      * Enters logging context

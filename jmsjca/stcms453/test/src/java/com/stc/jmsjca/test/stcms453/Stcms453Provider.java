@@ -17,6 +17,8 @@
 package com.stc.jmsjca.test.stcms453;
 
 import com.stc.jmsjca.container.EmbeddedDescriptor;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.stcms453.RASTCMS453ResourceAdapter;
 import com.stc.jmsjca.test.core.EndToEndBase;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
@@ -28,7 +30,7 @@ import java.util.Properties;
 /**
  * 
  * @author fkieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class Stcms453Provider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms453.host";
@@ -107,5 +109,10 @@ public class Stcms453Provider extends JMSProvider {
     @Override
     public String getProviderID() {
         return "stcms453";
+    }
+
+    @Override
+    public RAJMSResourceAdapter createRA() {
+        return new RASTCMS453ResourceAdapter();
     }
 }

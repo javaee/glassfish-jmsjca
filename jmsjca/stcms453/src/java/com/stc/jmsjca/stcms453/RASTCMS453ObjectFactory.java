@@ -35,7 +35,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -183,5 +183,10 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
     @Override
     public boolean shouldUseProducerPooling() {
         return true;
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RASTCMS453ActivationSpec();
     }
 }

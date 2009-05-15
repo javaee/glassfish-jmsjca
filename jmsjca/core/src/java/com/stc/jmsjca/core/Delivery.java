@@ -20,6 +20,10 @@ import com.stc.jmsjca.core.RedeliveryHandler.ActionInstruction;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.InterceptorChain;
+import com.stc.jmsjca.util.InterceptorChainBuilder;
+import com.stc.jmsjca.util.InterceptorInfo;
+import com.stc.jmsjca.util.InterceptorLoader;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -51,6 +55,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Baseclass and interface definition of a delivery-strategy. The connector provides
@@ -59,7 +64,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -111,6 +116,7 @@ public abstract class Delivery {
     private Object mTxMgrCacheLock = new Object();
     private boolean mTxFailureLoggedOnce;
     private IdentityHashMap<Thread, String> mThreadsCurrentlyInOnMessage = new IdentityHashMap<Thread, String>();
+    private InterceptorChainBuilder mInterceptorChainBuilder;
     
     
     private static final Localizer LOCALE = Localizer.get();
@@ -548,7 +554,7 @@ public abstract class Delivery {
         mStats = stats;
         mMethod = mActivation.getOnMessageMethod();
         mRedeliveryChecker = new DeliveryActions(a.getActivationSpec(), mStats, 5000);
-
+        
         // Batch
         mBatchSize = a.getActivationSpec().getBatchSize() == null ? 0 : a.getActivationSpec().getBatchSize().intValue();
         
@@ -576,6 +582,10 @@ public abstract class Delivery {
                 throw Exc.rsrcExc(LOCALE.x("E057: TxMgr could not be obtained: {0}", e), e);
             }
         }
+        
+        // Interceptors
+        Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors();
+        mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors);
     }
 
     /**
@@ -586,12 +596,13 @@ public abstract class Delivery {
      * @param s session; this is used in the unusual case of TopicToQueueDelivery
      * @throws Exception on failure
      */
-    protected MessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
+    protected XMessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
         if (sLog.isDebugEnabled()) {
             sLog.debug("Creating message endpoint");
         }
 
-        MessageEndpoint ret = null;
+        MessageEndpoint mep = null;
+        InterceptorChain chain = null;
         long start = System.currentTimeMillis();
         for (;;) {
             if (mActivation.isStopping()) {
@@ -603,7 +614,7 @@ public abstract class Delivery {
             }
 
             try {
-                ret = mActivation.getMessageEndpointFactory().createEndpoint(xa);
+                mep =  mActivation.getMessageEndpointFactory().createEndpoint(xa);
             } catch (UnavailableException ex1) {
                 long now = System.currentTimeMillis();
                 if (now - start > MAX_CREATE_ENDPOINT_TIME) {
@@ -618,13 +629,30 @@ public abstract class Delivery {
                     }
                 }
             }
-            if (ret != null) {
-                mStats.addMessageEndpoint();
-                break;
+            
+            if (mep == null) {
+                // Try again
+                continue;
             }
+            
+            // Create interceptor chain
+            try {
+                chain = mInterceptorChainBuilder.create(mep, mActivation.getOnMessageMethod());
+            } catch (Exception e) {
+                mep.release();
+                mep = null;
+                throw Exc.rsrcExc(LOCALE.x("E217: Failed to create interceptor chain ({0}): {1}", 
+                    mInterceptorChainBuilder, e), e);
+            }
+
+            // Update stats
+            mStats.addMessageEndpoint();
+
+            // At this point the mep != null, and the interceptorchain was created successfully: done
+            break;
         }
 
-        return ret;
+        return new XMessageEndpoint(mep, chain);
     }
     
     /**
@@ -632,7 +660,7 @@ public abstract class Delivery {
      * 
      * @param mep endpoint to release; null is OK
      */
-    protected void release(MessageEndpoint mep) {
+    protected void release(XMessageEndpoint mep) {
         if (mep != null) {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Releasing endpoint");
@@ -748,215 +776,6 @@ public abstract class Delivery {
         public XAResource getXAResource() {
             return mXA;
         }
-        
-    }
-    
-    /**
-     * Encapsulates the result of a call to deliver
-     * 
-     * @author fkieviet
-     */
-    public static class DeliveryResults {
-        private boolean mShouldDiscardEndpoint;
-        private boolean mBeforeDeliveryFailed;
-        private boolean mAfterDeliveryFailed;
-        private boolean mOnMessageFailed;
-        private Exception mException;
-        private boolean mOnMessageWasCalled;
-        private int mNOnMessageWasCalled;
-        private boolean mOnMessageWasBypassed;
-        private boolean mOnMessageSucceeded;
-        private boolean mIsRollbackOnly;
-        
-        /**
-         * Clears the state
-         */
-        public void reset() {
-            mShouldDiscardEndpoint = false;
-            mBeforeDeliveryFailed = false;
-            mAfterDeliveryFailed = false;
-            mIsRollbackOnly = false;
-            mOnMessageFailed = false;
-            mException = null;
-            mOnMessageSucceeded = false;
-            mOnMessageWasCalled = false;
-            mNOnMessageWasCalled = 0;
-            mOnMessageWasBypassed = false;
-        }
-        
-        /**
-         * Clears all state except state concerning transactions
-         */
-        public void resetDeliveryState() {
-            mOnMessageFailed = false;
-            mException = null;
-            mOnMessageSucceeded = false;
-            mOnMessageWasCalled = false;
-            mOnMessageWasBypassed = false;
-        }
-        
-        /**
-         * Getter for onMessageSucceeded
-         *
-         * @return boolean
-         */
-        public boolean getOnMessageSucceeded() {
-            return mOnMessageSucceeded;
-        }
-        /**
-         * Setter for onMessageSucceeded
-         *
-         * @param onMessageSucceeded booleanThe onMessageSucceeded to set.
-         */
-        public void setOnMessageSucceeded(boolean onMessageSucceeded) {
-            mOnMessageSucceeded = onMessageSucceeded;
-        }
-        /**
-         * Getter for afterDeliveryFailed
-         *
-         * @return boolean
-         */
-        public boolean getAfterDeliveryFailed() {
-            return mAfterDeliveryFailed;
-        }
-        /**
-         * Setter for afterDeliveryFailed
-         *
-         * @param afterDeliveryFailed booleanThe afterDeliveryFailed to set.
-         */
-        public void setAfterDeliveryFailed(boolean afterDeliveryFailed) {
-            mAfterDeliveryFailed = afterDeliveryFailed;
-        }
-        /**
-         * Getter for beforeDeliveryFailed
-         *
-         * @return boolean
-         */
-        public boolean getBeforeDeliveryFailed() {
-            return mBeforeDeliveryFailed;
-        }
-        /**
-         * Setter for beforeDeliveryFailed
-         *
-         * @param beforeDeliveryFailed booleanThe beforeDeliveryFailed to set.
-         */
-        public void setBeforeDeliveryFailed(boolean beforeDeliveryFailed) {
-            mBeforeDeliveryFailed = beforeDeliveryFailed;
-        }
-        /**
-         * Getter for exception
-         *
-         * @return Exception
-         */
-        public Exception getException() {
-            return mException;
-        }
-        /**
-         * Setter for exception
-         *
-         * @param exception ExceptionThe exception to set.
-         */
-        public void setException(Exception exception) {
-            mException = exception;
-        }
-        /**
-         * Getter for onMessageFailed
-         *
-         * @return boolean
-         */
-        public boolean getOnMessageFailed() {
-            return mOnMessageFailed;
-        }
-        /**
-         * Setter for onMessageFailed
-         *
-         * @param onMessageFailed booleanThe onMessageFailed to set.
-         */
-        public void setOnMessageFailed(boolean onMessageFailed) {
-            mOnMessageFailed = onMessageFailed;
-        }
-        /**
-         * Getter for shouldDiscardEndpoint
-         *
-         * @return boolean
-         */
-        public boolean getShouldDiscardEndpoint() {
-            return mShouldDiscardEndpoint;
-        }
-        /**
-         * Setter for shouldDiscardEndpoint
-         *
-         * @param shouldDiscardEndpoint booleanThe shouldDiscardEndpoint to set.
-         */
-        public void setShouldDiscardEndpoint(boolean shouldDiscardEndpoint) {
-            mShouldDiscardEndpoint = shouldDiscardEndpoint;
-        }
-
-        /**
-         * Getter for onMessageWasBypassed
-         *
-         * @return boolean
-         */
-        public boolean getOnMessageWasBypassed() {
-            return mOnMessageWasBypassed;
-        }
-
-        /**
-         * Setter for onMessageWasBypassed
-         *
-         * @param onMessageWasBypassed booleanThe onMessageWasBypassed to set.
-         */
-        public void setOnMessageWasBypassed(boolean onMessageWasBypassed) {
-            mOnMessageWasBypassed = onMessageWasBypassed;
-        }
-
-        /**
-         * Getter for onMessageWasCalled
-         *
-         * @return boolean
-         */
-        public boolean getOnMessageWasCalled() {
-            return mOnMessageWasCalled;
-        }
-
-        /**
-         * Setter for onMessageWasCalled
-         *
-         * @param onMessageWasCalled booleanThe onMessageWasCalled to set.
-         */
-        public void setOnMessageWasCalled(boolean onMessageWasCalled) {
-            mOnMessageWasCalled = onMessageWasCalled;
-            if (onMessageWasCalled) {
-                mNOnMessageWasCalled++;
-            }
-        }
-
-        /**
-         * Getter for isRollbackOnly
-         *
-         * @return boolean
-         */
-        public boolean getIsRollbackOnly() {
-            return mIsRollbackOnly;
-        }
-
-        /**
-         * Setter for isRollbackOnly
-         *
-         * @param isRollbackOnly booleanThe isRollbackOnly to set.
-         */
-        public void setRollbackOnly(boolean isRollbackOnly) {
-            mIsRollbackOnly = isRollbackOnly;
-        }
-
-        /**
-         * Getter for nOnMessageWasCalled
-         *
-         * @return int
-         */
-        public int getNOnMessageWasCalled() {
-            return mNOnMessageWasCalled;
-        }
     }
     
     /**
@@ -1045,11 +864,11 @@ public abstract class Delivery {
      * @param rethrowSystemException throw instead of log system failures (tx mgr only)
      * @throws Exception tx exceptions
      */
-    public void beforeDelivery(DeliveryResults result, MessageEndpoint target, 
+    public void beforeDelivery(DeliveryResults result, XMessageEndpoint target, 
         boolean rethrowSystemException) throws Exception {
         if (mActivation.isCMT()) {
             try {
-                target.beforeDelivery(mMethod);
+                target.getEndpoint().beforeDelivery(mMethod);
             } catch (Exception e) {
                 result.setBeforeDeliveryFailed(true);
                 result.setShouldDiscardEndpoint(true);
@@ -1080,7 +899,7 @@ public abstract class Delivery {
      * @throws Exception tx exceptions 
      */
     public void afterDelivery(DeliveryResults result, ConnectionForMove connectionForMove, 
-        MessageEndpoint target, Delivery.MDB mdb, boolean rethrowSystemException) throws Exception {
+        XMessageEndpoint target, Delivery.MDB mdb, boolean rethrowSystemException) throws Exception {
 
         if (!mActivation.isCMT() || result.getBeforeDeliveryFailed()) {
             return;
@@ -1091,7 +910,7 @@ public abstract class Delivery {
                 if (result.getIsRollbackOnly()) {
                     getTransactionNotNull().setRollbackOnly();
                 }
-                target.afterDelivery();
+                target.getEndpoint().afterDelivery();
             } catch (Exception e) {
                 result.setAfterDeliveryFailed(true);
                 result.setShouldDiscardEndpoint(true);
@@ -1141,7 +960,7 @@ public abstract class Delivery {
      * @param target MEP
      */
     public void afterDeliveryNoXA(DeliveryResults result, javax.jms.Session session, 
-        ConnectionForMove connectionForMove, MessageEndpoint target) {
+        ConnectionForMove connectionForMove, XMessageEndpoint target) {
 
         if (mActivation.isCMT()) {
             return;
@@ -1222,7 +1041,7 @@ public abstract class Delivery {
      * @param rethrowSystemExceptions throw instead of log system failures (tx mgr only)
      * @throws Exception rollback exceptions
      */
-    public void deliverToEndpoint(DeliveryResults result, ConnectionForMove connectionForMove, MessageEndpoint target,
+    public void deliverToEndpoint(DeliveryResults result, ConnectionForMove connectionForMove, XMessageEndpoint target,
         javax.jms.Message m, boolean rethrowSystemExceptions) throws Exception {
         if (sLog.isDebugEnabled()) {
             sLog.debug("Delivering message to endpoint");
@@ -1244,7 +1063,7 @@ public abstract class Delivery {
                 try {
                     registerThreadAsInOnMessage(true);
                     result.setOnMessageWasCalled(true);
-                    ((javax.jms.MessageListener) target).onMessage(m);
+                    target.onMessage(m);
                     result.setOnMessageSucceeded(true);
                 } catch (RuntimeException ex) {
                     Exc.fixup(ex);
@@ -1437,5 +1256,12 @@ public abstract class Delivery {
 
             return false;
         }
+    }
+
+    /**
+     * @return interceptors
+     */
+    public InterceptorChainBuilder getInterceptors() {
+        return mInterceptorChainBuilder;
     }
 }

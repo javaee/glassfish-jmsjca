@@ -62,7 +62,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -473,5 +473,10 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     @Override
     public boolean shouldCacheConnectionFactories() {
         return false;
+    }
+
+    @Override
+    public RAJMSActivationSpec createActivationSpec() {
+        return new RAWLActivationSpec();
     }
 }
