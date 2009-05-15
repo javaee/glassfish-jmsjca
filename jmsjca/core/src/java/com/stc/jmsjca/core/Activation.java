@@ -76,7 +76,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -556,7 +556,7 @@ public class Activation extends ActivationBase {
                         // wastful. This will limit the cycle time of a situation where 
                         // where an internalDistress systematically happens immediately 
                         // after start.
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                         
                         synchronized (mLock) {
                             // Check for async errors during or right after start 

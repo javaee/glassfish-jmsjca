@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * 
  * @author fkieviet, cye
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  */
 public abstract class QueueEndToEnd extends EndToEndBase {
 
@@ -554,7 +554,7 @@ public abstract class QueueEndToEnd extends EndToEndBase {
                 
                 int nstart = mbean.xgetNMessages();
 
-                final int N = 1250;
+                final int N = 1000;
 
                 // Send messages
                 source.sendBatch(N, 0, "");
