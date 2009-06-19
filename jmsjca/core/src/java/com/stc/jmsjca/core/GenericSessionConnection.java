@@ -18,6 +18,7 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.Logger;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionMetaData;
@@ -33,10 +34,11 @@ import java.util.Properties;
  * dependencies are there outside of the JMS spec.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class GenericSessionConnection extends SessionConnection {
     private static final Localizer LOCALE = Localizer.get();
+    private static Logger sLog = Logger.getLogger(GenericSessionConnection.class.getName());
 
     /**
      * mConnection
@@ -73,28 +75,37 @@ public class GenericSessionConnection extends SessionConnection {
      * @throws JMSException failure
      */
     public GenericSessionConnection(Object connectionFactory, RAJMSObjectFactory objfact,
-        RAJMSResourceAdapter ra, XManagedConnection mc,
-        XConnectionRequestInfo descr, boolean isXa,
-        boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
+        RAJMSResourceAdapter ra, XManagedConnection mc, XConnectionRequestInfo descr,
+        boolean isXa, boolean isTransacted, int acknowledgmentMode, Class<?> sessionClass)
         throws JMSException {
+        
+        try {
+            mConFact = connectionFactory;
+            mObjFact = objfact;
+            mRA = ra;
+            mMC = mc;
+            mDescr = descr;
+            mSessionClass = sessionClass;
+            mIsXA = isXa;
+            mIsTransacted = isTransacted;
+            mAcknowledgMode = acknowledgmentMode;
 
-        mConFact = connectionFactory;
-        mObjFact = objfact;
-        mRA = ra;
-        mMC = mc;
-        mDescr = descr;
-        mSessionClass = sessionClass;
-        mIsXA = isXa;
-        mIsTransacted = isTransacted;
-        mAcknowledgMode = acknowledgmentMode;
+            mConnection = mObjFact.createConnection(mConFact, mDescr.getDomain(isXa),
+                null, mRA, mc.getUserid(), mc.getPassword());
+            if (mDescr.getClientID() != null) {
+                mObjFact.setClientID(mConnection, mDescr.getClientID());
+            }
+            mSession = mObjFact.createSession(mConnection, isXa, sessionClass, mRA, null,
+                isTransacted, acknowledgmentMode);
 
-        mConnection = mObjFact.createConnection(mConFact, mDescr.getDomain(isXa), null,
-            mRA, mc.getUserid(), mc.getPassword());
-        if (mDescr.getClientID() != null) {
-            mObjFact.setClientID(mConnection, mDescr.getClientID());
+            sLog.debug("GenericSessionConnection created");
+        } catch (JMSException e) {
+            Exc.checkLinkedException(e);
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("GenericSessionCreation failed: " + e, e);
+            }
+            throw e;
         }
-        mSession = mObjFact.createSession(mConnection, isXa, sessionClass, mRA, null, isTransacted,
-            acknowledgmentMode);
     }
 
     /**
@@ -152,21 +163,50 @@ public class GenericSessionConnection extends SessionConnection {
      */
     @Override
     public void destroy() throws JMSException {
-        try {
-            // Closing the session is necessary for MQSeries: for that JMS server it's
-            // not sufficient to just close the connection.
-            if (mSession != null) {
+        sLog.debug("Destroying GenericSessionConnection");
+        
+        Exception sessionException = null;
+        Exception connectionException = null;
+        
+        // Closing the session is necessary for MQSeries: for that JMS server it's
+        // not sufficient to just close the connection.
+        if (mSession != null) {
+            try {
                 mSession.close();
                 mSession = null;
+            } catch (Exception e) {
+                Exc.checkLinkedException(e);
+                sessionException = e;
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Session could not be closed: " + e, e);
+                }
             }
-        } finally {
-            // Make sure that the connection is closed even if session.close
-            // throws an exception. If close() throws an exception, this will
-            // overwrite the exception thrown from session.close, which is fine.
-            if (mConnection != null) {
+        }
+        
+        // Close connection
+        if (mConnection != null) {
+            try {
                 mConnection.close();
                 mConnection = null;
+            } catch (Exception e) {
+                Exc.checkLinkedException(e);
+                connectionException = e;
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Connection could not be closed: " + e, e);
+                }
             }
+        }
+        
+        // Handle exceptions
+        if (sessionException != null || connectionException != null) {
+            // Propagate one exception, preference for session
+            Exception trace = sessionException != null ? sessionException : connectionException;
+            
+            // Record both exceptions
+            String msgExc = "session exception=[" + sessionException + "]; connection exception=[" + connectionException + "]";
+            
+            throw Exc.jmsExc(LOCALE.x("E094: This {0} could not be closed properly: {1}", 
+                this.getClass().getName(), msgExc), trace);
         }
     }
 

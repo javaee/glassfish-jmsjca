@@ -43,7 +43,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements
 java.io.Serializable {
@@ -433,35 +433,6 @@ java.io.Serializable {
         return "SUNONE";
     }
     
-    /**
-     * @param k
-     * @return
-     */
-    public String badMethod(int k) {
-        for (int i = 0; i < 10; i++) {
-            badMethod(10);
-        }
-        for (k = 0; k < 10; k++) {
-            // 
-        }
-        
-        if (4 == 5) {
-            //
-        } else {
-            
-        }
-        
-        try { 
-            
-        } catch (Exception e) {
-            
-        } finally {
-       
-        }
-        
-        return null;
-    }
-
     @Override
     public RAJMSActivationSpec createActivationSpec() {
         return new RASunOneActivationSpec();

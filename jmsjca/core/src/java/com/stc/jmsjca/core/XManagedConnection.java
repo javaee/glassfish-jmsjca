@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
@@ -56,7 +57,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -291,9 +292,12 @@ public class XManagedConnection implements ManagedConnection {
             try {
                 mJSession.destroy();
             } catch (JMSException ex) {
-                throw Exc.rsrcExc(LOCALE.x("E087: Error while closing session: {0}", ex), ex);
+                LocalizedString msg = LOCALE.x("E087: Error while closing session: {0}", ex);
+                sLog.warn(msg);
+                throw Exc.rsrcExc(msg, ex);
+            } finally {
+                mJSession = null;
             }
-            mJSession = null;
         }
         mManagedConnectionFactory.notifyMCDestroyed(this);
     }
