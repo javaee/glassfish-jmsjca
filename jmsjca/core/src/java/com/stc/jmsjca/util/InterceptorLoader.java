@@ -40,7 +40,7 @@ import java.util.Set;
  * interceptors should be listed in a file in META-INF/services. The name of the file should
  * be the service name. There is a default for that, and this can be overridden.
  * 
- * @see Options.Interceptor#SERVICENAME
+ * @see Options.Interceptor#DEFAULT_SERVICENAME
  *  
  * @author fkieviet
  */
@@ -92,16 +92,6 @@ public final class InterceptorLoader {
         for (; toadd.hasMoreElements();) {
             addto.add(toadd.nextElement());
         }
-    }
-    
-    /**
-     * Loads interceptor classes through the service provider mechanism
-     * 
-     * @return classes
-     * @throws Exception propagated
-     */
-    public static Set<InterceptorInfo> getInterceptors() throws Exception {
-        return getInterceptors(Options.Interceptor.SERVICENAME);
     }
     
     /**

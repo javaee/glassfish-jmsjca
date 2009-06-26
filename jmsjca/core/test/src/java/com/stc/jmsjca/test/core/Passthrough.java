@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -76,6 +76,7 @@ public abstract class Passthrough {
     private String mTopic1DurableName2 = "T1SUB2";
     private String mTopic1DurableName3 = "T1SUB3";
     private JMSProvider mProvider;
+    private int mMultiplier = 1;
     
     /**
      * @return UserId
@@ -592,15 +593,15 @@ public abstract class Passthrough {
                 if (readbackCount[j] == 0) {
                     nFound0++;
                     failure = true;
-                } else if (readbackCount[j] == 1) {
+                } else if (readbackCount[j] == mMultiplier) {
                     nFound1++;
                 } else {
                     nFoundMore++;
                     failure = true;
                 }
             }
-            String countFailures = "bins with zero: " + nFound0 + "; bins with one "
-                + nFound1 + "; bins with more: " + nFoundMore + ";";
+            String countFailures = "bins with too few: " + nFound0 + "; bins with correct number: "
+                + nFound1 + "; bins with too many: " + nFoundMore + ";";
             if (nFound0 < 10) {
                 countFailures += " missing: (";
                 for (int j = 0; j < readbackCount.length; j++) {
@@ -707,6 +708,7 @@ public abstract class Passthrough {
                     String checkFail = mMessageGenerator.checkMessage(m, iRB, iBatchRB);
                     if (checkFail != null) {
                         System.out.println("Message check failure: " + checkFail);
+                        failures.add(checkFail);
                         nFailures++;
                     }
                 } catch (JMSException e) {
@@ -1597,4 +1599,22 @@ public abstract class Passthrough {
      * @throws Exception fault
      */
     public abstract void removeDurableSubscriber(String clientID, String t12, String subscriptionName) throws Exception;
+
+    /**
+     * Getter for multiplier
+     *
+     * @return int
+     */
+    public final int getMultiplier() {
+        return mMultiplier;
+    }
+
+    /**
+     * Setter for multiplier
+     *
+     * @param multiplier intThe multiplier to set.
+     */
+    public final void setMultiplier(int multiplier) {
+        mMultiplier = multiplier;
+    }
 }

@@ -18,11 +18,17 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.InterceptorChain;
+import com.stc.jmsjca.util.InterceptorUtil;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A wrapper around a javax.jms.MessageConsumer; this wrapper is given out to the
@@ -31,7 +37,7 @@ import javax.jms.MessageProducer;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class WMessageProducer implements MessageProducer {
     /**
@@ -39,6 +45,7 @@ public class WMessageProducer implements MessageProducer {
      */
     protected JProducer mMgr;
     private MessageProducer mDelegate;
+    private InterceptorChain mInterceptorChain;
     private static final Localizer LOCALE = Localizer.get();
 
     /**
@@ -50,6 +57,7 @@ public class WMessageProducer implements MessageProducer {
     public WMessageProducer(JProducer mgr, MessageProducer delegate) {
         mMgr = mgr;
         mDelegate = delegate;
+        mInterceptorChain =  mMgr.getSession().getManagedConnection().getInterceptorChain();
     }
 
     /**
@@ -268,6 +276,8 @@ public class WMessageProducer implements MessageProducer {
             throw e;
         }
     }
+    
+    private static final Method SEND1 = InterceptorUtil.getMethod(MessageProducer.class, "send", Message.class);
 
     /**
      * send
@@ -283,13 +293,21 @@ public class WMessageProducer implements MessageProducer {
             if (message instanceof Unwrappable) {
                 message = (Message) ((Unwrappable) message).getWrappedObject();
             }
-            mDelegate.send(message);
+            if (mInterceptorChain == null) {
+                mDelegate.send(message);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND1, contextData, message);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method SEND4 = InterceptorUtil.getMethod(MessageProducer.class, "send"
+        , Message.class, int.class, int.class, long.class);
 
     /**
      * send
@@ -309,13 +327,21 @@ public class WMessageProducer implements MessageProducer {
             if (message instanceof Unwrappable) {
                 message = (Message) ((Unwrappable) message).getWrappedObject();
             }
-            mDelegate.send(message, deliveryMode, priority, timeToLive);
+            if (mInterceptorChain == null) {
+                mDelegate.send(message, deliveryMode, priority, timeToLive);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND4, contextData, message, deliveryMode, priority, timeToLive);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method SEND2 = InterceptorUtil.getMethod(MessageProducer.class
+        , "send", Destination.class, Message.class);
 
     /**
      * send
@@ -335,13 +361,21 @@ public class WMessageProducer implements MessageProducer {
             message = (Message) ((Unwrappable) message).getWrappedObject();
         }
         try {
-            mDelegate.send(destination, message);
+            if (mInterceptorChain == null) {
+                mDelegate.send(destination, message);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND2, contextData, destination, message);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+    
+    private static final Method SEND5 = InterceptorUtil.getMethod(MessageProducer.class, "send"
+        , Destination.class, Message.class, int.class, int.class, long.class);
 
     /**
      * send
@@ -365,7 +399,13 @@ public class WMessageProducer implements MessageProducer {
             message = (Message) ((Unwrappable) message).getWrappedObject();
         }
         try {
-            mDelegate.send(destination, message, deliveryMode, priority, timeToLive);
+            if (mInterceptorChain == null) {
+                mDelegate.send(destination, message, deliveryMode, priority, timeToLive);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND5, contextData, destination
+                    , message, deliveryMode, priority, timeToLive);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);

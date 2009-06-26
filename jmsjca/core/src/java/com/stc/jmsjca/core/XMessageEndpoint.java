@@ -23,6 +23,10 @@ import com.stc.jmsjca.util.InterceptorChain;
 import javax.jms.Message;
 import javax.resource.spi.endpoint.MessageEndpoint;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Encapsulates an endpoint plus interceptors
  * 
@@ -32,15 +36,17 @@ public class XMessageEndpoint {
     private static final Localizer LOCALE = Localizer.get();
     private MessageEndpoint mEndpoint;
     private InterceptorChain mInterceptorChain;
+    private Method mTargetMethod;
     
     /**
      * Constructor
      * 
-     * @param target
+     * @param targetEndpoint
      * @param interceptorChain may be null
      */
-    public XMessageEndpoint(MessageEndpoint target, InterceptorChain interceptorChain) {
-        mEndpoint = target;
+    public XMessageEndpoint(MessageEndpoint targetEndpoint, Method targetMethod, InterceptorChain interceptorChain) {
+        mEndpoint = targetEndpoint;
+        mTargetMethod = targetMethod;
         mInterceptorChain = interceptorChain;
     }
     
@@ -54,11 +60,15 @@ public class XMessageEndpoint {
             ((javax.jms.MessageListener) mEndpoint).onMessage(m);
         } else {
             try {
-                mInterceptorChain.invoke(m);
+                // Create context data map
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                contextData.put(Options.Interceptor.KEY_MESSAGE, m);
+                
+                mInterceptorChain.invoke(mEndpoint, mTargetMethod, contextData, m);
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
-                throw Exc.rtexc(LOCALE.x("E216: Unexpected checked exception: {0}", e), e);
+                throw Exc.rtexc(LOCALE.x("E216: a checked exception was thrown from an interceptor: {0}", e), e);
             }
         }
     }

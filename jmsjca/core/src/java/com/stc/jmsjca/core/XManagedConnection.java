@@ -19,6 +19,7 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.LocalizedString;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.InterceptorChain;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
@@ -57,7 +58,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -74,6 +75,7 @@ public class XManagedConnection implements ManagedConnection {
     private String mUserid;
     private String mPassword;
     private long mLastUsedSuccessfullyAt;
+    private InterceptorChain mInterceptorChain;
 
     private static final Localizer LOCALE = Localizer.get();
 
@@ -88,6 +90,13 @@ public class XManagedConnection implements ManagedConnection {
     public XManagedConnection(XManagedConnectionFactory mcf, Subject subject,
         XConnectionRequestInfo descr) throws javax.resource.ResourceException {
         mManagedConnectionFactory = mcf;
+        
+        // Instantiate interceptors early to avoid connection leaks
+        try {
+            mInterceptorChain = mcf.getInterceptorChainBuilder().create();
+        } catch (Exception e) {
+            throw Exc.rsrcExc(LOCALE.x("E219: Could not instantiate interceptors: {0}", e), e);
+        }
         
         if (descr == null) {
             // This may be null during XA recovery; create a default one that will
@@ -132,6 +141,11 @@ public class XManagedConnection implements ManagedConnection {
                 try {
                     mXAResource = new PseudoXAResource((Session) mJSession.getDelegate());
                 } catch (JMSException e) {
+                    try {
+                        mJSession.destroy();
+                    } catch (JMSException ignore) {
+                        // ignore
+                    }
                     throw Exc.rsrcExc(LOCALE.x("E086: Could not create pseudo XAResource: {0}", e), e);
                 }
         } else {
@@ -652,5 +666,12 @@ public class XManagedConnection implements ManagedConnection {
      */
     public String getUserid() {
         return mUserid;
+    }
+
+    /**
+     * @return interceptor chain (can be null)
+     */
+    public InterceptorChain getInterceptorChain() {
+        return mInterceptorChain;
     }
 }

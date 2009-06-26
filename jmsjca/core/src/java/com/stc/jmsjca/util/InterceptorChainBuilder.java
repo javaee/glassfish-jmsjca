@@ -16,7 +16,6 @@
 
 package com.stc.jmsjca.util;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,17 +43,21 @@ public class InterceptorChainBuilder {
      * 
      * @param endpoint
      * @param endpointMethod
-     * @return new chain
+     * @return new chain if there are interceptors, or null if none
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      */
-    public InterceptorChain create(Object endpoint, Method endpointMethod) throws InstantiationException, IllegalAccessException {
+    public InterceptorChain create() throws InstantiationException, IllegalAccessException {
+        if (mInfos.isEmpty()) {
+            return null;
+        }
+        
         List<InterceptorInstance> instances = new ArrayList<InterceptorInstance>();
         for (InterceptorInfo info : mInfos) {
             InterceptorInstance inst = new InterceptorInstance(info);
             instances.add(inst);
         }
-        return new InterceptorChain(instances, endpoint, endpointMethod);
+        return new InterceptorChain(instances);
     }
     
     /**

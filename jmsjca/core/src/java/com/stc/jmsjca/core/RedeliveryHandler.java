@@ -151,7 +151,7 @@ import java.util.regex.Pattern;
  * 
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class RedeliveryHandler {
     private static Logger sLog = Logger.getLogger(RedeliveryHandler.class);
@@ -1363,13 +1363,13 @@ public abstract class RedeliveryHandler {
             enc.mEncActionsHaveChanged = false;
         
         // Move to next action? E.g. nextaction.at = 11, ienc = 11
-        if (cursor < (enc.mEncActions.length - 1)) {
+            if (cursor < (enc.mEncActions.length - 1)) {
                 ExecutableAction next = enc.mEncActions[cursor + 1];
                 if (next.getInstruction().getAt() == ienc) {
-                enc.setActionCursor(cursor + 1);
-                action = next;
+                    enc.setActionCursor(cursor + 1);
+                    action = next;
+                }
             }
-        }
         }
         
         try {

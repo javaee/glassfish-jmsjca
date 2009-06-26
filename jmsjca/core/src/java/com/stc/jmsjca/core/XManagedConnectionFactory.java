@@ -19,6 +19,9 @@ package com.stc.jmsjca.core;
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.InterceptorChainBuilder;
+import com.stc.jmsjca.util.InterceptorInfo;
+import com.stc.jmsjca.util.InterceptorLoader;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
@@ -52,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -103,7 +106,8 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private transient TestAllocator mAllocator;
     
     // Caching password credentials; key=Subject; value=PasswordCredential 
-    private transient IdentityHashMap<Subject, PasswordCredential> mCredentialCache; 
+    private transient IdentityHashMap<Subject, PasswordCredential> mCredentialCache;
+    private transient InterceptorChainBuilder mInterceptorChainBuilder; 
     private static final int MAXCREDENTIALCACHE = 50;
 
     private static final Localizer LOCALE = Localizer.get();
@@ -972,5 +976,19 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      */
     public void setIdleTimeout(String idleTimeout) {
         internalSetIdleTimeout(Integer.parseInt(idleTimeout));
+    }
+    
+    /**
+     * @return interceptorChainBuilder
+     * @throws Exception on load failure
+     */
+    public InterceptorChainBuilder getInterceptorChainBuilder() throws Exception {
+        if (mInterceptorChainBuilder == null) {
+            // Interceptors
+            String serviceName = mOptions.getProperty(Options.Interceptor.SERVICENAME, Options.Interceptor.DEFAULT_SERVICENAME);
+            Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(serviceName);
+            mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors);
+        }
+        return mInterceptorChainBuilder;
     }
 }

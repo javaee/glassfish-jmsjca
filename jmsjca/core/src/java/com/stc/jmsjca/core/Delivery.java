@@ -64,7 +64,7 @@ import java.util.Set;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -566,11 +566,12 @@ public abstract class Delivery {
             }
         }
 
+        // Unpack Options
+        Properties p = new Properties();
+        mActivation.getObjectFactory().getProperties(p, mActivation.getRA(), 
+            mActivation.getActivationSpec(), null, null);
         // Get TxMgr
         if (mActivation.isCMT()) {
-            Properties p = new Properties();
-            mActivation.getObjectFactory().getProperties(p, mActivation.getRA(), 
-                mActivation.getActivationSpec(), null, null);
             String txMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
             txMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, txMgrLocatorClass);
             try {
@@ -584,7 +585,8 @@ public abstract class Delivery {
         }
         
         // Interceptors
-        Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors();
+        String serviceName = p.getProperty(Options.Interceptor.SERVICENAME, Options.Interceptor.DEFAULT_SERVICENAME);
+        Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(serviceName);
         mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors);
     }
 
@@ -637,7 +639,7 @@ public abstract class Delivery {
             
             // Create interceptor chain
             try {
-                chain = mInterceptorChainBuilder.create(mep, mActivation.getOnMessageMethod());
+                chain = mInterceptorChainBuilder.create();
             } catch (Exception e) {
                 mep.release();
                 mep = null;
@@ -652,7 +654,7 @@ public abstract class Delivery {
             break;
         }
 
-        return new XMessageEndpoint(mep, chain);
+        return new XMessageEndpoint(mep, mMethod, chain);
     }
     
     /**

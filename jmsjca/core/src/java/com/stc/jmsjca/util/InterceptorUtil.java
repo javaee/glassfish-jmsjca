@@ -14,21 +14,32 @@
  * Copyright 2003-2007 Sun Microsystems, Inc. All Rights Reserved.
  */
 
-package com.stc.jmsjca.test.sunone;
+package com.stc.jmsjca.util;
 
-import com.stc.jmsjca.test.core.InterceptorTests;
-import com.stc.jmsjca.test.core.JMSProvider;
+import java.lang.reflect.Method;
 
 /**
+ * Generic utilities used for interceptors
+ * 
  * @author fkieviet
  */
-public class InterceptorTestsSunOneEar1 extends InterceptorTests {
-
+public final class InterceptorUtil {
+    private InterceptorUtil() {
+    }
+    
     /**
-     * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
+     * An alternative to getMethod that doesn't throw checked exceptions
+     * 
+     * @param clazz class to look up on
+     * @param name name of the method
+     * @param parameters signature
+     * @return method
      */
-    @Override
-    public JMSProvider getJMSProvider() {
-        return new SunOneProvider();
+    public static Method getMethod(Class<?> clazz, String name, Class<?>... parameters) {
+        try {
+            return clazz.getMethod(name, parameters);
+        } catch (Exception e) {
+            throw new RuntimeException("Method not found: " + e, e);
+        }
     }
 }

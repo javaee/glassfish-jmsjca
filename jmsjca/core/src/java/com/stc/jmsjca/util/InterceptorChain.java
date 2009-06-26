@@ -16,10 +16,13 @@
 
 package com.stc.jmsjca.util;
 
-import javax.interceptor.InvocationContext;
+import com.stc.jmsjca.localization.Localizer;
 
+import javax.interceptor.InvocationContext;
+import javax.jms.JMSException;
+
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +35,7 @@ import java.util.Map;
  */
 public class InterceptorChain {
     private List<InterceptorInstance> mInterceptors;
-    private Object mEndpoint;
-    private Method mEndpointMethod;
+    private static final Localizer LOCALE = Localizer.get();
 
     /**
      * Constructor
@@ -42,11 +44,9 @@ public class InterceptorChain {
      * @param endpoint
      * @param endpointMethod
      */
-    public InterceptorChain(List<InterceptorInstance> interceptors, Object endpoint, Method endpointMethod) {
+    public InterceptorChain(List<InterceptorInstance> interceptors) {
         super();
         mInterceptors = interceptors;
-        mEndpoint = endpoint;
-        mEndpointMethod = endpointMethod;
     }
 
     /**
@@ -58,7 +58,9 @@ public class InterceptorChain {
     public class XInvocationContext implements InvocationContext {
         private Iterator<InterceptorInstance> mIterator;
         private Object[] mParameters;
-        private Map<String, Object> mContextData = new HashMap<String, Object>();
+        private Map<String, Object> mContextData;
+        private Method mEndpointMethod;
+        private Object mEndpoint;
 
         /**
          * Constructor
@@ -66,8 +68,12 @@ public class InterceptorChain {
          * @param it live iterator that is going over the list of iterators
          * @param args method arguments (the JMS Message)
          */
-        public XInvocationContext(Iterator<InterceptorInstance> it, Object[] args) {
+        public XInvocationContext(Iterator<InterceptorInstance> it, Object endpoint
+            , Method endpointMethod, Map<String, Object> contextData, Object[] args) {
             mIterator = it;
+            mEndpointMethod = endpointMethod;
+            mEndpoint = endpoint;
+            mContextData = contextData;
             mParameters = args;
         }
 
@@ -101,11 +107,19 @@ public class InterceptorChain {
          */
         public Object proceed() throws Exception {
             // Call the next interceptor, or the final endpoint
-            if (mIterator.hasNext()) {
-                return mIterator.next().invoke(this);
-            } else {
-                return mEndpointMethod.invoke(mEndpoint, mParameters);
+            try {
+                if (mIterator.hasNext()) {
+                    return mIterator.next().invoke(this);
+                } else {
+                    return mEndpointMethod.invoke(mEndpoint, mParameters);
+                }
+            } catch (InvocationTargetException e) {
+                if (e.getTargetException() instanceof Exception) {
+                    throw (Exception) e.getTargetException();
+                }
+                throw e;
             }
+            
         }
 
         /**
@@ -118,14 +132,42 @@ public class InterceptorChain {
 
     /**
      * Invoke the final endpoint through the chain of interceptors
-     * 
+     *
+     * @param endpoint target endpoint object
+     * @param endpointMethod to invoke on target endpoint object
+     * @param contextData contextdata passed to interceptors
      * @param args parameters to pass to the final endpoint
      * @return return value of the method on the final endpoint
      * @throws Exception propagated
      */
-    public Object invoke(Object... args) throws Exception {
+    public Object invoke(Object endpoint, Method endpointMethod
+        , Map<String, Object> contextData, Object... args) throws Exception {
         Iterator<InterceptorInstance> it = mInterceptors.iterator();
-        XInvocationContext ctx = new XInvocationContext(it, args);
-        return ctx.proceed();
+        XInvocationContext ctx = new XInvocationContext(it, endpoint, endpointMethod, contextData, args);
+        try {
+            return ctx.proceed();
+        } catch (InvocationTargetException e) {
+            if (e.getTargetException() instanceof Exception) {
+                throw (Exception) e.getTargetException();
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * JMS convenience method: throws only JMSExceptions
+     * @see invoke
+     */
+    public Object invokeJMS(Object endpoint, Method endpointMethod
+        , Map<String, Object> contextData, Object... args) throws JMSException {
+        try {
+            return invoke(endpoint, endpointMethod, contextData, args);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (JMSException e) {
+            throw e;
+        } catch (Exception e) {
+            throw Exc.jmsExc(LOCALE.x("E218: The interceptor threw an exception: {0}", e), e);
+        }
     }
 }

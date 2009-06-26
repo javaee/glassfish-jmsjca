@@ -16,10 +16,17 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.util.InterceptorChain;
+import com.stc.jmsjca.util.InterceptorUtil;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.QueueSender;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A wrapper around a javax.jms.MessageConsumer; this wrapper is given out to the
@@ -28,10 +35,11 @@ import javax.jms.QueueSender;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WQueueSender extends WMessageProducer implements QueueSender {
     private QueueSender mDelegate;
+    private InterceptorChain mInterceptorChain;
 
     /**
      * WQueueSender
@@ -42,6 +50,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
     public WQueueSender(JProducer mgr, QueueSender delegate) {
         super(mgr, delegate);
         mDelegate = delegate;
+        mInterceptorChain =  mMgr.getSession().getManagedConnection().getInterceptorChain();
     }
 
     /**
@@ -75,6 +84,8 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
         }
     }
 
+    private static final Method SEND2 = InterceptorUtil.getMethod(QueueSender.class, "send", Queue.class, Message.class);
+
     /**
      * send
      *
@@ -97,13 +108,21 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
             message = (Message) ((Unwrappable) message).getWrappedObject();
         }
         try {
-            mDelegate.send(queue, message);
+            if (mInterceptorChain == null) {
+                mDelegate.send(queue, message);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND2, contextData, queue, message);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method SEND5 = InterceptorUtil.getMethod(QueueSender.class, "send", Queue.class, Message.class
+        , int.class, int.class, long.class);
 
     /**
      * send
@@ -130,7 +149,12 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
             message = (Message) ((Unwrappable) message).getWrappedObject();
         }
         try {
-            mDelegate.send(queue, message, int2, int3, long4);
+            if (mInterceptorChain == null) {
+                mDelegate.send(queue, message, int2, int3, long4);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, SEND5, contextData, queue, message, int2, int3, long4);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);

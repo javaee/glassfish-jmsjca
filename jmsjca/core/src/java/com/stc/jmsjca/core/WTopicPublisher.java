@@ -16,19 +16,27 @@
 
 package com.stc.jmsjca.core;
 
+import com.stc.jmsjca.util.InterceptorChain;
+import com.stc.jmsjca.util.InterceptorUtil;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Topic;
 import javax.jms.TopicPublisher;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * See WProducer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WTopicPublisher extends WMessageProducer implements TopicPublisher {
     private TopicPublisher mDelegate;
+    private InterceptorChain mInterceptorChain;
 
     /**
      * WTopicPublisher
@@ -39,6 +47,7 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
     public WTopicPublisher(JProducer mgr, TopicPublisher delegate) {
         super(mgr, delegate);
         mDelegate = delegate;
+        mInterceptorChain =  mMgr.getSession().getManagedConnection().getInterceptorChain();
     }
 
     /**
@@ -72,6 +81,8 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
         }
     }
 
+    private static final Method PUBLISH1 = InterceptorUtil.getMethod(TopicPublisher.class, "publish", Message.class);
+
     /**
      * publish
      *
@@ -86,13 +97,21 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             if (message instanceof Unwrappable) {
                 message = (Message) ((Unwrappable) message).getWrappedObject();
             }
-            mDelegate.publish(message);
+            if (mInterceptorChain == null) {
+                mDelegate.publish(message);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, PUBLISH1, contextData, message);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method PUBLISH4 = InterceptorUtil.getMethod(TopicPublisher.class, "publish"
+        , Message.class, int.class, int.class, long.class);
 
     /**
      * publish
@@ -112,12 +131,20 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             if (message instanceof Unwrappable) {
                 message = (Message) ((Unwrappable) message).getWrappedObject();
             }
-            mDelegate.publish(message, int1, int2, long3);
+            if (mInterceptorChain == null) {
+                mDelegate.publish(message, int1, int2, long3);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, PUBLISH4, contextData, message, int1, int2, long3);
+            }
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method PUBLISH2 = InterceptorUtil.getMethod(TopicPublisher.class, "publish"
+        , Topic.class, Message.class);
 
     /**
      * publish
@@ -140,13 +167,21 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             if (message instanceof Unwrappable) {
                 message = (Message) ((Unwrappable) message).getWrappedObject();
             }
-            mDelegate.publish(topic, message);
+            if (mInterceptorChain == null) {
+                mDelegate.publish(topic, message);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, PUBLISH2, contextData, topic, message);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);
             throw e;
         }
     }
+
+    private static final Method PUBLISH5 = InterceptorUtil.getMethod(TopicPublisher.class, "publish"
+        , Topic.class, Message.class, int.class, int.class, long.class);
 
     /**
      * publish
@@ -172,7 +207,12 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             message = (Message) ((Unwrappable) message).getWrappedObject();
         }
         try {
-            mDelegate.publish(topic, message, int2, int3, long4);
+            if (mInterceptorChain == null) {
+                mDelegate.publish(topic, message, int2, int3, long4);
+            } else {
+                Map<String, Object> contextData = new HashMap<String, Object>();
+                mInterceptorChain.invokeJMS(mDelegate, PUBLISH5, contextData, topic, message, int2, int3, long4);
+            }
             mMgr.onSend();
         } catch (JMSException e) {
             mMgr.exceptionOccurred(e);

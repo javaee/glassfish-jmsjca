@@ -42,7 +42,7 @@ import java.util.Properties;
  * Activation for distributed durable subscribers
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class TopicToQueueActivation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(TopicToQueueActivation.class);
@@ -182,7 +182,7 @@ public class TopicToQueueActivation extends ActivationBase {
     /**
      * Copies messages from a topic to a queue so that the messages can be processed
      * concurrently, even over multiple machines. This delivery should be setup as non-XA,
-     * it should read from the topic, and the queue name should be specified TODO 
+     * it should read from the topic, and the queue name should be specified 
      *  
      * @author fkieviet
      */
@@ -209,7 +209,7 @@ public class TopicToQueueActivation extends ActivationBase {
          */
         @Override
         protected XMessageEndpoint createMessageEndpoint(XAResource xa, Session s) throws Exception {
-            return new XMessageEndpoint(new Copier(s), null);
+            return new XMessageEndpoint(new Copier(s), mMethod, null);
         }
         
         /**

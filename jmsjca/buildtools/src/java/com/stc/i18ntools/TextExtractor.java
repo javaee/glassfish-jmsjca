@@ -672,7 +672,6 @@ public class TextExtractor extends Task {
                 case TAG_STRING:
                     // int stringIndex =  
                     inp.readShort();
-                    // TODO
                     break;
                 case TAG_FIELDREF: {
                     // int classIndex  = 

@@ -229,6 +229,12 @@
             <fileset dir="core/src/java" excludes="**/*.java" />
         </copy>
 
+        <!-- Package a services file for integrated testing -->
+        <mkdir dir="${jmsjca.core.classes.dir}/META-INF/services"/>
+        <echo file="${jmsjca.core.classes.dir}/META-INF/services/jmsjca-private.test.interceptor">
+            com.stc.jmsjca.util.SampleInterceptor  # For internal testing; normally not used
+        </echo>
+        
         <!-- Build core jar -->
         <jar destfile="${jmsjca.core.jar.path}">
             <fileset dir="${jmsjca.core.classes.dir}">
@@ -404,6 +410,7 @@
         <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.interceptor">
             com.stc.jmsjca.test.core.InterceptorTests$Interceptor1
             com.stc.jmsjca.test.core.InterceptorTests$Interceptor2
+            com.stc.jmsjca.test.core.InterceptorTests$Interceptor3
         </echo>
         <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.faulty1">
             com.stc.jmsjca.test.core.nonEx

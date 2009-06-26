@@ -68,7 +68,7 @@ import java.util.Map;
  * read-only.    
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
     private static Logger sLog = Logger.getLogger(MBeanHelper.class);
@@ -135,7 +135,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      * @param attribute Attribute
      */
     public void setAttribute(Attribute attribute) {
-        //TODO
+        throw new IllegalArgumentException("Not implemented");
     }
 
     /**
@@ -164,8 +164,7 @@ public abstract class MBeanHelper implements MBeanRegistration, DynamicMBean {
      * @return AttributeList
      */
     public AttributeList setAttributes(AttributeList attributeList) {
-        //TODO
-        return null;
+        throw new IllegalArgumentException("Not implemented");
     }
 
     /**

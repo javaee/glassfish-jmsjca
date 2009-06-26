@@ -22,6 +22,7 @@ import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.Unwrappable;
 import com.stc.jmsjca.core.WMessageIn;
 import com.stc.jmsjca.util.Logger;
+import com.stc.jmsjca.util.SampleInterceptor;
 
 import javax.ejb.EJBException;
 import javax.ejb.MessageDrivenBean;
@@ -72,7 +73,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -233,13 +234,13 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
             throw new EJBException(
                 "Intentional exception is being rethrown: " + e, e);
         } catch (Exception e) {
-            sLog.errorNoloc(".onMessage() encountered an exception: " + e, e);
+            sLog.errorNoloc("SimpleMessageBean.onMessage() encountered an exception: " + e, e);
             throw new EJBException(
-                "SimpleMessageBean.onMessage() encountered an exception: " + e, e);
+                "SimpleMessageBean.onMessage() encountered an EJBException: " + e, e);
         } catch (Throwable e) {
             sLog.errorNoloc(".onMessage() encountered an exception: " + e, e);
             throw new EJBException(
-                "SimpleMessageBean.onMessage() encountered an unexpected throwable: " + e, new Exception(e));
+                "SimpleMessageBean.onMessage() encountered an unexpected Throwable: " + e, new Exception(e));
         }
     }
 
@@ -1425,7 +1426,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         }
     }
     
-    private Message copy(Message message, Session s) throws JMSException {
+    public static Message copy(Message message, Session s) throws JMSException {
         Message m1;
         if (message instanceof TextMessage) {
             m1 = s.createTextMessage(((TextMessage) message).getText() + " forward to QueueReplier ");
@@ -2601,6 +2602,57 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 Queue dest = s.createQueue("jmsjca://?name=Queue2&testoption=54");
                 QueueSender prod = s.createSender(dest);
                 prod.send(message);
+            } finally {
+                safeClose(conn);
+            }
+        } catch (Exception e) {
+            sLog.errorNoloc("Failed: " + e, e);
+            throw new EJBException("Failed: " + e, e);
+        }
+    }
+    
+    public void testInterceptor1(javax.jms.Message message) {
+        try {
+            QueueConnection conn = null;
+            try {
+                QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+                    .lookup("java:comp/env/queuefact");
+                conn = fact.createQueueConnection();
+                QueueSession s = conn.createQueueSession(true, Session.AUTO_ACKNOWLEDGE);
+                Queue dest = s.createQueue("Queue2");
+                QueueSender prod = s.createSender(dest);
+                
+                if (SampleInterceptor.getInboundContext() != null) {
+                    prod.send(message);
+                } else {
+                    throw new Exception("No Context", null);
+                }
+                
+                if (shouldThrow()) {
+                    mMdc.setRollbackOnly();
+                }
+            } finally {
+                safeClose(conn);
+            }
+        } catch (Exception e) {
+            sLog.errorNoloc("Failed: " + e, e);
+            throw new EJBException("Failed: " + e, e);
+        }
+    }
+
+    public void testFailall(javax.jms.Message message) {
+        try {
+            QueueConnection conn = null;
+            try {
+                QueueConnectionFactory fact = (QueueConnectionFactory) mCtx
+                    .lookup("java:comp/env/queuefact");
+                conn = fact.createQueueConnection();
+                QueueSession s = conn.createQueueSession(true, Session.AUTO_ACKNOWLEDGE);
+                Queue dest = s.createQueue("Queue2");
+                QueueSender prod = s.createSender(dest);
+                prod.send(message);
+                
+                throw new Exception("Always FAIL");
             } finally {
                 safeClose(conn);
             }

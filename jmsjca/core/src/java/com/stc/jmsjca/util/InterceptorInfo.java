@@ -94,7 +94,7 @@ public class InterceptorInfo {
     
     @Override
     public String toString() {
-        return classname + " (" + url + ":" + iLine + "@(" + loader + ")";
+        return classname + " (" + url + ":" + iLine + ")";
     }
 
     /**

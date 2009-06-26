@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Tools for obtaining localized messages
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class LocalizationSupport {
     private PropertyResourceBundle mBundle;
@@ -98,6 +98,25 @@ public abstract class LocalizationSupport {
     
     private String format(String msg, Object[] args) {
         try {
+            // Check for exception classes
+            boolean foundException = false;
+            for (Object o : args) {
+                if (o instanceof Throwable) {
+                    foundException = true;
+                    break;
+                }
+            }
+            if (foundException) {
+                Object[] copy = new Object[args.length];
+                System.arraycopy(args, 0, copy, 0, copy.length);
+                args = copy;
+                for (int i = 0; i < args.length; i++) {
+                    if (args[i] instanceof Throwable) {
+                        args[i] = ((Throwable) args[i]).getLocalizedMessage();
+                    }
+                }
+            }
+            
             return MessageFormat.format(msg, args);
         } catch (Exception e) {
             // Format error, e.g. "my msg{{0}/{1}", return "my msg{{0}/{1} [invalid format, {0}=xx, {1}=yy]"
