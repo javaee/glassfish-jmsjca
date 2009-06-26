@@ -612,14 +612,6 @@ or type
             </fileset>
         </copy>
 
-        <!-- Replace headers -->
-        <java classname="com.stc.jmsjca.util.ReplaceHeaders">
-            <arg value="${jmsjca.maven.work.dir}/src" />
-            <classpath>
-                <pathelement location="${jmsjca.core.jar.path}" />
-            </classpath>
-        </java>
-
         <!-- Zip up sources -->
         <mkdir dir="${jmsjca.maven.artefacts.dir}/java-sources" />
         <zip destfile="${jmsjca.maven.artefacts.dir}/java-sources/jmsjca-${jmsjca.maven.version}.zip"
