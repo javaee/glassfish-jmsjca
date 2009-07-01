@@ -34,7 +34,7 @@ import java.util.Properties;
  * ManagedConnection will have one instance of this class and will reuse it.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class TxMgr {
     private TxMgrAdapter mTxMgrAdapter;
@@ -137,16 +137,16 @@ public class TxMgr {
             mTxMgrAdapter = new GlobalJNDI("javax.transaction.TransactionManager").init();
         }
         if (mTxMgrAdapter == null) {
+            // WAS6 (note, do this before looking up java:/ as that causes a warning in the WAS log)
+            mTxMgrAdapter = new WAS6a().init();
+        }
+        if (mTxMgrAdapter == null) {
             // JBoss
             mTxMgrAdapter = new LocalJNDI("java:/TransactionManager").init();
         }
         if (mTxMgrAdapter == null) {
             // WL9 alternative
             mTxMgrAdapter = new WL9().init();
-        }
-        if (mTxMgrAdapter == null) {
-            // WAS6
-            mTxMgrAdapter = new WAS6a().init();
         }
         if (mTxMgrAdapter == null) {
             // Most others
