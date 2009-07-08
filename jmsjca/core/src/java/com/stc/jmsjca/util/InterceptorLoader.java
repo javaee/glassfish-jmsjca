@@ -31,9 +31,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Loads interceptor classes through a mechanism that is similar to JDK6's ServiceProvider:
@@ -100,8 +99,8 @@ public final class InterceptorLoader {
      * @return classes
      * @throws Exception propagated
      */
-    public static Set<InterceptorInfo> getInterceptors(String svcname) throws Exception {
-        Set<InterceptorInfo> ret = new HashSet<InterceptorInfo>();
+    public static HashMap<Class<?>, InterceptorInfo> getInterceptors(String svcname) throws Exception {
+        HashMap<Class<?>, InterceptorInfo> ret = new HashMap<Class<?>, InterceptorInfo>();
         ClassLoader loader1 = InterceptorLoader.class.getClassLoader();
         getInterceptors(loader1, svcname, ret);
         
@@ -113,7 +112,9 @@ public final class InterceptorLoader {
         return ret;
     }
     
-    private static void getInterceptors(ClassLoader loader, String svcname, Set<InterceptorInfo> toAddTo) throws Exception {
+    private static void getInterceptors(ClassLoader loader, String svcname
+        , HashMap<Class<?>, InterceptorInfo> toAddTo) throws Exception {
+        
         // Find URLs
         List<URL> urls = new ArrayList<URL>();
         addTo(urls, loader.getResources(Options.Interceptor.SERVICEPREFIX + svcname));
@@ -125,7 +126,7 @@ public final class InterceptorLoader {
     }
     
     private static int processServiceLine(URL u, BufferedReader r, int iLine, 
-        Set<InterceptorInfo> toAddTo, ClassLoader loader) throws Exception {
+        HashMap<Class<?>, InterceptorInfo> toAddTo, ClassLoader loader) throws Exception {
         
         String line = r.readLine();
         if (line == null) {
@@ -165,28 +166,41 @@ public final class InterceptorLoader {
                         , iLine, u, line));
                 }
             }
-            InterceptorInfo c = new InterceptorInfo(line, u, iLine, loader);
-            if (toAddTo.contains(c)) {
-                sLog.warn(LOCALE.x("E214: Interceptor {0} is a duplicate of {1}... will be ignored."));
-            } else {
-                try {
-                    // Load class and method
-                    if (sLog.isDebugEnabled()) {
-                        sLog.debug("Trying to load " + c.getClassname());
-                    }
-                    Class<?> class1 = loader.loadClass(c.getClassname());
-                    c.setClazz(class1);
-                    c.setMethod(getInterceptor(class1));
-                    toAddTo.add(c);
-                } catch (Exception e) {
-                    throw Exc.exc(LOCALE.x("E215: Failed to load {0}: {1}", c, e), e);
+
+            // Load class and method
+            try {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Trying to load " + line);
                 }
+                
+                Class<?> class1 = loader.loadClass(line);
+                String svcDescriptorURL = u.toExternalForm();
+
+                
+                if (toAddTo.get(class1) != null) {
+                    // Ignore, but warn if there are two the same classnames in two different service descriptors 
+                    InterceptorInfo alreadyThere = toAddTo.get(class1);
+                    if (alreadyThere.getSvcDescriptorURL().equals(svcDescriptorURL) && alreadyThere.getLine() == iLine) {
+                        // Same line in the same descriptor; descriptor likely loaded multiple times
+                    } else {
+                        sLog.warn(LOCALE.x("E214: Interceptor {0} is a duplicate of {1}... will be ignored."
+                            , alreadyThere.getSvcDescriptorURL() + ":" + alreadyThere.getLine()));
+                    }
+                } else {
+                    InterceptorInfo c = new InterceptorInfo(class1, svcDescriptorURL, iLine);
+                    c.setMethod(getInterceptor(class1));
+                    toAddTo.put(class1, c);
+                }
+            } catch (Exception e) {
+                throw Exc.exc(LOCALE.x("E215: Failed to load {0}: {1}", line, e), e);
             }
         }
         return iLine + 1;
     }
     
-    private static void loadInterceptorsFromURL(Set<InterceptorInfo> toAddTo, URL u, ClassLoader loader) throws Exception {
+    private static void loadInterceptorsFromURL(HashMap<Class<?>, InterceptorInfo> toAddTo
+        , URL u, ClassLoader loader) throws Exception {
+        
         InputStream in = null;
         BufferedReader r = null;
         try {

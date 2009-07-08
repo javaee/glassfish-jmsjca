@@ -50,12 +50,12 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * Baseclass and interface definition of a delivery-strategy. The connector provides
@@ -64,7 +64,7 @@ import java.util.Set;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -586,8 +586,8 @@ public abstract class Delivery {
         
         // Interceptors
         String serviceName = p.getProperty(Options.Interceptor.SERVICENAME, Options.Interceptor.DEFAULT_SERVICENAME);
-        Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(serviceName);
-        mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors);
+        HashMap<Class<?>, InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(serviceName);
+        mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors.values());
     }
 
     /**

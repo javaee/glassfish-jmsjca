@@ -53,7 +53,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Tests interceptors
@@ -183,7 +182,7 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @throws Exception
      */
     public void testLoader() throws Exception {
-        Set<InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(Options.Interceptor.DEFAULT_SERVICENAME);
+        HashMap<Class<?>, InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(Options.Interceptor.DEFAULT_SERVICENAME);
         assertTrue(interceptors.size() == 3);
     }
     

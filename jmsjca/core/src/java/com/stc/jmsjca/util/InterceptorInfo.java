@@ -17,18 +17,17 @@
 package com.stc.jmsjca.util;
 
 import java.lang.reflect.Method;
-import java.net.URL;
 
 /**
- * Represents a single interceptor description
+ * Represents a single interceptor description.
+ * 
+ * Identity (for hashcode and equals) depends on the class only
  * 
  * @author fkieviet
  */
 public class InterceptorInfo {
-    private String classname;
-    private String url;
+    private String svcDescriptorURL;
     private int iLine;
-    private ClassLoader loader;
     private Class<?> clazz;
     private Method method;
     
@@ -36,65 +35,20 @@ public class InterceptorInfo {
      * Constructor with the origin information
      * 
      * @param name
-     * @param url
+     * @param svcDescriptorURL
      * @param line
      * @param loader
      */
-    public InterceptorInfo(String name, URL url, int line, ClassLoader loader) {
+    public InterceptorInfo(Class<?> clazz, String svcDescriptorURL, int line) {
         super();
-        this.classname = name;
-        this.url = url.toExternalForm();
+        this.clazz = clazz;
+        this.svcDescriptorURL = svcDescriptorURL;
         iLine = line;
-        this.loader = loader;
     }
 
-    /**
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((loader == null) ? 0 : loader.hashCode());
-        result = prime * result + ((classname == null) ? 0 : classname.hashCode());
-        return result;
-    }
-
-    /**
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        InterceptorInfo other = (InterceptorInfo) obj;
-        if (loader == null) {
-            if (other.loader != null) {
-                return false;
-            }
-        } else if (!loader.equals(other.loader)) {
-            return false;
-        }
-        if (classname == null) { 
-            if (other.classname != null) {
-                return false;
-            }
-        } else if (!classname.equals(other.classname)) {
-            return false;
-        }
-        return true;
-    }
-    
     @Override
     public String toString() {
-        return classname + " (" + url + ":" + iLine + ")";
+        return clazz.getName() + " (" + svcDescriptorURL + ":" + iLine + ")";
     }
 
     /**
@@ -121,16 +75,7 @@ public class InterceptorInfo {
      * @return String
      */
     public final String getClassname() {
-        return classname;
-    }
-
-    /**
-     * Setter for clazz
-     *
-     * @param clazz Class<?>The clazz to set.
-     */
-    public final void setClazz(Class<?> clazz) {
-        this.clazz = clazz;
+        return clazz.getName();
     }
 
     /**
@@ -140,6 +85,60 @@ public class InterceptorInfo {
      */
     public final void setMethod(Method method) {
         this.method = method;
+    }
+
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((clazz == null) ? 0 : clazz.hashCode());
+        return result;
+    }
+
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        InterceptorInfo other = (InterceptorInfo) obj;
+        if (clazz == null) {
+            if (other.clazz != null) {
+                return false;
+            }
+        } else if (!clazz.equals(other.clazz)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Getter for svcDescriptorURL
+     *
+     * @return String
+     */
+    public final String getSvcDescriptorURL() {
+        return svcDescriptorURL;
+    }
+
+    /**
+     * Getter for iLine
+     *
+     * @return int
+     */
+    public final int getLine() {
+        return iLine;
     }
 }
 
