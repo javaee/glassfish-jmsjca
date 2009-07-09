@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public interface Options {
     /**
@@ -534,7 +534,7 @@ public interface Options {
         /**
          * Option name of the interceptors service name
          */
-        String SERVICENAME = "JMSJMCA.interceptorsvcname";
+        String SERVICENAME = "JMSJCA.interceptorsvcname";
         
         /**
          * Context data: the message
