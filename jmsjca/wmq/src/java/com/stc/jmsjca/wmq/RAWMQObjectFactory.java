@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -340,7 +340,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_NONXA:
                 cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
-                    "com.ibm.mq.jms.MQXATopicConnectionFactory").newInstance();
+                    "com.ibm.mq.jms.MQTopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
                 cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
