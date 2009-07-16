@@ -18,7 +18,6 @@ package com.stc.jmsjca.test.wmq;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.TopicEndToEnd;
 
@@ -30,8 +29,20 @@ public class BasicWMQTopicEar1 extends TopicEndToEnd {
      * @see com.stc.jmsjca.test.core.EndToEndBase#getJMSProvider()
      */
     @Override
-    public JMSProvider getJMSProvider() {
+    public WMQProvider getJMSProvider() {
         return new WMQProvider();
+    }
+    
+    @Override
+    protected void predelay() {
+        if (getJMSProvider().is5()) {
+            try {
+                System.out.println("Sleeping for WMQ5");
+                Thread.sleep(30000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

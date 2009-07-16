@@ -21,7 +21,6 @@ import com.ibm.mq.jms.MQTopicConnectionFactory;
 import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.util.Exc;
-import com.stc.jmsjca.wmq.RAWMQObjectFactory;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -41,16 +40,11 @@ import java.util.logging.Level;
  * Passthrough for MQSeries
  * 
  * @author  fkieviet (rewrite April 2009)
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WMQPassthrough extends Passthrough {
-    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
-    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.wmq.port";
-    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.wmq.userid";
-    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.wmq.password";
-    public static final String PROPNAME_QUEUEMANAGER = "jmsjca.jmsimpl.wmq.queuemanager";
-
     private Properties mServerProperties;
+    private WMQProvider mProvider;
 
     public static int TRANSPORT_TYPE = 1; //1:JMSC_MQJMS_TP_CLIENT_MQ_TCPIP, 0: JMSC.MQJMS_TP_BINDINGS_MQ 
     static final String CHANNEL  = "SYSTEM.DEF.SVRCONN"; // need if it uses admin functionalities
@@ -61,18 +55,7 @@ public class WMQPassthrough extends Passthrough {
     public WMQPassthrough(Properties server, JMSProvider provider) {
         super(server, provider);
         mServerProperties = server;
-    }
-    
-    public static int getPort(Properties serverProperties) {
-        int port = Integer.parseInt(serverProperties.getProperty(PROPNAME_PORT, null));
-        return port;
-    }
-    
-    public static String getHost(Properties serverProperties) {return serverProperties.getProperty(PROPNAME_HOST);        
-    }
-    
-    public static String getQueueManager(Properties serverProperties) {
-        return serverProperties.getProperty(PROPNAME_QUEUEMANAGER);        
+        mProvider = (WMQProvider) provider;
     }
     
     /**
@@ -133,9 +116,9 @@ public class WMQPassthrough extends Passthrough {
     @Override
     public TopicConnectionFactory createTopicConnectionFactory() throws JMSException {        
         MQTopicConnectionFactory cf = new MQTopicConnectionFactory();        
-        cf.setHostName(getHost(mServerProperties));
-        cf.setPort(getPort(mServerProperties));
-        cf.setQueueManager(getQueueManager(mServerProperties));
+        cf.setHostName(mProvider.getHost(mServerProperties));
+        cf.setPort(mProvider.getPort(mServerProperties));
+        cf.setQueueManager(mProvider.getQueueManager(mServerProperties));
         cf.setTransportType(TRANSPORT_TYPE);
         cf.setChannel(CHANNEL);   
 //        cf.setClientID(getJMSProvider().getClientId(getDurableTopic1Name1() + "clientID"));
@@ -148,15 +131,11 @@ public class WMQPassthrough extends Passthrough {
     @Override
     public QueueConnectionFactory createQueueConnectionFactory() throws JMSException {
         MQQueueConnectionFactory cf = new MQQueueConnectionFactory();        
-        cf.setHostName(getHost(mServerProperties));
-        cf.setPort(getPort(mServerProperties));
-        cf.setQueueManager(getQueueManager(mServerProperties));
+        cf.setHostName(mProvider.getHost(mServerProperties));
+        cf.setPort(mProvider.getPort(mServerProperties));
+        cf.setQueueManager(mProvider.getQueueManager(mServerProperties));
         cf.setTransportType(TRANSPORT_TYPE);
         cf.setChannel(CHANNEL);                
         return cf;
-    }
-
-    public static String getConnectionUrl(Properties p) {
-        return "wmq://" + getHost(p) + ":" + getPort(p) + "?" + RAWMQObjectFactory.QUEUEMANAGER + "=" + getQueueManager(p);
     }
 }

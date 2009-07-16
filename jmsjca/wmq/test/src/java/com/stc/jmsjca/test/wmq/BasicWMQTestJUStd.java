@@ -28,7 +28,7 @@ import com.ibm.mq.jms.MQTopicConnectionFactory;
 import com.ibm.mq.jms.MQXAConnectionFactory;
 import com.ibm.mq.jms.MQXAQueueConnectionFactory;
 import com.ibm.mq.jms.MQXATopicConnectionFactory;
-import com.stc.jmsjca.wmq.WMQConnectionUrl;
+import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -297,13 +297,13 @@ public class BasicWMQTestJUStd extends TestCase {
                throw new RuntimeException("Failed to set wmq.url system property");
             }
                    
-            WMQConnectionUrl wurl = new WMQConnectionUrl(url);
+            UrlParser wurl = new UrlParser(url);
             Properties p = new Properties();
             wurl.getQueryProperties(p);         
                         
-            QUEUE_MANAGER = p.getProperty("QueueManager", getQueueManager(wurl.getUrlParser().getHost()));                        
-            HOSTNAME = wurl.getUrlParser().getHost();
-            PORT = wurl.getUrlParser().getPort();            
+            QUEUE_MANAGER = p.getProperty("QueueManager", getQueueManager(wurl.getHost()));                        
+            HOSTNAME = wurl.getHost();
+            PORT = wurl.getPort();            
         }
         // Create concreate connection factories and bind them into JNDI
         {

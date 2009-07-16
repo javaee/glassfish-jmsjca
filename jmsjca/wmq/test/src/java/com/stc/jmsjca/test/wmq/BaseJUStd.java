@@ -21,7 +21,6 @@ import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XMCFQueueXA;
 import com.stc.jmsjca.core.XMCFTopicXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
-import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.wmq.RAWMQObjectFactory;
 import com.stc.jmsjca.wmq.RAWMQResourceAdapter;
@@ -53,7 +52,7 @@ public class BaseJUStd extends XTestBase {
      * @see com.stc.jmsjca.test.core.XTestBase#getJMSProvider()
      */
     @Override
-    public JMSProvider getJMSProvider() {
+    public WMQProvider getJMSProvider() {
         return new WMQProvider();
     }
 
@@ -111,20 +110,6 @@ public class BaseJUStd extends XTestBase {
         return new InitialContext(props);
     }
 
-    /**
-     * Gets connection URL to the default test server; contains host, but not port.
-     * Port should be obtained from a system property.
-     *
-     * @return URL
-     */
-    protected String getConnectionURL() {
-        return "wmq://" + mServerProperties.getProperty(WMQProvider.PROPNAME_HOST, "<wmq host not set>") + ":"
-        + mServerProperties.getProperty(WMQProvider.PROPNAME_PORT, "<wmq port not set>") + "?" 
-        + RAWMQObjectFactory.QUEUEMANAGER + "=" + mServerProperties.getProperty(WMQProvider.QUEUEMANAGER, "<wmq queuemgr not set>")
-        ;
-        
-    }
-
     @Override
     public void init(boolean producerPooling) throws Throwable {
         InitialContext ctx = getContext();
@@ -135,7 +120,7 @@ public class BaseJUStd extends XTestBase {
             XManagedConnectionFactory x = new XMCFQueueXA();
             RAWMQResourceAdapter ra = new RAWMQResourceAdapter();
             x.setResourceAdapter(ra);
-            ra.setConnectionURL(getConnectionURL());
+            ra.setConnectionURL(getJMSProvider().getConnectionUrl(mServerProperties));
             x.setProducerPooling(Boolean.toString(producerPooling));
             ra.setUserName(getJMSProvider().getUserName(mServerProperties));
             ra.setPassword(getJMSProvider().getPassword(mServerProperties));
@@ -151,7 +136,7 @@ public class BaseJUStd extends XTestBase {
             XManagedConnectionFactory x = new XMCFTopicXA();
             RAWMQResourceAdapter ra = new RAWMQResourceAdapter();
             x.setResourceAdapter(ra);
-            ra.setConnectionURL(getConnectionURL());
+            ra.setConnectionURL(getJMSProvider().getConnectionUrl(mServerProperties));
             x.setProducerPooling(Boolean.toString(producerPooling));
             ra.setUserName(getJMSProvider().getUserName(mServerProperties));
             ra.setPassword(getJMSProvider().getPassword(mServerProperties));
@@ -206,6 +191,13 @@ public class BaseJUStd extends XTestBase {
     public void skip_testXACCBatch() throws Throwable {
     }
     
+    /**
+     * WMQ5 doesn't support XA; this test uses XA directly
+     */
+    public boolean shouldRun_testXACCStopCloseRolback() throws Throwable {
+        System.out.println("This is WMQ5? " + getJMSProvider().is5());
+        return !getJMSProvider().is5();
+    }
     
     /**
      * @see com.stc.jmsjca.test.core.XTestBase#getXAQueueConnectionFactory()
@@ -214,7 +206,8 @@ public class BaseJUStd extends XTestBase {
     @Override
     public XAQueueConnectionFactory getXAQueueConnectionFactory() throws JMSException {
         RAWMQObjectFactory o = new RAWMQObjectFactory();
-        
-        return (XAQueueConnectionFactory) o.createConnectionFactory(XConnectionRequestInfo.DOMAIN_QUEUE_XA, null, null, null, getConnectionURL());
+        String url = getJMSProvider().getConnectionUrl(mServerProperties);
+        RAWMQResourceAdapter ra = new RAWMQResourceAdapter();
+        return (XAQueueConnectionFactory) o.createConnectionFactory(XConnectionRequestInfo.DOMAIN_QUEUE_XA, ra, null, null, url);
     }
 }

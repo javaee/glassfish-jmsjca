@@ -34,7 +34,7 @@ import junit.framework.TestResult;
  * Adds functionality to skip tests
  *
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class BaseTestCase extends TestCase {
     private List<Throwable> mAsyncErrors = new ArrayList<Throwable>();
@@ -175,6 +175,9 @@ public abstract class BaseTestCase extends TestCase {
         }
     }
     
+    protected void predelay() {
+    }
+    
     /**
      * Runs the test case except if a similarly named method prefixed with
      * skip_ or disabled_ exists.
@@ -225,6 +228,7 @@ public abstract class BaseTestCase extends TestCase {
         }
 
         // Apparently specially marked method does not exist; execute it.
+        predelay();
         super.run(result);
     }
     

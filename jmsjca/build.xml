@@ -421,6 +421,7 @@
              inheritall="false"
              inheritRefs="false"
         >
+            <property name="jmsjca.jmsimpl.subid" value="${jmsjca.jmsimpl.subid}" />
             <property name="jcaid" value="${jmsjca.jmsimpl.id}" />
             <property name="jmsjca.container.id" value="${jmsjca.container.id}" />
             <property name="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
@@ -433,6 +434,7 @@
 -->
     <target name="stcms" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="stcms" />
+        <property name="jmsjca.jmsimpl.subid" value="" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -442,6 +444,7 @@
 -->
     <target name="sunone" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="sunone" />
+        <property name="jmsjca.jmsimpl.subid" value="" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -449,8 +452,19 @@
 <!--===========================================================================
     DEV-ONLY: Sets up a jms implementation to test
 -->
-    <target name="wmq" depends="check-config-file" description="Sets up this jms implementation to test">
+    <target name="wmq6" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="wmq" />
+        <property name="jmsjca.jmsimpl.subid" value="6" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
+    <target name="wmq5" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="wmq" />
+        <property name="jmsjca.jmsimpl.subid" value="5" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -460,6 +474,7 @@
 -->
     <target name="wl" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="wl" />
+        <property name="jmsjca.jmsimpl.subid" value="" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -469,6 +484,7 @@
 -->
     <target name="jndi" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="jndi" />
+        <property name="jmsjca.jmsimpl.subid" value="" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
         <antcall target="compile-a-jmsimpl-test" />
     </target>
@@ -485,6 +501,7 @@
              inheritRefs="false"
         >
             <property name="jcaid" value="${jmsjca.jmsimpl.id}" />
+            <property name="jmsjca.jmsimpl.subid" value="${jmsjca.jmsimpl.subid}" />
             <property name="jmsjca.container.id" value="${jmsjca.container.id}" />
             <property name="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
         	<reference refid="emma.lib"/>
@@ -502,18 +519,18 @@
         <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
         <fail unless="jmsjca.jmsimpl.id" >$${jmsjca.jmsimpl.id} needs to be specified: call a jmsimpl target first</fail>
 
-        <junitreport todir="${jmsjca.reports.junit.dir}/${jmsjca.jmsimpl.id}-${jmsjca.container.id}">
-            <fileset dir="${jmsjca.reports.junit.dir}/${jmsjca.jmsimpl.id}-${jmsjca.container.id}">
+        <junitreport todir="${jmsjca.reports.junit.dir}/${jmsjca.jmsimpl.id}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}">
+            <fileset dir="${jmsjca.reports.junit.dir}/${jmsjca.jmsimpl.id}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}">
                 <include name="TEST-*.xml" />
             </fileset>
-            <report format="frames" todir="${jmsjca.reports.junit.html.dir}/${jmsjca.jmsimpl.id}-${jmsjca.container.id}" />
+            <report format="frames" todir="${jmsjca.reports.junit.html.dir}/${jmsjca.jmsimpl.id}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}" />
         </junitreport>
 
         <!-- Upload the report -->
 <!--        <antcall target="publish-test-results" />-->
 
         <path id="jmsjca.junit.dir.display_x"
-              location="${jmsjca.reports.junit.html.dir}/${jmsjca.jmsimpl.id}-${jmsjca.container.id}/index.html"
+              location="${jmsjca.reports.junit.html.dir}/${jmsjca.jmsimpl.id}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}/index.html"
         />
         <pathconvert targetos="windows"
                      property="jmsjca.junit.dir.display"
@@ -523,7 +540,7 @@
 To view the junit report, type            
   start ${jmsjca.junit.dir.display}
 or type 
-  ant ${jmsjca.container.id} ${jmsjca.jmsimpl.id} view-report           
+  ant ${jmsjca.container.id} ${jmsjca.jmsimpl.id}${jmsjca.jmsimpl.subid} view-report           
         </echo>            
     </target>
 

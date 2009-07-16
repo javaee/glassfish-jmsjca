@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -483,29 +483,38 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
             return;
         }
         
+        // Effective URL for ObjectFactory: fact takes precedence 
         String urlstr = mConnectionURL == null ? mRA.getConnectionURL() : mConnectionURL;
         mObjFactory =  mRA.createObjectFactory(urlstr);
-
-        Properties p = new Properties();
+        
+        // Cache RA URL and Options to detect changes in these values
         mRAUrl = mRA.lookUpLDAP(mRA.getConnectionURL());
         mRAOptionsStr = mRA.getOptions();
-
-        // Lowest precedence: RA-options
-        Str.deserializeProperties(Str.parseProperties(Options.SEP, mRAOptionsStr), p);  
-
-        // Higher precedence: RA-url
-        if (!Str.empty(mRAUrl)) {
-            getObjFactory().createConnectionUrl(mRAUrl).getQueryProperties(p);
+        
+        Properties p = new Properties();
+        try {
+            mObjFactory.getProperties(p, mRA, null, this, null);
+        } catch (JMSException e) {
+            throw Exc.rtexc(LOCALE.x("E220: Could not decode configuration: {0}", e), e);
         }
-
-        // Override 1: locally defined options
-        Str.deserializeProperties(Str.parseProperties(Options.SEP, mOptionsStr), p);
         mOptions = p;
 
-        // Higher precedence: locally defined url
-        if (mConnectionURL != null) {
-            getObjFactory().createConnectionUrl(mConnectionURL).getQueryProperties(p);
-        }
+//        // Lowest precedence: RA-options
+//        Str.deserializeProperties(Str.parseProperties(Options.SEP, mRAOptionsStr), p);  
+//
+//        // Higher precedence: RA-url
+//        if (!Str.empty(mRAUrl)) {
+//            getObjFactory().createConnectionUrl(mRAUrl).getQueryProperties(p);
+//        }
+//
+//        // Override 1: locally defined options
+//        Str.deserializeProperties(Str.parseProperties(Options.SEP, mOptionsStr), p);
+//        mOptions = p;
+//
+//        // Higher precedence: locally defined url
+//        if (mConnectionURL != null) {
+//            getObjFactory().createConnectionUrl(mConnectionURL).getQueryProperties(p);
+//        }
 
         // Extract values; system properties have highest precedence
         mClientContainer = Utility.isTrue(p.getProperty(Options.Out.CLIENTCONTAINER), false);

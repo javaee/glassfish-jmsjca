@@ -130,7 +130,7 @@
                 <fileset file="${stc.lib.dir}/jdom.jar" />
                 <fileset file="${stc.lib.dir}/junit.jar" />
             </classpath>
-            <classpath refid="jmsjca.${jcaid}.clientjars.path" />
+            <classpath refid="jmsjca.${jcaid}${jmsjca.jmsimpl.subid}.clientjars.path" />
         </javac>
 
         <!-- copy resources -->
@@ -270,13 +270,14 @@
     <target name="run-test2" depends="init">
         <echo message="test ear                  : ${jmsjca.xxx.ear.path}" />
         <echo message="jms impl                  : ${jcaid}" />
+        <echo message="jms sub impl              : ${jmsjca.jmsimpl.subid}" />
         <echo message="test container            : ${jmsjca.container.id}" />
         <echo message="test container properties : ${jmsjca.properties.path}" />
         <echo message="test jms server properties: ${jmsjca.properties.path}" />
         <echo message="results in                : ${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
         <echo message="EMMA coverage dump to     : ${coverage.dir}\junit-coverage.ec"/>
         <delete dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
-        <mkdir dir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"/>
+        <mkdir dir="${jmsjca.reports.junit.dir}/${jcaid}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}"/>
 
         <junit
         	fork="yes"
@@ -286,6 +287,8 @@
         >
             <sysproperty key="jmsjca.container.id" value="${jmsjca.container.id}"/>
             <sysproperty key="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
+            <sysproperty key="jmsjca.jmsimpl.subid" value="${jmsjca.jmsimpl.subid}"/>
+            
             <jvmarg value="-Demma.coverage.out.file=${coverage.dir}\junit-coverage.ec"/>
             <classpath refid="jmsjca.${jmsjca.container.id}.classpath" />
             <classpath>
@@ -300,14 +303,14 @@
                 <fileset file="${jmsjca.filejndi.jar.path-providerutil.jar}" />
                 <path refid="emma.lib" />
             </classpath>
-            <classpath refid="jmsjca.${jcaid}.clientjars.path" />
+            <classpath refid="jmsjca.${jcaid}${jmsjca.jmsimpl.subid}.clientjars.path" />
             <classpath path="${jmsjca.xxx.test.classes.dir}" />
             <classpath path="${jmsjca.module.dir}" />
             
             <batchtest
                 haltonfailure="no"
                 haltonerror="no"
-                todir="${jmsjca.reports.junit.dir}/${jcaid}-${jmsjca.container.id}"
+                todir="${jmsjca.reports.junit.dir}/${jcaid}${jmsjca.jmsimpl.subid}-${jmsjca.container.id}"
             >
                 <fileset dir="${jmsjca.xxx.test.classes.dir}">
                     <include name="**/${jmsjca.ear1.pattern}JUStd.class"/>

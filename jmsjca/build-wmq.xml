@@ -5,11 +5,18 @@
     <taskdef name="switch" classname="net.sf.antcontrib.logic.Switch" classpath="./buildtools/lib/ant-contrib.jar"/>
 
     <!-- REQUIRED for compile test -->
-    <path id="jmsjca.wmq.clientjars.path">
-        <fileset file="${jmsjca.wmq.jar.path-mq.jar}" />
-        <fileset file="${jmsjca.wmq.jar.path-mqetclient.jar}" />
-        <fileset file="${jmsjca.wmq.jar.path-mqjms.jar}" />
-        <fileset file="${jmsjca.wmq.jar.path-dhbcore.jar}" />
+    <path id="jmsjca.wmq6.clientjars.path">
+        <fileset file="${jmsjca.wmq6.jar.path-mq.jar}" />
+        <fileset file="${jmsjca.wmq6.jar.path-mqetclient.jar}" />
+        <fileset file="${jmsjca.wmq6.jar.path-mqjms.jar}" />
+        <fileset file="${jmsjca.wmq6.jar.path-dhbcore.jar}" />
+    </path>
+
+    <!-- REQUIRED for compile test -->
+    <path id="jmsjca.wmq5.clientjars.path">
+        <fileset file="${jmsjca.wmq5.jar.path-mq.jar}" />
+        <fileset file="${jmsjca.wmq5.jar.path-mqbind.jar}" />
+        <fileset file="${jmsjca.wmq5.jar.path-mqjms.jar}" />
     </path>
 
 <!--===========================================================================

@@ -41,7 +41,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     java.io.Serializable {
@@ -200,46 +200,6 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
     }    
 
     /**
-     * Gets the connection type properties and connection URL
-     * 
-     * @param p properties to fill in
-     * @param ra resouce adapter
-     * @param spec activation spec
-     * @param fact factory
-     * @param overrideUrl optional URL specified in createConnection(URL,
-     *            password)
-     * @return url parser
-     * @throws JMSException on incorrect URL
-     */
-    @Override
-    public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter ra,
-        RAJMSActivationSpec spec, XManagedConnectionFactory fact, String overrideUrl)
-        throws JMSException {
-        UrlParser url = (UrlParser) super.getProperties(p, ra, spec, fact, overrideUrl);
-
-        // When using SSL, use TrustAll unless otherwise specified
-        if (PROT_SSL.equals(url.getProtocol())) {
-            if (p.get(SSL_AUTHENTICATION_MODE) == null) {
-                p.setProperty(SSL_AUTHENTICATION_MODE, SSL_AUTHENTICATION_MODE_TRUSTALL);
-            }
-        }
-
-        // Port
-        int port = url.getPort();
-        p.setProperty(HOST, url.getHost());
-        p.setProperty(PORT, Integer.toString(port));
-
-        // Other options
-        p.setProperty(AUTOCOMMITXA, "true");
-
-        if (fact != null && fact.getOptionStrict()) {
-            p.setProperty(STRICTPERSISTENCE, "true");
-        }
-
-        return url;
-    }
-
-    /**
      * createConnectionFactory
      * 
      * @param domain boolean
@@ -258,7 +218,26 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
 
         // Get the connection properties
         Properties p = new Properties();
-        getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        UrlParser url = (UrlParser) getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        
+        // Add STCMS specific connection properties to this properties set
+        int port = url.getPort();
+        p.setProperty(HOST, url.getHost());
+        p.setProperty(PORT, Integer.toString(port));
+        
+        // When using SSL, use TrustAll unless otherwise specified
+        if (PROT_SSL.equals(url.getProtocol())) {
+            if (p.get(SSL_AUTHENTICATION_MODE) == null) {
+                p.setProperty(SSL_AUTHENTICATION_MODE, SSL_AUTHENTICATION_MODE_TRUSTALL);
+            }
+        }
+
+        // Other options
+        p.setProperty(AUTOCOMMITXA, "true");
+
+        if (fact != null && fact.getOptionStrict()) {
+            p.setProperty(STRICTPERSISTENCE, "true");
+        }
 
         String classname;
         switch (domain) {
@@ -389,7 +368,7 @@ public class RASTCMSObjectFactory extends RAJMSObjectFactory implements
             // Determine URL -> connection properties
             Properties p = new Properties();
             UrlParser url = (UrlParser) getProperties(p, ra, spec, null, null);
-            validateAndAdjustURL(url);
+
             Properties connectionProperties = new Properties();
             connectionProperties.setProperty(HOST, url.getHost());
             connectionProperties.setProperty(PORT, Integer.toString(url.getPort()));

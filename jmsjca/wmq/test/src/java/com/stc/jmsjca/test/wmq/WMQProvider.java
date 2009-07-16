@@ -23,6 +23,7 @@ import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.Passthrough;
 import com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv;
 import com.stc.jmsjca.test.core.EndToEndBase.ConnectorConfig;
+import com.stc.jmsjca.wmq.RAWMQObjectFactory;
 import com.stc.jmsjca.wmq.RAWMQResourceAdapter;
 
 import java.util.Properties;
@@ -30,14 +31,27 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WMQProvider extends JMSProvider {
-    public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wmq.host";
-    public static final String PROPNAME_PORT = "jmsjca.jmsimpl.wmq.port";
-    public static final String PROPNAME_USERID = "jmsjca.jmsimpl.wmq.userid";
-    public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.wmq.password";
-    public static final String QUEUEMANAGER = "jmsjca.jmsimpl.wmq.queuemanager";
+    public static final String PROPNAME_HOST5 = "jmsjca.jmsimpl.wmq5.host";
+    public static final String PROPNAME_PORT5 = "jmsjca.jmsimpl.wmq5.port";
+    public static final String PROPNAME_USERID5 = "jmsjca.jmsimpl.wmq5.userid";
+    public static final String PROPNAME_PASSWORD5 = "jmsjca.jmsimpl.wmq5.password";
+    public static final String QUEUEMANAGER5 = "jmsjca.jmsimpl.wmq5.queuemanager";
+
+    public static final String PROPNAME_HOST6 = "jmsjca.jmsimpl.wmq6.host";
+    public static final String PROPNAME_PORT6 = "jmsjca.jmsimpl.wmq6.port";
+    public static final String PROPNAME_USERID6 = "jmsjca.jmsimpl.wmq6.userid";
+    public static final String PROPNAME_PASSWORD6 = "jmsjca.jmsimpl.wmq6.password";
+    public static final String QUEUEMANAGER6 = "jmsjca.jmsimpl.wmq6.queuemanager";
+    
+    /**
+     * @return true if this is WMQ5
+     */
+    public boolean is5() {
+        return "5".equals(System.getProperty("jmsjca.jmsimpl.subid", "6"));
+    }
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider
@@ -50,12 +64,12 @@ public class WMQProvider extends JMSProvider {
         // Update first RA
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl(test.getJmsServerProperties()));
+        cc.setConnectionURL(getConnectionUrl(test));
 
         // Update second RA
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1)
                 .createConnector(ConnectorConfig.class);
-        cc.setConnectionURL(WMQPassthrough.getConnectionUrl(test.getJmsServerProperties()));
+        cc.setConnectionURL(getConnectionUrl(test));
 
         // Commit
         dd.update();
@@ -82,15 +96,31 @@ public class WMQProvider extends JMSProvider {
         passthrough.setCommitSize(10);
         return passthrough;
     }
+    
+    public String getHost(Properties serverProperties) {
+        return serverProperties.getProperty(is5() ? PROPNAME_HOST5 : PROPNAME_HOST6);
+    }
+    
+    public int getPort(Properties serverProperties) {
+        return Integer.parseInt(serverProperties.getProperty(is5() ? PROPNAME_PORT5 : PROPNAME_PORT6)); 
+    }
+    
+    public String getQueueManager(Properties serverProperties) {
+        return serverProperties.getProperty(is5() ? QUEUEMANAGER5 : QUEUEMANAGER6);
+    }
 
     /**
      * @see com.stc.jmsjca.test.core.JMSProvider#getConnectionUrl(com.stc.jmsjca.test.core.BaseTestCase.JMSTestEnv)
      */
     @Override
     public String getConnectionUrl(JMSTestEnv test) {
-        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
-        return createConnectionUrl(host, port);
+        Properties p = test.getJmsServerProperties();
+        return getConnectionUrl(p);
+    }
+
+    public String getConnectionUrl(Properties p) {
+        return (is5() ? "wmq5://" : "wmq://") + getHost(p) + ":" + getPort(p) 
+        + "?" + RAWMQObjectFactory.QUEUEMANAGER + "=" + getQueueManager(p);
     }
 
     /**
@@ -98,7 +128,7 @@ public class WMQProvider extends JMSProvider {
      */
     @Override
     public String getPassword(Properties serverProperties) {
-        return serverProperties.getProperty(PROPNAME_PASSWORD);
+        return serverProperties.getProperty(is5() ? PROPNAME_PASSWORD5 : PROPNAME_PASSWORD6);
     }
 
     /**
@@ -106,7 +136,7 @@ public class WMQProvider extends JMSProvider {
      */
     @Override
     public String getUserName(Properties serverProperties) {
-        return serverProperties.getProperty(PROPNAME_USERID);
+        return serverProperties.getProperty(is5() ? PROPNAME_USERID5 : PROPNAME_USERID6);
     }
 
     /**

@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -61,23 +61,23 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     /**
      * Protocol
      */
-    private static final String PROTOCOL = "wmq";
+    private static final String PROTOCOL6 = "wmq";
     
     /**
      * SSL Protocol
      */
-    private static final String SPROTOCOL = "wmqs";
+    private static final String SPROTOCOL6 = "wmqs";
     
     /**
-     * Port
-     */    
-    private static final String PORT = "Port";
+     * Protocol
+     */
+    private static final String PROTOCOL5 = "wmq5";
     
     /**
-     * Hostname
-     */    
-    private static final String HOSTNAME = "HostName";
-
+     * SSL Protocol
+     */
+    private static final String SPROTOCOL5 = "wmqs5";
+    
     /**
      * WebSphere MQ Queue Manager Name
      */        
@@ -86,7 +86,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     /**
      * WebSphere MQ transport type
      */            
-    public static final String TRANSPORTTYPE = "TransportType";
+    public static final String TRANSPORTTYPE = "TransportType"; 
     
     /**
      * WebSphere MQ Channel
@@ -94,36 +94,18 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     public static final String CHANNEL = "Channel";
  
     /**
-     * WebSphere MQ Client Id
-     */            
-    public static final String CLIENTID = "ClientId";
-    
-    /**
-     * WebSphere MQ Default Client Id
-     */            
-    private static final String DEFAULT_CLIENTID = "SeeBeyond RAWMQ";
-        
-    /**
      * WebSphere MQ Default Transport Type
      */            
     private static final String DEFAULT_TRANSPORTTYPE = "JMSC_MQJMS_TP_CLIENT_MQ_TCPIP";
     
-    /**
-     * WebSphere MQ Server port 
-     */                
-    private static final String PORTPROPERTY = "WMQ.Server.Port";
-    
-    /**
-     * WebSphere MQ Server hostname 
-     */                
-    private static final String HOSTPROPERTY = "WMQ.Server.Host";
- 
     /*
      * Connection Protocol Url Prefixes
      */
     private static final String[] URL_PREFIXES = new String[] {
-            PROTOCOL + "://",
-            SPROTOCOL + "://",
+            PROTOCOL6 + "://",
+            SPROTOCOL6 + "://",
+            PROTOCOL5 + "://",
+            SPROTOCOL5 + "://",
         };
     
     /*
@@ -136,55 +118,6 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
 
     private static final Localizer LOCALE = Localizer.get();    
     
-    /**
-     * Checks the validity of the URL; adjusts the port number if necessary
-     *  using system properties
-     * @param connectionUrl ConnectionUrl
-     * @throws JMSException on format failure
-     * @return boolean true if the url specified url object was changed by this
-     *         validation
-     */
-    @Override
-    public boolean validateAndAdjustURL(ConnectionUrl connectionUrl) throws JMSException {
-        boolean hasChanged = false;
-        UrlParser url = (UrlParser) connectionUrl;
-
-        // protocol
-        if (!PROTOCOL.equals(url.getProtocol())) {
-            throw Exc.jmsExc(LOCALE.x("E306: Invalid protocol [{0}]:"
-                + " should be ''{1}''",  url.getProtocol(), PROTOCOL));
-        }
-
-        // Check port
-        int port = url.getPort();
-        if (port <= 0) {
-            String s = System.getProperty(PORTPROPERTY);
-            if (s != null) {
-                port = Integer.parseInt(s);
-                url.setPort(port);
-                hasChanged = true;
-            } else {
-                throw new JMSException("No port specified in URL [" + url
-                    + "], and also not available in System property [" + PORTPROPERTY
-                    + "]");
-            }
-        }
-
-        // Check host
-        String host = url.getHost();
-        if ("".equals(host)) {
-            String s = System.getProperty(HOSTPROPERTY);
-            if (s != null) {
-                url.setHost(s);                
-            } else {
-                url.setHost("localhost");
-            }
-            hasChanged = true;
-        }
-        
-        return hasChanged;
-    }
-
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
@@ -239,22 +172,13 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
            XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
 
         UrlParser url = (UrlParser) super.getProperties(p, ra, spec, fact, overrideUrl);
-
         validateAndAdjustURL(url);
+        
+        // WMQ5 does not support XA
+        if (url.getProtocol().equals(PROTOCOL5) || url.getProtocol().equals(SPROTOCOL5)) {
+            p.setProperty(Options.NOXA, Boolean.TRUE.toString());
+        }
 
-        p.setProperty(HOSTNAME, url.getHost());        
-        p.setProperty(PORT, Integer.toString(url.getPort()));
-        
-        //other properties
-        String clientId = DEFAULT_CLIENTID;
-        if (spec != null && !Str.empty(spec.getClientId())) {
-            clientId = spec.getClientId();
-        }        
-        p.setProperty(CLIENTID, clientId);
-        
-        //Default Queue Manager
-        //DEFAULT_QUEUEMANAGER = getQueueManager(url.getHost());        
-        
         return url;
     }
     
@@ -274,60 +198,27 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
            RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec activationSpec,
            XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
 
+        Properties p = new Properties();
+        UrlParser url = (UrlParser) getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        
+        boolean is5 = url.getProtocol().equals(PROTOCOL5) || url.getProtocol().equals(SPROTOCOL5);
+
+        String qMgr = p.getProperty(QUEUEMANAGER, getQueueManager(url.getHost()));
+
+        String transType = p.getProperty(TRANSPORTTYPE, DEFAULT_TRANSPORTTYPE);
+        
+        String channelName = p.getProperty(CHANNEL);
+
+        String tosetTransportType;
+        if (TRANSPORT_TYPES[0].equals(transType)) {
+            tosetTransportType = "0";
+        } else if (TRANSPORT_TYPES[1].equals(transType)) {
+            tosetTransportType = "1";
+        } else {
+            tosetTransportType = "1"; 
+        }            
+        
         ConnectionFactory cf = null;
-    
-        // Obtain URL
-        String urlstr = overrideUrl;
-        if (urlstr == null && resourceAdapter != null && !Str.empty(resourceAdapter.getConnectionURL())) {
-            urlstr = resourceAdapter.getConnectionURL();
-        }
-        if (urlstr == null && activationSpec != null && !Str.empty(activationSpec.getConnectionURL())) {
-            urlstr = activationSpec.getConnectionURL();
-        }
-        if (urlstr == null && fact != null && !Str.empty(fact.getConnectionURL())) {
-            urlstr = fact.getConnectionURL();
-        }
-
-        // need to ensure that this URL isn't an indirect reference, i.e.
-        // actually an LDAP URL where the real value is bound
-        String realUrl = resourceAdapter == null ? urlstr : resourceAdapter.lookUpLDAP(urlstr);
-        
-        String clientId = DEFAULT_CLIENTID;
-        if (activationSpec != null && !Str.empty(activationSpec.getClientId())) {
-            clientId = activationSpec.getClientId();
-        }
-
-        Properties cfp = new Properties();
-        try {
-            WMQConnectionUrl url = new WMQConnectionUrl(realUrl);
-            validateAndAdjustURL(url.getUrlParser());
-            Properties p = new Properties();
-            url.getQueryProperties(p);         
-                        
-            String qMgr = p.getProperty(QUEUEMANAGER, getQueueManager(url.getUrlParser().getHost()));
-                        
-            String transType = p.getProperty(TRANSPORTTYPE, DEFAULT_TRANSPORTTYPE);            
-            if (TRANSPORT_TYPES[0].equals(transType)) {
-                cfp.setProperty(TRANSPORTTYPE, "0");
-            } else if (TRANSPORT_TYPES[1].equals(transType)) {
-                cfp.setProperty(TRANSPORTTYPE, "1");
-            } else {
-                cfp.setProperty(TRANSPORTTYPE, "1"); 
-            }            
-            cfp.setProperty(QUEUEMANAGER, qMgr);
-            cfp.setProperty(HOSTNAME, url.getUrlParser().getHost());
-            cfp.setProperty(PORT, Integer.toString(url.getUrlParser().getPort()));
-            cfp.setProperty(CLIENTID, clientId);
-            String channelName = p.getProperty(CHANNEL);
-            if (channelName != null) {
-                cfp.setProperty(CHANNEL, channelName);
-            }
-        } catch (Exception ex) {
-            JMSException e = new JMSException("Invalid url " + realUrl);
-            e.initCause(ex);
-            throw e;
-        }
-        
         try {
             switch (domain) {
                 case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
@@ -335,6 +226,9 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                     "com.ibm.mq.jms.MQQueueConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_QUEUE_XA:
+                if (is5) {
+                    throw Exc.jmsExc(LOCALE.x("E843: Logic fault: trying to use XA on WMQ5"));
+                }
                 cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXAQueueConnectionFactory").newInstance();
                 break;
@@ -343,6 +237,9 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                     "com.ibm.mq.jms.MQTopicConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_TOPIC_XA:
+                if (is5) {
+                    throw Exc.jmsExc(LOCALE.x("E843: Logic fault: trying to use XA on WMQ5"));
+                }
                 cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXATopicConnectionFactory").newInstance();
                 break;
@@ -351,6 +248,9 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                     "com.ibm.mq.jms.MQConnectionFactory").newInstance();
                 break;
             case XConnectionRequestInfo.DOMAIN_UNIFIED_XA:
+                if (is5) {
+                    throw Exc.jmsExc(LOCALE.x("E843: Logic fault: trying to use XA on WMQ5"));
+                }
                 cf = (ConnectionFactory) ClassLoaderHelper.loadClass(
                     "com.ibm.mq.jms.MQXAConnectionFactory").newInstance();
                 break;
@@ -365,18 +265,17 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         Class<?> clazz = cf.getClass();
         try {
             clazz.getMethod("setHostName", new Class[] {String.class}).invoke(
-                cf, new Object[] {cfp.getProperty(HOSTNAME)});
+                cf, new Object[] {url.getHost()});
 
             clazz.getMethod("setPort", new Class[] {int.class}).invoke(
-                cf, new Object[] {Integer.valueOf(cfp.getProperty(PORT))});
+                cf, new Object[] {Integer.valueOf(url.getPort())});
 
             clazz.getMethod("setQueueManager", new Class[] {String.class}).invoke(
-                cf, new Object[] {cfp.getProperty(QUEUEMANAGER)});
+                cf, new Object[] {qMgr});
 
             clazz.getMethod("setTransportType", new Class[] {int.class}).invoke(
-                cf, new Object[] {Integer.valueOf(cfp.getProperty(TRANSPORTTYPE))});
+                cf, new Object[] {Integer.valueOf(tosetTransportType)});
 
-            String channelName = cfp.getProperty(CHANNEL);
             if (channelName != null) {
                 clazz.getMethod("setChannel", new Class[] {String.class}).invoke(cf,
                     new Object[] {channelName});

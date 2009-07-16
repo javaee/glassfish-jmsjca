@@ -26,7 +26,6 @@ import com.stc.jmsjca.core.SessionConnection;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
-import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
@@ -53,7 +52,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -180,6 +179,26 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
         // Get the connection properties
         Properties p = new Properties();
         getProperties(p, resourceAdapter, activationSpec, fact, overrideUrl);
+        
+        if (resourceAdapter instanceof RAJNDIResourceAdapter) {
+            RAJNDIResourceAdapter ra = (RAJNDIResourceAdapter) resourceAdapter;
+            // Get properties from RA
+            if (ra.getQueueConnectionFactoryJndiName() != null) {
+                p.setProperty(RAJNDIResourceAdapter.QUEUECF, ra.getQueueConnectionFactoryJndiName());
+            }
+            if (ra.getTopicConnectionFactoryJndiName() != null) {
+                p.setProperty(RAJNDIResourceAdapter.TOPICCF, ra.getTopicConnectionFactoryJndiName());
+            }
+            if (ra.getUnifiedConnectionFactoryJndiName() != null) {
+                p.setProperty(RAJNDIResourceAdapter.UNIFIEDCF, ra.getUnifiedConnectionFactoryJndiName());
+            }
+            if (ra.getInitialContextFactory() != null) {
+                p.setProperty(Context.INITIAL_CONTEXT_FACTORY, ra.getInitialContextFactory());
+            }
+            if (ra.getProviderUrl() != null) {
+                p.setProperty(Context.PROVIDER_URL, ra.getProviderUrl());
+            }
+        }
 
         switch (domain) {
         case XConnectionRequestInfo.DOMAIN_QUEUE_NONXA:
@@ -201,45 +220,6 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
         default:
             throw Exc.jmsExc(LOCALE.x("E402: Logic fault: invalid domain {0}", Integer.toString(domain)));
         }
-    }
-
-    /**
-     * Gets the connection type properties and connection URL
-     * 
-     * @param p properties to fill in
-     * @param resourceAdapter resouce adapter
-     * @param spec activation spec
-     * @param fact factory
-     * @param overrideUrl optional URL specified in createConnection(URL, password)
-     * @return url parser
-     * @throws JMSException on incorrect URL
-     */
-    @Override
-    public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter resourceAdapter, RAJMSActivationSpec spec,
-            XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
-        ConnectionUrl url = super.getProperties(p, resourceAdapter, spec, fact, overrideUrl);
-
-        if (resourceAdapter instanceof RAJNDIResourceAdapter) {
-            RAJNDIResourceAdapter ra = (RAJNDIResourceAdapter) resourceAdapter;
-            // Get properties from RA
-            if (ra.getQueueConnectionFactoryJndiName() != null) {
-                p.setProperty(RAJNDIResourceAdapter.QUEUECF, ra.getQueueConnectionFactoryJndiName());
-            }
-            if (ra.getTopicConnectionFactoryJndiName() != null) {
-                p.setProperty(RAJNDIResourceAdapter.TOPICCF, ra.getTopicConnectionFactoryJndiName());
-            }
-            if (ra.getUnifiedConnectionFactoryJndiName() != null) {
-                p.setProperty(RAJNDIResourceAdapter.UNIFIEDCF, ra.getUnifiedConnectionFactoryJndiName());
-            }
-            if (ra.getInitialContextFactory() != null) {
-                p.setProperty(Context.INITIAL_CONTEXT_FACTORY, ra.getInitialContextFactory());
-            }
-            if (ra.getProviderUrl() != null) {
-                p.setProperty(Context.PROVIDER_URL, ra.getProviderUrl());
-            }
-        }
-
-        return url;
     }
 
     /**
