@@ -73,7 +73,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -2659,6 +2659,16 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
         } catch (Exception e) {
             sLog.errorNoloc("Failed: " + e, e);
             throw new EJBException("Failed: " + e, e);
+        }
+    }
+    
+    public void testDoNotSend(Message m) {
+        
+    }
+    
+    public void testDoNotSendThrow(Message m) throws Exception {
+        if (shouldThrow()) {
+            throw new IntentionalException("testDoNotSendThrow");
         }
     }
 }

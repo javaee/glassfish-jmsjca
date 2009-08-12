@@ -27,8 +27,10 @@ import com.stc.jmsjca.core.XMCFUnifiedXA;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.InterceptorInfo;
 import com.stc.jmsjca.util.InterceptorLoader;
+import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.SampleInterceptor;
 
+import javax.ejb.EJBException;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 import javax.jms.Connection;
@@ -38,6 +40,7 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
+import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSender;
@@ -47,6 +50,8 @@ import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicPublisher;
 import javax.jms.TopicSession;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -60,6 +65,7 @@ import java.util.Random;
  * @author fkieviet
  */
 public abstract class InterceptorTests extends EndToEndBase {
+    private static Logger sLog = Logger.getLogger(InterceptorTests.class.getName());
     
     public static class Interceptor1 {
         public static Map<String, Integer> sInvocationCount = new HashMap<String, Integer>();
@@ -626,41 +632,6 @@ public abstract class InterceptorTests extends EndToEndBase {
         }
     }
     
-//    /**
-//     * Queue to queue XA on in, XA on out CC-mode
-//     * 
-//     * @throws Throwable
-//     */
-//    public void testInAS() throws Throwable {
-//        EmbeddedDescriptor dd = getDD();
-//        dd.findElementByText(EJBDD, "testQQXAXA").setText("testInterceptor1");
-//        dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
-//        ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
-//        String url = x.getConnectionURL();
-//        url = url + (url.indexOf('?') > 0 ? "&" : "?") + Options.Interceptor.SERVICENAME + "=" + "jmsjca-private.test.interceptor";
-//        x.setConnectionURL(url);
-//        dd.update();
-//
-//        // Deploy
-//        Container c = createContainer();
-//        Passthrough p = createPassthrough(mServerProperties);
-//
-//        try {
-//            if (c.isDeployed(mTestEar.getAbsolutePath())) {
-//                c.undeploy(mTestEarName);
-//            }
-//            p.clearQ1Q2Q3();
-//
-//            c.redeployModule(mTestEar.getAbsolutePath());
-//            p.passFromQ1ToQ2();
-//            c.undeploy(mTestEarName);
-//            p.get(p.getQueue1Name()).assertEmpty();
-//        } finally {
-//            Container.safeClose(c);
-//            Passthrough.safeClose(p);
-//        }
-//    }
-//    
     /**
      * Tests the basic properties of the nbound context
      * 
@@ -701,7 +672,7 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @throws Throwable
      */
     public void testContextInbound() throws Throwable {
-        runInboundInterceptor(ContextTestInbound.class, SampleInterceptor.TEST_IN_EXEC);
+        runInterceptor(ContextTestInbound.class, SampleInterceptor.TEST_IN_EXEC, "testInterceptor1");
     }
     
 
@@ -735,7 +706,7 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @throws Exception
      */
     public void testThrowExceptionInbound() throws Exception {
-        runInboundInterceptor(ThrowExceptionTest.class, SampleInterceptor.TEST_IN_EXEC);
+        runInterceptor(ThrowExceptionTest.class, SampleInterceptor.TEST_IN_EXEC, "testInterceptor1");
     }
     
     /**
@@ -744,7 +715,7 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @throws Exception
      */
     public void testThrowExceptionOutbound() throws Exception {
-        runInboundInterceptor(ThrowExceptionTest.class, SampleInterceptor.TEST_OUT_EXEC);
+        runInterceptor(ThrowExceptionTest.class, SampleInterceptor.TEST_OUT_EXEC, "testInterceptor1");
     }
     
     /**
@@ -753,10 +724,10 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @param testClass
      * @throws Exception
      */
-    public void runInboundInterceptor(final Class<?> testClass, final String propertyName) throws Exception {
+    public void runInterceptor(final Class<?> testClass, final String inboundOrOutbound, String testName) throws Exception {
         EmbeddedDescriptor dd = getDD();
-        dd.findElementByText(EJBDD, "testQQXAXA").setText("testInterceptor1");
-        dd.findElementByText(EJBDD, "XContextName").setText("testInterceptor1");
+        dd.findElementByText(EJBDD, "testQQXAXA").setText(testName);
+        dd.findElementByText(EJBDD, "XContextName").setText(testName);
 
         dd.findElementByText(EJBDD, "cc").setText("serial");
 
@@ -786,7 +757,7 @@ public abstract class InterceptorTests extends EndToEndBase {
                     } catch (Exception e) {
                         throw new JMSException("" + e);
                     }
-                    ret.setBooleanProperty(propertyName, true);
+                    ret.setBooleanProperty(inboundOrOutbound, true);
                     return ret;
                 }
             });
@@ -810,11 +781,11 @@ public abstract class InterceptorTests extends EndToEndBase {
         EmbeddedDescriptor dd = getDD();
         dd.findElementByText(EJBDD, "testQQXAXA").setText("testFailall");
         dd.findElementByText(EJBDD, "XContextName").setText("j-testQQXAXA");
-//        dd.findElementByText(EJBDD, "cc").setText("serial");
+        dd.findElementByText(EJBDD, "cc").setText("serial");
         
         ConnectorConfig x = (ConnectorConfig) dd.new ResourceAdapter(RAXML).createConnector(ConnectorConfig.class);
         String url = x.getConnectionURL();
-//        url = url + (url.indexOf('?') > 0 ? "&" : "?") + Options.Interceptor.SERVICENAME + "=" + "jmsjca-private.test.interceptor";
+        url = url + (url.indexOf('?') > 0 ? "&" : "?") + Options.Interceptor.SERVICENAME + "=" + Options.Interceptor.TEST_SVC;
         x.setConnectionURL(url);
         dd.update();
 
@@ -840,7 +811,65 @@ public abstract class InterceptorTests extends EndToEndBase {
         }
     }
     
-    
+    public static class SendUsingGlobalPool implements SampleInterceptor.Executor, Serializable {
+        private static Logger sLog = Logger.getLogger(SendUsingGlobalPool.class.getName());
+
+        public static void safeClose(Connection c) {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+        }
+        
+        public static void safeClose(Context c) {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+        }
+        
+        public void run() throws Exception {
+            try {
+                Connection conn = null;
+                Context ctx = new InitialContext();
+                try {
+                    Message message = (Message) SampleInterceptor.getInboundContext().getParameters()[0];
+                    
+                    ConnectionFactory fact = (ConnectionFactory) ctx.lookup("jms/tx/default");
+                    conn = fact.createConnection();
+                    Session s = conn.createSession(true, Session.AUTO_ACKNOWLEDGE);
+                    Queue dest = s.createQueue("Queue2");
+                    MessageProducer prod = s.createProducer(dest);
+                    prod.send(message);
+                } finally {
+                    safeClose(ctx);
+                    safeClose(conn);
+                }
+            } catch (JMSException e) {
+                sLog.errorNoloc("Failed: " + e, e);
+                throw new EJBException("Failed: " + e, e);
+            }
+        }
+    }
+
+    /**
+     * Demoes sending a message from an inbound interceptor using a global connection pool
+     * 
+     * POOL HAS TO BE CONFIGURED IN THE APPLICATION SERVER BEFORE TEST CAN BE RUN!
+     * 
+     * @throws Throwable
+     */
+    public void skip_testGlobalInterceptorUsingGlobalPool() throws Throwable {
+        runInterceptor(SendUsingGlobalPool.class, SampleInterceptor.TEST_IN_EXEC, "testDoNotSend");
+    }
+
+
     // Tests to add:
     // -------------
     // Classloading test when adding the interceptor to the EAR
