@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -994,7 +994,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     public InterceptorChainBuilder getInterceptorChainBuilder() throws Exception {
         if (mInterceptorChainBuilder == null) {
             // Interceptors
-            String serviceName = mOptions.getProperty(Options.Interceptor.SERVICENAME, Options.Interceptor.DEFAULT_SERVICENAME);
+            String serviceName = getOptionsAsProperties().getProperty(Options.Interceptor.SERVICENAME, Options.Interceptor.DEFAULT_SERVICENAME);
             HashMap<Class<?>, InterceptorInfo> interceptors = InterceptorLoader.getInterceptors(serviceName);
             mInterceptorChainBuilder = new InterceptorChainBuilder(interceptors.values());
         }
