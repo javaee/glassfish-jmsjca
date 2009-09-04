@@ -18,10 +18,18 @@ package com.stc.jmsjca.core;
 
 import com.stc.jmsjca.localization.Localizer;
 import com.stc.jmsjca.util.Exc;
+import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
 import javax.resource.ResourceException;
 import javax.resource.spi.InvalidPropertyException;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import java.util.Enumeration;
+import java.util.Properties;
 
 /**
  * Encapsulates the configuration of a MessageEndpoint.
@@ -29,10 +37,11 @@ import javax.resource.spi.InvalidPropertyException;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
+    private static Logger sLog = Logger.getLogger(RAJMSActivationSpec.class);
 
     /** String constants used to map standard values to JMS equivalents */
     private static final String AUTOACKNOWLEDGE = "Auto-acknowledge";
@@ -93,6 +102,8 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     private String mContextName;
     private String mOptionsStr;
     private String mRedeliveryActions = "3:25; 5:50; 10:100; 20:1000; 50:5000";
+    private String mConfigurationTemplate;
+    private String mProjectInfo;
 
     // Provider specific attributes
 
@@ -841,6 +852,42 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
     }
     
     /**
+     * Getter for ConfigurationTemplate; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getConfigurationTemplate() {
+        return mConfigurationTemplate;
+    }
+
+    /**
+     * Setter for ConfigurationTemplate, for CAPS only -- not used for JMSJCA
+     *
+     * @param configurationTemplate The configuration template to set.
+     */
+    public void setConfigurationTemplate(String configurationTemplate) {
+        mConfigurationTemplate = configurationTemplate;
+    }
+    
+    /**
+     * Getter for ProjectInfo; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getProjectInfo() {
+        return mProjectInfo;
+    }
+
+    /**
+     * Setter for ProjectInfo, for CAPS only -- not used for JMSJCA
+     *
+     * @param projectInfo The project info to set.
+     */
+    public void setProjectInfo(String projectInfo) {
+        mProjectInfo = projectInfo;
+    }
+
+    /**
      * toString
      * 
      * @return String
@@ -881,5 +928,81 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
             + "\tMBeanName                           =" + mMBeanName + "\n"
             + "\tOptionsStr                          =" + mOptionsStr + "\n"
             + "\tRedeliveryHandling                  =" + mRedeliveryActions;
+    }
+    
+    /**
+     * Checks for a java.util.Properties object in JNDI and if found, overrides the 
+     * configuration of the spec with the one in the Properties object.
+     * 
+     * @return true if the RA spec was changed
+     */
+    public boolean overrideRASpecFromJNDI() {
+        boolean changed = false;
+        if (!Str.empty(getContextName())) {
+            Context ctx = null;            
+            String jndiName = "capsenv/CM/" + getContextName();
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Lookup in JNDI: " + jndiName);
+            }
+            try {
+                // Lookup object
+                ctx = new InitialContext();
+                Object o = ctx.lookup(jndiName);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Found in JNDI using [" + jndiName + "]: " + o);
+                }
+                
+                // Cast
+                if (!(o instanceof Properties)) {
+                    throw Exc.exc(LOCALE.x("E191: Incompatible object specified: the object must of type ''{0}'' "
+                        + "but the object bound to ''{1}'' is of type ''{2}''", Properties.class.getName()
+                        , jndiName, o.getClass().getName()));
+                }
+
+                // Change values                
+                Properties p = (Properties) o;
+                Enumeration<?> e = p.propertyNames();
+
+                // Replace the "key=<key>" to "key=''"
+                while (e.hasMoreElements()) {
+                    String key = (String) e.nextElement();
+                    String value = p.getProperty(key);
+                    if (value != null && value.equals("<" + key + ">")) {
+                        p.setProperty(key, "");
+                    }
+                }
+                
+                setConcurrencyMode(p.getProperty("ConcurrencyMode", getConcurrencyMode()));
+                setDestination(p.getProperty("Destination", getDestination()));
+                setDestinationType(p.getProperty("DestinationType", getDestinationType()));
+                setSubscriptionDurability(p.getProperty("SubscriptionDurability", getSubscriptionDurability()));
+                setSubscriptionName(p.getProperty("SubscriptionName", getSubscriptionName()));
+                setClientId(p.getProperty("ClientId", getClientId()));
+                setEndpointPoolMaxSize(p.getProperty("EndpointPoolMaxSize", getEndpointPoolMaxSize().toString()));
+                setMBeanName(p.getProperty("MBeanName", getMBeanName()));
+                setMessageSelector(p.getProperty("MessageSelector", getMessageSelector()));
+                setRedeliveryHandling(p.getProperty("RedeliveryHandling", getRedeliveryHandling()));
+                
+                changed = true;
+            } catch (NamingException e) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug("Could not find " + jndiName + ": " + e, e);
+                }
+            } catch (Exception e) {
+                sLog.warn(LOCALE.x("E193: The configuration overrides bound to JNDI name " 
+                    + "''{0}'' could not be fully applied; some default values will be used instead. " 
+                    + "The error was: {1}", jndiName, e), e);
+            } finally {
+                if (ctx != null) {
+                    try {
+                        ctx.close();
+                    } catch (Exception ignore) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        
+        return changed;
     }
 }

@@ -49,6 +49,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -61,7 +62,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -81,6 +82,13 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     private String mConfigurationOverride;
     private String mConfigurationTemplate;
     private String mProjectInfo;
+
+    // Following field are set during deployment and read by the CAPS JMS OTD, 
+    // but are not used anywhere in JMSJCA.
+    private String mDestination;
+    private String mTransactionMode;
+    private String mDeliveryMode;
+    private String mPriority;
     
     // For closing connections associated with getXAResources()
     private transient List<Connection> mRecoveryConnections;
@@ -290,6 +298,15 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         if (sLog.isDebugEnabled()) {
             sLog.debug("Activation spec configuration is: ["
                 + ((RAJMSActivationSpec) spec).dumpConfiguration() + "]");
+        }
+        
+        // Override spec
+        boolean overridden = ((RAJMSActivationSpec) spec).overrideRASpecFromJNDI();
+        if (overridden) {
+            if (sLog.isDebugEnabled()) {
+                sLog.debug("Activation spec configuration after being overridden is: ["
+                    + ((RAJMSActivationSpec) spec).dumpConfiguration() + "]");
+            }
         }
         
         // Adjust spec in case of url=lookup://
@@ -626,6 +643,17 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
 
                 // Change values
                 Properties p = (Properties) o;
+
+                // Replace the "key=<key>" to "key=''"
+                Enumeration<?> e = p.propertyNames();
+                while (e.hasMoreElements()) {
+                    String key = (String) e.nextElement();
+                    String value = p.getProperty(key);
+                    if (value != null && value.equals("<" + key + ">")) {
+                        p.setProperty(key, "");
+                    }
+                }
+                
                 setConnectionURL(p.getProperty("MSURL", p.getProperty("ConnectionURL", getConnectionURL())));
                 setUserName(p.getProperty("MSUsername", p.getProperty("UserName", getUserName())));
                 setPassword(p.getProperty("MSPassword", p.getProperty("Password", getPassword())));
@@ -638,7 +666,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 }
             } catch (Exception e) {
                 sLog.warn(LOCALE.x("E193: The configuration overrides bound to JNDI name " 
-                    + "''{0}'' could not be applied; the default values will be used instead. " 
+                    + "''{0}'' could not be fully applied; some default values will be used instead. " 
                     + "The error was: {1}", getConfigurationJNDIName(), e), e);
             } finally {
                 if (ctx != null) {
@@ -1288,9 +1316,81 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     /**
      * Setter for projectInfo, for CAPS only -- not used for JMSJCA
      *
-     * @param projectInfo StringThe projectInfo to set.
+     * @param projectInfo The projectInfo to set.
      */
     public void setProjectInfo(String projectInfo) {
         mProjectInfo = projectInfo;
+    }
+
+    /**
+     * Getter for TransactionMode; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getTransactionMode() {
+        return mTransactionMode;
+    }
+
+    /**
+     * Setter for TransactionMode, for CAPS only -- not used for JMSJCA
+     *
+     * @param transactionMode The transaction mode to set.
+     */
+    public void setTransactionMode(String transactionMode) {
+        mTransactionMode = transactionMode;
+    }
+
+    /**
+     * Getter for Destination; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getDestination() {
+        return mDestination;
+    }
+
+    /**
+     * Setter for Destination, for CAPS only -- not used for JMSJCA
+     *
+     * @param destination The destination name to set.
+     */
+    public void setDestination(String destination) {
+        mDestination = destination;
+    }
+
+    /**
+     * Getter for Delivery Mode; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getDeliveryMode() {
+        return mDeliveryMode;
+    }
+
+    /**
+     * Setter for Delivery Mode, for CAPS only -- not used for JMSJCA
+     *
+     * @param deliveryMode The delivery mode to set.
+     */
+    public void setDeliveryMode(String deliveryMode) {
+        mDeliveryMode = deliveryMode;
+    }
+
+    /**
+     * Getter for Priority; for CAPS only, not used by JMSJCA
+     *
+     * @return String
+     */
+    public String getPriority() {
+        return mPriority;
+    }
+
+    /**
+     * Setter for Priority, for CAPS only -- not used for JMSJCA
+     *
+     * @param priority The priority to set.
+     */
+    public void setPriority(String priority) {
+        mPriority = priority;
     }
 }

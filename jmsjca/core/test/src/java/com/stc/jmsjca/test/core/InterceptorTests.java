@@ -65,7 +65,7 @@ import java.util.Random;
  * @author fkieviet
  */
 public abstract class InterceptorTests extends EndToEndBase {
-    private static Logger sLog = Logger.getLogger(InterceptorTests.class.getName());
+//    private static Logger sLog = Logger.getLogger(InterceptorTests.class.getName());
     
     public static class Interceptor1 {
         public static Map<String, Integer> sInvocationCount = new HashMap<String, Integer>();
