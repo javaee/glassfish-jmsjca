@@ -31,13 +31,20 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
     public static final String PROPNAME_PORT = "jmsjca.jmsimpl.sunone.port";
     public static final String PROPNAME_USERID = "jmsjca.jmsimpl.sunone.userid";
     public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.sunone.password";
+    
+    /**
+     * @return true if directmode tests need to be tested
+     */
+    public boolean isDirect() {
+        return "direct".equals(System.getProperty("jmsjca.jmsimpl.subid", "direct"));
+    }
 
     /**
      * @param dd
@@ -49,14 +56,10 @@ public class SunOneProvider extends JMSProvider {
     public EmbeddedDescriptor changeDD(EmbeddedDescriptor dd, JMSTestEnv test)
     throws Exception {
         ConnectorConfig cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" 
-            + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) 
-            + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
+        cc.setConnectionURL(getConnectionUrl(test));
 
         cc = (ConnectorConfig) dd.new ResourceAdapter(EndToEndBase.RAXML1).createConnector(ConnectorConfig.class);
-        cc.setConnectionURL("mq://" 
-            + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_HOST) 
-            + ":" + test.getJmsServerProperties().getProperty(SunOneProvider.PROPNAME_PORT));
+        cc.setConnectionURL(getConnectionUrl(test));
 
         return dd;
     }
@@ -87,7 +90,7 @@ public class SunOneProvider extends JMSProvider {
      */
     @Override
     public String createConnectionUrl(String host, int port) {
-        return "mq://" + host + ":" + port;
+        return "mq://" + host + ":" + port + (isDirect() ? "/direct" : "");
     }
 
     /**

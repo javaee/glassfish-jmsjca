@@ -10,6 +10,9 @@
     <path id="jmsjca.sunone.clientjars.path">
         <fileset file="${jmsjca.sunone.jar.path-imqjmsra.jar}" />
     </path>
+    <path id="jmsjca.sunonedirect.clientjars.path">
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.jar}" />
+    </path>
 
 <!--===========================================================================
     Initializes variables etc

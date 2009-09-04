@@ -452,6 +452,16 @@
 <!--===========================================================================
     DEV-ONLY: Sets up a jms implementation to test
 -->
+    <target name="sunonedirect" depends="check-config-file" description="Sets up this jms implementation to test">
+        <property name="jmsjca.jmsimpl.id" value="sunone" />
+        <property name="jmsjca.jmsimpl.subid" value="direct" />
+        <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>
+        <antcall target="compile-a-jmsimpl-test" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a jms implementation to test
+-->
     <target name="wmq6" depends="check-config-file" description="Sets up this jms implementation to test">
         <property name="jmsjca.jmsimpl.id" value="wmq" />
         <property name="jmsjca.jmsimpl.subid" value="6" />
@@ -626,6 +636,9 @@ or type
                 <exclude name="core/test/lib/jdom.jar" />
                 <exclude name="**/*.bak" />
                 <exclude name="build/**" />
+                <exclude name="out/**" />
+                <exclude name="ext/**" />
+                <exclude name="emma/**" />
             </fileset>
         </copy>
 
