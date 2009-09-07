@@ -154,8 +154,8 @@ public class TestSunOneJUStd extends XTestBase {
 
             // }
 
-            super.setUp();
         }
+        super.setUp();
     }
 
     @Override

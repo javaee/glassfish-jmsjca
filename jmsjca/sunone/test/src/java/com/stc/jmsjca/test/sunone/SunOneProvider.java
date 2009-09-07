@@ -31,7 +31,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
@@ -44,7 +44,7 @@ public class SunOneProvider extends JMSProvider {
      * @return true if directmode tests need to be tested
      */
     public boolean isDirect() {
-        return "direct".equals(System.getProperty("jmsjca.jmsimpl.subid", "direct"));
+        return "direct".equals(System.getProperty("jmsjca.jmsimpl.subid", ""));
     }
 
     /**
