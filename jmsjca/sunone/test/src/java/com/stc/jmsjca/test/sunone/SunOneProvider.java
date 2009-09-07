@@ -31,13 +31,14 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
     public static final String PROPNAME_PORT = "jmsjca.jmsimpl.sunone.port";
     public static final String PROPNAME_USERID = "jmsjca.jmsimpl.sunone.userid";
     public static final String PROPNAME_PASSWORD = "jmsjca.jmsimpl.sunone.password";
+    public static final String PROPNAME_IMQHOME = "jmsjca.jmsimpl.sunone.imqhome";
     
     /**
      * @return true if directmode tests need to be tested
