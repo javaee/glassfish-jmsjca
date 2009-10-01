@@ -359,6 +359,17 @@ The connector for RAWMQ is shipped as <tt>rawmq.rar</tt>. It does NOT include th
 </li>
 </ul>
 </li>
+<li> The com.ibm.mq.jms.MQConnectionFactory has a large list of properties of type boolean, int, long, String, URL which can be set.  The setter can be invoked by specifying a connection URL option named using the following convention: remove the 'set' prefix from the name of the setter method and prepend 'WMQ_', e.g.
+<ul>
+<li> setMessageRetention(int): WMQ_MessageRetention=1
+</li>
+<li> setSecurityExit(String): WMQ_SecurityExit=wmq.exits.MySecurityExit
+</li>
+<li> setSparseSubscriptions(boolean): WMQ_SparseSubscriptions=true
+</li>
+</ul>
+<li>
+</li>
 <li> Before deploying the connector, add the following jars to the classpath suffix:
 <ul>
 <li> com.ibm.mqjms.jar
