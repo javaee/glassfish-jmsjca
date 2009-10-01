@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.19 $
+ * @version $Revision: 1.20 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -118,6 +118,29 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
 
     private static final Localizer LOCALE = Localizer.get();    
     
+    /** 
+     * General property prefix
+     *
+     * The com.ibm.mq.jms.MQConnectionFactory has a large list of properties
+     * of type boolean, int, long, String, URL which can be set.  The setter can
+     * be invoked by specifying a connection property named using the following
+     * convention: remove the 'set' prefix from the name of the setter method
+     * and prepend 'WMQ_'.
+     *
+     * Examples:
+     *
+     *  setMessageRetention(int)       : WMQ_MessageRetention=1
+     *  setSecurityExit(String)        : WMQ_SecurityExit=wmq.exits.MySecurityExit
+     *  setSparseSubscriptions(boolean): WMQ_SparseSubscriptions=true
+     *
+     * Note:
+     *
+     *  A "E841: Failure to set connection factory properties" JMSException  will
+     *  be thrown if the setter method does not exist.
+     *
+     */
+    private static final String WMQ_GENERAL_PROPERTY = "WMQ_";
+
     /**
      * @see com.stc.jmsjca.core.RAJMSObjectFactory#adjustDeliveryMode(int, boolean)
      */
@@ -280,11 +303,104 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                 clazz.getMethod("setChannel", new Class[] {String.class}).invoke(cf,
                     new Object[] {channelName});
             }
+
+            // Set general properties
+            String status = null; // to provide better exception handling
+            try {
+                for (java.util.Enumeration e = p.propertyNames() ; e.hasMoreElements() ;) {
+                    String key = (String) e.nextElement();
+                    if (key.startsWith(WMQ_GENERAL_PROPERTY)) {
+                        try {
+                            String value = p.getProperty(key);
+                            status = key + "=" + value;
+                            invokeSetter(cf, key.substring(WMQ_GENERAL_PROPERTY.length()), value);
+                        } catch (IndexOutOfBoundsException ex) {
+                            // do nothing
+                            if (sLog.isDebugEnabled()) {
+                                sLog.errorNoloc("Suppressed exception: " + ex,  ex);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                if (status != null) {
+                    throw new Exception("An exception occurred while processing connection URL property " + status, e);
+                } else {
+                    throw e;
+                }
+            }
         } catch (Exception e) {
             throw Exc.jmsExc(LOCALE.x("E841: Failure to set connection factory properties: {0}", e), e);
         }
         return cf;
     } 
+
+    /**
+     * Invokes the connection factory's setter method
+     *
+     * @param cf connection factory
+     * @param key name of property
+     * @param value value of property
+     * @throws Exception on invalid property name or type conversion error
+     */
+    private void invokeSetter(ConnectionFactory cf, String key, String value)
+            throws Exception {
+        String setter = "set" + key;
+        Method[] methods = cf.getClass().getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            Method method = methods[i];
+            if (method.getName().equalsIgnoreCase(setter)) {
+                Class[] params = method.getParameterTypes();
+                if (params.length == 1) {
+                    Object object = value;
+                    Class param = params[0];
+                    if (param != String.class) {
+                        // We need to perform a type conversion using valueOf(String)
+                        if (param.isPrimitive()) {
+                            // Unfortunately there's no easy way to do this
+                            if (param == Integer.TYPE) {
+                                object = Integer.valueOf(value);
+                            } else if (param == Boolean.TYPE) {
+                                object = Boolean.valueOf(value);
+                            } else if (param == Long.TYPE) {
+                                object = Long.valueOf(value);
+                            } else if (param == Short.TYPE) {
+                                object = Short.valueOf(value);
+                            } else if (param == Float.TYPE) {
+                                object = Float.valueOf(value);
+                            } else if (param == Double.TYPE) {
+                                object = Double.valueOf(value);
+                            } else if (param == Character.TYPE) {
+                                object = new Character(value.charAt(0));
+                            } else if (param == Byte.TYPE) {
+                                object = Byte.valueOf(value);
+                            } else {
+                                throw new Exception("Failed to convert property from String to " + param.getName());
+                            }
+                        } else {
+                            // Try valueOf(String) method
+                            try {
+                                object = param.getMethod("valueOf", new Class[] {String.class}).invoke(param.newInstance(), new Object[] {value});
+                            } catch (java.lang.NoSuchMethodException e) {
+                                // No valueOf method so look for a constructor taking a String
+                                try {
+                                    object = param.getConstructor(new Class[] {String.class}).newInstance(new Object[] {value});
+                                } catch (java.lang.NoSuchMethodException e1) {
+                                    throw new Exception("Failed to convert property from String to " + param.getName());
+                                }
+                            }
+                        }
+                    }
+                    if (sLog.isDebugEnabled()) {
+                        sLog.debug("Invoking MQConnectionFactory." + setter + "(" + value + ")");
+                    }
+                    method.invoke(cf, new Object[] {object});
+                    return;
+                }
+            }
+        }
+        throw new Exception("Could not resolve connection factory setter " + setter);
+    }
     
     /**
      * Returns true if the specified string may be a recognised URL

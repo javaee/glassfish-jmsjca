@@ -16,6 +16,8 @@
 
 package com.stc.jmsjca.test.wmq;
 
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.TxMgr;
 import com.stc.jmsjca.core.XConnectionRequestInfo;
 import com.stc.jmsjca.core.XMCFQueueXA;
@@ -34,7 +36,10 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Properties;
+
+import com.ibm.mq.jms.MQConnectionFactory;
 
 /**
  *
@@ -209,5 +214,74 @@ public class BaseJUStd extends XTestBase {
         String url = getJMSProvider().getConnectionUrl(mServerProperties);
         RAWMQResourceAdapter ra = new RAWMQResourceAdapter();
         return (XAQueueConnectionFactory) o.createConnectionFactory(XConnectionRequestInfo.DOMAIN_QUEUE_XA, ra, null, null, url);
+    }
+
+    /**
+     * 
+     * testGeneralProperties
+     *
+     * Tests the setting of general boolean/int/long/String/URL MQConnectionFactory
+     * properties via the connection URL
+     *
+     */
+    public void testGeneralProperties() {
+        if (!getJMSProvider().is5()) {
+            try {
+                // Verify setting of boolean, int, long, String and URL general properties
+                RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
+                ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_CCDTURL=file%3A%2F%2F%2Fpath&WMQ_SecurityExit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=1234&WMQ_CleanupInterval=54321");
+                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                        XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
+
+                assertTrue("Failed to set host", mqcf.getHostName().equals("testGeneralProperties"));
+                assertTrue("Failed to set port", mqcf.getPort() == 1234);
+                assertTrue("Failed to set boolean property", mqcf.getSparseSubscriptions() == false);
+                assertTrue("Failed to set int property: " + mqcf.getStatusRefreshInterval(), mqcf.getStatusRefreshInterval() == 1234);
+                assertTrue("Failed to set String property: " + mqcf.getSecurityExit(), mqcf.getSecurityExit() != null && mqcf.getSecurityExit().equals("testGeneralProperties"));
+                assertTrue("Failed to set URL property: " + mqcf.getCCDTURL(), mqcf.getCCDTURL() != null && mqcf.getCCDTURL().equals(new URL("file:///path")));
+                assertTrue("Failed to set long property: " + mqcf.getCleanupInterval(), mqcf.getCleanupInterval() == 54321);
+
+                ra.setConnectionURL("wmq://pompey:4321?WMQ_SeCuRiTyExIt=GeneralPropertiestest&WMQ_SparseSubscriptions=true&WMQ_StatusRefreshInterval=4321");
+                mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                        XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);            
+
+                assertTrue("Failed to set host", mqcf.getHostName().equals("pompey"));
+                assertTrue("Failed to set port", mqcf.getPort() == 4321);
+                assertTrue("Failed to set boolean property" , mqcf.getSparseSubscriptions() == true);
+                assertTrue("Failed to set int property: " + mqcf.getStatusRefreshInterval(), mqcf.getStatusRefreshInterval() == 4321);
+                assertTrue("Failed to set String property: " + mqcf.getSecurityExit(), mqcf.getSecurityExit() != null && mqcf.getSecurityExit().equals("GeneralPropertiestest"));
+            } catch (Exception e) {
+                e.printStackTrace();
+                assertTrue("Unexpected exception thrown", false);
+            }
+
+            // Verify E841 is thrown for invalid general properties
+            try {
+                RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
+                ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_Securityxit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=1234");
+                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                        XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
+                assertTrue("RAWMQ-E841 was not thrown for setSecurityxit", false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                assertTrue("Unexpected exception thrown", e.getMessage().startsWith("RAWMQ-E841"));
+            }
+
+            // Verify E841 is thrown for invalid int properties
+            try {
+                RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
+                ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_SecurityExit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=STRING");
+                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                        XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
+                assertTrue("RAWMQ-E841 was not thrown for an invalid int property", false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                assertTrue("Unexpected exception thrown", e.getMessage().startsWith("RAWMQ-E841"));
+            }
+        }
+        System.out.println("testGeneralProperties completed successfully");
     }
 }
