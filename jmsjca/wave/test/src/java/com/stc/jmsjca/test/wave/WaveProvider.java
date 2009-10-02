@@ -30,7 +30,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WaveProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wave.host";
@@ -78,6 +78,11 @@ public class WaveProvider extends JMSProvider {
         WavePassthrough ret = new WavePassthrough(serverProperties, this);
         ret.setCommitSize(1);
         return ret;
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
 
     /**

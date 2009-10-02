@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WLProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.wl.host";
@@ -50,6 +50,11 @@ public class WLProvider extends JMSProvider {
     @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new WLPassthrough(serverProperties, this);
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
 
     /**

@@ -31,7 +31,7 @@ import java.util.Properties;
 /**
  *
  * @author  fkieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WMQProvider extends JMSProvider {
     public static final String PROPNAME_HOST5 = "jmsjca.jmsimpl.wmq5.host";
@@ -95,6 +95,11 @@ public class WMQProvider extends JMSProvider {
         WMQPassthrough passthrough = new WMQPassthrough(serverProperties, this);
         passthrough.setCommitSize(10);
         return passthrough;
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
     
     public String getHost(Properties serverProperties) {

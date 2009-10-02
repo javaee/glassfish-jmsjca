@@ -30,7 +30,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JBossProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jboss.host";
@@ -60,6 +60,11 @@ public class JBossProvider extends JMSProvider {
     @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new JBossPassthrough(serverProperties, this);
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
 
     /**
@@ -110,4 +115,6 @@ public class JBossProvider extends JMSProvider {
     public RAJMSResourceAdapter createRA() {
         return new RAJBossResourceAdapter();
     }
+
+
 }

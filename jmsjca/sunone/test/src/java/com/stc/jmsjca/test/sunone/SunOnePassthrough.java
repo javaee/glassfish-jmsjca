@@ -33,13 +33,22 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class SunOnePassthrough extends Passthrough {
     private Properties mServerProperties;
+    private boolean mIsDirect;
 
-    public SunOnePassthrough(Properties server, JMSProvider provider) {
+    /**
+     * 
+     * @param server
+     * @param isDirect Whether the passthrough should use direct mode
+     * @param provider
+     */
+    public SunOnePassthrough(Properties server, boolean isDirect, JMSProvider provider) {
         super(server, provider);
+        
+        mIsDirect = isDirect;
         mServerProperties = server;
     }
     
@@ -54,7 +63,11 @@ public class SunOnePassthrough extends Passthrough {
     }
 
     private String getConnectionUrl() {
-        return "mq://" + getHost(mServerProperties) + ":" + getPort(mServerProperties);
+        if (mIsDirect){
+            return "mq://localhost/direct";
+        } else {
+            return "mq://" + getHost(mServerProperties) + ":" + getPort(mServerProperties);    
+        }        
     }
 
     public boolean isDurableSubscriberPresent(String topic, String subname) throws Exception {

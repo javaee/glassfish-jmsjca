@@ -31,7 +31,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class StcmsProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.stcms.host";
@@ -83,6 +83,11 @@ public class StcmsProvider extends JMSProvider {
     @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new StcmsPassthrough(serverProperties, this);
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
 
     /**

@@ -39,11 +39,22 @@ public abstract class JMSProvider {
     
     /**
      * Creates a JMS Provider specific passthrough
+     * which will be used to test code that is processing messages in an application server
      * 
      * @param serverProperties
      * @return new PassThrough
      */
     public abstract Passthrough createPassthrough(Properties serverProperties);
+    
+    /**
+     * Creates a JMS Provider specific passthrough 
+     * which will be used to test some code that is processing messages in the this JVM
+     * rather than in an application server
+     * 
+     * @param serverProperties
+     * @return new PassThrough
+     */
+    public abstract Passthrough createLocalPassthrough(Properties serverProperties);
 
     /**
      * Provides a hook to plug in provider specific client IDs

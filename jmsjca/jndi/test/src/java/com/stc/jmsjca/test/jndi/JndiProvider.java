@@ -34,7 +34,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class JndiProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.jndi.host";
@@ -99,6 +99,11 @@ public class JndiProvider extends JMSProvider {
     @Override
     public Passthrough createPassthrough(Properties serverProperties) {
         return new JndiPassthrough(serverProperties, this);
+    }
+    
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        return createPassthrough(serverProperties);
     }
 
     /**

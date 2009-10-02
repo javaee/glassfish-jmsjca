@@ -220,7 +220,7 @@ public abstract class InterceptorTests extends EndToEndBase {
         T fact;
         
         public MockTestQueue() throws Exception {
-            p = getJMSProvider().createPassthrough(mServerProperties);
+            p = getJMSProvider().createLocalPassthrough(mServerProperties);
 
             // RA
             ra = getJMSProvider().createRA();
@@ -561,7 +561,7 @@ public abstract class InterceptorTests extends EndToEndBase {
      * @throws Throwable
      */
     public void testInterceptorDemo() throws Throwable {
-        Passthrough p = getJMSProvider().createPassthrough(mServerProperties);
+        Passthrough p = getJMSProvider().createLocalPassthrough(mServerProperties);
 
         // RA
         RAJMSResourceAdapter ra = getJMSProvider().createRA();

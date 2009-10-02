@@ -31,7 +31,7 @@ import java.util.Properties;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class SunOneProvider extends JMSProvider {
     public static final String PROPNAME_HOST = "jmsjca.jmsimpl.sunone.host";
@@ -76,12 +76,39 @@ public class SunOneProvider extends JMSProvider {
     }
 
     /**
+     * Creates a JMS Provider specific passthrough
+     * which will be used to test code that is processing messages in an application server
+     * 
      * @param serverProperties
-     * @return
+     * @return new PassThrough
      */
     @Override
     public Passthrough createPassthrough(Properties serverProperties) {
-        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties, this);
+        
+        // configure the Passthrough to use TCP to communicate with the MQ broker
+        // even if the MDB is using direct mode
+        // because the MDB is running in a separate JVM
+       
+        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties, false, this);
+        sunOnePassthrough.setCommitSize(1);
+        return sunOnePassthrough;
+    }
+    
+    /**
+     * Creates a JMS Provider specific passthrough 
+     * which will be used to test some code that is processing messages in the this JVM
+     * rather than in an application server
+     * 
+     * @param serverProperties
+     * @return new PassThrough
+     */
+    @Override
+    public Passthrough createLocalPassthrough(Properties serverProperties) {
+        
+        // if this is a direct mode test then the Passthrough can use direct mode to communicate with the MQ broker
+        // since the code being tested is running in the same JVM as this code
+        
+        SunOnePassthrough sunOnePassthrough = new SunOnePassthrough(serverProperties, isDirect(), this);
         sunOnePassthrough.setCommitSize(1);
         return sunOnePassthrough;
     }
@@ -99,9 +126,13 @@ public class SunOneProvider extends JMSProvider {
      */
     @Override
     public String getConnectionUrl(JMSTestEnv test) {
-        String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
-        int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
-        return createConnectionUrl(host, port);
+        if (isDirect()){
+            return "mq://localhost/direct";
+        } else {
+            String host = test.getJmsServerProperties().getProperty(PROPNAME_HOST);
+            int port = Integer.parseInt(test.getJmsServerProperties().getProperty(PROPNAME_PORT));
+            return createConnectionUrl(host, port);
+        }
     }
 
     /**

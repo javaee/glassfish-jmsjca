@@ -18,6 +18,7 @@ package com.stc.jmsjca.test.sunone;
 
 import com.stc.jmsjca.test.core.InterceptorTests;
 import com.stc.jmsjca.test.core.JMSProvider;
+import com.sun.messaging.jmq.jmsclient.runtime.BrokerInstance;
 
 /**
  * @author fkieviet
@@ -31,4 +32,27 @@ public class InterceptorTestsSunOneEar1 extends InterceptorTests {
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
     }
+    
+    // Embedded broker instance, used only when testing direct mode
+    private BrokerInstance brokerInstance;
+
+    public void setUp() throws Exception {
+        
+        if (((SunOneProvider) getJMSProvider()).isDirect()) {
+            brokerInstance=DirectModeSupport.startEmbeddedbroker(getServerProperties());
+        }
+        
+        super.setUp();
+    }
+
+
+    public void tearDown() throws Exception {
+        
+        if (((SunOneProvider) getJMSProvider()).isDirect()){
+            DirectModeSupport.shutdownEmbeddedBroker(brokerInstance);
+        }
+        
+        super.tearDown();
+    }
+    
 }
