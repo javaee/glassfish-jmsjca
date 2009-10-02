@@ -30,7 +30,7 @@ import java.io.UnsupportedEncodingException;
  * service := 
  * path := file?query | ?query | file
  * @author misc
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class SunOneConnectionUrl extends ConnectionUrl {
     private String mUrl;
@@ -95,16 +95,16 @@ public class SunOneConnectionUrl extends ConnectionUrl {
         int tunnel = r.indexOf("/tunnel");            
         if (r.length() > 0 && tunnel != -1) {
             mService = r.substring(0, tunnel + "/tunnel".length());       
-            r = r.substring(tunnel + "/tunnel".length()+1);
+            r = r.substring(tunnel + "/tunnel".length() + 1);
         } else if (r.length() > 0 && r.startsWith("/ssljms")) {
             mService = "ssljms";
-            r = r.substring("/ssljms".length()+1);            
+            r = r.substring("/ssljms".length() + 1);            
         } else if (r.length() > 0 && r.startsWith("/jms")) {
             mService = "jms";
             r = r.substring("jms".length());       
         } else if (r.length() > 0 && r.startsWith("/direct")) {
             mService = "direct";
-            r = r.substring("direct".length()+1);               
+            r = r.substring("direct".length() + 1);               
         } else {
             mService = "";            
         }

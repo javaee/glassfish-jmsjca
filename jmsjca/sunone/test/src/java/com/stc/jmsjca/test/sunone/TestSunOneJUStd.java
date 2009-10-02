@@ -30,9 +30,6 @@ import com.stc.jmsjca.test.core.JMSProvider;
 import com.stc.jmsjca.test.core.XTestBase;
 import com.stc.jmsjca.util.Semaphore;
 import com.sun.messaging.jmq.jmsclient.runtime.BrokerInstance;
-import com.sun.messaging.jmq.jmsclient.runtime.ClientRuntime;
-import com.sun.messaging.jmq.jmsservice.BrokerEvent;
-import com.sun.messaging.jmq.jmsservice.BrokerEventListener;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;

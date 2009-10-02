@@ -36,8 +36,8 @@ public class InterceptorTestsSunOneEar1 extends InterceptorTests {
     // Embedded broker instance, used only when testing direct mode
     private BrokerInstance brokerInstance;
 
+    @Override
     public void setUp() throws Exception {
-        
         if (((SunOneProvider) getJMSProvider()).isDirect()) {
             brokerInstance=DirectModeSupport.startEmbeddedbroker(getServerProperties());
         }
@@ -46,8 +46,8 @@ public class InterceptorTestsSunOneEar1 extends InterceptorTests {
     }
 
 
+    @Override
     public void tearDown() throws Exception {
-        
         if (((SunOneProvider) getJMSProvider()).isDirect()){
             DirectModeSupport.shutdownEmbeddedBroker(brokerInstance);
         }

@@ -47,7 +47,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -307,7 +307,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
             // Set general properties
             String status = null; // to provide better exception handling
             try {
-                for (java.util.Enumeration e = p.propertyNames() ; e.hasMoreElements() ;) {
+                for (java.util.Enumeration<?> e = p.propertyNames(); e.hasMoreElements();) {
                     String key = (String) e.nextElement();
                     if (key.startsWith(WMQ_GENERAL_PROPERTY)) {
                         try {
@@ -324,7 +324,8 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                 }
             } catch (Exception e) {
                 if (status != null) {
-                    throw new Exception("An exception occurred while processing connection URL property " + status, e);
+                    throw Exc.exc(LOCALE.x("E844: An exception occurred while " 
+                        + "processing connection URL property {0}: {1}", status, e), e);
                 } else {
                     throw e;
                 }
@@ -350,10 +351,10 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
             if (method.getName().equalsIgnoreCase(setter)) {
-                Class[] params = method.getParameterTypes();
+                Class<?>[] params = method.getParameterTypes();
                 if (params.length == 1) {
                     Object object = value;
-                    Class param = params[0];
+                    Class<?> param = params[0];
                     if (param != String.class) {
                         // We need to perform a type conversion using valueOf(String)
                         if (param.isPrimitive()) {
@@ -380,7 +381,8 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
                         } else {
                             // Try valueOf(String) method
                             try {
-                                object = param.getMethod("valueOf", new Class[] {String.class}).invoke(param.newInstance(), new Object[] {value});
+                                object = param.getMethod("valueOf", new Class[] {String.class})
+                                .invoke(param.newInstance(), new Object[] {value});
                             } catch (java.lang.NoSuchMethodException e) {
                                 // No valueOf method so look for a constructor taking a String
                                 try {

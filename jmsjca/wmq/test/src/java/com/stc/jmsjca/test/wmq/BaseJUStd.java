@@ -261,7 +261,7 @@ public class BaseJUStd extends XTestBase {
                 RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
                 ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_Securityxit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=1234");
                 RAJMSObjectFactory fact = ra.createObjectFactory(null);
-                MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                fact.createConnectionFactory(
                         XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
                 assertTrue("RAWMQ-E841 was not thrown for setSecurityxit", false);
             } catch (Exception e) {
@@ -274,7 +274,7 @@ public class BaseJUStd extends XTestBase {
                 RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
                 ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_SecurityExit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=STRING");
                 RAJMSObjectFactory fact = ra.createObjectFactory(null);
-                MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
+                fact.createConnectionFactory(
                         XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
                 assertTrue("RAWMQ-E841 was not thrown for an invalid int property", false);
             } catch (Exception e) {

@@ -34,7 +34,7 @@ import javax.jms.JMSException;
  *   options  := key=value[&key=value]*       
  *
  * @author misc
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class SunOneUrlParser extends ConnectionUrl {
     private SunOneConnectionUrl[] mConnectionUrls;
@@ -165,11 +165,12 @@ public class SunOneUrlParser extends ConnectionUrl {
             if (i != 0) {
                 buf.append(",");
             }
-            if (urls[i].getPort()==-1){
+            if (urls[i].getPort() == -1) {
                 // direct mode
                 buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + "/" + urls[i].getService());
             } else {
-                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() + ":" + urls[i].getPort() + "/" + urls[i].getService());
+                buf.append(urls[i].getProtocol() + "://" + urls[i].getHost() 
+                    + ":" + urls[i].getPort() + "/" + urls[i].getService());
             }
         }
         return buf.toString();
