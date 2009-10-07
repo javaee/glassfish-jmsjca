@@ -34,7 +34,7 @@ import java.util.Properties;
  * ManagedConnection will have one instance of this class and will reuse it.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class TxMgr {
     private TxMgrAdapter mTxMgrAdapter;
@@ -141,6 +141,10 @@ public class TxMgr {
             mTxMgrAdapter = new WAS6a().init();
         }
         if (mTxMgrAdapter == null) {
+            // GlassFish v3
+            mTxMgrAdapter = new LocalJNDI("java:appserver/TransactionManager").init();
+        }
+        if (mTxMgrAdapter == null) {
             // JBoss
             mTxMgrAdapter = new LocalJNDI("java:/TransactionManager").init();
         }
@@ -149,7 +153,11 @@ public class TxMgr {
             mTxMgrAdapter = new WL9().init();
         }
         if (mTxMgrAdapter == null) {
-            // Most others
+            // Resin 3.x 
+            mTxMgrAdapter = new LocalJNDI("java:comp/TransactionManager").init();
+        }
+        if (mTxMgrAdapter == null) {
+            // Most others (Resin 2.x, Oracle OC4J (Orion), JOnAS (JOTM), BEA WebLogic)
             mTxMgrAdapter = new LocalJNDI("java:comp/UserTransaction").init();
         }
         
