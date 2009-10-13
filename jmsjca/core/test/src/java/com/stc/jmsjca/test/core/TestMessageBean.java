@@ -73,7 +73,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -204,7 +204,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 sLog.debug("Looking up function name " + fname + " (will set context)");
             }
             try {
-                sContextEnter.infoNoloc(fname);
+                sContextEnter.debug(fname);
                 if (!mInited) {
                     sLog.infoNoloc("First call on method " + fname + " for this MDB");
                     checkInit();
@@ -227,7 +227,7 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                     sLog.debug("Function " + fname + " called; no exc. thrown");
                 }
             } finally {
-                sContextExit.infoNoloc(fname);
+                sContextExit.debug(fname);
             }
         } catch (IntentionalException e) {
             // don't log

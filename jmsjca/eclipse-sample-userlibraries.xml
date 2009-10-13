@@ -1,53 +1,63 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <eclipse-userlibraries version="2">
-<library name="jmsjca-user-ant" systemlibrary="false">
-<archive path="Y:/glassfish/lib/ant/lib/ant.jar"/>
-</library>
-<library name="jmsjca-user-fileprovider" systemlibrary="false">
-<archive path="W:/jmsjcaExternalDependencies/providerutil.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/fscontext.jar"/>
-</library>
-<library name="jmsjca-user-glassfish" systemlibrary="false">
-<archive path="Y:/glassfish/lib/appserv-deployment-client.jar" source="Y:/src/glassfish/appserv-core/src/java"/>
-<archive path="Y:/glassfish/lib/appserv-ext.jar"/>
-</library>
-<library name="jmsjca-user-jboss" systemlibrary="false">
-<archive path="W:/jboss42/jboss-4.2.2.GA/client/jboss-client.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/client/jbossall-client.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/client/jbossmq-client.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/client/jnp-client.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/lib/jboss-system.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/lib/jboss-jmx.jar"/>
-<archive path="W:/jboss42/jboss-4.2.2.GA/client/jmx-invoker-adaptor-client.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/xml-apis.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/xercesImpl.jar"/>
-</library>
-<library name="jmsjca-user-rts" systemlibrary="false">
-<archive path="Q:/BUILD/Lib/com.stc.rts.deployimpl.jar"/>
-</library>
-<library name="jmsjca-user-stcms" systemlibrary="false">
-<archive path="Q:/BUILD/API/com.stc.jms.stcjms.jar"/>
-<archive path="Q:/BUILD/API/com.stc.jms.stcqueueviewer.jar"/>
-</library>
-<library name="jmsjca-user-stcms453" systemlibrary="false">
-<archive path="W:/jmsjcaExternalDependencies/stcqueueviewer_453.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/stcjms_453.jar"/>
-</library>
-<library name="jmsjca-user-sunone" systemlibrary="false">
-<archive path="Y:/glassfish/lib/install/applications/jmsra/imqjmsra.jar"/>
-</library>
-<library name="jmsjca-user-was" systemlibrary="false">
-<archive path="W:/jmsjcaExternalDependencies/com.ibm.mqjms.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/com.ibm.mq.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/com.ibm.mqetclient.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/dhbcore.jar"/>
-</library>
-<library name="jmsjca-user-wave" systemlibrary="false">
-<archive path="W:/jmsjcaExternalDependencies/com.stc.wave.wave.jar"/>
-</library>
-<library name="jmsjca-user-wl" systemlibrary="false">
-<archive path="W:/jmsjcaExternalDependencies/wljmxclient.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/wlclient.jar"/>
-<archive path="W:/jmsjcaExternalDependencies/wljmsclient.jar"/>
-</library>
+    <library name="jmsjca-user-ant" systemlibrary="false">
+        <archive path="Y:/glassfish/lib/ant/lib/ant.jar"/>
+    </library>
+    <library name="jmsjca-user-fileprovider" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/providerutil.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/fscontext.jar"/>
+    </library>
+    <library name="jmsjca-user-glassfish" systemlibrary="false">
+        <archive path="Y:/glassfish/lib/appserv-deployment-client.jar" source="Y:/src/glassfish/appserv-core/src/java"/>
+        <archive path="Y:/glassfish/lib/appserv-ext.jar"/>
+    </library>
+    <library name="jmsjca-user-glassfishv3" systemlibrary="false">
+        <archive path="X:/glassfish/modules/deployment-client.jar"/>
+        <archive path="X:/glassfish/modules/common-util.jar"/>
+        <archive path="X:/glassfish/modules/jmxremote_optional-repackaged.jar"/>
+    </library>
+    <library name="jmsjca-user-jboss" systemlibrary="false">
+        <archive path="W:/jboss42/jboss-4.2.2.GA/client/jboss-client.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/client/jbossall-client.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/client/jbossmq-client.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/client/jnp-client.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/lib/jboss-system.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/lib/jboss-jmx.jar"/>
+        <archive path="W:/jboss42/jboss-4.2.2.GA/client/jmx-invoker-adaptor-client.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/xml-apis.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/xercesImpl.jar"/>
+    </library>
+    <library name="jmsjca-user-rts" systemlibrary="false">
+        <archive path="Q:/BUILD/Lib/com.stc.rts.deployimpl.jar"/>
+    </library>
+    <library name="jmsjca-user-stcms" systemlibrary="false">
+        <archive path="Q:/BUILD/API/com.stc.jms.stcjms.jar"/>
+        <archive path="Q:/BUILD/API/com.stc.jms.stcqueueviewer.jar"/>
+    </library>
+    <library name="jmsjca-user-stcms453" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/stcqueueviewer_453.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/stcjms_453.jar"/>
+    </library>
+    <library name="jmsjca-user-sunone" systemlibrary="false">
+        <archive path="Y:/glassfish/lib/install/applications/jmsra/imqjmsra.jar"/>
+    </library>
+    <library name="jmsjca-user-was" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/com.ibm.mqjms.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/com.ibm.mq.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/com.ibm.mqetclient.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/dhbcore.jar"/>
+    </library>
+    <library name="jmsjca-user-wave" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/com.stc.wave.wave.jar"/>
+    </library>
+    <library name="jmsjca-user-wl" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/wljmxclient.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/wlclient.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/wljmsclient.jar"/>
+    </library>
+    <library name="jmsjca-user-wl5" systemlibrary="false">
+        <archive path="W:/jmsjcaExternalDependencies/MQSeries53/com.ibm.mqjms.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/MQSeries53/com.ibm.mq.jar"/>
+        <archive path="W:/jmsjcaExternalDependencies/MQSeries53/com.ibm.mqbind.jar"/>
+    </library>
 </eclipse-userlibraries>

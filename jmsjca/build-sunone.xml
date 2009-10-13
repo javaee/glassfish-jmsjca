@@ -8,10 +8,12 @@
 
     <!-- REQUIRED for compile test -->
     <path id="jmsjca.sunone.clientjars.path">
-        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.jar}" />
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.1.jar}" />
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.2.jar}" />
     </path>
     <path id="jmsjca.sunonedirect.clientjars.path">
-        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.jar}" />
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.1.jar}" />
+        <fileset file="${jmsjca.sunone.jar.path-imqjmsra.2.jar}" />
     </path>
 
 <!--===========================================================================

@@ -31,7 +31,7 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
@@ -50,6 +50,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     public final static String RTS_ALT_ID = "bare-rts";
     public final static String SJSAS_ID = "sjsas";
     public final static String GLASSFISH_ID = "glassfish";
+    public final static String GLASSFISHV3_ID = "glassfishv3";
     public final static String WL_ID = "wl";
     public final static String WAS_ID = "was";
     public final static String JBOSS_ID = "jboss";
@@ -176,6 +177,8 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
             clz = Class.forName("com.stc.jmsjca.container.sjsas.SJSASContainer");
         } else if (GLASSFISH_ID.equals(containerid)) {
             clz = Class.forName("com.stc.jmsjca.container.glassfish.GlassFishContainer");
+        } else if (GLASSFISHV3_ID.equals(containerid)) {
+            clz = Class.forName("com.stc.jmsjca.container.glassfishv3.GlassFishv3Container");
         } else {
             throw new Exception(
                 "Cannot create container: unknown value for system-property ["

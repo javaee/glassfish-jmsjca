@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="container/src/java"/>
+	<classpathentry kind="src" path="container-glassfishv3/src/java"/>
 	<classpathentry kind="src" path="container-wl/src/java"/>
 	<classpathentry kind="src" path="container-sjsas/src/java"/>
 	<classpathentry kind="src" path="container-glassfish/src/java"/>
@@ -31,7 +32,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="ext/jdom.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-ant"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-glassfishv3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-glassfish"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-rts"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-sunone"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjcaExternaDependencies"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-stcms"/>
@@ -40,7 +43,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-was"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wave"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-jboss"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-rts"/>
 	<classpathentry kind="lib" path="ext/j2ee.jar"/>
 	<classpathentry kind="lib" path="build/jmsjca"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wl5"/>

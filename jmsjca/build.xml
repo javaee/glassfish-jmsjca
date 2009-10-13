@@ -73,6 +73,15 @@
         <fileset file="${jmsjca.glassfish.home.dir}/lib/jmxremote_optional.jar" />
     </path>
 
+    <path id="jmsjca.glassfishv3.classpath">
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/deployment-client.jar" />
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/common-util.jar" />
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/jmxremote_optional-repackaged.jar" />
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/javax.jms.jar" />
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/javax.ejb.jar" />
+        <fileset file="${jmsjca.glassfishv3.home.dir}/modules/javax.resource.jar" />
+    </path>
+
     <path id="jmsjca.jboss.classpath">
         <fileset file="${jmsjca.jboss.home.dir}/lib/jboss-jmx.jar" />
         <fileset file="${jmsjca.jboss.home.dir}/lib/xml-apis.jar" />
@@ -315,6 +324,16 @@
     <target name="glassfish" depends="check-config-file" description="Setups up this specific container">
         <fail if="jmsjca.container.id">$${jmsjca.container.id} already set to "${jmsjca.container.id}"</fail>
         <property name="jmsjca.container.id" value="glassfish" />
+        <echo>Setting container to ${jmsjca.container.id}</echo>
+        <antcall target="compile-a-container" />
+    </target>
+
+<!--===========================================================================
+    DEV-ONLY: Sets up a specific container container
+-->
+    <target name="glassfishv3" depends="check-config-file" description="Setups up this specific container">
+        <fail if="jmsjca.container.id">$${jmsjca.container.id} already set to "${jmsjca.container.id}"</fail>
+        <property name="jmsjca.container.id" value="glassfishv3" />
         <echo>Setting container to ${jmsjca.container.id}</echo>
         <antcall target="compile-a-container" />
     </target>
