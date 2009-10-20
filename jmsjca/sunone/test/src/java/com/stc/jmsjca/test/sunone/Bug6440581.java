@@ -43,7 +43,7 @@ public class Bug6440581 {
      * Copied from STCMS
      *
      * @author JMS Team
-     * @version $Revision: 1.5 $
+     * @version $Revision: 1.6 $
      */
     public static final class XXid implements Xid, Serializable {
         static byte[] ipAddress;
@@ -551,13 +551,13 @@ public class Bug6440581 {
         mdbconn.start();
         
         // Wait until message processing is fully going
-        if (false) {
-            // The test passes if all the threads are stuck waiting
-            waiting.waitForUp(POOLSIZE, 30000);
-        } else {
+//        if (false) {
+//            // The test passes if all the threads are stuck waiting
+//            waiting.waitForUp(POOLSIZE, 30000);
+//        } else {
             // The test fails if close() is called while processing
             rolledback.waitForUp(5, 30000);
-        }
+//        }
         System.out.println("All threads are waiting: " + waiting.current());
         
         ccx.close();

@@ -328,9 +328,6 @@ public class SyncDelivery extends Delivery {
             return mIsRollbackOnly;
         }
         
-        public void msgDelivered(Exception e) {
-        }
-        
         @Override
         public void msgDelivered(boolean wasDelivered) {
             if (wasDelivered) {

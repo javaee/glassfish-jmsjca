@@ -35,7 +35,7 @@ import javax.jms.Topic;
  * wrapper will delegate the calls to the JConnection.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class WConnection implements Connection {
     private static final Localizer LOCALE = Localizer.get();
@@ -218,7 +218,7 @@ public class WConnection implements Connection {
         if (mMgr == null) {
             invokeOnClosed();
         }
-        return createDurableConnectionConsumer(topic, string, string2, serverSessionPool, int4);
+        return mMgr.createDurableConnectionConsumer(topic, string, string2, serverSessionPool, int4);
     }
 
     /**

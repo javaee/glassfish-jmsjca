@@ -64,7 +64,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.19 $
+ * @version $Revision: 1.20 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -342,17 +342,17 @@ public abstract class Delivery {
             }
         }
         
-        public void setObjectProperty(String key, Object value) throws JMSException {
-            if (value != null) {
-                return;
-            }
-            mDelegate.setObjectProperty(key, value);
-
-            // For legacy properties:
-            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
-                mDelegate.setObjectProperty(Options.MessageProperties.OLDPREFIX + key, value);
-            }
-        }
+//        public void setObjectProperty(String key, Object value) throws JMSException {
+//            if (value != null) {
+//                return;
+//            }
+//            mDelegate.setObjectProperty(key, value);
+//
+//            // For legacy properties:
+//            if (mSupportsLegacy && key.startsWith(Options.MessageProperties.MSG_PROP_PREFIX)) {
+//                mDelegate.setObjectProperty(Options.MessageProperties.OLDPREFIX + key, value);
+//            }
+//        }
 
         public void setIntProperty(String key, int value) throws JMSException {
             mDelegate.setIntProperty(key, value);

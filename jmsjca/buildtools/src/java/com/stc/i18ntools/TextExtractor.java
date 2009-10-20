@@ -57,9 +57,9 @@ public class TextExtractor extends Task {
    private String pattern = "([A-Z]\\d\\d\\d)(: )(.*)";
    private Pattern splitter;
     
-    /**
-     * @see org.apache.tools.ant.Task#execute()
-     */
+   /**
+    * @see org.apache.tools.ant.Task#execute()
+    */
     @Override
     public void execute() {
        if (classesDir == null) {
@@ -79,7 +79,7 @@ public class TextExtractor extends Task {
     * From JDK Properties
     */
    private String saveConvert(String theString, boolean escapeSpace) {
-       int len = theString.length();
+                                                                                                    int len = theString.length();
        int bufLen = len * 2;
        if (bufLen < 0) {
            bufLen = Integer.MAX_VALUE;
@@ -446,7 +446,6 @@ public class TextExtractor extends Task {
      * @author fkieviet
      */
    private class TextEntry {
-        private String jarURL;
         private String classname;
         private String text;
         private String id;
@@ -458,7 +457,6 @@ public class TextExtractor extends Task {
          * @param text String
          */
         public TextEntry(String jarurl, String classname, String text) {
-            jarURL = jarurl;
             this.classname = classname;
             this.text = text;
         }
@@ -472,24 +470,6 @@ public class TextExtractor extends Task {
             return classname;
         }
         
-        /**
-         * Setter for classname
-         *
-         * @param classname StringThe classname to set.
-         */
-        public void setClassname(String classname) {
-            this.classname = classname;
-        }
-
-        /**
-         * Getter for jarURL
-         *
-         * @return String
-         */
-        public String getJarURL() {
-            return jarURL;
-        }
-
         /**
          * Getter for strings
          *
@@ -522,15 +502,6 @@ public class TextExtractor extends Task {
                 getID();
             }
             return content;
-        }
-        
-        /**
-         * @param s to test
-         * @return true if matches
-         */
-       public boolean matches(String s) {
-           Matcher m = splitter.matcher(s);
-            return m.matches();
         }
     }
     

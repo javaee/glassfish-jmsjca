@@ -34,7 +34,7 @@ import java.util.Properties;
  * Provides for easy string formatting
  *
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class Str {
     /**
@@ -627,6 +627,7 @@ public class Str {
          * @throws UnsupportedEncodingException if the character encoding specified
          *         is not supported.
          */
+        @SuppressWarnings("unused")
         public static String encode(String string, String enc)
             throws UnsupportedEncodingException {
             return new String(encode(string.getBytes(enc)), enc);
@@ -679,6 +680,7 @@ public class Str {
          * 
          * @throws IOException if there is a problem reading or writing.
          */
+        @SuppressWarnings("unused")
         public static void encode(InputStream in, OutputStream out) throws IOException {
             encode(in, out, true);
         }
@@ -790,6 +792,7 @@ public class Str {
          * @throws UnsupportedEncodingException if the character encoding specified
          *         is not supported.
          */
+        @SuppressWarnings("unused")
         public static String decode(String string, String enc)
         throws UnsupportedEncodingException {
             return new String(decode(string.getBytes(enc)), enc);
@@ -876,6 +879,7 @@ public class Str {
          *
          * @throws IOException if an IO error occurs.
          */
+        @SuppressWarnings("unused")
         public static void decode(InputStream in, OutputStream out)
         throws IOException {
             decode(in, out, true);

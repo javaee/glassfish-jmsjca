@@ -43,10 +43,9 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
-public class RASunOneObjectFactory extends RAJMSObjectFactory implements
-java.io.Serializable {
+public class RASunOneObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RASunOneObjectFactory.class);
     private static final Localizer LOCALE = Localizer.get(); 
         
@@ -93,42 +92,13 @@ java.io.Serializable {
         return null;
     }
     
-    private static class ConnectionValues {
+    private static final class ConnectionValues {
         private String host;
         private String port;
         private String username;
         private String password;
-
-        public final String getHost() {
-            return host;
-        }
-
-        public final void setHost(String host) {
-            this.host = host;
-        }
-
-        public final String getPort() {
-            return port;
-        }
-
-        public final void setPort(String port) {
-            this.port = port;
-        }
-
-        public final String getUsername() {
-            return username;
-        }
-
-        public final void setUsername(String username) {
-            this.username = username;
-        }
-
-        public final String getPassword() {
-            return password;
-        }
-
-        public final void setPassword(String password) {
-            this.password = password;
+        
+        private ConnectionValues() {
         }
     }
 

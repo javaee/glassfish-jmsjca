@@ -46,7 +46,7 @@ import javax.naming.NamingException;
  * and use this configuration information in the getDelegate() method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public abstract class RAJMSContext implements Context, java.io.Serializable {
 //    private static Logger sLog = Logger.getLogger(RAJMSActivationSpec.class);
@@ -135,7 +135,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
      * @see javax.naming.Context#removeFromEnvironment(java.lang.String)
      */
     public Object removeFromEnvironment(String propName) throws NamingException {
-        return removeFromEnvironment(propName);
+        return getDelegate().removeFromEnvironment(propName);
     }
 
     /**
@@ -198,7 +198,7 @@ public abstract class RAJMSContext implements Context, java.io.Serializable {
      * @see javax.naming.Context#createSubcontext(javax.naming.Name)
      */
     public Context createSubcontext(Name name) throws NamingException {
-        return createSubcontext(name);
+        return getDelegate().createSubcontext(name);
     }
 
     /**
