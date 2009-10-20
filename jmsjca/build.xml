@@ -323,6 +323,7 @@
 -->
     <target name="glassfish" depends="check-config-file" description="Setups up this specific container">
         <fail if="jmsjca.container.id">$${jmsjca.container.id} already set to "${jmsjca.container.id}"</fail>
+        <property name="jmsjca.sunone.jar.path-imqjmsra.jar" value="${jmsjca.sunone.jar.path-gfv2-imqjmsra.jar}" />
         <property name="jmsjca.container.id" value="glassfish" />
         <echo>Setting container to ${jmsjca.container.id}</echo>
         <antcall target="compile-a-container" />
@@ -334,6 +335,7 @@
     <target name="glassfishv3" depends="check-config-file" description="Setups up this specific container">
         <fail if="jmsjca.container.id">$${jmsjca.container.id} already set to "${jmsjca.container.id}"</fail>
         <property name="jmsjca.container.id" value="glassfishv3" />
+        <property name="jmsjca.sunone.jar.path-imqjmsra.jar" value="${jmsjca.sunone.jar.path-gfv3-imqjmsra.jar}" />
         <echo>Setting container to ${jmsjca.container.id}</echo>
         <antcall target="compile-a-container" />
     </target>
@@ -444,6 +446,8 @@
             <property name="jcaid" value="${jmsjca.jmsimpl.id}" />
             <property name="jmsjca.container.id" value="${jmsjca.container.id}" />
             <property name="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
+            <!-- Kludge: allow container dependent location of sunone jar -->
+            <property name="jmsjca.sunone.jar.path-imqjmsra.jar" value="${jmsjca.sunone.jar.path-imqjmsra.jar}"/>
             <reference refid="jmsjca.${jmsjca.container.id}.classpath"/>
         </ant>
     </target>
@@ -462,6 +466,8 @@
     DEV-ONLY: Sets up a jms implementation to test
 -->
     <target name="sunone" depends="check-config-file" description="Sets up this jms implementation to test">
+        <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
+        <property name="jmsjca.sunone.jar.path-imqjmsra.jar" value="${jmsjca.sunone.jar.path-default-imqjmsra.jar}" />
         <property name="jmsjca.jmsimpl.id" value="sunone" />
         <property name="jmsjca.jmsimpl.subid" value="" />
         <echo>Setting jms implementation to ${jmsjca.jmsimpl.id}</echo>

@@ -10,11 +10,16 @@
     <library name="jmsjca-user-glassfish" systemlibrary="false">
         <archive path="Y:/glassfish/lib/appserv-deployment-client.jar" source="Y:/src/glassfish/appserv-core/src/java"/>
         <archive path="Y:/glassfish/lib/appserv-ext.jar"/>
+        <archive path="Y:/glassfish/lib/install/applications/jmsra/imqjmsra.jar"/>
     </library>
     <library name="jmsjca-user-glassfishv3" systemlibrary="false">
         <archive path="X:/glassfish/modules/deployment-client.jar"/>
         <archive path="X:/glassfish/modules/common-util.jar"/>
         <archive path="X:/glassfish/modules/jmxremote_optional-repackaged.jar"/>
+        <archive path="X:/glassfish/lib/install/applications/jmsra/imqjmsra.jar"/>
+    </library>
+    <library name="jmsjca-user-javaee" systemlibrary="false">
+        <archive path="Y:/glassfish/lib/javaee.jar"/>
     </library>
     <library name="jmsjca-user-jboss" systemlibrary="false">
         <archive path="W:/jboss42/jboss-4.2.2.GA/client/jboss-client.jar"/>
@@ -38,9 +43,7 @@
         <archive path="W:/jmsjcaExternalDependencies/stcqueueviewer_453.jar"/>
         <archive path="W:/jmsjcaExternalDependencies/stcjms_453.jar"/>
     </library>
-    <library name="jmsjca-user-sunone" systemlibrary="false">
-        <archive path="Y:/glassfish/lib/install/applications/jmsra/imqjmsra.jar"/>
-    </library>
+    <library name="jmsjca-user-sunone" systemlibrary="false"/>
     <library name="jmsjca-user-was" systemlibrary="false">
         <archive path="W:/jmsjcaExternalDependencies/com.ibm.mqjms.jar"/>
         <archive path="W:/jmsjcaExternalDependencies/com.ibm.mq.jar"/>

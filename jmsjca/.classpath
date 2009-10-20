@@ -32,6 +32,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="ext/jdom.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-ant"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-javaee"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-glassfishv3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-glassfish"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-rts"/>
