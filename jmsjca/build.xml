@@ -253,7 +253,9 @@
         <!-- copy jar file -->
         <mkdir dir="${jmsjca.jars.dir}" />
         <copy file="${jmsjca.core.jar.path}" todir="${jmsjca.jars.dir}" />
-    	
+
+        <!-- Create rootmarker directory (keeps Eclipse happy if tests are not compiled -->
+        <mkdir dir="${jmsjca.module.dir}/${jmsjca.marker.dirname}"/>
     	
     	<!-- instrument core jar for emma -->
         <path id="emma.jmsjca.core.jar">
@@ -423,17 +425,17 @@
         <fail unless="jmsjca.jmsimpl.id" >$${jmsjca.jmsimpl.id} needs to be specified: call a jmsimpl target first</fail>
         <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
         
-        <echo file="${jmsjca.module.dir}/${jmsjca.marker.filename}">
+        <echo file="${jmsjca.module.dir}/${jmsjca.marker.dirname}/${jmsjca.marker.filename}">
             This file should be in the classpath so that the tests can find the ear files
         </echo>
 
-        <mkdir dir="${jmsjca.module.dir}/META-INF/services"/>
-        <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.interceptor">
+        <mkdir dir="${jmsjca.module.dir}/${jmsjca.marker.dirname}/META-INF/services"/>
+        <echo file="${jmsjca.module.dir}/${jmsjca.marker.dirname}/META-INF/services/jmsjca.interceptor">
             com.stc.jmsjca.test.core.InterceptorTests$Interceptor1
             com.stc.jmsjca.test.core.InterceptorTests$Interceptor2
             com.stc.jmsjca.test.core.InterceptorTests$Interceptor3
         </echo>
-        <echo file="${jmsjca.module.dir}/META-INF/services/jmsjca.faulty1">
+        <echo file="${jmsjca.module.dir}/${jmsjca.marker.dirname}/META-INF/services/jmsjca.faulty1">
             com.stc.jmsjca.test.core.nonEx
         </echo>
 
@@ -539,6 +541,8 @@
             <property name="jmsjca.jmsimpl.subid" value="${jmsjca.jmsimpl.subid}" />
             <property name="jmsjca.container.id" value="${jmsjca.container.id}" />
             <property name="jmsjca.properties.path" value="${jmsjca.properties.path}"/>
+            <!-- Kludge: allow container dependent location of sunone jar -->
+            <property name="jmsjca.sunone.jar.path-imqjmsra.jar" value="${jmsjca.sunone.jar.path-imqjmsra.jar}"/>
         	<reference refid="emma.lib"/>
         	<property name="out.instr.dir" value="${out.instr.dir}"/>
             <reference refid="jmsjca.${jmsjca.container.id}.classpath"/>
@@ -604,29 +608,6 @@ or type
         </exec>
     </target>
 
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 <!--===========================================================================
     DEV-ONLY: replace-headers: changes SeeBeyond headers to CDDL
 -->

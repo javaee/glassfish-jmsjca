@@ -305,7 +305,7 @@
             </classpath>
             <classpath refid="jmsjca.${jcaid}${jmsjca.jmsimpl.subid}.clientjars.path" />
             <classpath path="${jmsjca.xxx.test.classes.dir}" />
-            <classpath path="${jmsjca.module.dir}" />
+            <classpath path="${jmsjca.module.dir}/${jmsjca.marker.dirname}" />
             
             <batchtest
                 haltonfailure="no"

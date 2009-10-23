@@ -45,7 +45,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wave"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-jboss"/>
 	<classpathentry kind="lib" path="ext/j2ee.jar"/>
-	<classpathentry kind="lib" path="build/jmsjca"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jmsjca-user-wl5"/>
+	<classpathentry kind="lib" path="build/jmsjca/rootmarker"/>
 	<classpathentry kind="output" path="out"/>
 </classpath>

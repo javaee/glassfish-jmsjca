@@ -31,7 +31,7 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
@@ -235,7 +235,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
             		"This directory is used to locate the EAR files.");
         }
         File marker = new File(markerURL.getPath());
-        File root = marker.getParentFile();
+        File root = marker.getParentFile().getParentFile();
         String module = getJMSProvider().getProviderID();
         mTestEar = new File(root, "ra" + module + "/test/ratest-test.ear"); 
         mTestEarName = Container.getModuleName(mTestEar.getName());
