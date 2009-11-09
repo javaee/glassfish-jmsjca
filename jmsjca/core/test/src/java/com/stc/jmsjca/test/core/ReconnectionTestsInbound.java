@@ -32,13 +32,23 @@ import javax.jms.TopicSession;
  * a single tcp/ip connection that can be led through a proxy. 
  * 
  * @author fkieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public abstract class ReconnectionTestsInbound extends EndToEndBase {
     // To test:
     // Connection failure in running application (CC, serial, sync)
     // Connection failure upon deployment (CC, serial, sync)
     // Undeployment of application that is reconnecting
+    
+    /**
+     * Whether to use a TCP proxy to monitor reconnections.
+     * Subclasses should override this when a proxy would not be possible
+     * 
+     * @return   
+     */
+    protected boolean useProxy(){
+        return true;
+    }
     
     
     /**
@@ -205,11 +215,23 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
      * @param mode concurrency
      * @throws Throwable
      */
+    /**
+     * @param mode
+     * @throws Throwable
+     */
     public void doTestDistributedSubscriberStandardFailover(String mode) throws Throwable {
-        // Setup proxy
-        UrlParser realUrl = new UrlParser(getJMSProvider().getConnectionUrl(this));
-        TcpProxyNIO proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
-        String proxyUrl = getJMSProvider().createConnectionUrl("localhost", proxy.getPort());
+        
+        TcpProxyNIO proxy = null;
+        String url = null;
+        if (useProxy()){
+            // Setup proxy
+            UrlParser realUrl = new UrlParser(getJMSProvider().getConnectionUrl(this));
+            proxy = new TcpProxyNIO(realUrl.getHost(), realUrl.getPort()); 
+            url = getJMSProvider().createConnectionUrl("localhost", proxy.getPort());
+        } else {
+            url = getJMSProvider().getConnectionUrl(this);
+        }
+
 
         Passthrough p = createPassthrough(mServerProperties);
                
@@ -225,7 +247,7 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
         String clientID = getJMSProvider().getClientId(p.getDurableTopic1Name1() + "clientID");
         spec.setClientId(clientID);
 
-        spec.setConnectionURL(proxyUrl + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB 
+        spec.setConnectionURL(url + "?" + Options.In.OPTION_MINIMAL_RECONNECT_LOGGING_DURSUB 
             + "=1&com.stc.jms.socketpooling=FALSE");
 
         dd.update();
@@ -261,8 +283,10 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
                 
                 // Wait for reconnections
                 Thread.sleep(10000);
-                assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() >= 0);
-                assertTrue("c-con=" + proxy.getConnectionsCreated(), proxy.getConnectionsCreated() >= 3);
+                if (useProxy()){
+                    assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() >= 0);
+                    assertTrue("c-con=" + proxy.getConnectionsCreated(), proxy.getConnectionsCreated() >= 3);
+                }
                 p.assertQ2Empty();
                 
                 // Now enable reconnection
@@ -273,13 +297,17 @@ public abstract class ReconnectionTestsInbound extends EndToEndBase {
                 
                 c.undeploy(mTestEarName);
                 
-                assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() == 0);
+                if (useProxy()){
+                    assertTrue("con=" + proxy.getConnectionsOpen(), proxy.getConnectionsOpen() == 0);
+                }
             }
         } finally {
             Container.safeClose(c);
             Passthrough.safeClose(p);
             Passthrough.safeClose(conn);
-            proxy.close();
+            if (useProxy()){
+                proxy.close();
+            }
         }
     }
 

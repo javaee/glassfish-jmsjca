@@ -23,7 +23,7 @@ import com.stc.jmsjca.test.core.ReconnectionTestsInbound;
  * Tests STCMS reconnects on inbound connections
  *
  * @author fkieviet
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class ReconnectInboundSunOneEar1 extends ReconnectionTestsInbound {
     
@@ -33,5 +33,24 @@ public class ReconnectInboundSunOneEar1 extends ReconnectionTestsInbound {
     @Override
     public JMSProvider getJMSProvider() {
         return new SunOneProvider();
+    }
+    
+    /**
+     * Whether to use a TCP proxy to monitor reconnections.
+     * Subclasses should override this when the use of a proxy would not be possible
+     * 
+     * @return   
+     */
+    @Override
+    protected boolean useProxy(){
+        
+        /**
+         * Can't use a proxy in direct mode
+         */
+        if (((SunOneProvider) getJMSProvider()).isDirect()){
+            return false;
+        }
+        
+        return true;
     }
 }
