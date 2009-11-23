@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  */
 public interface Options {
     /**
@@ -494,7 +494,7 @@ public interface Options {
         /**
          * Property name for getting access to statistics
          */
-        String DELIVERYSTATS = "_JMSJCA_Stats";
+        String DELIVERYSTATS = "JMSJCA.stats";
     }
     
     /**
