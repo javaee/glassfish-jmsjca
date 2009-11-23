@@ -45,6 +45,8 @@ import javax.jms.TextMessage;
 import javax.jms.TopicSession;
 import javax.resource.spi.UnavailableException;
 import javax.resource.spi.endpoint.MessageEndpoint;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -64,7 +66,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.21 $
+ * @version $Revision: 1.22 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -869,11 +871,27 @@ public abstract class Delivery {
      * @param rethrowSystemException throw instead of log system failures (tx mgr only)
      * @throws Exception tx exceptions
      */
-    public void beforeDelivery(DeliveryResults result, XMessageEndpoint target, 
+    public void beforeDelivery(final DeliveryResults result, XMessageEndpoint target, 
         boolean rethrowSystemException) throws Exception {
         if (mActivation.isCMT()) {
             try {
                 target.getEndpoint().beforeDelivery(mMethod);
+
+                // Keep track of transaction outcome
+                getTransactionNotNull().registerSynchronization(new Synchronization() {
+                    public void beforeCompletion() {
+                    }
+                    public void afterCompletion(int status) {
+                        if (status == Status.STATUS_COMMITTED) {
+                            if (result.getOnMessageWasBypassed()) {
+                                mStats.msgDeliveryBypassCommit();
+                            } else {
+                                mStats.msgDeliveryCommit();
+                            }
+                        }
+                    }
+                });
+
             } catch (Exception e) {
                 result.setBeforeDeliveryFailed(true);
                 result.setShouldDiscardEndpoint(true);
@@ -903,13 +921,13 @@ public abstract class Delivery {
      * @param rethrowSystemException throw instead of log system failures (tx mgr only)
      * @throws Exception tx exceptions 
      */
-    public void afterDelivery(DeliveryResults result, ConnectionForMove connectionForMove, 
+    public void afterDelivery(final DeliveryResults result, ConnectionForMove connectionForMove, 
         XMessageEndpoint target, Delivery.MDB mdb, boolean rethrowSystemException) throws Exception {
 
         if (!mActivation.isCMT() || result.getBeforeDeliveryFailed()) {
             return;
         }
-
+        
         if (!result.getOnMessageWasBypassed()) {
             try {
                 if (result.getIsRollbackOnly()) {
@@ -994,6 +1012,13 @@ public abstract class Delivery {
         if (!result.getIsRollbackOnly()) {
             try {
                 session.commit();
+                
+                // Keep track of outcome
+                if (result.getOnMessageWasBypassed()) {
+                    mStats.msgDeliveryBypassCommit();
+                } else {
+                    mStats.msgDeliveryCommit();
+                }
             } catch (JMSException ex) {
                 sLog.error(LOCALE.x("E065: The message could not be committed: {0}", ex), ex);
             }

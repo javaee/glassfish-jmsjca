@@ -675,7 +675,46 @@ public abstract class InterceptorTests extends EndToEndBase {
         runInterceptor(ContextTestInbound.class, SampleInterceptor.TEST_IN_EXEC, "testInterceptor1");
     }
     
-
+    /**
+     * Tests the basic properties of the nbound context
+     * 
+     * @author fkieviet
+     */
+    public static class DeliveryStatsTestInbound  implements SampleInterceptor.Executor, Serializable {
+        @SuppressWarnings("unchecked")
+        public void run() throws Exception {
+            InvocationContext ctx = SampleInterceptor.getInboundContext();
+            
+            if (ctx == null) {
+                throw new Exception("No context set on thread local");
+            }
+            Message m = (Message) ctx.getContextData().get(Options.Interceptor.KEY_MESSAGE);
+            
+            Map<String, Long> stats = (Map<String, Long>) m.getObjectProperty(Options.MessageProperties.DELIVERYSTATS);
+            
+            StringBuilder buf = new StringBuilder();
+            for (String s: stats.keySet()) {
+                buf.append(s + "=" + stats.get(s) + "; ");
+            }
+//            Logger.getLogger(this.getClass()).infoNoloc("stats: " + buf);
+            
+            if (stats.get(Options.Stats.BYPASS_COMMITS) == null) {
+                throw new Exception("No BC found");
+            }
+            if (!stats.get(Options.Stats.BYPASS_COMMITS).toString().equals("0")) {
+                throw new Exception("BC != null: " + stats.get(Options.Stats.BYPASS_COMMITS));
+            }
+        }
+    }
+    
+    /**
+     * Tests in the application server the proper invocation of the inbound interceptor
+     *  
+     * @throws Throwable
+     */
+    public void testDeliveryStats() throws Throwable {
+        runInterceptor(DeliveryStatsTestInbound.class, SampleInterceptor.TEST_IN_EXEC, "testInterceptor1");
+    }
     
     /**
      * Tests the basic properties of the nbound context

@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.19 $
+ * @version $Revision: 1.20 $
  */
 public interface Options {
     /**
@@ -490,6 +490,99 @@ public interface Options {
          * Property name for copying messages to DLQ
          */
         String CONTEXTNAME = "_JMSJCA_ContextName";
+
+        /**
+         * Property name for getting access to statistics
+         */
+        String DELIVERYSTATS = "_JMSJCA_Stats";
+    }
+    
+    /**
+     * Delivery statistics keys
+     * 
+     * @author fkieviet
+     */
+    public interface Stats {
+        /**
+         * @see DeliveryStats
+         */
+        String NMESSAGES = "DA";
+        /**
+         * @see DeliveryStats
+         */
+        String TIME_AT_SAMPLEPOINT_0 = "t(s0)";
+        /**
+         * @see DeliveryStats
+         */
+        String TIME_AT_SAMPLEPOINT_1 = "t(s1)";
+        /**
+         * @see DeliveryStats
+         */
+        String TIME_AT_SAMPLEPOINT_2 = "t(s2)";
+        /**
+         * @see DeliveryStats
+         */
+        String TIME_AT_SAMPLEPOINT_3 = "t(s3)";
+        /**
+         * @see DeliveryStats
+         */
+        String TIME_AT_SAMPLEPOINT_4 = "t(s4)";
+        /**
+         * @see DeliveryStats
+         */
+        String DELIVERY_COMMITS_SINCE_LAST_BYPASS_COMMIT = "DCSLBC";
+        /**
+         * @see DeliveryStats
+         */
+        String BYPASS_COMMITS_SINCE_LAST_DELIVERY_COMMIT = "BCSLDC";
+        /**
+         * @see DeliveryStats
+         */
+        String DELIVERY_COMMITS = "DC";
+        /**
+         * @see DeliveryStats
+         */
+        String BYPASS_COMMITS = "BC";
+        /**
+         * @see DeliveryStats
+         */
+        String REDELIVERIES = "R";
+        /**
+         * @see DeliveryStats
+         */
+        String REDELIVERED_MSGS = "RM";
+        /**
+         * @see DeliveryStats
+         */
+        String HIGEST_ENDPOINTS = "H-EP";
+        /**
+         * @see DeliveryStats
+         */
+        String ACTIVE_ENDPOINTS = "A-EP";
+        /**
+         * @see DeliveryStats
+         */
+        String ENDPOINTS = "EP";
+        /**
+         * @see DeliveryStats
+         */
+        String MSGS_AT_SAMPLEPOINT_4 = "D(s0)";
+        /**
+         * @see DeliveryStats
+         */
+        String MSGS_AT_SAMPLEPOINT_3 = "D(s1)";
+        /**
+         * @see DeliveryStats
+         */
+        String MSGS_AT_SAMPLEPOINT_2 = "D(s2)";
+        /**
+         * @see DeliveryStats
+         */
+        String MSGS_AT_SAMPLEPOINT_1 = "D(s3)";
+        /**
+         * @see DeliveryStats
+         */
+        String MSGS_AT_SAMPLEPOINT_0 = "D(s4)";
     }
     
     /**

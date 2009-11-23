@@ -24,6 +24,8 @@ import com.stc.jmsjca.util.Str;
 import org.jdom.Namespace;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
@@ -31,7 +33,7 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
@@ -131,16 +133,15 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
      * @return rts, sjsas, ...
      */
     public String getContainerID() {
-        if (mContainerID == null) {
-            String containerid = System.getProperty(CONTAINERID, null);
-            if (containerid == null) {
-                containerid = GLASSFISH_ID;
-                Logger.getLogger(this.getClass()).warnNoloc(
-                    "System property [" + CONTAINERID + "] is not set; reverting to \"" + containerid + "\"");
-            }
-            mContainerID = containerid;
+        try {
+            init();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return mContainerID;
+        if (mContainerID == null) {
+            throw new RuntimeException(CONTAINERID + " needs to be specified in rootmarker");
+        }
+        return mContainerID.trim();
     }
     
     /**
@@ -218,6 +219,43 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
         return getJMSProvider().createPassthrough(serverProperties);
     }
     
+    private boolean initialized;
+    
+    public void init() throws Exception {
+        if (initialized) {
+            return;
+        }
+        
+        // Get marker file, and from there the root directory
+        URL markerURL = this.getClass().getClassLoader().getResource("rootmarker");
+        if (markerURL == null) {
+            throw new Exception("Ensure that the build directory is in the classpath. " +
+                    "This directory should contain the file 'rootmarker'. " +
+                    "This directory is used to locate the EAR files.");
+        }
+        File marker = new File(markerURL.getPath());
+        File root = marker.getParentFile().getParentFile();
+        
+        Properties p = new Properties();
+        InputStream inp = new FileInputStream(marker);
+        try {
+            p.load(inp);
+        } finally {
+            safeClose(inp);
+        }
+        mContainerID = p.getProperty(CONTAINERID);
+        
+        String module = getJMSProvider().getProviderID();
+        mTestEar = new File(root, "ra" + module + "/test/ratest-test.ear"); 
+        mTestEarName = Container.getModuleName(mTestEar.getName());
+        mTestEarOrg = new File(mTestEar.getAbsolutePath() + ".1");
+        
+        if (!mTestEarOrg.exists()) {
+            throw new Exception("EAR file " + mTestEarOrg.getAbsolutePath() + " does not " +
+                    "exist. Run the Ant script to generate the EAR file.");
+        }
+    }
+    
     /**
      * Loads config
      *
@@ -226,25 +264,6 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        
-        // Get marker file, and from there the root directory
-        URL markerURL = this.getClass().getClassLoader().getResource("rootmarker");
-        if (markerURL == null) {
-            throw new Exception("Ensure that the build directory is in the classpath. " +
-            		"This directory should contain the file 'rootmarker'. " +
-            		"This directory is used to locate the EAR files.");
-        }
-        File marker = new File(markerURL.getPath());
-        File root = marker.getParentFile().getParentFile();
-        String module = getJMSProvider().getProviderID();
-        mTestEar = new File(root, "ra" + module + "/test/ratest-test.ear"); 
-        mTestEarName = Container.getModuleName(mTestEar.getName());
-        mTestEarOrg = new File(mTestEar.getAbsolutePath() + ".1");
-        
-        if (!mTestEarOrg.exists()) {
-            throw new Exception("EAR file " + mTestEarOrg.getAbsolutePath() + " does not " +
-            		"exist. Run the Ant script to generate the EAR file.");
-        }
     }
 
     public static Namespace J2EENS = Namespace.getNamespace("http://java.sun.com/xml/ns/j2ee");

@@ -16,12 +16,15 @@
 
 package com.stc.jmsjca.core;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Runtime statistics information on message delivery (used by an activation and the MBean
  * tied to that activation)
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class DeliveryStats {
     private int mNMessages;
@@ -30,16 +33,20 @@ public class DeliveryStats {
     private long mt2;
     private long mt3;
     private long mt4;
-    private int mn0 = 1;
-    private int mn1 = 1000;
-    private int mn2 = 10000;
-    private int mn3 = 20000;
-    private int mn4 = 100000;
+    private static final int SAMPLEPOINT_0 = 1;
+    private static final int SAMPLEPOINT_1 = 1000;
+    private static final int SAMPLEPOINT_2 = 10000;
+    private static final int SAMPLEPOINT_3 = 20000;
+    private static final int SAMPLEPOINT_4 = 100000;
     private int mNEndpoints;
     private int mNActiveEndpoints;
     private int mNHighestActiveEndpoints;
     private int mRedeliveredMsgs;
     private int mRedeliveries;
+    private int mBypassCommits;
+    private int mDeliveryCommits;
+    private int mBypassCommitsSinceLastDeliveryCommit;
+    private int mDeliveryCommitsSinceLastBypassCommit;
 
     /**
      * reset
@@ -52,22 +59,26 @@ public class DeliveryStats {
         mt3 = 0;
         mt4 = 0;
         mNHighestActiveEndpoints = 0;
+        mBypassCommits = 0;
+        mDeliveryCommits = 0;
+        mBypassCommitsSinceLastDeliveryCommit = 0;
+        mDeliveryCommitsSinceLastBypassCommit = 0;
     }
 
     /**
-     * messageDelivered
+     * messageDelivered (irrespective transaction outcome)
      */
     public synchronized void messageDelivered() {
         mNMessages++;
-        if (mNMessages == mn0) {
+        if (mNMessages == SAMPLEPOINT_0) {
             mt0 = System.currentTimeMillis();
-        } else if (mNMessages == mn1) {
+        } else if (mNMessages == SAMPLEPOINT_1) {
             mt1 = System.currentTimeMillis();
-        } else if (mNMessages == mn2) {
+        } else if (mNMessages == SAMPLEPOINT_2) {
             mt2 = System.currentTimeMillis();
-        } else if (mNMessages == mn3) {
+        } else if (mNMessages == SAMPLEPOINT_3) {
             mt3 = System.currentTimeMillis();
-        } else if (mNMessages == mn4) {
+        } else if (mNMessages == SAMPLEPOINT_4) {
             mt4 = System.currentTimeMillis();
         }
         mNActiveEndpoints--;
@@ -106,7 +117,7 @@ public class DeliveryStats {
         return mNMessages;
     }
 
-    private String rate(int n, long dt) {
+    private static String rate(int n, long dt) {
         if (n <= 0 || dt <= 0) {
             return "n/a";
         }
@@ -123,20 +134,25 @@ public class DeliveryStats {
     public synchronized String toString() {
         long tnow = System.currentTimeMillis();
         return "nMessages=" + mNMessages
-            + "; t(" + mn0 + ")=" + mt0
-            + "; t(" + mn1 + ")=" + mt1
-            + "; t(" + mn2 + ")=" + mt2
-            + "; t(" + mn3 + ")=" + mt3
-            + "; t(" + mn4 + ")=" + mt4
+            + "; t(" + SAMPLEPOINT_0 + ")=" + mt0
+            + "; t(" + SAMPLEPOINT_1 + ")=" + mt1
+            + "; t(" + SAMPLEPOINT_2 + ")=" + mt2
+            + "; t(" + SAMPLEPOINT_3 + ")=" + mt3
+            + "; t(" + SAMPLEPOINT_4 + ")=" + mt4
             + "; t(now)=" + tnow
-            + "; rate(" + mn0 + "," + mn1 + ")=" + rate(mn1 - mn0, mt1 - mt0)
-            + "; rate(" + mn1 + "," + mn2 + ")=" + rate(mn2 - mn1, mt2 - mt1)
-            + "; rate(" + mn2 + "," + mn3 + ")=" + rate(mn3 - mn2, mt3 - mt2)
-            + "; rate(" + mn3 + "," + mn4 + ")=" + rate(mn4 - mn3, mt4 - mt3)
-            + "; rate(" + mn0 + "," + mNMessages + ")=" + rate(mNMessages - mn1, tnow - mt0)
+            + "; rate(" + SAMPLEPOINT_0 + "," + SAMPLEPOINT_1 + ")=" + rate(SAMPLEPOINT_1 - SAMPLEPOINT_0, mt1 - mt0)
+            + "; rate(" + SAMPLEPOINT_1 + "," + SAMPLEPOINT_2 + ")=" + rate(SAMPLEPOINT_2 - SAMPLEPOINT_1, mt2 - mt1)
+            + "; rate(" + SAMPLEPOINT_2 + "," + SAMPLEPOINT_3 + ")=" + rate(SAMPLEPOINT_3 - SAMPLEPOINT_2, mt3 - mt2)
+            + "; rate(" + SAMPLEPOINT_3 + "," + SAMPLEPOINT_4 + ")=" + rate(SAMPLEPOINT_4 - SAMPLEPOINT_3, mt4 - mt3)
+            + "; rate(" + SAMPLEPOINT_0 + "," + mNMessages + ")=" + rate(mNMessages - SAMPLEPOINT_1, tnow - mt0)
             + "; nEndpoints=" + mNEndpoints
             + "; nRedelivies=" + mRedeliveries
-            + "; nRedeliveredMsgs=" + mRedeliveredMsgs;
+            + "; nRedeliveredMsgs=" + mRedeliveredMsgs
+            + "; msgsDeliveryCommits=" + mDeliveryCommits
+            + "; msgsDeliveryCommitsSinceLastBypassCommit=" + mDeliveryCommitsSinceLastBypassCommit
+            + "; msgsBypassCommits=" + mBypassCommits
+            + "; msgsBypassCommitsSinceLastDeliveryCommit=" + mBypassCommitsSinceLastDeliveryCommit;
+        
     }
 
     /**
@@ -153,7 +169,7 @@ public class DeliveryStats {
      *
      * @return int
      */
-    public int getNActiveEndpoints() {
+    public synchronized int getNActiveEndpoints() {
         return mNActiveEndpoints;
     }
 
@@ -162,21 +178,67 @@ public class DeliveryStats {
      *
      * @return int
      */
-    public int getNHighestEndpoints() {
+    public synchronized int getNHighestEndpoints() {
         return mNHighestActiveEndpoints;
     }
 
     /**
-     * Called when a msg is being redelivered 
+     * Called when a msg is being redelivered (irrespective transaction outcome)
      */
-    public void msgRedelivered() {
+    public synchronized void msgRedelivered() {
         mRedeliveries++;
     }
 
     /**
      * Called when a new redelivery is detected, e.g. a msg that was not seen before
      */
-    public void msgRedeliveredFirstTime() {
+    public synchronized void msgRedeliveredFirstTime() {
         mRedeliveredMsgs++;
+    }
+
+    /**
+     * Called when a msg bypass (moved to DLQ or deleted) was successful
+     */
+    public synchronized void msgDeliveryBypassCommit() {
+        mBypassCommits++;
+        mBypassCommitsSinceLastDeliveryCommit++;
+        mDeliveryCommitsSinceLastBypassCommit = 0;
+    }
+
+    /**
+     * Called when a msg was successfully delivered and committed
+     */
+    public synchronized void msgDeliveryCommit() {
+        mDeliveryCommits++;
+        mBypassCommitsSinceLastDeliveryCommit = 0;
+        mDeliveryCommitsSinceLastBypassCommit++;
+    }
+    
+    /**
+     * @return all stats in the form of a map
+     */
+    public synchronized Map<String, Long> getDump() {
+        Map<String, Long> ret = new HashMap<String, Long>();
+        ret.put(Options.Stats.NMESSAGES, Long.valueOf(mNMessages));
+        ret.put(Options.Stats.TIME_AT_SAMPLEPOINT_0, mt0);
+        ret.put(Options.Stats.TIME_AT_SAMPLEPOINT_1, mt1);
+        ret.put(Options.Stats.TIME_AT_SAMPLEPOINT_2, mt2);
+        ret.put(Options.Stats.TIME_AT_SAMPLEPOINT_3, mt3);
+        ret.put(Options.Stats.TIME_AT_SAMPLEPOINT_4, mt4);
+        ret.put(Options.Stats.MSGS_AT_SAMPLEPOINT_0, Long.valueOf(SAMPLEPOINT_0));
+        ret.put(Options.Stats.MSGS_AT_SAMPLEPOINT_1, Long.valueOf(SAMPLEPOINT_1));
+        ret.put(Options.Stats.MSGS_AT_SAMPLEPOINT_2, Long.valueOf(SAMPLEPOINT_2));
+        ret.put(Options.Stats.MSGS_AT_SAMPLEPOINT_3, Long.valueOf(SAMPLEPOINT_3));
+        ret.put(Options.Stats.MSGS_AT_SAMPLEPOINT_4, Long.valueOf(SAMPLEPOINT_4));
+        ret.put(Options.Stats.ENDPOINTS, Long.valueOf(mNEndpoints));
+        ret.put(Options.Stats.ACTIVE_ENDPOINTS, Long.valueOf(mNActiveEndpoints));
+        ret.put(Options.Stats.HIGEST_ENDPOINTS, Long.valueOf(mNHighestActiveEndpoints));
+        ret.put(Options.Stats.REDELIVERED_MSGS, Long.valueOf(mRedeliveredMsgs));
+        ret.put(Options.Stats.REDELIVERIES, Long.valueOf(mRedeliveries));
+        ret.put(Options.Stats.BYPASS_COMMITS, Long.valueOf(mBypassCommits));
+        ret.put(Options.Stats.DELIVERY_COMMITS, Long.valueOf(mDeliveryCommits));
+        ret.put(Options.Stats.BYPASS_COMMITS_SINCE_LAST_DELIVERY_COMMIT, Long.valueOf(mBypassCommitsSinceLastDeliveryCommit));
+        ret.put(Options.Stats.DELIVERY_COMMITS_SINCE_LAST_BYPASS_COMMIT, Long.valueOf(mDeliveryCommitsSinceLastBypassCommit));
+        return ret;
     }
 }

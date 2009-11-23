@@ -426,7 +426,8 @@
         <fail unless="jmsjca.container.id" >$${jmsjca.container.id} needs to be specified: call a container target first</fail>
         
         <echo file="${jmsjca.module.dir}/${jmsjca.marker.dirname}/${jmsjca.marker.filename}">
-            This file should be in the classpath so that the tests can find the ear files
+# This file should be in the classpath so that the tests can find the ear files
+jmsjca.container.id=${jmsjca.container.id}            
         </echo>
 
         <mkdir dir="${jmsjca.module.dir}/${jmsjca.marker.dirname}/META-INF/services"/>
