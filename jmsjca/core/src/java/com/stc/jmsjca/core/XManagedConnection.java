@@ -58,7 +58,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -127,6 +127,10 @@ public class XManagedConnection implements ManagedConnection {
         if (xa) {
             try {
                 mXAResource = mJSession.getXAResource();
+                
+                if (mManagedConnectionFactory.isOverrideIsSameRM()) {
+                    mXAResource = new WXAResourceNoIsSameRM(mXAResource);
+                }
             } catch (JMSException ex) {
                 if (mJSession != null) {
                     try {

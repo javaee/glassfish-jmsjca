@@ -50,7 +50,7 @@
 
         <outbound-resourceadapter>
             <connection-definition>
-                <managedconnectionfactory-class>com.stc.jmsjca.core.XMCFUnifiedXA</managedconnectionfactory-class>
+                <managedconnectionfactory-class>com.stc.jmsjca.unifiedjms.UnifiedMCFUnified</managedconnectionfactory-class>
                 <config-property>
                     <config-property-name>ConnectionURL</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
@@ -74,7 +74,7 @@
             </connection-definition>
 
             <connection-definition>
-                <managedconnectionfactory-class>com.stc.jmsjca.core.XMCFQueueXA</managedconnectionfactory-class>
+                <managedconnectionfactory-class>com.stc.jmsjca.unifiedjms.UnifiedMCFQueue</managedconnectionfactory-class>
                 <config-property>
                     <config-property-name>ConnectionURL</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
@@ -103,7 +103,7 @@
             </connection-definition>
 
             <connection-definition>
-                <managedconnectionfactory-class>com.stc.jmsjca.core.XMCFTopicXA</managedconnectionfactory-class>
+                <managedconnectionfactory-class>com.stc.jmsjca.unifiedjms.UnifiedMCFTopic</managedconnectionfactory-class>
                 <config-property>
                     <config-property-name>ConnectionURL</config-property-name>
                     <config-property-type>java.lang.String</config-property-type>
@@ -205,7 +205,7 @@
 
         <adminobject>
             <adminobject-interface>javax.jms.Queue</adminobject-interface>
-            <adminobject-class>com.stc.jmsjca.core.AdminQueue</adminobject-class>
+            <adminobject-class>com.stc.jmsjca.unifiedjms.UnifiedAdminQueue</adminobject-class>
             <config-property>
                 <config-property-name>Name</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>
@@ -218,7 +218,7 @@
 
         <adminobject>
             <adminobject-interface>javax.jms.Topic</adminobject-interface>
-            <adminobject-class>com.stc.jmsjca.core.AdminTopic</adminobject-class>
+            <adminobject-class>com.stc.jmsjca.unifiedjms.UnifiedAdminTopic</adminobject-class>
             <config-property>
                 <config-property-name>Name</config-property-name>
                 <config-property-type>java.lang.String</config-property-type>

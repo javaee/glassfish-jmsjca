@@ -16,12 +16,15 @@
 
 package com.stc.jmsjca.wl;
 
+import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.XManagedConnectionFactory;
 
 /**
  * Specializes the core resource adapter for Spirit Wave Messageserver
  *
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  * @author misc
  */
 public class RAWLResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
@@ -41,7 +44,8 @@ public class RAWLResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapte
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
     @Override
-    public RAJMSObjectFactory createObjectFactory(String urlstr) {
+    public RAJMSObjectFactory createObjectFactory(RAJMSResourceAdapter ra, 
+        RAJMSActivationSpec spec, XManagedConnectionFactory fact) {
         return new RAWLObjectFactory();
     }
 }

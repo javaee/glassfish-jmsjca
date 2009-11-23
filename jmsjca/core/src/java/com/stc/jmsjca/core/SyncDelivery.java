@@ -127,7 +127,7 @@ public class SyncDelivery extends Delivery {
         a.getObjectFactory().getProperties(p, a.getRA(), a.getActivationSpec(), null, null);
         mReceiveTimeout = Utility.getIntProperty(p, Options.In.RECEIVE_TIMEOUT, mReceiveTimeout);
         
-        if (a.getActivationSpec().getDeliveryConcurrencyMode() == 
+        if (a.getActivationSpec().getInternalDeliveryConcurrencyMode() == 
             RAJMSActivationSpec.DELIVERYCONCURRENCY_SERIAL) {
             mNThreads = 1;
         } else if (a.getActivationSpec().getDestinationType().equals(
@@ -510,6 +510,9 @@ public class SyncDelivery extends Delivery {
                     mXA = new PseudoXAResource(mSess);
                 } else {
                     mXA = mActivation.getObjectFactory().getXAResource(true, mSess);
+                    if (mActivation.isOverrideIsSameRM()) {
+                        mXA = new WXAResourceNoIsSameRM(mXA);
+                    }
                 }
             }
             mMDB = new Delivery.MDB(mXA);

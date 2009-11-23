@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -91,6 +91,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private transient boolean mIgnoreTx;
     private transient boolean mClientContainer;
     private transient boolean mBypassRA;
+    private transient boolean mOverrideIsSameRM;
     private transient boolean mDoNotCacheConnectionFactories;
     private transient boolean mStrict;
     private transient String mTxMgrLocatorClass;
@@ -484,8 +485,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         }
         
         // Effective URL for ObjectFactory: fact takes precedence 
-        String urlstr = mConnectionURL == null ? mRA.getConnectionURL() : mConnectionURL;
-        mObjFactory =  mRA.createObjectFactory(urlstr);
+        mObjFactory =  mRA.createObjectFactory(mRA, null, this);
         
         // Cache RA URL and Options to detect changes in these values
         mRAUrl = mRA.lookUpLDAP(mRA.getConnectionURL());
@@ -525,6 +525,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mNoXA = Utility.getSystemProperty(Options.NOXA, mNoXA);
         mBypassRA = Utility.isTrue(p.getProperty(Options.Out.BYPASSRA), false);
         mBypassRA = Utility.getSystemProperty(Options.Out.BYPASSRA, mBypassRA);
+        mOverrideIsSameRM = Utility.isTrue(p.getProperty(Options.OVERRIDEISSAMERM), false);
         mDoNotCacheConnectionFactories = Utility.isTrue(p.getProperty(Options.Out.DONOTCACHECONNECTIONFACTORIES), 
             !getObjFactory().shouldCacheConnectionFactories());
         mStrict = Utility.isTrue(p.getProperty(Options.Out.STRICT), false);
@@ -814,6 +815,14 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         return mBypassRA;
     }
 
+    /**
+     * @return true if the XAResource needs to be wrapped to override isSameRM
+     */
+    public boolean isOverrideIsSameRM() {
+        extractOptions();
+        return mOverrideIsSameRM;
+    }
+    
     /**
      * Returns true if connection factories should not be cached
      *

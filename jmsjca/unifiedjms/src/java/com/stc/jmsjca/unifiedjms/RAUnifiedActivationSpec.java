@@ -16,15 +16,14 @@
 
 package com.stc.jmsjca.unifiedjms;
 
-import com.stc.jmsjca.core.RAJMSActivationSpec;
 
 /**
  * Encapsulates the configuration of a MessageEndpoint.
  *
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * @author misc
  */
-public class RAUnifiedActivationSpec extends RAJMSActivationSpec {
+public class RAUnifiedActivationSpec extends GJRActivationSpecLayer {
 
     /**
      * isValidDestinationName
@@ -36,6 +35,13 @@ public class RAUnifiedActivationSpec extends RAJMSActivationSpec {
      */
     @Override
     public boolean isValidDestinationName(String name) {
-        return !empty(name);
+        if (!empty(name)) {
+            return true;
+        } else {
+            if (hasGenericJMSRAProperties() || ((RAUnifiedResourceAdapter) getResourceAdapter()).hasGenericJMSRAProperties()) {
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -16,9 +16,7 @@
 
 package com.stc.jmsjca.jndi;
 
-import com.stc.jmsjca.core.AdminDestination;
 import com.stc.jmsjca.core.DestinationCacheEntry;
-import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
@@ -28,8 +26,6 @@ import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
-import com.stc.jmsjca.util.Str;
-import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -52,7 +48,7 @@ import java.util.Properties;
  * For JNDI provider
  *
  * @author Frank Kieviet
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  */
 public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializable {
     private static Logger sLog = Logger.getLogger(RAJNDIObjectFactory.class);
@@ -242,65 +238,24 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
     }
     
     /**
-     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session, 
-     * boolean, boolean, com.stc.jmsjca.core.RAJMSActivationSpec, 
-     * com.stc.jmsjca.core.XManagedConnectionFactory, 
-     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, Properties, Class)
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#instantiateDestination(javax.jms.Session, boolean, boolean, 
+     * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.lang.Class, java.util.Properties[])
      */
     @Override
-    public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
+    protected Destination instantiateDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class<?> sessionClass) throws JMSException {
+        String destName, Class<?> sessionClass, Properties... options) throws JMSException {
 
-        if (sLog.isDebugEnabled()) {
-            sLog.debug("createDestination(" + destName + ")");
-        }
+        Destination ret = null;
 
-        if (Str.empty(destName)) {
-            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
-        }
-
-        // Check for lookup:// destination: this may return an admin destination 
-        Destination ret = adminDestinationLookup(destName);
-        
-        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
-        ret = checkGeneric(ret);
-        
-        // Unwrap admin destination if necessary
-        if (ret != null && ret instanceof AdminDestination) {
-            // Ignore properties and use name only
-            AdminDestination admindest = (AdminDestination) ret;
-            destName = admindest.retrieveCheckedName();
-            
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(ret + " is an admin object: embedded name: " + destName);
-            }
-            ret = null;
-        }
-        
-        // Needs to parse jmsjca:// format?
-        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
-            Properties otherOptions = new Properties();
-            UrlParser u = new UrlParser(destName);
-            otherOptions = u.getQueryProperties();
-
-            // Reset name from options
-            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
-                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
-                    + "specify a destination name. Destination names are specified using " 
-                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
-                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
-            }
-            destName = otherOptions.getProperty(Options.Dest.NAME);
-        }
-        
         // Check for jndi://
-        if (ret == null && destName.startsWith(JNDI_PREFIX)) {
+        if (destName.startsWith(JNDI_PREFIX)) {
             String name = destName.substring(JNDI_PREFIX.length());
             if (sLog.isDebugEnabled()) {
                 sLog.debug(destName + " is a jndi object: looking up [" + name + "]");
             }
-            
+
             // Check cache
             if (fact == null) {
                 ret = (Destination) getJndiObject(ra, activationSpec, fact, null, name);
@@ -319,18 +274,12 @@ public class RAJNDIObjectFactory extends RAJMSObjectFactory implements Serializa
 
         // Create if necessary
         if (ret == null) {
-            if (sLog.isDebugEnabled()) {
-                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
-            }
-            if (!isTopic) {
-                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
-            } else {
-                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
-            }
+            ret = super.instantiateDestination(sess, isXA, isTopic, activationSpec, fact, 
+                ra, destName, sessionClass, options);
         }
-        
+
         return ret;
-    }
+    }    
 
     /**
      * Returns true if the specified string may be a recognised URL

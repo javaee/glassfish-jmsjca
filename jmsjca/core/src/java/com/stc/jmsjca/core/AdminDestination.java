@@ -24,30 +24,50 @@ import javax.jms.JMSException;
 
 import java.util.Properties;
 
-
 /**
  * Base class for administrative destinations. These are administrative objects that 
  * describe queues and topics. 
  *
  * @author Frank Kieviet
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public abstract class AdminDestination implements javax.jms.Destination, java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
+    private String mName;
+    private String mOptions; 
 
+    /**
+     * @param name destination name
+     */
+    public void setName(String name) {
+        mName = name;
+    }
+    
     /**
      * Gets the name of the destination
      * 
      * @return name of the destination
      */
-    public abstract String getName();
+    public String getName() {
+        return mName;
+    }
+    
+    /**
+     * @param options options
+     */
+    public void setOptions(String options) {
+        mOptions = options;
+    }
     
     /**
      * Gets the optional settings for creating the destination
      * 
      * @return options string
      */
-    public abstract String getOptions();
+    public String getOptions() {
+        return mOptions;
+    }
+    
     
     /**
      * @return non-null name
@@ -65,14 +85,23 @@ public abstract class AdminDestination implements javax.jms.Destination, java.io
     /**
      * @return the Options field in the form of a properties set
      */
-    public Properties retrieveProperties() {
+    public Properties retrieveProperties() throws JMSException {
         if (Str.empty(getOptions())) {
             return null;
-            
         } else {
             Properties p = new Properties();
             Str.deserializeProperties(Str.parseProperties(Options.SEP, getOptions()), p);
             return p;
         }
     }
+
+    /**
+     * @return true if this is a queue
+     */
+    public abstract boolean isQueue();
+
+    /**
+     * @return true if this is a topic
+     */
+    public abstract boolean isTopic();
 }

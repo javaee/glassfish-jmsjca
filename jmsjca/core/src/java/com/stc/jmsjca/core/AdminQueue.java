@@ -22,46 +22,29 @@ import javax.jms.JMSException;
  * An administrative queue
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class AdminQueue extends AdminDestination implements javax.jms.Queue, java.io.Serializable {
-    private String mName;
-    private String mOptions; 
-
     /**
      * @see javax.jms.Queue#getQueueName()
      */
     public String getQueueName() throws JMSException {
-        return mName;
+        return getName();
     }
-    
+
     /**
-     * @param name destination name
-     */
-    public void setName(String name) {
-        mName = name;
-    }
-    
-    /**
-     * @see com.stc.jmsjca.core.AdminDestination#getName()
+     * @see com.stc.jmsjca.core.AdminDestination#isQueue()
      */
     @Override
-    public String getName() {
-        return mName;
+    public boolean isQueue() {
+        return true;
     }
-    
+
     /**
-     * @param options options
-     */
-    public void setOptions(String options) {
-        mOptions = options;
-    }
-    
-    /**
-     * @return options
+     * @see com.stc.jmsjca.core.AdminDestination#isTopic()
      */
     @Override
-    public String getOptions() {
-        return mOptions;
+    public boolean isTopic() {
+        return false;
     }
 }

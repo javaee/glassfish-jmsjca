@@ -230,7 +230,7 @@ public class BaseJUStd extends XTestBase {
                 // Verify setting of boolean, int, long, String and URL general properties
                 RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
                 ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_CCDTURL=file%3A%2F%2F%2Fpath&WMQ_SecurityExit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=1234&WMQ_CleanupInterval=54321");
-                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                RAJMSObjectFactory fact = ra.createObjectFactory(ra, null, null);
                 MQConnectionFactory mqcf = (MQConnectionFactory) fact.createConnectionFactory(
                         XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
 
@@ -260,7 +260,7 @@ public class BaseJUStd extends XTestBase {
             try {
                 RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
                 ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_Securityxit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=1234");
-                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                RAJMSObjectFactory fact = ra.createObjectFactory(ra, null, null);
                 fact.createConnectionFactory(
                         XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
                 assertTrue("RAWMQ-E841 was not thrown for setSecurityxit", false);
@@ -273,7 +273,7 @@ public class BaseJUStd extends XTestBase {
             try {
                 RAJMSResourceAdapter ra = new RAWMQResourceAdapter();
                 ra.setConnectionURL("wmq://testGeneralProperties:1234?WMQ_SecurityExit=testGeneralProperties&WMQ_SparseSubscriptions=false&WMQ_StatusRefreshInterval=STRING");
-                RAJMSObjectFactory fact = ra.createObjectFactory(null);
+                RAJMSObjectFactory fact = ra.createObjectFactory(ra, null, null);
                 fact.createConnectionFactory(
                         XConnectionRequestInfo.DOMAIN_TOPIC_XA, ra, null, null, null);
                 assertTrue("RAWMQ-E841 was not thrown for an invalid int property", false);

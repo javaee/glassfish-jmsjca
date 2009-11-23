@@ -16,7 +16,10 @@
 
 package com.stc.jmsjca.stcms;
 
+import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.UrlParser;
 
 /**
@@ -26,7 +29,7 @@ import com.stc.jmsjca.util.UrlParser;
  * is required to be a JavaBean</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RASTCMSResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
     private RAJMSObjectFactory mFactory;
@@ -72,7 +75,8 @@ public class RASTCMSResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAda
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
     @Override
-    public RAJMSObjectFactory createObjectFactory(String urlstr) {
+    public RAJMSObjectFactory createObjectFactory(RAJMSResourceAdapter ra, 
+        RAJMSActivationSpec spec, XManagedConnectionFactory fact) {
         return mFactory;
     }
 }

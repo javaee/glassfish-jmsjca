@@ -64,7 +64,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -429,6 +429,9 @@ public abstract class Delivery {
                     xa = new PseudoXAResource(s);
                 } else {
                     xa = mActivation.getObjectFactory().getXAResource(true, s);
+                    if (mActivation.isOverrideIsSameRM()) {
+                        xa = new WXAResourceNoIsSameRM(xa);
+                    }
                 }
                 getTransactionNotNull().enlistResource(xa);
                 // Note: MUST delist lateron!

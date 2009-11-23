@@ -127,7 +127,14 @@ public class GlassFishContainer extends Container {
         }
         */
         
-        dm = dmFactory.getDeploymentManager(anURI, aUserName, aPassword);
+        try {
+            dm = dmFactory.getDeploymentManager(anURI, aUserName, aPassword);
+        } catch (Exception e) {
+            if (e.getCause() != null && e.getCause() instanceof VerifyError) {
+                throw new Exception("Cannot deploy. Likely cause: glassfishv3 classpath being used. Swap the order of v2 and v3. Original error: " + e, e); 
+            }
+            throw e;
+        }
         
         return dm;
     }

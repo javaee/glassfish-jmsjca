@@ -76,7 +76,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.19 $
+ * @version $Revision: 1.20 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -95,6 +95,7 @@ public class Activation extends ActivationBase {
     private ActivationMBean mActivationMBean;
     private ObjectName mServerMgtMBeanName;
     private int mDeliveryMode;
+    private boolean mOverrideIsSameRM;
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -151,7 +152,7 @@ public class Activation extends ActivationBase {
             url = ra.getConnectionURL();
         }
         mURL = url;
-        mObjFactory = ra.createObjectFactory(url);
+        mObjFactory = ra.createObjectFactory(ra, spec, null);
     }
     
     /**
@@ -224,6 +225,7 @@ public class Activation extends ActivationBase {
             }
             
             mIsXAEmulated = Utility.getSystemProperty(Options.NOXA, Utility.isTrue(p.getProperty(Options.NOXA), false));
+            mOverrideIsSameRM = Utility.isTrue(p.getProperty(Options.OVERRIDEISSAMERM), false);
             // Extract options for redelivery handling
             mRedeliveryRedirect = Utility.isTrue(p.getProperty(Options.In.OPTION_REDIRECT), false);
             mWrapAlways = "1".equals(p.getProperty(Options.In.OPTION_REDELIVERYWRAP, "1"));
@@ -290,7 +292,7 @@ public class Activation extends ActivationBase {
             if (overridemode != null) {
                 mSpec.setConcurrencyMode(overridemode);
             } 
-            mDeliveryMode = mSpec.getDeliveryConcurrencyMode();
+            mDeliveryMode = mSpec.getInternalDeliveryConcurrencyMode();
             mDeliveryMode = getObjectFactory().adjustDeliveryMode(mDeliveryMode, mIsCMT && !mIsXAEmulated);
             
             internalStart();
@@ -950,5 +952,12 @@ public class Activation extends ActivationBase {
      */
     public boolean shouldWrapAlways() {
         return mWrapAlways;
+    }
+
+    /**
+     * @return true if the XAResource needs to be wrapped to override isSameRM()
+     */
+    public boolean isOverrideIsSameRM() {
+        return mOverrideIsSameRM;
     }
 }

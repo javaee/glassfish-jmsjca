@@ -16,7 +16,10 @@
 
 package com.stc.jmsjca.jndi;
 
+import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Str;
 
 /**
@@ -26,7 +29,7 @@ import com.stc.jmsjca.util.Str;
  * is required to be a JavaBean</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class RAJNDIResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
 //    private static Logger sLog = Logger.getLogger(RAJNDIResourceAdapter.class);
@@ -175,7 +178,8 @@ public class RAJNDIResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdap
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
     @Override
-    public RAJMSObjectFactory createObjectFactory(String urlstr) {
+    public RAJMSObjectFactory createObjectFactory(RAJMSResourceAdapter ra, 
+        RAJMSActivationSpec spec, XManagedConnectionFactory fact) {
         return new RAJNDIObjectFactory();
     }
 }

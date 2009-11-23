@@ -32,7 +32,7 @@ import java.util.Map;
  * See WProducer
  *
  * @author Frank Kieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class WTopicPublisher extends WMessageProducer implements TopicPublisher {
     private TopicPublisher mDelegate;
@@ -158,8 +158,8 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
             invokeOnClosed();
         }
         try {
-            if (topic instanceof AdminTopic) {
-                topic = (Topic) mMgr.getSession().createDestination((AdminTopic) topic);
+            if (topic instanceof AdminDestination && ((AdminDestination) topic).isTopic()) {
+                topic = (Topic) mMgr.getSession().createDestination((AdminDestination) topic);
             }
             if (topic instanceof Unwrappable) {
                 topic = (Topic) ((Unwrappable) topic).getWrappedObject();
@@ -197,8 +197,8 @@ public class WTopicPublisher extends WMessageProducer implements TopicPublisher 
         if (mMgr == null) {
             invokeOnClosed();
         }
-        if (topic instanceof AdminTopic) {
-            topic = (Topic) mMgr.getSession().createDestination((AdminTopic) topic);
+        if (topic instanceof AdminDestination && ((AdminDestination) topic).isTopic()) {
+            topic = (Topic) mMgr.getSession().createDestination((AdminDestination) topic);
         }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();

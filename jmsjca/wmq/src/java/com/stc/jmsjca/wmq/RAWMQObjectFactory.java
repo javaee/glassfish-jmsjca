@@ -16,7 +16,6 @@
 
 package com.stc.jmsjca.wmq;
 
-import com.stc.jmsjca.core.AdminDestination;
 import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
@@ -29,7 +28,6 @@ import com.stc.jmsjca.util.ClassLoaderHelper;
 import com.stc.jmsjca.util.ConnectionUrl;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
-import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.Connection;
@@ -47,7 +45,7 @@ import java.util.Properties;
  * Encapsulates most of the specific traits of the Wave message server.
  * ConnectionURL: wmq://host:port
  * 
- * @version $Revision: 1.21 $
+ * @version $Revision: 1.22 $
  * @author cye
  */
 public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
@@ -484,87 +482,21 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
     }
     
     /**
-     * createDestination()
-     *
-     * @param sess Session
-     * @param isXA boolean
-     * @param isTopic boolean
-     * @param activationSpec RAJMSActivationSpec
-     * @param fact MCF
-     * @param ra RAJMSResourceAdapter
-     * @param destName String
-     * @param options Options
-     * @param sessionClass domain
-     * @return Destination
-     * @throws JMSException failure
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#instantiateDestination(javax.jms.Session, boolean, boolean, 
+     * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.lang.Class, java.util.Properties[])
      */
     @Override
-    public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
+    protected Destination instantiateDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class<?> sessionClass) throws JMSException {
+        String destName, Class<?> sessionClass, Properties... options) throws JMSException {
         
-        if (sLog.isDebugEnabled()) {
-            sLog.debug("createDestination(" + destName + ")");
-        }
-
-        // Check for lookup:// destination: this may return an admin destination 
-        Destination ret = adminDestinationLookup(destName);
-        
-        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
-        ret = checkGeneric(ret);
-        
-        // Unwrap admin destination if necessary
-        Properties options2 = null;
-        if (ret != null && ret instanceof AdminDestination) {
-            AdminDestination admindest = (AdminDestination) ret;
-            destName = admindest.retrieveCheckedName();
-            options2 = admindest.retrieveProperties();
-            
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(ret + " is an admin object: embedded name: " + destName);
-            }
-            ret = null;
-        }
-        
-        // Needs to parse jmsjca:// format?
-        Properties options3 = new Properties();
-        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
-            UrlParser u = new UrlParser(destName);
-            options3 = u.getQueryProperties();
-
-            // Reset name from options
-            if (Str.empty(options3.getProperty(Options.Dest.NAME))) {
-                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
-                    + "specify a destination name. Destination names are specified using " 
-                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
-                    options3.getProperty(Options.Dest.ORIGINALNAME)));
-            }
-            destName = options3.getProperty(Options.Dest.NAME);
-        }
-        
-        // Create if necessary
-        if (ret == null) {
-            if (sLog.isDebugEnabled()) {
-                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
-            }
-            if (!isTopic) {
-                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
-            } else {
-                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
-            }
-        }
+        // Create destination "the normal way"
+        Destination ret = super.instantiateDestination(sess, isXA, isTopic, activationSpec, 
+            fact, ra, destName, sessionClass, options);
         
         // Call setBrokerDurSubQueue()
-        String dursubqueue = null;
-        if (options3 != null) {
-            dursubqueue = options3.getProperty(BROKERDURSUBQUEUE);            
-        }
-        if (options2 != null && dursubqueue == null) {
-            dursubqueue = options2.getProperty(BROKERDURSUBQUEUE);            
-        }
-        if (options != null && dursubqueue == null) {
-            dursubqueue = options.getProperty(BROKERDURSUBQUEUE);            
-        }
+        String dursubqueue = getLastNotNull(BROKERDURSUBQUEUE, options);            
         if (dursubqueue != null) {
             try {
                 Method m = ret.getClass().getMethod("setBrokerDurSubQueue", new Class[] {String.class });
@@ -578,6 +510,7 @@ public class RAWMQObjectFactory extends RAJMSObjectFactory implements java.io.Se
         
         return ret;
     }
+    
 
     @Override
     public RAJMSActivationSpec createActivationSpec() {

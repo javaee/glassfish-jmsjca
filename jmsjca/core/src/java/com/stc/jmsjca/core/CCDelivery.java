@@ -56,7 +56,7 @@ import java.util.List;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -267,6 +267,9 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
                 if (mActivation.isCMT()) {
                     if (!mActivation.isXAEmulated()) {
                         xa = mActivation.getObjectFactory().getXAResource(true, s);
+                        if (!mActivation.isOverrideIsSameRM()) {
+                            xa = new WXAResourceNoIsSameRM(xa);
+                        }
                     } else {
                         xa = new PseudoXAResource(s); 
                     }

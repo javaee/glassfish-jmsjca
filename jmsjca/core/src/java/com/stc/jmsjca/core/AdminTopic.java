@@ -22,46 +22,29 @@ import javax.jms.JMSException;
  * Administrative topic
  *
  * @author Frank Kieviet
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class AdminTopic extends AdminDestination implements javax.jms.Topic, java.io.Serializable {
-    private String mName;
-    private String mOptions; 
-
-    /**
-     * @param name destination name
-     */
-    public void setName(String name) {
-        mName = name;
-    }
-    
-    /**
-     * @see com.stc.jmsjca.core.AdminDestination#getName()
-     */
-    @Override
-    public String getName() {
-        return mName;
-    }
-    
-    /**
-     * @param options options
-     */
-    public void setOptions(String options) {
-        mOptions = options;
-    }
-    
-    /**
-     * @return options
-     */
-    @Override
-    public String getOptions() {
-        return mOptions;
-    }
-
     /**
      * @see javax.jms.Topic#getTopicName()
      */
     public String getTopicName() throws JMSException {
-        return mName;
+        return getName();
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.AdminDestination#isQueue()
+     */
+    @Override
+    public boolean isQueue() {
+        return false;
+    }
+
+    /**
+     * @see com.stc.jmsjca.core.AdminDestination#isTopic()
+     */
+    @Override
+    public boolean isTopic() {
+        return true;
     }
 }

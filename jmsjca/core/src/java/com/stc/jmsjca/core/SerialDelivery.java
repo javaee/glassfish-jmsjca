@@ -32,7 +32,7 @@ import javax.transaction.xa.XAResource;
  * A strategy for serial delivery
  *
  * @author fkieviet
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  */
 public class SerialDelivery extends Delivery implements MessageListener,
     javax.jms.ExceptionListener {
@@ -123,6 +123,9 @@ public class SerialDelivery extends Delivery implements MessageListener,
                 mXA = new PseudoXAResource(mSession);
             } else {
                 mXA = mActivation.getObjectFactory().getXAResource(true, mSession);
+                if (mActivation.isOverrideIsSameRM()) {
+                    mXA = new WXAResourceNoIsSameRM(mXA);
+                }
             }
         }
         

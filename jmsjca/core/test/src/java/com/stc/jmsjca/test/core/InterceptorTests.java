@@ -229,7 +229,7 @@ public abstract class InterceptorTests extends EndToEndBase {
             ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
             // Spec
-            spec = ra.createObjectFactory(ra.getConnectionURL()).createActivationSpec();
+            spec = ra.createObjectFactory(ra, null, null).createActivationSpec();
             spec.setUserName(p.getUserid());
             spec.setPassword(p.getPassword());
             spec.setConcurrencyMode("sync");
@@ -570,7 +570,7 @@ public abstract class InterceptorTests extends EndToEndBase {
         ra.setPassword(getJMSProvider().getPassword(mServerProperties));
 
         // Spec
-        RAJMSActivationSpec spec = ra.createObjectFactory(ra.getConnectionURL()).createActivationSpec();
+        RAJMSActivationSpec spec = ra.createObjectFactory(ra, null, null).createActivationSpec();
         spec.setUserName(p.getUserid());
         spec.setPassword(p.getPassword());
         spec.setConcurrencyMode("sync");

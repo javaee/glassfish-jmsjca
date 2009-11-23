@@ -62,7 +62,7 @@ import java.util.WeakHashMap;
  * The resource adapter; exposed through DD
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAJMSResourceAdapter.class);    
@@ -143,6 +143,11 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         
         overrideRAConfigFromJNDI();
         
+        RAJMSObjectFactory fact = null;;
+        if (!Str.empty(getMBeanObjectName())) {
+            fact = createObjectFactory(this, null, null);
+        }
+        
         try {
             // Adjust Connection properties from the jndi resource in case of
             // url=lookup://
@@ -155,8 +160,6 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             }
             // Create MBean
             if (!Str.empty(getMBeanObjectName())) {
-                RAJMSObjectFactory fact = createObjectFactory(getConnectionURL());
-
                 MBeanServer mbeanServer = getMBeanServer();
                 ObjectName mbeanName = new ObjectName(getMBeanObjectName());
                 mAdapterMBean = fact.createRAMBean(this);
@@ -338,7 +341,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
                 url = getConnectionURL();
             }
 
-            RAJMSObjectFactory fact = createObjectFactory(url);
+            RAJMSObjectFactory fact = createObjectFactory(this, (RAJMSActivationSpec) spec, null);
             a = fact.createActivation(this, endpointFactory,
                 (RAJMSActivationSpec) spec);
             a.activate();
@@ -788,7 +791,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
             if (urlstr == null || urlstr.length() == 0) {
                 urlstr = getConnectionURL();
             }
-            RAJMSObjectFactory fact = createObjectFactory(urlstr);
+            RAJMSObjectFactory fact = createObjectFactory(this, (RAJMSActivationSpec) specs[i], null);
 
             if (fact.canDo(RAJMSObjectFactory.CANDO_XA) == RAJMSObjectFactory.CAP_NO) {
                 continue;
@@ -814,8 +817,7 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
         for (int i = 0; i < uniqueSpecs.size(); i++) {
             RAJMSActivationSpec s = uniqueSpecs.get(i);
             try {
-                String  urlstr = s.getConnectionURL();
-                RAJMSObjectFactory fact = createObjectFactory(urlstr);
+                RAJMSObjectFactory fact = createObjectFactory(this, (RAJMSActivationSpec) specs[i], null);
                 ConnectionFactory qcf = fact.createConnectionFactory(
                     XConnectionRequestInfo.DOMAIN_QUEUE_XA, this, s, null, null);
                 String username = s.getUserName() == null ? getUserName() 
@@ -1297,12 +1299,15 @@ public abstract class RAJMSResourceAdapter implements ResourceAdapter, java.io.S
     }
 
     /**
-     * @param urlstr url to derive the type of JMS server for so that the right 
-     *   object factory can be created; for static resource adapters, the connection
-     *   url may be null
-     * @return object factory, new or cached
+     * Matches an object factory to the configuration set in the RA, MCF and / or spec
+     * 
+     * @param ra RA
+     * @param spec activation spec (may be null)
+     * @param fact MCF (may be null)
+     * @return factory
      */
-    public abstract RAJMSObjectFactory createObjectFactory(String urlstr);
+    public abstract RAJMSObjectFactory createObjectFactory(RAJMSResourceAdapter ra, 
+        RAJMSActivationSpec spec, XManagedConnectionFactory fact);
 
     /**
      * Getter for projectInfo; for CAPS only, not used by JMSJCA

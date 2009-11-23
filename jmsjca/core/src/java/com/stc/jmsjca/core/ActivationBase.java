@@ -63,7 +63,7 @@ import javax.resource.spi.endpoint.MessageEndpointFactory;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class ActivationBase {
     /**
@@ -124,7 +124,7 @@ public abstract class ActivationBase {
         if (url == null || url.length() == 0) {
             url = ra.getConnectionURL();
         }
-        mObjFactory = ra.createObjectFactory(url);
+        mObjFactory = ra.createObjectFactory(ra, spec, null);
     }
     
     /**

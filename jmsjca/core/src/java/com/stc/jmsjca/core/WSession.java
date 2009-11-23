@@ -45,7 +45,7 @@ import javax.jms.TopicSubscriber;
  * calls to the JSession
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WSession implements IWSession {
     private static final Localizer LOCALE = Localizer.get();
@@ -570,8 +570,8 @@ public class WSession implements IWSession {
         String string) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
-        if (topic instanceof AdminTopic) {
-            topic = (Topic) mMgr.createDestination((AdminTopic) topic); 
+        if (topic instanceof AdminDestination && ((AdminDestination) topic).isTopic()) {
+            topic = (Topic) mMgr.createDestination((AdminDestination) topic); 
         }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
@@ -598,8 +598,8 @@ public class WSession implements IWSession {
         String string2, boolean boolean3) throws JMSException {
         checkClosed();
         checkTemporaryDestinationOwnership(topic);
-        if (topic instanceof AdminTopic) {
-            topic = (Topic) mMgr.createDestination((AdminTopic) topic); 
+        if (topic instanceof AdminDestination && ((AdminDestination) topic).isTopic()) {
+            topic = (Topic) mMgr.createDestination((AdminDestination) topic); 
         }
         if (topic instanceof Unwrappable) {
             topic = (Topic) ((Unwrappable) topic).getWrappedObject();
@@ -621,8 +621,8 @@ public class WSession implements IWSession {
      */
     public QueueBrowser createBrowser(Queue queue) throws JMSException {
         checkClosed();
-        if (queue instanceof AdminQueue) {
-            queue = (Queue) mMgr.createDestination((AdminQueue) queue); 
+        if (queue instanceof AdminDestination && ((AdminDestination) queue).isQueue()) {
+            queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
         }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();
@@ -645,8 +645,8 @@ public class WSession implements IWSession {
      */
     public QueueBrowser createBrowser(Queue queue, String string) throws JMSException {
         checkClosed();
-        if (queue instanceof AdminQueue) {
-            queue = (Queue) mMgr.createDestination((AdminQueue) queue); 
+        if (queue instanceof AdminDestination && ((AdminDestination) queue).isQueue()) {
+            queue = (Queue) mMgr.createDestination((AdminDestination) queue); 
         }
         if (queue instanceof Unwrappable) {
             queue = (Queue) ((Unwrappable) queue).getWrappedObject();

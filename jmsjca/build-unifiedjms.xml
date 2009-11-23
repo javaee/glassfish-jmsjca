@@ -7,7 +7,7 @@
     <property file="${jmsjca.properties.path}" />
 
     <!-- REQUIRED for compile test -->
-    <path id="jmsjca.stcms.clientjars.path">
+    <path id="jmsjca.unifiedjms.clientjars.path">
         <fileset file="${jmsjca.stcms.jar.path-com.stc.jms.stcjms.jar}" />
         <fileset file="${jmsjca.stcms.jar.path-com.stc.jms.stcqueueviewer.jar}" />
     </path>

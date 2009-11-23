@@ -16,9 +16,7 @@
 
 package com.stc.jmsjca.wl;
 
-import com.stc.jmsjca.core.AdminDestination;
 import com.stc.jmsjca.core.DestinationCacheEntry;
-import com.stc.jmsjca.core.Options;
 import com.stc.jmsjca.core.PseudoXASession;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
@@ -29,7 +27,6 @@ import com.stc.jmsjca.core.XManagedConnection;
 import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
-import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.Connection;
@@ -62,7 +59,7 @@ import java.util.Properties;
  * connection factory; it is this factory that is used.
  * 
  * @author fkieviet
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  */
 public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RAWLObjectFactory.class);
@@ -308,79 +305,36 @@ public class RAWLObjectFactory extends RAJMSObjectFactory implements java.io.Ser
     }
 
     /**
-     * @see com.stc.jmsjca.core.RAJMSObjectFactory#createDestination(javax.jms.Session, boolean, 
-     * boolean, com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
-     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.util.Properties, java.lang.Class)
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#instantiateDestination(javax.jms.Session, boolean, boolean, 
+     * com.stc.jmsjca.core.RAJMSActivationSpec, com.stc.jmsjca.core.XManagedConnectionFactory, 
+     * com.stc.jmsjca.core.RAJMSResourceAdapter, java.lang.String, java.lang.Class, java.util.Properties[])
      */
     @Override
-    public Destination createDestination(Session sess, boolean isXA, boolean isTopic,
+    protected Destination instantiateDestination(Session sess, boolean isXA, boolean isTopic,
         RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
-        String destName, Properties options, Class<?> sessionClass) throws JMSException {
-        
+        String destName, Class<?> sessionClass, Properties... options) throws JMSException {
+
         if (sLog.isDebugEnabled()) {
-            sLog.debug("createDestination(" + destName + ")");
+            sLog.debug(destName + " is a jndi object: looking up [" + destName + "]");
         }
+        
+        Destination ret;
 
-        if (Str.empty(destName)) {
-            throw Exc.jmsExc(LOCALE.x("E095: The destination should not be empty or null"));
-        }
-
-        // Check for lookup:// destination: this may return an admin destination 
-        Destination ret = adminDestinationLookup(destName);
-        
-        // Check if this is a GenericJMSRA destination, if so this will return a JMSJCA admin destination
-        ret = checkGeneric(ret);
-        
-        // Unwrap admin destination if necessary
-        if (ret != null && ret instanceof AdminDestination) {
-            // Ignore properties and use name
-            AdminDestination admindest = (AdminDestination) ret;
-            destName = admindest.retrieveCheckedName();
-            
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(ret + " is an admin object: embedded name: " + destName);
-            }
-            ret = null;
-        }
-        
-        // Needs to parse jmsjca:// format?
-        if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
-            Properties otherOptions = new Properties();
-            UrlParser u = new UrlParser(destName);
-            otherOptions = u.getQueryProperties();
-
-            // Reset name from options
-            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
-                throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
-                    + "specify a destination name. Destination names are specified using " 
-                    + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
-                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
-            }
-            destName = otherOptions.getProperty(Options.Dest.NAME);
-        }
-        
-        // Create if necessary
-        if (ret == null) {
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(destName + " is a jndi object: looking up [" + destName + "]");
-            }
-            
-            // Check cache
-            if (fact == null) {
-                ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
-            } else {
-                DestinationCacheEntry d = isTopic 
-                ? fact.getTopicCache().get(destName) : fact.getQueueCache().get(destName);
-                synchronized (d) {
-                    ret = d.get();
-                    if (ret == null) {
-                        ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
-                        d.set(ret);
-                    }
+        // Check cache
+        if (fact == null) {
+            ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
+        } else {
+            DestinationCacheEntry d = isTopic 
+            ? fact.getTopicCache().get(destName) : fact.getQueueCache().get(destName);
+            synchronized (d) {
+                ret = d.get();
+                if (ret == null) {
+                    ret = lookupDestination(activationSpec, fact, ra, destName, null, null);
+                    d.set(ret);
                 }
             }
         }
-
+        
         return ret;
     }
     

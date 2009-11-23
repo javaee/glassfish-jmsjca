@@ -21,12 +21,11 @@ import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
-import javax.resource.ResourceException;
-import javax.resource.spi.InvalidPropertyException;
-
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.resource.ResourceException;
+import javax.resource.spi.InvalidPropertyException;
 
 import java.util.Enumeration;
 import java.util.Properties;
@@ -37,7 +36,7 @@ import java.util.Properties;
  * Parts of this implementation are based on Sun IMQ
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public abstract class RAJMSActivationSpec implements javax.resource.spi.ActivationSpec,
     javax.resource.spi.ResourceAdapterAssociation, java.io.Serializable {
@@ -655,7 +654,7 @@ public abstract class RAJMSActivationSpec implements javax.resource.spi.Activati
      * 
      * @return int
      */
-    public int getDeliveryConcurrencyMode() {
+    public int getInternalDeliveryConcurrencyMode() {
         return mDeliveryConcurrencyMode;
     }
 

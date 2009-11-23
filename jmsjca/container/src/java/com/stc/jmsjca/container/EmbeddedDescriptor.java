@@ -43,7 +43,7 @@ import java.util.Map;
 /**
  *
  * @author fkieviet
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 @SuppressWarnings("unchecked")
 public class EmbeddedDescriptor {
@@ -333,11 +333,14 @@ public class EmbeddedDescriptor {
          * All parameters
          */
         protected Map<String, Element> mValues = new HashMap<String, Element>();
+
+        private int mIdxLastEl;
         
         protected void findValues() throws Exception {
             for (Iterator iter = mRoot.getDescendants(new ElementFilter()); iter.hasNext(); ) {
                 Element e = (Element) iter.next();
                 if (e.getParent() == mRoot && e.getName().equals("config-property")) {
+                    mIdxLastEl++;
                     Iterator subs = e.getDescendants(new ElementFilter());
                     // config-property-name
                     if (!subs.hasNext()) {
@@ -384,13 +387,18 @@ public class EmbeddedDescriptor {
             Element e = mValues.get(name.toUpperCase());
             if (e == null) {
                 Element configEl = new Element("config-property", mRoot.getNamespace());
+                
                 Element nameEl = new Element("config-property-name", mRoot.getNamespace());
                 nameEl.setText(name);
+                
                 Element typeEl = new Element("config-property-type", mRoot.getNamespace());
                 typeEl.setText(String.class.getName());
+                
                 e = new Element("config-property-value", mRoot.getNamespace());
-                mRoot.addContent(configEl);
+                
+                mRoot.addContent(mIdxLastEl, configEl);
                 configEl.addContent(nameEl);
+                configEl.addContent(typeEl);
                 configEl.addContent(e);
             }
             e.setText(newValue);

@@ -16,7 +16,10 @@
 
 package com.stc.jmsjca.wmq;
 
+import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
+import com.stc.jmsjca.core.RAJMSResourceAdapter;
+import com.stc.jmsjca.core.XManagedConnectionFactory;
 import com.stc.jmsjca.util.Exc;
 import com.stc.jmsjca.util.UrlParser;
 
@@ -24,7 +27,7 @@ import com.stc.jmsjca.util.UrlParser;
  * Specializes the core resource adapter for IBM WebSphere Message Server
  *
  * @author cye
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  */
 public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapter {
     private static final Localizer LOCALE = Localizer.get();    
@@ -54,7 +57,8 @@ public class RAWMQResourceAdapter extends com.stc.jmsjca.core.RAJMSResourceAdapt
      * @see com.stc.jmsjca.core.RAJMSResourceAdapter#createObjectFactory(java.lang.String)
      */
     @Override
-    public RAJMSObjectFactory createObjectFactory(String urlstr) {
+    public RAJMSObjectFactory createObjectFactory(RAJMSResourceAdapter ra, 
+        RAJMSActivationSpec spec, XManagedConnectionFactory fact) {
         return new RAWMQObjectFactory();
     }
 }

@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -247,7 +247,7 @@ public abstract class RAJMSObjectFactory {
      */
     public ConnectionUrl getProperties(Properties p, RAJMSResourceAdapter ra, RAJMSActivationSpec spec,
             XManagedConnectionFactory fact, String overrideUrl) throws JMSException {
-
+        
         // Obtain URL from (1) override, (2) activationspec or fact, (3) RA
         String urlstr = overrideUrl;
         if (urlstr == null && spec != null && !Str.empty(spec.getConnectionURL())) {
@@ -409,10 +409,11 @@ public abstract class RAJMSObjectFactory {
         ret = checkGeneric(ret);
         
         // Unwrap admin destination if necessary
+        Properties options2 = null;
         if (ret != null && ret instanceof AdminDestination) {
-            // get name, and ignore options
             AdminDestination admindest = (AdminDestination) ret;
             destName = admindest.retrieveCheckedName();
+            options2 = admindest.retrieveProperties();
             
             if (sLog.isDebugEnabled()) {
                 sLog.debug(ret + " is an admin object: embedded name: " + destName);
@@ -421,35 +422,80 @@ public abstract class RAJMSObjectFactory {
         }
         
         // Needs to parse jmsjca:// format?
+        Properties options3 = new Properties();
         if (ret == null && destName.startsWith(Options.Dest.PREFIX)) {
-            Properties otherOptions = new Properties();
             UrlParser u = new UrlParser(destName);
-            otherOptions = u.getQueryProperties();
+            options3 = u.getQueryProperties();
 
             // Reset name from options
-            if (Str.empty(otherOptions.getProperty(Options.Dest.NAME))) {
+            if (Str.empty(options3.getProperty(Options.Dest.NAME))) {
                 throw Exc.jmsExc(LOCALE.x("E207: The specified destination string [{0}] does not " 
                     + "specify a destination name. Destination names are specified using " 
                     + "the ''name'' key, e.g. ''jmsjca://?name=Queue1''.", 
-                    otherOptions.getProperty(Options.Dest.ORIGINALNAME)));
+                    options3.getProperty(Options.Dest.ORIGINALNAME)));
             }
-            destName = otherOptions.getProperty(Options.Dest.NAME);
+            destName = options3.getProperty(Options.Dest.NAME);
         }
         
         // Create if necessary
         if (ret == null) {
-            if (sLog.isDebugEnabled()) {
-                sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
-            }
-            if (!isTopic) {
-                ret = getNonXASession(sess, isXA, sessionClass).createQueue(destName);
-            } else {
-                ret = getNonXASession(sess, isXA, sessionClass).createTopic(destName);
+            ret = instantiateDestination(sess, isXA, isTopic, activationSpec, fact, ra, destName
+                , sessionClass, options, options2, options3);
+        }
+        
+        return ret;
+    }
+    
+    /**
+     * Instantiates a destination. Called from createDestination() which does all the 
+     * unwrapping. Default implementation: calls createQueue() or createTopic().
+     * 
+     * @param sess Session
+     * @param isXA true if XA
+     * @param isTopic true if topic
+     * @param activationSpec spec
+     * @param fact mcf
+     * @param ra ra
+     * @param destName name of the destination, does no longer contain jmsjca:// or lookup://
+     * @param sessionClass session class
+     * @param options Series of options in more specific order: original options, 
+     *   options from admin destination, and options from jmsjca:// notation  
+     * @return destination; should NOT return null
+     * @throws JMSException propagated
+     */
+    protected Destination instantiateDestination(Session sess, boolean isXA, boolean isTopic,
+        RAJMSActivationSpec activationSpec, XManagedConnectionFactory fact,  RAJMSResourceAdapter ra,
+        String destName, Class<?> sessionClass, Properties... options) throws JMSException {
+
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("Creating " + destName + " using createQueue()/createTopic()");
+        }
+        if (!isTopic) {
+            return getNonXASession(sess, isXA, sessionClass).createQueue(destName);
+        } else {
+            return getNonXASession(sess, isXA, sessionClass).createTopic(destName);
+        }
+    }
+    
+    /**
+     * Returns the last non-null value from the specified array of Properties
+     * 
+     * @param key
+     * @param ps
+     * @return
+     */
+    public static String getLastNotNull(String key, Properties... ps) {
+        String ret = null;
+        for (Properties p : ps) {
+            if (p != null) {
+                ret = p.getProperty(key, ret);
             }
         }
         
         return ret;
     }
+    
+    
     
     /**
      * Computes a message selector with substitutions
@@ -914,7 +960,7 @@ public abstract class RAJMSObjectFactory {
             break;
         default:
             throw Exc.exc(LOCALE.x("E140 Invalid concurrency ''{0}''",
-                Integer.toString(activation.getActivationSpec().getDeliveryConcurrencyMode())));
+                Integer.toString(activation.getActivationSpec().getInternalDeliveryConcurrencyMode())));
         }
         return ret;
     }

@@ -20,7 +20,7 @@ package com.stc.jmsjca.core;
  * Collects all options that can be set in the VM or ra.xml in one place.
  * 
  * @author fkieviet
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public interface Options {
     /**
@@ -52,6 +52,12 @@ public interface Options {
      */
     String LOCAL_JNDI_LOOKUP = "lookup://";
     
+    /**
+     * When set to true, this will wrap the XAResource and will override isSameRM() 
+     * such that it will always return false. Valid values: true, false
+     */
+    String OVERRIDEISSAMERM = "JMSJCA.overrideissamerm";
+
     /**
      * Options specific to the inbound part of the RA
      */

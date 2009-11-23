@@ -35,7 +35,7 @@ import java.util.Map;
  * calls will be treated specially, such as the close() method.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class WQueueSender extends WMessageProducer implements QueueSender {
     private QueueSender mDelegate;
@@ -98,7 +98,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
             invokeOnClosed();
         }
         queue = (Queue) mMgr.getSession().checkGeneric(queue);
-        if (queue instanceof AdminQueue) {
+        if (queue instanceof AdminDestination && ((AdminDestination) queue).isQueue()) {
             queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
         }
         if (queue instanceof Unwrappable) {
@@ -139,7 +139,7 @@ public class WQueueSender extends WMessageProducer implements QueueSender {
             invokeOnClosed();
         }
         queue = (Queue) mMgr.getSession().checkGeneric(queue);
-        if (queue instanceof AdminQueue) {
+        if (queue instanceof AdminDestination && ((AdminDestination) queue).isQueue()) {
             queue = (Queue) mMgr.getSession().createDestination((AdminDestination) queue); 
         }
         if (queue instanceof Unwrappable) {
