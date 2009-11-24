@@ -498,6 +498,7 @@ public class SyncDelivery extends Delivery {
                 mActivation.getActivationSpec().getDestination(), 
                 null,
                 getSessionClass());
+            mActivation.publishInboundDestination(dest);
             mCons = o.createMessageConsumer(
                 mSess,
                 mActivation.isCMT() && !mActivation.isXAEmulated(),

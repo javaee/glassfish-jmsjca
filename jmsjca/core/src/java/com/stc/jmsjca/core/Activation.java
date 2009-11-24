@@ -24,6 +24,7 @@ import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 import com.stc.jmsjca.util.Utility;
 
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.management.MBeanServer;
@@ -76,7 +77,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -96,6 +97,7 @@ public class Activation extends ActivationBase {
     private ObjectName mServerMgtMBeanName;
     private int mDeliveryMode;
     private boolean mOverrideIsSameRM;
+    private volatile Destination mPublishedDestination;
 
     private static final Localizer LOCALE = Localizer.get();
     
@@ -959,5 +961,26 @@ public class Activation extends ActivationBase {
      */
     public boolean isOverrideIsSameRM() {
         return mOverrideIsSameRM;
+    }
+
+    /**
+     * Called by the delivery to let the activation know which destination object
+     * is actually used for reading messages. This destination can then be shared
+     * with the inbound message wrapper.
+     * 
+     * @param dest
+     */
+    public void publishInboundDestination(Destination dest) {
+        mPublishedDestination = dest;
+    }
+    
+    /**
+     * @return the destination as it was published by the Delivery. This may be null
+     * during startup, and the object identity may change during the lifecycle of the 
+     * activation. Its purpose is to make the destination object available to the 
+     * message wrapper.
+     */
+    public Destination getPublishedDestination() {
+        return mPublishedDestination;
     }
 }

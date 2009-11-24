@@ -33,7 +33,7 @@ import java.util.Enumeration;
  * method.
  * 
  * @author Frank Kieviet
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  */
 public class WMessageIn implements Message, Unwrappable {
     private Message mDelegate;
@@ -315,6 +315,8 @@ public class WMessageIn implements Message, Unwrappable {
             return mActivation.getRA().getMBeanServer();
         } else if (Options.MessageProperties.DELIVERYSTATS.equals(name)) {
             return mActivation.getStats().getDump();
+        } else if (Options.MessageProperties.INBOUND_DESTINATION.equals(name)) {
+            return mActivation.getPublishedDestination();
         } else {
             return mDelegate.getObjectProperty(original);
         }

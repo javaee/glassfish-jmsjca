@@ -56,7 +56,7 @@ import java.util.List;
  * there is no JMS-thread or Work-thread anymore.
  *
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
     javax.jms.ExceptionListener {
@@ -136,6 +136,7 @@ public class CCDelivery extends Delivery implements javax.jms.ServerSessionPool,
             null,
             mActivation.isTopic() ? TopicSession.class : QueueSession.class);
         createDLQDest();
+        mActivation.publishInboundDestination(dest);
         sess.close();
         o.createConnectionConsumer(
             mConnection,

@@ -35,6 +35,7 @@ import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -703,6 +704,11 @@ public abstract class InterceptorTests extends EndToEndBase {
             }
             if (!stats.get(Options.Stats.BYPASS_COMMITS).toString().equals("0")) {
                 throw new Exception("BC != null: " + stats.get(Options.Stats.BYPASS_COMMITS));
+            }
+            
+            Destination dest = (Destination) m.getObjectProperty(Options.MessageProperties.INBOUND_DESTINATION);
+            if (dest == null) {
+                throw new Exception("INBOUND DEST IS NULL");
             }
         }
     }
