@@ -77,7 +77,7 @@ import java.util.Properties;
  * - if disconnecting: ignore
  *
  * @author fkieviet
- * @version $Revision: 1.21 $
+ * @version $Revision: 1.22 $
  */
 public class Activation extends ActivationBase {
     private static Logger sLog = Logger.getLogger(Activation.class);
@@ -553,6 +553,7 @@ public class Activation extends ActivationBase {
                         }
                         
                         // Start... async errors may occur during or right after start()
+                        mStats.resetDeliveryStats();
                         mDelivery.start();
 
                         // Give some time for immediate async errors to occur

@@ -52,7 +52,7 @@ import java.util.Properties;
  * is to send messages to one destination and read it back from another destination.
  * 
  * @author fkieviet
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  */
 public abstract class Passthrough {
     private Properties mServerProperties;
@@ -440,6 +440,86 @@ public abstract class Passthrough {
             }
         }
         
+        public void checkResults(long t0, List<String> failures, int nReceived, int nExpected,
+            int[] readbackCount, int[] readbackOrder, int multiplier, boolean strictOrder) throws Exception {
+            boolean failure = false;
+            
+            // Count
+            int nFound0 = 0;
+            int nFound1 = 0;
+            int nFoundMore = 0;
+            for (int j = 0; j < readbackCount.length; j++) {
+                if (readbackCount[j] == 0) {
+                    nFound0++;
+                    failure = true;
+                } else if (readbackCount[j] == multiplier) {
+                    nFound1++;
+                } else {
+                    nFoundMore++;
+                    failure = true;
+                }
+            }
+            String countFailures = "bins with too few: " + nFound0 + "; bins with correct number: "
+                + nFound1 + "; bins with too many: " + nFoundMore + ";";
+            if (nFound0 < 10) {
+                countFailures += " missing: (";
+                for (int j = 0; j < readbackCount.length; j++) {
+                    if (readbackCount[j] == 0) {
+                        countFailures += j + " ";
+                    }
+                }
+                countFailures += ")";
+            }
+            
+            // Strict order
+            String orderFailures = "";
+            if (strictOrder) {
+                int k = 0;
+                for (int i = 0; i < readbackOrder.length; i++) {
+                    if (readbackOrder[i] != i) {
+                        failure = true;
+                        if (++k < 10) {
+                            orderFailures = "#" + i + "!=" + "#" + readbackOrder[i] + "; "; 
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (orderFailures.length() == 0) {
+                orderFailures = "[no order failures]";
+            } else {
+                orderFailures = "[order failures: " + orderFailures + "]";
+            }
+
+            // Other failures (passed in)
+            String otherFailures = " no other failures";
+            if (!failures.isEmpty()) {
+                failure = true;
+                int k = 0;
+                otherFailures = "[Other failures: ";
+                for (Iterator<String> iter = failures.iterator(); iter.hasNext();) {
+                    String f = iter.next();
+                    if (k != 0) {
+                        otherFailures += ", ";
+                    }
+                    if (k > 10) {
+                        otherFailures += (failures.size() - k) + " more";
+                        break;
+                    }
+                    otherFailures += f;
+                }
+                otherFailures += "]";
+            }
+            
+            if (failure) {
+                throw new Exception("Messages received after "
+                    + (System.currentTimeMillis() - t0) + " ms: " + nReceived
+                    + "; expected: " + nExpected + "; diag: [" + countFailures + "]; "
+                    + otherFailures + "; " + orderFailures);
+            }
+        }
+
         /**
          * Generates a string payload
          * 
@@ -581,85 +661,6 @@ public abstract class Passthrough {
             }
         }
         
-        private void checkResults(long t0, List<String> failures, int nReceived, int nExpected,
-            int[] readbackCount, int[] readbackOrder) throws Exception {
-            boolean failure = false;
-            
-            // Count
-            int nFound0 = 0;
-            int nFound1 = 0;
-            int nFoundMore = 0;
-            for (int j = 0; j < readbackCount.length; j++) {
-                if (readbackCount[j] == 0) {
-                    nFound0++;
-                    failure = true;
-                } else if (readbackCount[j] == mMultiplier) {
-                    nFound1++;
-                } else {
-                    nFoundMore++;
-                    failure = true;
-                }
-            }
-            String countFailures = "bins with too few: " + nFound0 + "; bins with correct number: "
-                + nFound1 + "; bins with too many: " + nFoundMore + ";";
-            if (nFound0 < 10) {
-                countFailures += " missing: (";
-                for (int j = 0; j < readbackCount.length; j++) {
-                    if (readbackCount[j] == 0) {
-                        countFailures += j + " ";
-                    }
-                }
-                countFailures += ")";
-            }
-            
-            // Strict order
-            String orderFailures = "";
-            if (mStrictOrder) {
-                int k = 0;
-                for (int i = 0; i < readbackOrder.length; i++) {
-                    if (readbackOrder[i] != i) {
-                        failure = true;
-                        if (++k < 10) {
-                            orderFailures = "#" + i + "!=" + "#" + readbackOrder[i] + "; "; 
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
-            if (orderFailures.length() == 0) {
-                orderFailures = "[no order failures]";
-            } else {
-                orderFailures = "[order failures: " + orderFailures + "]";
-            }
-
-            // Other failures (passed in)
-            String otherFailures = " no other failures";
-            if (!failures.isEmpty()) {
-                failure = true;
-                int k = 0;
-                otherFailures = "[Other failures: ";
-                for (Iterator<String> iter = failures.iterator(); iter.hasNext();) {
-                    String f = iter.next();
-                    if (k != 0) {
-                        otherFailures += ", ";
-                    }
-                    if (k > 10) {
-                        otherFailures += (failures.size() - k) + " more";
-                        break;
-                    }
-                    otherFailures += f;
-                }
-                otherFailures += "]";
-            }
-            
-            if (failure) {
-                throw new Exception("Messages received after "
-                    + (System.currentTimeMillis() - t0) + " ms: " + nReceived
-                    + "; expected: " + nExpected + "; diag: [" + countFailures + "]; "
-                    + otherFailures + "; " + orderFailures);
-            }
-        }
 
         /**
          * Reads messages from the destination
@@ -688,7 +689,7 @@ public abstract class Passthrough {
                     getSession().commit();
                     
                     // Will throw
-                    checkResults(t0, failures, nReceived, n, readbackCount, readbackOrder);
+                    mMessageGenerator.checkResults(t0, failures, nReceived, n, readbackCount, readbackOrder, mMultiplier, mStrictOrder);
                     break;
                 }
 
@@ -754,7 +755,7 @@ public abstract class Passthrough {
             getSession().commit();
 
             // Check received so far
-            checkResults(t0, failures, nReceived, n, readbackCount, readbackOrder);
+            mMessageGenerator.checkResults(t0, failures, nReceived, n, readbackCount, readbackOrder, mMultiplier, mStrictOrder);
             
             // Check no more messages
             Message toomany;

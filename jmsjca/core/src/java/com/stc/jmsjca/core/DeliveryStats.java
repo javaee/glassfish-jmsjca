@@ -24,7 +24,7 @@ import java.util.Map;
  * tied to that activation)
  *
  * @author fkieviet
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class DeliveryStats {
     private int mNMessages;
@@ -59,6 +59,17 @@ public class DeliveryStats {
         mt3 = 0;
         mt4 = 0;
         mNHighestActiveEndpoints = 0;
+        mBypassCommits = 0;
+        mDeliveryCommits = 0;
+        mBypassCommitsSinceLastDeliveryCommit = 0;
+        mDeliveryCommitsSinceLastBypassCommit = 0;
+    }
+    
+    /**
+     * Partial reset: called when the delivery starts so that the stats can be used
+     * to monitor deadletter activity 
+     */
+    public synchronized void resetDeliveryStats() {
         mBypassCommits = 0;
         mDeliveryCommits = 0;
         mBypassCommitsSinceLastDeliveryCommit = 0;

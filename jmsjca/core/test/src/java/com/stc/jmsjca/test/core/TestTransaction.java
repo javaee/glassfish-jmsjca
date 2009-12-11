@@ -21,6 +21,7 @@ import com.stc.jmsjca.core.XXid;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
+import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -105,10 +106,10 @@ public class TestTransaction implements Transaction {
             }
         }
 
-        // syn.before
+        // syn.after
         for (Iterator<Synchronization> syns = mSynchronizations.iterator(); syns.hasNext();) {
             Synchronization syn = syns.next();
-            syn.afterCompletion(mRollbackOnly ? XAResource.TMFAIL : XAResource.TMSUCCESS);
+            syn.afterCompletion(mRollbackOnly ? Status.STATUS_ROLLEDBACK : Status.STATUS_COMMITTED);
         }
         
         mTxMgr.removeTx(this);

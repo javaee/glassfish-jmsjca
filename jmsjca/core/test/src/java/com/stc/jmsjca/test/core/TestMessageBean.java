@@ -65,6 +65,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -73,7 +74,7 @@ import java.util.Random;
  * test is invoked is determined by an environment setting.
  *
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class TestMessageBean implements MessageDrivenBean, MessageListener {
     private transient MessageDrivenContext mMdc = null;
@@ -2624,6 +2625,38 @@ public class TestMessageBean implements MessageDrivenBean, MessageListener {
                 
                 if (SampleInterceptor.getInboundContext() != null) {
                     prod.send(message);
+                } else {
+                    throw new Exception("No Context", null);
+                }
+                
+                if (shouldThrow()) {
+                    mMdc.setRollbackOnly();
+                }
+            } finally {
+                safeClose(conn);
+            }
+        } catch (Exception e) {
+            sLog.errorNoloc("Failed: " + e, e);
+            throw new EJBException("Failed: " + e, e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testCopyStats(javax.jms.Message in) {
+        try {
+            QueueConnection conn = null;
+            try {
+                QueueConnectionFactory fact = (QueueConnectionFactory) mCtx.lookup("java:comp/env/queuefact");
+                conn = fact.createQueueConnection();
+                QueueSession s = conn.createQueueSession(true, Session.AUTO_ACKNOWLEDGE);
+                Queue dest = s.createQueue("Queue2");
+                QueueSender prod = s.createSender(dest);
+                
+                if (SampleInterceptor.getInboundContext() != null) {
+                    HashMap<String, Long> stats = (HashMap<String, Long>) in.getObjectProperty(Options.MessageProperties.DELIVERYSTATS);
+                    ObjectMessage out = (ObjectMessage) copy(in, s);
+                    out.setObject(stats);
+                    prod.send(out);
                 } else {
                     throw new Exception("No Context", null);
                 }
