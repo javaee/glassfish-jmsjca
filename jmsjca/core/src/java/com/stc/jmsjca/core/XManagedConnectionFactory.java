@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -63,17 +63,20 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private static Logger sLog = Logger.getLogger(XManagedConnectionFactory.class);
     private transient PrintWriter mLogWriter;
     private RAJMSResourceAdapter mRA;
-    private Map<String, Object[]> mConnectionFactories; // key=overrideURL, value=Object[]=connection factories
-    private Object[] mDefaultConnectionFactories;
-    private boolean mProducerPoolingOn;
+    private transient Map<String, Object[]> mConnectionFactories; // key=overrideURL, value=Object[]=connection factories
+    private transient Object[] mDefaultConnectionFactories;
+    
+    // Bean properties
+    private boolean mProducerPoolingOnBeanProperty;
     private String mConnectionURL;
     private String mUserName;
     private String mPassword;
     private String mOptionsStr;
-    private Properties mOptions;
     private String mClientId;
-    private long mIdleTimeout = 30000;
+    private long mIdleTimeoutBeanProperty = 30000;
+    // End bean properties
 
+    private transient Properties mOptions;
     private transient RAJMSObjectFactory mObjFactory;
     
     // For special connectors such as WebLogic
@@ -94,7 +97,9 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private transient boolean mOverrideIsSameRM;
     private transient boolean mDoNotCacheConnectionFactories;
     private transient boolean mStrict;
+    private transient boolean mEffectiveProducerPoolingOn;
     private transient String mTxMgrLocatorClass;
+    private transient long mEffectiveIdleTimeout;
     
     // For diagnostics: counts how many MCs were created
     private transient int mCtMCCreated;
@@ -112,6 +117,15 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     private static final int MAXCREDENTIALCACHE = 50;
 
     private static final Localizer LOCALE = Localizer.get();
+    
+    /**
+     * Default constructor
+     */
+    public XManagedConnectionFactory() {
+        if (sLog.isDebugEnabled()) {
+            sLog.debug("Created: " + this);
+        }
+    }
     
     /**
      * Used for testing: allows derived XManagedConnections to be used so that special
@@ -499,23 +513,6 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         }
         mOptions = p;
 
-//        // Lowest precedence: RA-options
-//        Str.deserializeProperties(Str.parseProperties(Options.SEP, mRAOptionsStr), p);  
-//
-//        // Higher precedence: RA-url
-//        if (!Str.empty(mRAUrl)) {
-//            getObjFactory().createConnectionUrl(mRAUrl).getQueryProperties(p);
-//        }
-//
-//        // Override 1: locally defined options
-//        Str.deserializeProperties(Str.parseProperties(Options.SEP, mOptionsStr), p);
-//        mOptions = p;
-//
-//        // Higher precedence: locally defined url
-//        if (mConnectionURL != null) {
-//            getObjFactory().createConnectionUrl(mConnectionURL).getQueryProperties(p);
-//        }
-
         // Extract values; system properties have highest precedence
         mClientContainer = Utility.isTrue(p.getProperty(Options.Out.CLIENTCONTAINER), false);
         mClientContainer = Utility.getSystemProperty(Options.Out.CLIENTCONTAINER, mClientContainer);
@@ -532,10 +529,10 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         mStrict = Utility.getSystemProperty(Options.Out.STRICT, mStrict);
         mTxMgrLocatorClass = p.getProperty(Options.TXMGRLOCATOR, TxMgr.class.getName());
         mTxMgrLocatorClass = Utility.getSystemProperty(Options.TXMGRLOCATOR, mTxMgrLocatorClass);
-        mProducerPoolingOn = Utility.isTrue(p.getProperty(Options.Out.PRODUCER_POOLING, null)
-            , mProducerPoolingOn || getObjFactory().shouldUseProducerPooling());
+        mEffectiveProducerPoolingOn = Utility.isTrue(p.getProperty(Options.Out.PRODUCER_POOLING, null)
+            , mProducerPoolingOnBeanProperty || getObjFactory().shouldUseProducerPooling());
         
-        mIdleTimeout = Long.parseLong(p.getProperty(Options.Out.STALETIMEOUT, Long.toString(mIdleTimeout)));
+        mEffectiveIdleTimeout = Long.parseLong(p.getProperty(Options.Out.STALETIMEOUT, Long.toString(mIdleTimeoutBeanProperty)));
         
         mOptionsAreSet = true;
     }
@@ -552,9 +549,11 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         h = Str.hash(h, mUserName);
         h = Str.hash(h, mPassword);
         h = Str.hash(h, mConnectionURL);
-        h = Str.hash(h, mProducerPoolingOn);
+        h = Str.hash(h, mProducerPoolingOnBeanProperty);
         h = Str.hash(h, mRA);
         h = Str.hash(h, mOptionsStr);
+        h = Str.hash(h, mClientId);
+        h += mIdleTimeoutBeanProperty;
         return h;
     }
     
@@ -624,9 +623,11 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
         return Str.isEqual(mUserName, x.mUserName)
             && Str.isEqual(mPassword, x.mPassword)
             && Str.isEqual(mConnectionURL, x.mConnectionURL)
-            && isProducerPoolingOn() == x.isProducerPoolingOn()
+            && mProducerPoolingOnBeanProperty == x.mProducerPoolingOnBeanProperty
             && mRA.equals(x.mRA)
-            && Str.isEqual(mOptionsStr, x.mOptionsStr);
+            && Str.isEqual(mOptionsStr, x.mOptionsStr)
+            && Str.isEqual(mClientId, x.mClientId)
+            && mIdleTimeoutBeanProperty == x.mIdleTimeoutBeanProperty;
     }
 
     /**
@@ -635,9 +636,9 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @param setOn true to turn on
      */
     public void setProducerPooling(String setOn) {
-        mProducerPoolingOn = "true".equalsIgnoreCase(setOn);
+        mProducerPoolingOnBeanProperty = "true".equalsIgnoreCase(setOn);
         if (sLog.isDebugEnabled()) {
-            sLog.debug("Setting mProducerPoolingOn to " + mProducerPoolingOn);
+            sLog.debug("Setting mProducerPoolingOn to " + mProducerPoolingOnBeanProperty);
         }
     }
 
@@ -647,7 +648,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @return String
      */
     public String getProducerPooling() {
-        return Boolean.toString(mProducerPoolingOn);
+        return Boolean.toString(mProducerPoolingOnBeanProperty);
     }
 
     /**
@@ -656,7 +657,8 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * @return true if on
      */
     public boolean isProducerPoolingOn() {
-        return mProducerPoolingOn;
+        extractOptions();
+        return mEffectiveProducerPoolingOn;
     }
 
     /**
@@ -956,33 +958,16 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
     /**
      * @return idle timeout in ms
      */
-    public long internalGetIdleTimeout() {
-        return mIdleTimeout;
+    public long getEffectiveIdleTimeout() {
+        extractOptions();
+        return mEffectiveIdleTimeout;
     }
     
-    /**
-     * Sets the maximum time that a connection can be idle after which it will be 
-     * marked as invalid. Idle is defined as not being used to either send or 
-     * receive.
-     * 
-     * @param idleTimeout idletime out in ms
-     */
-    public void internalSetIdleTimeout(long idleTimeout) {
-        if (idleTimeout < 1000) {
-            throw Exc.rtexc(LOCALE.x("E168: Invalid timeout [{0}] ms: should be > 1000 ms"
-                , Long.toString(idleTimeout)));
-        }
-        mIdleTimeout = idleTimeout;
-    }
-    /**
-     * @return idle timeout in ms
-     */
-
     /**
      * @return String representation of idletimeout
      */
     public String getIdleTimeout() {
-        return Long.toString(internalGetIdleTimeout());
+        return Long.toString(mIdleTimeoutBeanProperty);
     }
     
     /**
@@ -992,8 +977,13 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * 
      * @param idleTimeout idletime out in ms
      */
-    public void setIdleTimeout(String idleTimeout) {
-        internalSetIdleTimeout(Integer.parseInt(idleTimeout));
+    public void setIdleTimeout(String idleTimeoutStr) {
+        long idleTimeout = Long.parseLong(idleTimeoutStr);
+        if (idleTimeout < 1000) {
+            throw Exc.rtexc(LOCALE.x("E168: Invalid timeout [{0}] ms: should be > 1000 ms"
+                , Long.toString(idleTimeout)));
+        }
+        mIdleTimeoutBeanProperty = idleTimeout;
     }
     
     /**

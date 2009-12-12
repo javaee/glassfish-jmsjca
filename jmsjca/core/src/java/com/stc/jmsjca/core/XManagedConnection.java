@@ -58,7 +58,7 @@ import java.util.List;
  * manage local transactions. End spec.</p>
  *
  * @author Frank Kieviet
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  */
 public class XManagedConnection implements ManagedConnection {
     private static Logger sLog = Logger.getLogger(XManagedConnection.class);
@@ -250,7 +250,7 @@ public class XManagedConnection implements ManagedConnection {
         
         // Test staleness
         if (mJSession != null && (System.currentTimeMillis() - getLastSuccessfullyUsedAt()) 
-            > mManagedConnectionFactory.internalGetIdleTimeout()) {
+            > mManagedConnectionFactory.getEffectiveIdleTimeout()) {
             if (sLog.isDebugEnabled()) {
                 sLog.debug("Stale connection: will be destroyed. Age: " 
                     + (System.currentTimeMillis() - getLastSuccessfullyUsedAt()));
