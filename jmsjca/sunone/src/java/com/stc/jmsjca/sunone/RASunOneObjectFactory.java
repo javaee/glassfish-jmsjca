@@ -43,7 +43,7 @@ import java.util.Properties;
  * and the urls are reconstructed and passed to Wave.
  * 
  * @author misc
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public class RASunOneObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static Logger sLog = Logger.getLogger(RASunOneObjectFactory.class);
@@ -407,4 +407,14 @@ public class RASunOneObjectFactory extends RAJMSObjectFactory implements java.io
     public RAJMSActivationSpec createActivationSpec() {
         return new RASunOneActivationSpec();
     }
+
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#shouldUseProducerPooling()
+     */
+    @Override
+    public boolean shouldUseProducerPooling() {
+        // Significant performance difference when using pooling
+        return true;
+    }
+
 }
