@@ -510,7 +510,7 @@ public class SyncDelivery extends Delivery {
                 if (mActivation.isXAEmulated()) {
                     mXA = new PseudoXAResource(mSess);
                 } else {
-                    mXA = mActivation.getObjectFactory().getXAResource(true, mSess);
+                    mXA = mActivation.getObjectFactory().getXAResource(mActivation, true, mSess);
                     if (mActivation.isOverrideIsSameRM()) {
                         mXA = new WXAResourceNoIsSameRM(mXA);
                     }

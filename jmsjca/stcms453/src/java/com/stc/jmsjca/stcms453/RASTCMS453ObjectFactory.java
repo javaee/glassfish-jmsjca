@@ -16,6 +16,7 @@
 
 package com.stc.jmsjca.stcms453;
 
+import com.stc.jmsjca.core.Activation;
 import com.stc.jmsjca.core.RAJMSActivationSpec;
 import com.stc.jmsjca.core.RAJMSObjectFactory;
 import com.stc.jmsjca.core.RAJMSResourceAdapter;
@@ -28,6 +29,10 @@ import com.stc.jmsjca.util.UrlParser;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 import java.util.Properties;
 
@@ -35,7 +40,7 @@ import java.util.Properties;
  * Encapsulates the configuration of a MessageEndpoint.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  */
 public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.io.Serializable {
     private static final Localizer LOCALE = Localizer.get();
@@ -189,4 +194,83 @@ public class RASTCMS453ObjectFactory extends RAJMSObjectFactory implements java.
     public RAJMSActivationSpec createActivationSpec() {
         return new RASTCMS453ActivationSpec();
     }
+
+    
+    /**
+     * @see com.stc.jmsjca.core.RAJMSObjectFactory#getXAResource(com.stc.jmsjca.core.Activation, boolean, javax.jms.Session)
+     * 
+     * Intercepts exceptions on start() on the XAResource. In such event, a reconnect 
+     * is started.
+     * 
+     * In the case the connection with the JMS server is lost the receive() operation 
+     * in 453 will not throw an exception. As a result, a connection failure is not
+     * detected and automatic reconnect is not happening. 
+     * 
+     * Before calling receive(), JMSJCA will call beforeDelivery() which will call
+     * XAResource.start(). This will throw an exception in the case of a connection 
+     * failure. However, this exception is not propagated back to JMSJCA through the 
+     * beforeDelivery() method.
+     * 
+     * The wrapper will intercept the exception and do the restart at that moment.
+     */
+    @Override
+    public XAResource getXAResource(final Activation activation, boolean isXA, Session sess) throws JMSException {
+        final XAResource unwrapped = getXAResource(isXA, sess);
+        if (unwrapped == null) {
+            return null;
+        }
+        
+        XAResource panicWrapper = new XAResource() {
+
+            public void commit(Xid xid, boolean onePhase) throws XAException {
+                unwrapped.commit(xid, onePhase);
+            }
+
+            public void end(Xid xid, int flags) throws XAException {
+                unwrapped.end(xid, flags);
+            }
+
+            public void forget(Xid xid) throws XAException {
+                unwrapped.forget(xid);
+            }
+
+            public int getTransactionTimeout() throws XAException {
+                return unwrapped.getTransactionTimeout();
+            }
+
+            /**
+             * @see javax.transaction.xa.XAResource#isSameRM(javax.transaction.xa.XAResource)
+             * 
+             */
+            public boolean isSameRM(XAResource arg0) throws XAException {
+                return false;
+            }
+
+            public int prepare(Xid xid) throws XAException {
+                return unwrapped.prepare(xid);
+            }
+
+            public Xid[] recover(int flag) throws XAException {
+                return unwrapped.recover(flag);
+            }
+
+            public void rollback(Xid xid) throws XAException {
+                unwrapped.rollback(xid);
+            }
+
+            public boolean setTransactionTimeout(int timeout) throws XAException {
+                return unwrapped.setTransactionTimeout(timeout);
+            }
+
+            public void start(Xid xid, int flags) throws XAException {
+                try {
+                    unwrapped.start(xid, flags);
+                } catch (Exception e) {
+                    activation.distress(e);
+                }
+            }
+        };
+        
+        return panicWrapper;
+    }    
 }

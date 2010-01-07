@@ -76,7 +76,7 @@ import java.util.Properties;
  * specific utilities.
  *
  * @author fkieviet
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public abstract class RAJMSObjectFactory {
     private static Logger sLog = Logger.getLogger(RAJMSObjectFactory.class);
@@ -1193,4 +1193,13 @@ public abstract class RAJMSObjectFactory {
      * @return a new and empty activation spec
      */
     public abstract RAJMSActivationSpec createActivationSpec();
+
+    /**
+     * Allows for XAWrappers to be created for some JMS implementations
+     * 
+     * @throws JMSException propagated
+     */
+    public XAResource getXAResource(Activation activation, boolean isXA, Session sess) throws JMSException {
+        return getXAResource(isXA, sess);
+    }
 }
