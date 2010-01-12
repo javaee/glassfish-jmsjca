@@ -66,7 +66,7 @@ import java.util.Properties;
  * delivery) and using multiple queue-receivers (concurrent delivery, queues only).
  *
  * @author fkieviet
- * @version $Revision: 1.22 $
+ * @version $Revision: 1.23 $
  */
 public abstract class Delivery {
     private static Logger sLog = Logger.getLogger(Delivery.class);
@@ -1087,7 +1087,7 @@ public abstract class Delivery {
             }
             boolean shouldDeliver = mRedeliveryChecker.shouldDeliver(new Cookie(result, connectionForMove), m);
             
-            if (!shouldDeliver) {
+            if (!shouldDeliver || result.getBeforeDeliveryFailed()) {
                 result.setOnMessageWasBypassed(true);
             } else {
                 try {
