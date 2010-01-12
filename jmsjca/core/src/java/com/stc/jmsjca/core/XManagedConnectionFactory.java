@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
  * the connection factory through the deployment descriptor.
  *
  * @author Frank Kieviet
- * @version $Revision: 1.18 $
+ * @version $Revision: 1.19 $
  */
 public abstract class XManagedConnectionFactory implements ManagedConnectionFactory,
     javax.resource.spi.ResourceAdapterAssociation,
@@ -975,7 +975,7 @@ public abstract class XManagedConnectionFactory implements ManagedConnectionFact
      * marked as invalid. Idle is defined as not being used to either send or 
      * receive.
      * 
-     * @param idleTimeout idletime out in ms
+     * @param idleTimeoutStr idletime out in ms
      */
     public void setIdleTimeout(String idleTimeoutStr) {
         long idleTimeout = Long.parseLong(idleTimeoutStr);
