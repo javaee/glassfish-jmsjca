@@ -427,7 +427,8 @@
         
         <echo file="${jmsjca.module.dir}/${jmsjca.marker.dirname}/${jmsjca.marker.filename}">
 # This file should be in the classpath so that the tests can find the ear files
-jmsjca.container.id=${jmsjca.container.id}            
+jmsjca.container.id=${jmsjca.container.id}
+jmsjca.jmsimpl.subid=${jmsjca.jmsimpl.subid}
         </echo>
 
         <mkdir dir="${jmsjca.module.dir}/${jmsjca.marker.dirname}/META-INF/services"/>

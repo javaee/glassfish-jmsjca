@@ -18,7 +18,6 @@ package com.stc.jmsjca.test.core;
 
 import com.stc.jmsjca.container.Container;
 import com.stc.jmsjca.container.EmbeddedDescriptor;
-import com.stc.jmsjca.util.Logger;
 import com.stc.jmsjca.util.Str;
 
 import org.jdom.Namespace;
@@ -33,7 +32,7 @@ import junit.framework.TestResult;
 
 /**
  * @author fkieviet
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  */
 public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.JMSTestEnv {
     protected File mTestEar;
@@ -80,6 +79,7 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
     }
     
     public static String CONTAINERID = "jmsjca.container.id";
+    public static String SUBIMPLID = "jmsjca.jmsimpl.subid";
     
     /**
      * Runs the test case except if a similarly named method prefixed with
@@ -244,6 +244,11 @@ public abstract class EndToEndBase extends BaseTestCase implements BaseTestCase.
             safeClose(inp);
         }
         mContainerID = p.getProperty(CONTAINERID);
+        if (System.getProperty(SUBIMPLID) == null) {
+            if (p.getProperty(SUBIMPLID) != null) {
+                System.setProperty(SUBIMPLID, p.getProperty(SUBIMPLID));
+            }
+        }
         
         String module = getJMSProvider().getProviderID();
         mTestEar = new File(root, "ra" + module + "/test/ratest-test.ear"); 
