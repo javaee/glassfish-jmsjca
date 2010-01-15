@@ -13,18 +13,18 @@
       <ejb-name>mdbtest</ejb-name>
       <jndi-name>mdbtest</jndi-name>
 
-      <resource-env-ref>
-         <resource-env-ref-name>queuefact</resource-env-ref-name>
+      <resource-ref>
+         <res-ref-name>queuefact</res-ref-name>
          <jndi-name>__SYSTEM/resource/ratest-test#ratest#javax.jms.QueueConnectionFactory</jndi-name>
-      </resource-env-ref>
-      <resource-env-ref>
-         <resource-env-ref-name>topicfact</resource-env-ref-name>
+      </resource-ref>
+      <resource-ref>
+         <res-ref-name>topicfact</res-ref-name>
          <jndi-name>__SYSTEM/resource/ratest-test#ratest#javax.jms.TopicConnectionFactory</jndi-name>
-      </resource-env-ref>
-      <resource-env-ref>
-         <resource-env-ref-name>unifiedfact</resource-env-ref-name>
+      </resource-ref>
+      <resource-ref>
+         <res-ref-name>unifiedfact</res-ref-name>
          <jndi-name>__SYSTEM/resource/ratest-test#ratest1#javax.jms.ConnectionFactory</jndi-name>
-      </resource-env-ref>
+      </resource-ref>
 
       <pass-by-reference>false</pass-by-reference>
       <ior-security-config>
