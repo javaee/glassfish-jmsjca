@@ -1,0 +1,234 @@
+<head>
+<head>
+    <title>The Open Source ESB for SOA & Integration - JMSJCA</title>
+    <style>
+      @import "css/OpenEsb.css";
+      @import "css/jmsjca.css";
+
+        #apphead, #almtoolbox, #navcol, #bodycol #apphead, #projecthome .axial, #projecthome #longdescription H2, #bodycol .tasknav { display: none; }
+    </style>
+</head>
+<body>
+  <table id="OesbMainTable" width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr id="OesbMainTr" height="300" align="center" valign="top">
+
+  <table id="OesbMainTable" width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr id="OesbMainTr" height="300" align="center" valign="top">
+
+      <!-- ============================================= -->
+      <!-- Main Column: Page contents are displayed here -->
+      <!-- ============================================= -->
+      <td id="OesbCentercol">
+        <table id="OesbMainTable" width="100%" boder="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td>
+              <div style="margin:0px 10px 0px 10px">  
+
+
+<script>
+function toggledisplay(id) {
+  var totoggle = document.getElementById(id);
+  if (!totoggle.style.display || totoggle.style.display == 'none')  {
+    totoggle.style.display = 'block'
+  } else {
+    totoggle.style.display = 'none'
+  }
+}
+</script>
+
+
+<div style="margin:10px 0px 0px 0px">
+<div class="bigltbluebox2">
+	<div class="cornerTL"><div class="cornerTR"></div></div>
+	<div style="margin-left: 20px; margin-top: -10px; margin-right: 20px;">
+		<h2>What is JMSJCA?</h2>
+		<p>JMSJCA is J2EE 1.4 Resource Adapter for JMS: it provides the interfacing between a J2EE 
+		or EE application server and a JMS Server. JMSJCA can also be used as a standalone library
+		outside of an application server.</p>
+		
+		<p>JMSJCA ships with CAPS 5.1.x and 6, with GlassFish ESB (both as a JCA deployed in GlassFish, 
+		and as an integral part of the <a href="http://wiki.open-esb.java.net/Wiki.jsp?page=JMSBC">JMS BC</a>),
+		and JMS Grid.
+		JMSJCA is available as a single resource adapter (rasunone.rar, rastcms.rar, etc) for 
+		each supported JMS Provider, or as a single unified resource adapter (sun-jms-adapter.rar) 
+		that works with all supported JMS Providers.</p>
+		
+		<h4>Documentation</h4>
+		<ul>
+			<li><a href="http://wiki.open-esb.java.net/Wiki.jsp?page=JMSJCA-readme">Main documentation</a></li>
+			<li><a href="http://wiki.open-esb.java.net/Wiki.jsp?page=JMSJCAWizard">JMSJCA wizard</a> (IDE support in NetBeans)</li>
+			<li>Read blogs about JMSJCA: <a href="http://blogs.sun.com/fkieviet">misc blogs from Frank Kieviet</a>,
+				<a href="http://blogs.sun.com/rupesh/entry/javacaps_and_ibm_websphere_mq">MQ Series blogs from Rupesh Ramachandran</a>
+			</li>
+		</ul>
+
+
+		
+		<h4>Features</h4>
+		<ul>
+			<li>Spec compliant: tested with the Sun J2EE TCK (Sun SeeBeyond Integration Server / STCMS, Sun Java System Application Server 8.x / JMS Grid)</li>
+			<li>Advanced connection error detection and handling</li>
+			<li>Asynchronous deployment</li>
+			<li>Feature rich Dead Letter Channel (aka deadletter queue)</li>
+			<li>Batch Processing</li>
+			<li>JMX MBean support</li>
+			<li>Multiple concurrency modes: serial, sync, connection consumer</li>
+			<li>Advanced transaction support: XA emulation</li>
+			<li>Supports multiple JMS Providers <a href="javascript:none" onclick="return toggledisplay('jmsproviders');">(click to expand)</a>
+				<div id="jmsproviders" style="display: none;"><ul>
+					<li>Sun Java System Message Queue, also known as <a
+					 href="http://mq.dev.java.net">Open MQ</a></li>
+					<li>STCMS, also known as Sun / SeeBeyond Intelligent Queue Manager, part of Java CAPS</li>
+					<li>STCMS 4.5.3</li>
+					<li>Websphere MQ Series</li>
+					<li>Wave, also known as JMS Grid, shipping as part of Java CAPS</li>
+					<li>WebLogic JMS</li>
+					<li>JBoss JMS</li>
+					<li>Any JMS Provider of which the connection factories can be bound in JNDI</li>
+				</ul></div>
+			</li>
+			<li>Built-in workarounds for problems with these JMS Providers</li>
+			<li>Works with multiple J2EE / Java EE application servers <a href="javascript:none" onclick="return toggledisplay('appservers');">(click to expand)</a>
+				<div id="appservers" style="display: none;">
+				<br>The following J2EE servers have been tested (A=full test suite, B=reduced test suite):
+				<ul>
+					<li>Sun Java System Application Server 8.x (A)</li>
+					<li><a href="http://glassfish.dev.java.net">Glassfish</a> (A)</li>
+					<li>Sun SeeBeyond Integration Server, shipping as part of Java CAPS (A)</li>
+					<li>Weblogic 9.x (A) </li>
+					<li>JBoss 4.x (B) </li>
+					<li>WebSphere 6 (B)</li>
+				</ul></div>
+			</li>
+			<li>Can be used outside of an application server in the form of a jar <a href="javascript:none" onclick="return toggledisplay('standalone');">(click to expand)</a></li>
+				<div id="standalone" style="display: none;"><ul>
+					<li>Built-in JCA container:</li>
+					<li>Work manager with threadpool (based on Java SE 1.5 concurrent library)</li>
+					<li>ConnectionManager
+						<ul>
+							<li>Connection pooling</li>
+							<li>Supports XA</li>
+							<li>Automatically enlists and delists connections in transactions</li>
+							<li>Takes care of the problem of keeping connections open after an application calls <a href="http://blogs.sun.com/fkieviet/entry/when_connection_close_should_not">close() in a transaction</a></li>
+						</ul>
+				</ul></div>
+			</li>
+
+		</ul>
+
+	
+		<h4>System requirements and dependencies</h4>
+		<ul>
+			<li>JDK 5 or higher</li>
+			<li>JMS 1.0.2 or JMS 1.1 JMS Provider</li>
+			<li>J2EE 1.4 application server, or use the built-in JCA Container</li>
+		</ul>
+		
+		<h4>Download</h4>
+		<p>Download the latest version of <a href="https://jmsjca.dev.java.net/source/browse/*checkout*/jmsjca/downloads/latest/sun-jms-adapter.rar">sun-jms-adapter.rar</a></p>
+		
+		<h4>Trouble?</h4>
+		<p>Please post questions on the <a class="external" href="https://open-esb.dev.java.net/MailingLists.html">OpenESB mailing list</a>. File bugs in the <a href="https://open-esb.dev.java.net/IssueTracker.html">OpenESB issue tracker</a>. Select "glassfish-addons" as the component, and then choose JMSJCA as the subcomponent.</p>
+		
+	</div>
+	<div class="cornerBL"><div class="cornerBR"></div></div>
+</div>
+</div>
+
+<div style="margin:10px 0px 0px 0px">
+<div class="fpnews">
+	<div class="cornerTL"><div class="cornerTR"></div></div>
+	<div style="margin-left: 20px; margin-top: -10px; margin-right: 20px;">
+		<h2>Evolution of JMSJCA</h2>
+		<h4>What is new?</h4>
+		<ul>
+		    <li>01/18/2007: java.net project approved in EE incubator</li>
+		    <li>01/19/2007: jars are now available on the java.net maven repository; source drop in java.net cvs</li>
+		    <li>04/10/2007: improved support for WebLogic JMS; addition of administrative objects; enhanced support for JNDI</li>
+		    <li>04/28/2007: Released 5.1.3</li>
+		    <li>05/29/2007: Started 5.1.4</li>
+		    <li>08/15/2007: Full WebLogic support</li>
+		    <li>11/23/2007: SUNIT release: a dozen new features in the area of redelivery handling and selectors</li>
+		    <li>01/21/2008: Version 6 released</li>
+		    <li>05/29/2008: Version 6.0.1-snapshot: fix for deploying on Oracle Application Server (OC4J), Japanese localizations added</li>
+		    <li>10/17/2008: Version 6.0.1-snapshot: minor fixes in redelivery handling, reconnect, logging</li>
+		    <li>01/06/2009: Version 6.0.2-snapshot: fix in DLQ processing across different domains</li>
+		    <li>01/15/2009: Build reorganized; dependencies removed / auto download</li>
+		    <li>04/30/2009: Version 6.0.2-snapshot: release for GlassFish ESB v2.1: WMQ support extended (DurSubQueue added)</li>
+		    <li>06/26/2009: Version 6.2.0-snapshot: addition of interceptors</li>
+		</ul>
+		
+		<h4>Roadmap</h4>
+		<p>JMSJCA is to merge with the JMSRA and GenericJMSRA and will ship as the one and only JMS connector with GlassFish v3. This consolidation effort was started in H2 of 2008 and will finish in H2 of 2009.</p>
+		
+		<h4>Team</h4>
+		<ul>
+			<li>Founder and original developer: Frank Kieviet</li>
+			<li>Developers: Frank Kieviet, Sujit Biswas, Nigel Deakin, Satish Kumar</li>
+		</ul>
+	</div>
+	<div class="cornerBL"><div class="cornerBR"></div></div>
+</div>
+</div>
+
+
+<div style="margin:10px 0px 0px 0px">
+<div class="yellowbox">
+	<div class="cornerTL"><div class="cornerTR"></div></div>
+	<div style="margin-left: 20px; margin-top: -10px; margin-right: 20px;">
+		<h2>Developing JMSJCA</h2>
+		<h4>Source code access</h4>
+		<p>Browse the <a href="https://maven-repository.dev.java.net/nonav/repository/com.stc.jmsjca/">Maven repository</a> 
+		for zip files of the source. Sources can also be checked out from <a href="https://jmsjca.dev.java.net/source/browse/jmsjca/">CVS</a>.</p>
+		
+		<h4>Building JMSJCA</h4>
+		<p>Building requires Ant 1.6 or higher. All external files (e.g. javaee.jar) are automatically downloaded. 
+		Type <TT>ant -projecthelp</TT> for an overview of all available targets.</p>
+		
+		<h4>Testing JMSJCA</h4>
+		<p>Running the JMSJCA test suite requires the jars of the JMS Providers and EE application servers being tested. 
+		See <TT>ant -projecthelp</TT>  for more information.</p>
+		
+		
+
+		
+	</div>
+	<div class="cornerBL"><div class="cornerBR"></div></div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+
+      <td id="OesbRightSpacercol" width="2">
+      </td>
+
+      <!-- ========================================= -->
+      <!-- Right Side Navigation Column              -->
+      <!-- ========================================= -->
+      <td id="OesbRightNavcol" width="170">
+          <script src="https://open-esb.dev.java.net/RightColumnNavGroups.js" type="text/javascript"></script> 
+          <img src="https://open-esb.dev.java.net/images/a.gif" width=170 height=1>
+      </td>
+
+    </tr>
+  </table>
+
+  <!-- ======================================== -->
+  <!-- End of Home Page body section            -->
+  <!-- ======================================== -->
+</body>
+</html>

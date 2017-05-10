@@ -1,0 +1,1022 @@
+<!doctype HTML 
+PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>JMSJCA</title>
+<style>
+/***************************************************************
+ * Top-level style sheet.  Make general CSS changes here and
+ * use the browser/platform-specific CCS files for specific
+ * changes.
+ *
+ * Note: Do NOT specify fonts in points/pixel sizes.  Use
+ *       percentages only as this will ensure the browser gets
+ *       the option of using user-specified font sizes.  This
+ *       is important for those who have better or worse vision
+ *       than yourself.
+ **************************************************************/
+
+/* Set the normal page background color to white, the font color
+   to black, and use a sans serif font by default. */
+BODY
+  { background-color: #FFFFFF;
+    font-family:      geneva,helvetica,arial,"lucida sans",sans-serif;}
+
+/* Set the page background color to a light red/pink for the
+   Edit page to distinguish it from a "regular" page. */
+BODY.edit
+  { background-color: #D9E8FF; }
+
+
+/* Adjust the margins for headings. */
+/* H1, H2, H3, H4, H5, H6
+  { margin-top: 0px;
+    padding-top: 0px;
+    color:#000; }
+*/
+
+/* right arrow for left menu items */
+span.rightarrow{font-family:verdana,sans-serif}
+span.rightarrowblue{font-family:verdana,sans-serif;color:#899ce6}
+
+/* H1.pagename */
+/* H3.leftmenuheading */
+
+body, th, td, p, span, a, div, li, ul, ol
+  { font-size:10pt; }
+
+body, th, td, p
+  { color:#333; }
+
+code, kbd, tt, pre
+  { font-family: monaco,courier,"courier new";
+    font-size:10pt;
+    color:#666; }
+
+DT
+  { font-weight: bold;
+    padding-top: 5px; }
+
+/* List margin settings. */
+OL, UL
+  { margin-top: 0pt; }
+
+/* Make the horizontal rule fairly tight. */
+HR 
+  { color:#000; height:1px; }
+
+
+/* Make BR tags clear floating elements by default, but provide escapes.
+   for the left/right/none versions, specify an id="right", etc. on the
+   BR tag. */
+BR
+  { clear: left; }
+BR#left
+  { clear: left; }
+BR#right
+  { clear: right; }
+BR#none
+  { clear: none; }
+
+
+/* Currently unused? */
+IMG.inline {}
+
+
+/* Allow for a smaller font in some divisions.  Should this
+   just be a .small setting? */
+DIV.small { font-size: 70%; }
+
+/* Normal link colors (inside the main content view). */
+A         { text-decoration: none; }
+A:link    { color: #594fbf; }
+A:visited { color: #594fbf; }
+/* A:visited { color: #96C; } */
+A:hover   { text-decoration:underline;}
+
+/* NOTE: not clear if bordermenu a styles are necessary.
+
+/* The link colors for the LeftMenu (the DIV tag uses
+   "bordermenu" as it's class). */
+.bordermenu a         { text-decoration: none; }
+.bordermenu a:link    { color: #594fbf; }
+.bordermenu a:visited { color: #96C; }
+.bordermenu a:hover   { text-decoration:underline;}
+
+/* Footnotes. */
+A.footnoteref
+  { vertical-align: super; 
+    font-size: 70%; }
+A.footnote
+  { color: #0044AA; }
+
+/* You can alter these if needed -- if you really want more
+   control or different colors for the links, but keep in mind
+   they'll overwrite the above settings.  Plus you might want
+   to define the link/vistied/active/hover settings, too.  */
+A.wikipage  { } /* Normal, internal wiki reference */
+A.external  { } /* External reference */
+A.interwiki { } /* Interwiki reference */
+
+
+/* Our standard table options. */
+TABLE.wikitable
+  {
+   border-collapse: collapse;
+   empty-cells: show;
+   margin: 1em;
+   color: #515D65;
+   background-color: white;
+   border: 1px solid #515D65;
+   font-size: small;
+  }
+    
+TABLE.wikitable * TD
+  { padding:    1ex;
+    text-align: left; }
+
+TABLE.wikitable * TH
+  { padding:    1ex;
+    background-color: #dddddd;
+    text-align: left; }
+                                                                            
+/* This is the "header" table cell where the page's title
+   appears.  We want it bigger and to show up against the
+   background. */
+TD.header
+  { color:         #ffffff;
+    font-size:     180%;
+    margin-bottom: 0; }
+
+TD.controls { text-align: right; font-size: 75%; font-style: italic; }
+
+/* Change colors/fonts when looking at differences between
+   the page versions. */
+TD.diffadd
+  { background:  #99FF99; 
+    font-family: monospace; }
+TD.diffrem
+  { background:  #FF9933; 
+    font-family: monospace; }
+TD.diff
+  { background:  #FFFFFF; 
+    font-family: monospace; }
+
+/* For the CalendarTag */
+TABLE.calendar
+  { font-size: 80%; }
+TABLE.calendar TD
+  { text-align: center; }
+TABLE.calendar TD.othermonth
+  { color: #707070; }
+TABLE.calendar TD.link
+  { background: #E0E0E0; }
+TABLE.calendar TR.month
+  { font-size:   120%;
+    font-family: sans-serif; }
+TABLE.calendar TR.weekdays
+  { font-color: #FF0000; }
+
+/* For the ListLocksPlugin */
+/* TABLE.listlocksplugin { empty-cells: show; }
+TABLE.listlocksplugin * TD { padding: 4; text-align: left; }
+TABLE.listlocksplugin * TH { padding: 4; text-align: left; } */
+
+/* Not used now? */
+TD.leftmenu
+ { vertical-align: top;
+  background-color: #efefef;}
+
+TD.page {
+	border: 1px black;
+	padding: 5pt
+}
+
+/* This is the Edit.jsp editor style. */
+TEXTAREA.editor {}
+
+
+/* These were originally on the <P> tag, but I made it more
+   general.  They are used to highlight and offset important
+   messages displayed in the page. */
+.locknote, .versionnote
+  { color: red;
+    font-size: 130%;
+    text-align: center; 
+    background: #EAEAEA;
+    padding: 12px 12px 12px 12px; }
+
+/* How the "This is a preview" comment should be shown. */
+.previewnote
+  { color:      red;
+    font-size:  150%;
+    text-align: center; }
+
+/* How the preview content and system messages (from
+   DisplayMessage.jsp) should be shown. */
+.previewcontent, .messagecontent
+  { background: #E0E0E0; }
+
+/* How the "This page has been modified..." comment should
+   be shown. */
+.conflictnote { }
+
+/* This setting effects the background color in the table
+   cells for the top and left border. */
+.border { background: #003366; }
+
+/* Make sure the DIV tag surrounding the LeftMenu changes
+   the text color to white (or some other color) to make it
+   visible against the darker border color. */
+.border DIV
+  { color: #ffffff; }
+
+/* For the BreadcrumbsTag */
+.history
+  { font-size: 70%; }
+
+/* For the left-menu footer (or any "footer"). */
+.footer { font-size: 75%; }
+
+/* For the weblog plugin */
+.weblog { margin-left: 20px; }
+.weblogentry { font-family: sans-serif; font-size:   85%; margin-left: 10px; }
+.weblogentryheading { background: #E0E0E0; font-size: 120%; font-family: sans-serif; margin-top: 3ex; }
+.weblogentrybody { font-family: sans-serif; font-size: 85%; margin-left: 10px; margin-top: 1ex; }
+.weblogentryfooter { font-size: 9px; margin-left: 10px; clear: both; margin-top: 1ex;}
+.weblogpermalink { font-size:   8px; margin-left: 10px; }
+
+
+/* For the BreadcrumbsTag */
+/* No longer used?  .breadcrumbs { font-size: 60%; } */
+
+/* For the search_highlight.js.  This style defines the how the words that have
+   been found look like.  If you look for "thingy", you will get these following
+   in the results.
+
+   <span class="searchword">thingy</span>
+ */
+.searchword { background-color: #FFFF00; }
+
+/*  Here's a nice style you can use to put comment boxes on pages.  It's used
+    on some pages. */
+
+div.commentbox {
+   float:right;
+   width: 20%;
+   border-style: inset;
+   background: #f0f0f0;
+   font-size: 80%;
+   padding: 4px;
+   margin-left: 4px;
+}
+
+.commentbox ul, ol {
+   padding-left: 1em;
+   margin-left: 4px;
+}
+
+/*  To make centering easier */
+
+.center { 
+    text-align: center;
+}
+
+.center table { 
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+/* Added by Yogesh Patel: Sun  */
+
+.red {
+  color: red;
+}
+.green {
+  color: green;
+}
+.orange {
+  color: orange;
+}
+
+div.calendar { background-color: #f0f0f0; 
+               font-family: monospace; font-size: 
+               xx-small; 
+               font-weight: normal; }
+div.calendartitle       { background-color: #e0e0e0; }
+div.calendar a          { font-weight: lighter; }
+div.calendar a.today    { color: #000000; }
+div.calendar a.selected { color: #ffffff; background-color: #a04020; }
+div.calendar a.exists   { color: #000000; background-color: #d0b0a0; }
+div.calendarentry       { border: 1px solid #a0a0a0; padding: 4px; }
+div.calendarentryheader { background-color: #e0e0e0; }
+div.calendarentryfooter { background-color: #f0f0f0; }
+
+
+</style>
+</head>
+
+<body topmargin="12" leftmargin="12" rightmargin="12" bgcolor="#ffffff" 
+marginheight="12" marginwidth="12">
+
+<h2><a name="section-Test-WhatIsJMSJCA">What is JMSJCA</a></h2>
+J2EE 1.4 specifies J2EE Connector Architecture 1.5 as the basic mechanism to integrate JMS providers with J2EE application servers. JMSJCA is an implementation of the Java Connector Architecture 1.5 that is used to integrate JMS providers within J2EE application servers. Not only does JMSJCA supports several different JMS providers, it also supports a number of advanced features not found in other connectors.
+<p>The generic JMSJCA adapter is packaged and specialized for the following connectors:
+</p>
+<ul>
+<li> RASTCMS: the JMS connector for STCMS 5.0 and above
+</li>
+<li> RASTCMS453: the JMS connector for STCMS SRE and 4.5.3
+
+</li>
+<li> RAJNDI a generic JNDI connector that can work with any JMS server that supports connection factories bound in JNDI
+</li>
+<li> RASunOne: a connector for Sun Java System Message Queue
+</li>
+<li> RAWMQ: a connector for WebSphere MQ Series
+</li>
+<li> RAWave: a connector for JMS Grid
+</li>
+<li> RAWL: a connector for BEA WebLogic JMS Server
+</li>
+<li> RAJBoss: a connector for JBoss MQ
+
+</li>
+<li> RAUnifiedJMS: combines all of the above connectors. See below for more information.
+</li>
+</ul>
+<h2><a name="section-Test-ReleaseInformation">Release information</a></h2>
+<h4><a name="section-Test-5.1.0">5.1.0</a></h4>
+<ul>
+<li> First release of jmsjca
+</li>
+</ul>
+<h4><a name="section-Test-5.1.1">5.1.1</a></h4>
+<ul>
+
+<li> Basic Weblogic support
+</li>
+</ul>
+<h4><a name="section-Test-5.1.2">5.1.2</a></h4>
+<ul>
+<li> New connector: raunifiedjms
+</li>
+<li> New inbound mode: Batch
+</li>
+<li> New inbound mode: Hold-Until-Ack mode
+</li>
+<li> Extended Weblogic support
+
+</li>
+</ul>
+<h2><a name="section-Test-Features">Features</a></h2>
+JMSJCA adapters provide the following advanced features:
+<ul>
+<li> JMX MBean support: the connector can register MBeans so that
+<ul>
+<li> the performance of the connector can be monitored
+</li>
+<li> message flow can be paused (the alternative to using this functionality is to deactivate the application)
+</li>
+<li> additional MBeans can be looked up that provide management of queues and topics so that end-users can see the live status and contents of destinations in Java CAPS Enterprise Manager, and can even view, edit and delete individual messages in these destinations.
+
+</li>
+</ul>
+</li>
+<li> asynchronous activation: instead of failing the deployment of an application that reads from a JMS server that is not up and running yet, deployment will proceed successfully and message flow will start as soon as the adapter can make contact with the JMS server.
+</li>
+<li> inbound connection monitoring: if connectivity is lost with the JMS server, message flow will resume as soon as contact with the JMS server can be re-established.
+</li>
+<li> outbound connection validation: outbound connections with the JMS server are monitored for their validity so that connections that have caused exceptions or connections that have not been used successfully for some time, are invalidated so that the application server can destroy these connections after which it can create new connections to the JMS server.
+</li>
+<li> producer pooling: the connector can pool JMS producers (queue senders and topic publishers) on the JMS session, so that producers do not have to be created each time an EJB retrieves a connection from the pool.
+</li>
+<li> different concurrency modes: the inbound part of the connector supports different concurrency modes 
+
+<ul>
+<li> serial: delivers messages serially using an asynchronous listener
+</li>
+<li> connection consumer: delivers messages concurrently using the Connection Consumer facility from the JMS spec
+</li>
+<li> sync: uses synchronous receivers to deliver messages either serially or concurrently
+</li>
+</ul>
+</li>
+<li> redelivery handling (also known as dead letter queue): message delivery is monitored so that those messages that are redelivered too often are delayed and optionally sent to a dead letter queue.
+</li>
+<li> "dynamic" connection factory: the application code in an EJB can specify the URL to a different JMS server in the username (<tt>createConnection(username, password)</tt>) so that it can connect to an arbitrary JMS server, rather than being limited to the ones bound in JNDI.
+
+</li>
+<li> binding of JNDI contexts as administrative objects: for those JMS servers that provide their own JNDI provider, the connector provides an administrative object that allows binding of this JNDI context into the application server's JNDI.
+</li>
+<li> binding of destinations through administrative objects: JMS destinations can be bound in JNDI through the application server's administration console
+</li>
+<li> support for both JMS 1.0.2 and JMS 1.1: the adapter does not require the JMS server to be compliant with JMS 1.1, but can also work with servers that are still at JMS 1.0.2
+</li>
+<li> support for XA, LocalTransaction and NoTransaction
+</li>
+<li> support for batch mode when used for inbound messaging
+</li>
+<li> support for a special hold-until-ack mode, a further extension to asynchronous processing (see below)
+
+</li>
+</ul>
+<h2><a name="section-Test-HowToUseAJMSJCAAdapter">How to use a JMSJCA adapter</a></h2>
+There are two ways to use a JMSJCA adapter with an EAR:
+<ol>
+<li> the adapter can be packaged in the EAR as a "local RAR"
+</li>
+<li> the adapter can be deployed in the application server as a "global RAR"
+</li>
+</ol>
+<p>In either case, to use of outbound connections, a mapping must be made in the deployment descriptor of the EJB or servlet that ties the JNDI names of the connection factories to names in the ENC (Environment Naming Context). The application code can then lookup the JMS connection factory and create outbound connections.
+</p>
+<p>Example:
+</p>
+
+<pre>
+TopicConnection topicConn = null;
+try {
+    TopicConnectionFactory factory = (TopicConnectionFactory) context.lookup("java:comp/env/jms/TCF");
+    topicConn = factory.createTopicConnection();
+    TopicSession topicSession = topicConn.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+    topic = (Topic) context.lookup("jms/topic1");
+    TopicPublisher publisher = topicSession.createPublisher(topic);
+    TextMessage txtMsg = topicSession.createTextMessage("Hello world");
+    publisher.publish(txtMsg);
+} finally {
+    if (topicConn != null) {
+        topicConn.close();
+    }
+}
+</pre>
+
+<p>Note that because a JMS connection is a transactional resource:
+</p>
+<ul>
+<li> Per the J2EE 1.4 spec, there can be only one session per connection
+</li>
+<li> When the connector is deployed as XATransaction or LocalTransaction, the application server manages the transaction in JMS on behalf of the application, either through Container Managed Transactions (CMT) or Bean Managed Transactions (BMT). The application should not call <tt>commit</tt> on the session object. Moreover, the parameters to the <tt>createTopicSession()</tt> are ignored.
+
+</li>
+<li> The application has no visibility to if a session is XA or transacted.
+</li>
+<li> The adapter does not expose XA-connection factories, but may use them under the cover. Hence the only connection factories that are exposed are <tt>javax.jms.QueueConnectionFactory</tt>, <tt>javax.jms.TopicConnectionFactory</tt> and a new one: <tt>javax.jms.ConnectionFactory</tt>.
+</li>
+</ul>
+<h2><a name="section-Test-Configuration">Configuration</a></h2>
+
+The connector is configured through <tt>ra.xml</tt>. The configuration is divided into these sections:
+<ol>
+<li> for each MDB there is an activation spec; it is defined in <tt>ra.xml</tt>, but the values for the activation spec parameters are specified in the <tt>ejb-jar.xml</tt> of the EJB.
+</li>
+<li> for each connection factory there is a section in the <tt>ra.xml</tt> in which parameters can be specified
+
+</li>
+<li> the connector can have default values that will be used if values are not set in the connection factory settings or activation spec. These values are specified at the top of <tt>ra.xml</tt>.
+</li>
+</ol>
+<h3><a name="section-Test-GenericParameters">Generic parameters</a></h3>
+The following parameters can be specified at the connector level, i.e. at the top of <tt>ra.xml</tt>.
+<table class="wikitable" border="1">
+<tr><th>Parameter name</th><th>Meaning</th></tr>
+<tr><td><tt>ConnectionURL</tt></td><td>default value for connectionURL</td></tr>
+
+<tr><td><tt>UserName</tt></td><td>default username</td></tr>
+<tr><td><tt>Password</tt></td><td>default password</td></tr>
+<tr><td><tt>MBeanObjectName</tt></td><td>MBeanObjectName: name of the MBean that the adapter should create. The MBean will provide access to statistical info and a relay MBean for management of destinations in the JMS server.</td></tr>
+<tr><td><tt>MBeanServerDomain</tt></td><td>MBean server domain: JMX name for the MBeanServer to be used to register the RA MBean in. Not used if no MBean name is specified. When left blank or unspecified, the default MBeanServer will be used.</td></tr>
+<tr><td><tt>Options</tt></td><td>See below</td></tr>
+</table>
+<h3><a name="section-Test-ConnectionFactoryConfiguration">Connection factory configuration</a></h3>
+
+<table class="wikitable" border="1">
+<tr><th>Parameter name</th><th>Meaning</th></tr>
+<tr><td><tt>ConnectionURL</tt></td><td>connectionURL. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+<tr><td><tt>UserName</tt></td><td>username. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+<tr><td><tt>Password</tt></td><td>password. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+
+<tr><td><tt>ClientId</tt></td><td>the client id, used in <tt>Connection.setClientID()</tt></td></tr>
+<tr><td><tt>ProducerPooling</tt></td><td>boolean that indicates if producers are pooled by the connector. For some JMS providers JMS producers (topic-publishers and queue-senders) are expensive to create because it may involve creating a socket connection. When ProducerPooling is turned on, the socket resources of a producer will not be closed when the application closes the producer. Instead, the producer will be returned to a pool that is tied to the session. The next time the application uses a producer on the session, it will be reused from the pool.</td></tr>
+<tr><td><tt>IdleTimeout</tt></td><td>this parameter is used for connection validation. If a connection is not used successfully for a period longer than the <tt>IdleTimeout</tt> period, the connection is marked as invalid. "Successfully" is defined as a msg was sent or received without an exception from the underlying JMS implementation.</td></tr>
+<tr><td><tt>Options</tt></td><td>switches and options, see below</td></tr>
+</table>
+
+<h3><a name="section-Test-ConfigurationOfTheActivationSpec">Configuration of the activation spec</a></h3>
+<table class="wikitable" border="1">
+<tr><th>Parameter name</th><th>required?</th><th>Meaning</th></tr>
+<tr><td><tt>ConnectionURL</tt></td><td>not required</td><td>connectionURL. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+<tr><td><tt>UserName</tt></td><td>not required</td><td>username. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+
+<tr><td><tt>Password</tt></td><td>not required</td><td>password. Takes precedence over the value specified in the generic section of <tt>ra.xml</tt>.</td></tr>
+<tr><td><tt>ClientId</tt></td><td>not required</td><td>the client id passed to <tt>setClientID)()</tt>. Note that many JMS providers require a client id to be set in order to use durable topics.  If this value is omitted or left blank, a client ID will be automatically generated based on the durable subscription name.</td></tr>
+<tr><td><tt>destination</tt></td><td>mandatory</td><td>name of the queue or topic that messages should be read from</td></tr>
+<tr><td><tt>destinationType</tt></td><td>mandatory</td><td>should be either <tt>javax.jms.Queue</tt> or <tt>javax.jms.Topic</tt></td></tr>
+
+<tr><td><tt>subscriptionDurability</tt></td><td>depends</td><td>applies only to topics. Should be set to either <tt>Durable</tt> or <tt>NonDurable</tt></td></tr>
+<tr><td><tt>subscriptionName</tt></td><td>depends</td><td>in case the <tt>subscriptionDurability</tt> is set to <tt>Durable</tt>, this parameter must be specified and must indicate the name of the durable subscriber.</td></tr>
+
+<tr><td><tt>ConcurrencyMode</tt></td><td>not required</td><td>either <tt>serial</tt>, <tt>cc</tt>, or <tt>sync</tt>. See below.</td></tr>
+<tr><td><tt>endpointPoolMaxSize</tt></td><td>not required</td><td>In the case of concurrent processing, this value (integer) specifies the number of MDBs that can be used to process messages concurrently. This should match the value specied in the application server specific deployment descriptor that specifies the number of MDBs the bean pool.</td></tr>
+<tr><td><tt>MBeanName</tt></td><td>not required</td><td>MBeanObjectName: name of the MBean that the adapter should create. The MBean will provide access to statistical info and a relay MBean for management of destinations in the JMS server.</td></tr>
+
+<tr><td><tt>selector</tt></td><td>not required</td><td>specifies a JMS message selector (optional)</td></tr>
+<tr><td><tt>Options</tt></td><td>not required</td><td>switches and options, see below</td></tr>
+<tr><td><tt>RedeliveryHandling</tt></td><td>not required</td><td>see below.</td></tr>
+<tr><td><tt>BatchSize</tt></td><td>not required</td><td>see below. (Set to a number greater than 1 to turn on batching)</td></tr>
+<tr><td><tt>HoldUntilAck</tt></td><td>not required</td><td>see below. (Set to 1 to turn on this special mode)</td></tr>
+
+<tr><td><tt>ContextName</tt></td><td>not required</td><td>Before the inbound connector calls the <tt>onMessage()</tt> method on an MDB, it will first log a message to the Logger with name <tt>com.stc.EnterContext</tt>. This entry in the activation spec defines the contents of the message. After the <tt>onMessage()</tt> method has returned, the same message (i.e. the value of <tt>ContextName</tt>), will be logged to the <tt>com.stc.ExitContext</tt> logger. The parameter <tt>ContextName</tt> may be left blank or may be omitted; in that case the value of <tt>ContextName</tt> is not logged to <tt>com.stc.EnterContext</tt> and <tt>com.stc.ExitContext</tt>. The Java CAPS application server interprets the <tt>com.stc.EnterContext</tt> and <tt>com.stc.ExitContext</tt> specially, and will actually not log the message (i.e. the value of <tt>ContextName</tt>), but will prepend the value of <tt>ContextName</tt> to all log entries that are logged by the application in the MBD.</td></tr>
+
+</table>
+<h3><a name="section-Test-ConnectionURL">ConnectionURL</a></h3>
+The connector typically uses a URL as the connectivity information to connect to the JMS server, even if that JMS server normally doesn't use a URL format. The format is of the form
+<pre>
+     protocol://server:port?key1=value1&amp;key2=value2
+</pre>
+
+The query string is optional and contains both properties for the JMS server as well as for the connector. See also the section on Options below.
+<p>The ConnectionURL can be specified at the connector level (i.e. top of <tt>ra.xml</tt>), but also for each activation spec. This allows multiple MDBs to use the same connector, but connect to different JMS servers. The ConnectionURL can also be specified for each connection factory. This is useful for global connectors: to connect to multiple JMS servers, one can specify a different ConnectionURL for each connection factory. For embedded connectors this is slightly different: the connection factory is configured in the <tt>ra.xml</tt>, and the number of connection factories in <tt>ra.xml</tt> is limited to exactly one per <tt>connectionfactory-interface</tt> class. This class must be one
+of the three JMS factory classes. Hence, the number of connection factories is limited to three per connector. Hence, if no global connectors are used, a separate embedded connector has to be used for each distinct JMS server used in an EAR. An alternative construct to using one different embedded connector for each distinct JMS server is by using a special facility in JMSJCA in which the username is overloaded: see below "Overloaded username".
+
+</p>
+<h3><a name="section-Test-Authentication">Authentication</a></h3>
+At each place where the connection URL can be specified, it is also necessary to specify the credentials to connect to that JMS server: hence the username and password can be specified at the connector level, the connection factory level, and at the activation spec level. Further, for outbound connections, the application code can specify a username and password when calling <tt>ConnectionFactory.createConnection(username, password)</tt> or one of the equivalents for queue and topic. See also the section "Overloaded username".
+<p>The presedence order for outbound connections is as follows: 1) <tt>createConnection(username, password)</tt>, 2) at the connection factory level, and 3) at the connector level.
+</p>
+<p>The presedence order for MDBs is as follows: 1) at the activation spec level, and 2) at the connector level.
+</p>
+<h3><a name="section-Test-OverloadedUsername">Overloaded username</a></h3>
+Normally the connectionURL is tied to a connection factory, so for each JMS server there should be a separate connection factory. The application code then has to choose the correct connection factory that is tied to the desired JMS server.
+<p>A special feature of JMSJCA is that the ConnectionURL can also be specified in the application code when creating a connection through <tt>ConnectionFactory.createConnection(username, password)</tt> or one of the equivalents for queue and topic. If the username can be recognized as a ConnectionURL, e.g. if the username starts with <tt>stcms://</tt> or <tt>stcmss://</tt> for STCMS, the username is interpreted as a ConnectionURL rather than a username. The username can still be specified: the query parameters <tt>username</tt> and <tt>password</tt> will be read from the ConnectionURL. The password can also be specified in the password parameter to <tt>createConnection(username, password)</tt>.
+
+</p>
+<p>Example:<br />
+<tt>ConnectionFactory.createConnection("stcms://blue:18008?user=X", "Y")</tt> will create a connection to the STCMS server on BLUE at port 18008 using the username "X" and the password "Y". This is equivalent to <tt>ConnectionFactory.createConnection("stcms://blue:18008?user=X&password=Y", null)</tt>. If the username is not specified, e.g. as in <tt>ConnectionFactory.createConnection("stcms://blue:18008, null)</tt>, the username is obtained through the normal presedence rules, i.e. from the connection factory level specification or the connector.
+</p>
+<p>Connections to JMS servers specified in the username parameter are pooled in the same pool as the "normal" connections in the connector pool.
+</p>
+<h3><a name="section-Test-Concurrency">Concurrency</a></h3>
+The JMSJCA connector can deliver messages to multiple MDBs concurrently. The following concurrency modes are available (specify one of these values for the <tt>ConcurrencyMode</tt>-parameter) in the activation spec:
+
+<table class="wikitable" border="1">
+<tr><th>Parameter value</th><th>Meaning</th></tr>
+<tr><td><tt>serial</tt></td><td>Uses one asynchronous listener; the JMS thread is used to invoke the <tt>onMessage()</tt> method.</td></tr>
+<tr><td><tt>cc</tt></td><td>Provides for concurrent processing by using connection consumer mode. Messages are dispatched to the <tt>WorkManager</tt>. Messages may be processed out of order.</td></tr>
+<tr><td><tt>sync</tt></td><td>Provides for multiple synchronous receivers that call <tt>receive(TIMEOUT)</tt> in a loop. This mode is mandatory for some implementations that do not properly implement the connection consumer mode (CC), or do not allow the XA <tt>start()</tt> method to be called from within the <tt>onMessage()</tt> method. A consequence is that for Topics, there will be no concurrent processing in this mode.</td></tr>
+
+</table>
+<p>The default value for the <tt>ConcurrencyMode</tt>-parameter is <tt>serial</tt>.
+</p>
+<p></p>
+<h2><a name="section-Test-RAOptions">RA Options</a></h2>
+The following RA options can be defined
+<table class="wikitable" border="1">
+<tr><th>Parameter name</th><th>in/out</th><th>Meaning</th></tr>
+<tr><td><tt>JMSJCA.NoXA</tt></td><td>in/out</td><td>if set to <tt>true</tt>, this indicates that the resource adapter should not use XA; it should assume that the container will not call <tt>getXAResource()</tt> on the managed connection. This feature can be used when the resource adapter is used outside of the application server, or if the application wants control over the transactional behavior.</td></tr>
+
+<tr><td><tt>JMSJCA.LocatorClass</tt></td><td>in/out</td><td>Specifies the Java class name of the class that will be used to access the transaction manager in the application server. The transaction manager is used in case of temporary destinations (in order to delete them when the connection closes) and when messages are moved to the dead letter queue. The default value will most likely suffice.</td></tr>
+<tr><td><tt>JMSJCA.redeliveryredirect</td><td>in</td><td>If set to <tt>true</tt>, in the case of messages being sent to dead letter queue, messages will be redirected rather than copied.</td></tr>
+<tr><td><tt>JMSJCA.redeliveryhandling</tt></td><td>in</td><td>specifies the behavior of the dead letter queue. See below.</td></tr>
+<tr><td><tt>JMSJCA.concurrencymode</tt></td><td>in</td><td>allows the concurrency mode to be overridden. Values are <tt>sync</tt>, <tt>CC</tt>, or <tt>serial</tt>. This is useful in particular cases (e.g. FIFO modes in STCMS) where the default concurrency mode does not suffice.</td></tr>
+
+<tr><td><tt>JMSJCA.ACC</tt></td><td>out</td><td>if set to <tt>true</tt> this indicates that the resouce adapter should behave as if it is running inside a client container. This means that the resource adapter will not be under the control of a transaction manager. The default is false.  This property can also be set as a system property.</td></tr>
+<tr><td><tt>JMSJCA.IgnoreTx</tt></td><td>out</td><td>if set to <tt>true</tt>, the resource adapter will ignore the <tt>isTransacted</tt> parameter to the method <tt>createSession(isTransacted, ackmode)</tt> and equivalent functions. The default is the opposite of <tt>JMSJCA.ACC</tt>.  This property can also be set as a system property.</td></tr>
+
+<tr><td><tt>JMSJCA.BypassRA</tt></td><td>out</td><td>if set to <tt>true</tt>, this indicates that factories should not delegate to the resource adapter, but will instead delegate to the "native" JMS connection factory directly. The default is false. This property can also be set as a system property.</td></tr>
+<tr><td><tt>JMSJCA.Strict</tt></td><td>out</td><td>if set to <tt>true</tt>, the adapter will behave as close to the J2EE spec as possible. This property can also be set as a system property. See notes of specific adapters.</td></tr>
+</table>
+<p>Options can be specified in:
+</p>
+<ol>
+<li> the Options field in the general section of the ra.xml; the options field is a serialized Java properties set. In short: this field consists of key-value pairs. One pair per line. A key is separated from the value using a <tt>=</tt> sign. Comments are indicated using <tt>!</tt> or <tt>#</tt>.
+
+</li>
+<li> the Options field of the connection factory in the ra.xml, or in the activation spec of the ejb-jar.xml. Format: see 1. Takes precedence over 1.
+</li>
+<li> the connection URL in the form of query parameters. Takes precedence over 2.
+</li>
+</ol>
+<h2><a name="section-Test-JMXManagement">JMX Management</a></h2>
+Each JMSJCA Resource Adapter can specify the name of an MBean. This MBean can be used to access some generic management properties of the adapter.
+<table class="wikitable" border="1">
+<tr><th>Method</th><th>Meaning</th></tr>
+<tr><td><tt>getJMSServerMBean()</tt></td><td>returns the ObjectName of the MBean that provides management capabilities of the contents of destinations in the JMS server.</td></tr>
+
+<tr><td><tt>getJMSServerType()</tt></td><td>returns the type of the JMS server, e.g. STCMS.</td></tr>
+</table>
+<p>Also, for each activation (i.e. MDB deployment), the JMSJCA connector can register an MBean. This MBean can be used to start/stop delivery of messages to the MDBs and can be used to extract performance data out of the connector. The name is specified in the <tt>MBeanName</tt> parameter of the activation spec. 
+</p>
+<p></p>
+<table class="wikitable" border="1">
+<tr><th>Attribute</th><th>Meaning</th></tr>
+<tr><td>ActivationSpec</td><td>A dump of the values in the activation spec</td></tr>
+
+<tr><td>NActiveEndpoints</td><td>Number of active MDBs, i.e. number of threads that are currently in <tt>onMessage()</tt></td></tr>
+<tr><td>NConfiguredEndpoints</td><td>Number of MDBs specified in the activation spec</td></tr>
+<tr><td>NHighestActiveEndpoints</td><td>Highest number of active MDBs reached sofar</td></tr>
+<tr><td>NMessages</td><td>Total number of messages delivered, i.e. the number of times <tt>onMessage()</tt> was invoked</td></tr>
+<tr><td>NTotalEndpoints</td><td>Current number of MDBs in the pool</td></tr>
+
+<tr><td>Stats</td><td>snapshot of performance numbers</td></tr>
+</table>
+<p></p>
+<table class="wikitable" border="1">
+<tr><th>Method</th><th>Meaning</th></tr>
+<tr><td><tt>getJMSServerMBean()</tt></td><td>returns the ObjectName of the MBean that provides management capabilities of the contents of destinations in the JMS server.</td></tr>
+<tr><td><tt>getJMSServerType()</tt></td><td>returns the type of the JMS server, e.g. STCMS.</td></tr>
+<tr><td>getStatus</td><td>indicates if the connector is "Up" (i.e. connected to the JMS server, and potentially delivering messages to MDBs), "Down" (i.e. no connection exists to the JMS server), "Connecting" (i.e. the adapter is trying to establish a connection to the JMS server; the status of a connector immediately after activation is always "Connecting"), or "Disconnecting" (i.e. the connector is disconnecting from the JMS server and may be waiting for all threads to return from their <tt>onMessage()</tt> methods.</td></tr>
+
+<tr><td>getProperties</td><td>returns a <tt>String<u></u></tt> specifying configuration parameters.</td></tr>
+</table>
+<h2><a name="section-Test-RedeliveryHandlingdeadletterQueue">Redelivery handling (deadletter queue)</a></h2>
+A poison message is a message that fails to be processed time and time again, 
+thereby stopping other messages from being processed, and hogging the CPU so that 
+other requests cannot be processed.
+<h4><a name="section-Test-HowItWorks">How it works</a></h4>
+For each message that is received, the redelivery-flag is checked. If that flag is 
+set, it will go through the redelivery handling process. This process uses a a cache 
+of msgids of messages that have the JMSRedelivered flag set. This cache keeps a count 
+for each of these messages of how often they were "seen", i.e. how often they were 
+redelivered. Based on this count, a particular Action can be invoked. Actions are 
+delaying, moving or deleting the message.
+<p>The msgid cache is not persistent, nor is it shared between multiple activations. This
+means that if a message was seen 10 times with the redelivered flag set, and the 
+project is undeployed, the redelivery count will be set to zero when the project is
+deployed again. Also, if there are multiple application servers reading from the same 
+queue, a message may be redelivered 10 times to one application server, and 10 times 
+to the other application server, and both activations will see a count of 10 instead 
+of 20.
+</p>
+<p>The msgid cache is limited to 5000 entries; when this limit is reached, the oldest 
+msgids are flushed from the cache. "Oldest" means least recently seen.
+</p>
+
+<h4><a name="section-Test-WhenToChooseWhichAction">When to choose which action?</a></h4>
+A message is typically redelivered because of an error in the processing of the 
+message by the application code. This error may be permanent or transient. Delaying 
+delivery of a redelivered message is useful to save CPU cycles instead of letting the 
+message "spin" rapidly. If the error is transient, the message will eventually "go
+through". If the error is permanent, moving messages to a different destination may
+be a better approach. If the message is not valuable, deleting the message is another
+option. 
+<h4><a name="section-Test-Configuration">Configuration</a></h4>
+Specification of what actions to undertake when the message is repeatedly redelivered
+is done through a specially formatted string. The string has this format:
+<pre>
+   format := entry[; entry]*
+   entry := idx ":" action
+   idx := number (denotes the n-th time a msg was seen)
+   action := number (denotes delay in ms) | "delete" | "move"(args)
+   move := "queue"|"topic" | "same" ":" destname
+   destname :=  any string, may include "$" which will be replaced with the original
+       destination name.
+</pre>
+
+Example:
+<pre>
+    5:1000; 10:5000; 50:move(queue:mydlq)
+</pre>
+
+This causes no delay up to the 5th delivery; a 1000 ms delay is invoked when the
+message is seen the 5th, 6th, 7th, 8th, and 9th time. A 5 second delay is invoked
+when the msg is invoked the 10th, 11th, ..., 49th time. When the msg is seen the 50th
+time the msg is moved to a queue with the name "mydlq".
+<p>If the messages were received from "Queue1" and if the string was specified as
+</p>
+<pre>
+    5:1000; 10:5000; 50:move(queue:dlq$oops)
+</pre>
+
+the messages would be moved to the destination "dlqQueue1oops": the special character
+"$" denotes the original destination name. Instead of "queue" one can also specify
+"topic" or "same". The latter denotes a queue if the message was received from a 
+queue, or can denote a topic if the message was received from a topic. 
+<p>Another example:
+</p>
+<pre>
+    5:1000; 10:5000
+</pre>
+
+This causes no delay up to the 5th delivery; a 1000 ms delay is invoked when the
+message is seen the 5th, 6th, 7th, 8th, and 9th time. A 5 second delay is invoked
+for each time the message is seen thereafter.
+
+<h4><a name="section-Test-WhereRedeliveryHandlingIsConfigured">Where redelivery handling is configured</a></h4>
+The action string (e.g. <tt>5:1000; 10:5000</tt>) can be specified in the 
+<tt>RedeliveryHandling</tt> field of the activation spec. Alternatively, the string can
+be specified as an option in either the URL, the <tt>Options</tt> field in the activation
+spec or in the <tt>Options</tt> spec in the <tt>ra.xml</tt> using the property name 
+
+<tt>JMSJCA.redeliveryhandling</tt>. Example: 
+<pre>
+     stcms://localhost:18007?JMSJCA.redeliveryhandling=5:1000; 10:5000
+</pre>
+
+<h4><a name="section-Test-HowMessagesAreMoved">How messages are moved</a></h4>
+Moving messages is done in the same transaction if the transaction is XA. Moving
+messages is done using auto-commit if the delivery is non-XA.
+<p>Moving messages is done by creating a new message of the same type unless the 
+property JMSJCA.redeliveryRedirect is set to true in which case the messages are 
+simply redirected. In the first case, the payload of the new message is set as follows:
+</p>
+<ul>
+<li> for an ObjectMessage this will be done through getObject(), setObject(); 
+</li>
+<li> for a StreamMessage through readObject/writeObject, 
+
+</li>
+<li> for a BytesMessage through readBytes() and writeBytes()
+</li>
+</ul>
+Note that copying the payload of an ObjectMessage may cause classloader problems 
+since the context classloader is not properly set. In this case the redelivery 
+handler should be configured to redirect the message instead. 
+The new message will have properties as follows:
+<ul>
+<li> JMS properties
+<ul>
+<li> JMSCorrelationID: copied
+</li>
+<li> JMSDestination: see above; set by JMS provider
+</li>
+<li> JMSExpiration: copied through the send method
+
+</li>
+<li> JMSMessageID: set by the JMS provider 
+</li>
+<li> JMSPriority: set by the JMS provider; propagated through the send() method
+</li>
+<li> JMSRedelivered: NOT copied
+</li>
+<li> JMSReplyTo: copied
+</li>
+<li> JMSTimestamp: copied into the user property field JMSJCATimestamp
+</li>
+<li> JMSType: copied
+
+</li>
+<li> JMSDeliveryMode: set by the JMS provider; propagated through the send() method
+</li>
+</ul>
+</li>
+<li> All user defined properties: copied
+</li>
+<li> Additional properties:
+<ul>
+<li> JMS_Sun_JMSJCA_RedeliveryCount: number of times the message was seen with the 
+   redelivered flag set by JMSJCA. Will accurately reflect the total number of 
+   redelivery attempts only if there's one instance of the inbound adapter, and 
+   the inbound adapter was not redeployed.
+</li>
+<li> JMS_Sun_JMSJCA_OriginalDestinationName: name of the destination as specified in the 
+  activation spec
+
+</li>
+<li> JMS_Sun_JMSJCA_OriginalDestinationType: either "javax.jms.Queue" or "javax.jms.Topic"
+</li>
+<li> JMS_Sun_JMSJCA_SubscriberName: as specified in the activation spec
+</li>
+<li> JMS_Sun_JMSJCA_ContextName: as specified in the activation spec
+</li>
+</ul>
+</li>
+</ul>
+<h4><a name="section-Test-RedirectingMessages">Redirecting messages</a></h4>
+If moving a message fails, the message is redirected instead. This means that the same
+<b>unmodified</b> message is sent to the target destination. This behavior can be 
+choosen as default behavior instead of moving by setting the property 
+
+<tt>JMSJCA.redeliveryredirect</tt> to <tt>true</tt>. This can be done in the URL or the 
+<tt>Options</tt> field in the activation spec or the <tt>ra.xml</tt>.
+ 
+<h4><a name="section-Test-HowMessagesAreDelayed">How messages are delayed</a></h4>
+Invoking a delay takes place by holding the processing thread occupied, that means 
+that while the thread is sleeping, this thread will not be used to process any other
+messages. This means that the delaying strategy cannot be used to "side-track" 
+messages at no expense. Note that long message delays have no effect on the speed of
+undeployment. Message delays cannot be longer than 5 seconds. No warning is logged
+unless the msg delay is divisible by 1000, in which case an INFO message is written 
+to the log indicating that the thead is delaying message delivery.
+<h4><a name="section-Test-DefaultBehavior">Default behavior</a></h4>
+There is a default behavior for message redelivery handling:
+<pre> 
+
+3:25; 5:50; 10:100; 20:1000; 50:5000
+</pre>
+
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<h2><a name="section-Test-Batching">Batching</a></h2>
+When the <tt>BatchSize</tt> parameter in the activation spec is set to a value greater than one, the resource adapter will deliver multiple messages <b>in one transaction</b> to the MDB.
+
+<h4><a name="section-Test-SupportedConcurrencyModes">Supported concurrency modes</a></h4>
+This mode is supported in the <tt>sync</tt> and <tt>cc</tt> concurrency modes only.
+<h4><a name="section-Test-EndOfBatchMessage">EndOfBatch message</a></h4>
+At the end of each batch, the connector delivers an EndOfBatch message to the MDB. Even if the transaction is marked for rollback, or if a message earlier caused an exception, the EndOfBatch message is delivered. Only if the MDB is shutdown by the application server, or if the application server unexpectedly exits, situations may arise where no EndOfBatch message is delivered.
+<p>The EndOfBatch message can be recognized using an Object message property with the name <tt>JMSJCA.EndOfBatch</tt> such that
+</p>
+
+<pre>
+    message.getObjectProperty("JMSJCA.EndOfBatch")
+</pre>
+
+returns
+<pre>
+    Boolean.TRUE
+</pre>
+
+<h4><a name="section-Test-NumberOfMessagesInABatch">Number of messages in a batch</a></h4>
+The connector tries to deliver the number of messages specified in <tt>BatchSize</tt> in one batch.  The EndOfBatch message is added to this number. The actual number of messages is less than or equal to the specified number (plus one for the EndOfBatch message).
+
+<ul>
+<li> For <tt>CC</tt> mode, the number of messages in a given batch may be less if
+<ul>
+<li> the JMS provider delivers less messages in one batch; this typically happens after no messages were available for delivery during a JMS provider specific timeout.
+</li>
+</ul>
+</li>
+<li> For <tt>sync</tt> mode, the number of messages in a given batch may be less if
+
+<ul>
+<li> as soon as the transaction is rolled back or if an exception is thrown from the <tt>onMessage()</tt> method
+</li>
+<li> if no messages were received for 100 ms
+</li>
+</ul>
+</li>
+</ul>
+<h4><a name="section-Test-TransactionScope">Transaction scope</a></h4>
+The EndOfBatch message is part of the transaction scope. Rolling back the transaction or throwing an exception from the <tt>onMessage()</tt> method will cause the batch to be rolled back.
+
+<p>Note that since all messages in a batch are delivered in one transaction, all messages in the batch are rolled back. Therefore, in typical applications, it would be preferable to move faulty messages to an error-queue rather than to throw an exception or mark the transaction for rollback. Note that the redelivery handling feature (see above) works the same on all messages and cannot make a distinction which message in a batch may be faulty.
+</p>
+<h4><a name="section-Test-Threading">Threading</a></h4>
+It is guaranteed that calls to <tt>onMessage()</tt> for all messages of the same batch are done in the same thread. However, it is not guaranteed that the calls to <tt>onMessage()</tt> for all messages of the same batch are done on the same <tt>MessageListener</tt> or MDB instance -- this depends on the application server.
+<p></p>
+<p></p>
+<p></p>
+
+<p></p>
+<h2><a name="section-Test-HoldForAcknowledgeModenonBatchMode">Hold-for-acknowledge mode (non batch mode)</a></h2>
+This mode allows for the processing of a message to be done in a thread that is different from the thread that calls <tt>onMessage()</tt>. This mode mimics the <tt>CLIENT_ACKNOWLEDGE</tt> mode in JMS with an extension for multi-threaded processing; this extension deviates from the J2EE 1.4 threading model. The advantage of this mode is that messages can be processed concurrently with fewer threads.
+<p>Here is an example that illustrates its intended use:
+</p>
+<pre>
+    // An imaginary way to post a request to a different thread
+    private void postRequest(Message m, OnDoneHandler h) {
+        // Do something
+    }
+
+    // An imaginary callback handler
+    public interface OnDoneHandler {
+        void onDone(boolean failed) throws Exception;
+    };
+    
+    // The onMessage method
+    public void onMessage(final Message m) {
+        postRequest(m, new onDoneHander() {
+            public void onDone(boolean failed) {
+                m.acknowledge();
+             }
+        });
+    }
+</pre>
+
+<p>In this example the RA-thread will call <tt>onMessage()</tt>, and after it has returned from this method it will <b>not</b> commit/rollback the transaction nor will it return the session to the pool. Instead, these two activities are done when the other thread calls <tt>acknowledge()</tt>.
+
+</p>
+<h4><a name="section-Test-SupportedModes">Supported modes</a></h4>
+<ul>
+<li> <tt>sync</tt> (also in batch mode)
+</li>
+<li> <tt>CC</tt> (also in batch mode)
+</li>
+</ul>
+<h4><a name="section-Test-AcknowledgingRollingBackAMessage">Acknowledging / rolling back a message</a></h4>
+
+To acknowledge a message, call <tt>acknowledge()</tt> on the message. To rollback a message, call the <tt>setRollbackOnly()</tt> method of the <tt>Transaction</tt> object that controls the delivery of the message. If the MDB was deployed as a Bean managed transaction (BMT) with the transaction-attribute <tt>NotSupported</tt>, the message was not delivered in a transaction, and there will be no <tt>Transaction</tt> object. In that case, set the <tt>JMSJCA.setRollBackOnly</tt> boolean property in the message to true, and then call <tt>acknowledge()</tt>. E.g.:
+
+<pre>
+message.setBooleanProperty("JMSJCA.setRollbackOnly", true);
+message.acknowledge();
+</pre>
+
+<h4><a name="section-Test-ThreadingAndTransactionDetails">Threading and transaction details</a></h4>
+<ul>
+<li> <tt>acknowledge()</tt> may return immediately or may return after the transaction is committed/rolled back, and the JMS session is returned to the pool; immediately after returning from the <tt>acknowledge()</tt> method, the RA may call <tt>onMessage()</tt> again.
+
+</li>
+<li> the work performed in <tt>acknowledge()</tt> may or may not be done by thread that calls <tt>acknowledge()</tt>. This may be significant if the RA is used in other containers than a application server.
+</li>
+<li> an exception thrown from the <tt>onMessage()</tt> method has the same effect as calling <tt>Transaction.setRollbackOnly()</tt> or <tt>Message.setBooleanProperty("JMSJCA.setRollbackOnly", true)</tt> followed by <tt>acknowledge()</tt>
+
+</li>
+<li> if the connector is stopped (for instance because of a shutdown of the application server) while the connector is waiting for messages to be acknowledged, the transaction will be rolled back, the JMS connection will be closed irrespective if there are any outstanding messages waiting to be acknowledged.
+</li>
+</ul>
+<h4><a name="section-Test-Example">Example</a></h4>
+The following code snippet illustrates the intended use of the hold-for-ack mode:
+<pre>
+    public void onMessage(final Message message) {
+        try {
+            postRequest(message, new OnDoneHandler() {
+                public void onDone(boolean failed) throws Exception {
+                    if (failed) { 
+                        message.setBooleanProperty("JMSJCA.setRollbackOnly", true);
+                    }
+                    message.acknowledge();
+                }
+            });
+        } catch (Exception e) {
+            // Posting failed; rollback
+            try {
+                message.setBooleanProperty("JMSJCA.setRollbackOnly", true);
+                message.acknowledge();
+            } catch (JMSException e1) {
+                throw new RuntimeException(e1);
+            }
+        }
+    }    
+</pre>
+    
+<h4><a name="section-Test-HowToConfigure">How to configure</a></h4>
+Specify the <tt>HoldUntilAck</tt> parameter in the activation spec; the value should be "1" to turn on the hold-until-ack mode.
+
+<p></p>
+<p></p>
+<h2><a name="section-Test-HoldForAcknowledgeModeInBatchMode">Hold-for-acknowledge mode in batch mode</a></h2>
+The hold-for-acknowledge mode can be combined with batch mode. This can lead to even more efficient use of JMS sessions and threads.
+<h4><a name="section-Test-AcknowledgingRollingBackAMessage">Acknowledging / rolling back a message</a></h4>
+In addition to what is described above, the following constraints are there for batch mode:
+<ul>
+<li> the <tt>acknowledge()</tt> method must be called on <b>each</b> message, including the EndOfBatch message; when all messages (including the EndOfBatch message) are acknowledged, the transaction is committed/rolled back and the JMS session is returned to the pool.
+
+</li>
+<li> the <tt>JMSJCA.setRollbackOnly</tt> flag can be set on any message including the EndOfBatch message.
+</li>
+<li> when the <tt>JMSJCA.setRollbackOnly</tt> is set, the RA will try to stop sending new messages and deliver the EndOfBatch message as soon as possible
+</li>
+<li> it is guaranteed that all messages in a batch are delivered by the same thread
+</li>
+</ul>
+
+<p>Here is an example:
+</p>
+<pre>
+    public void onMessage(final Message message) {
+        try {
+            if (message.getObjectProperty("JMSJCA.EndOfBatch") != null) {
+                // End of batch
+                message.acknowledge();
+            } else {
+                // Message in middle of batch 
+                try {
+                    postRequest(message, new OnDoneHandler() {
+                        public void onDone(boolean failed) throws Exception {
+                            if (failed) { 
+                                message.setBooleanProperty("JMSJCA.setRollbackOnly", true);
+                            }
+                            message.acknowledge();
+                        }
+                    });
+                } catch (Exception e) {
+                    // Posting failed; rollback
+                    message.setBooleanProperty("JMSJCA.setRollbackOnly", true);
+                    message.acknowledge();
+                }
+            }
+        } catch (JMSException e) {
+            throw new RuntimeException(e);
+        }
+    }    
+</pre>
+
+<p></p>
+<h3><a name="section-Test-ImportantNote">Important note:</a></h3>
+Contradictory to what is described above, the Batch and Hold-until-ack modes do not support the <tt>CC</tt> concurrency mode in 5.1.2.
+
+
+
+
+
+
+<hr />
+
+<div class="footer">
+
+</div>
+
+
+<br />
+
+</body>
+
+</html>

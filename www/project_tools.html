@@ -1,0 +1,217 @@
+<!-- ================================== -->
+<!-- Begin code from project_tools.html -->
+<!-- ================================== -->
+
+<!-- Import style sheet; this should formally go into the <head> section, but it also works when done here 
+     (tested on IE6, IE7, FF2, FF3, Opera9.5, Safari3.1(Win), Safari3(Mac)
+-->
+<link rel="stylesheet" type="text/css" href="https://open-esb.dev.java.net/oe.css"/>
+<link rel="icon" type="image/png" href='https://open-esb.dev.java.net/images/openesb16x16.png'/>" />
+
+
+<!-- ==================== Menu Structure ==================== -->
+<script type="text/javascript" src="https://open-esb.dev.java.net/menu.js" ></script>
+<div id="z_menu_02"><table width="100%"><tr><td>
+	<div id="z_menu_01">
+		<script>writeOEMenu();</script>
+	</div>
+</td></tr></table></div>
+<!-- ==================== End menu ==================== -->
+
+
+<!-- ==================== Search area ==================== -->
+<div id="oesearch" style="vertical-align: bottom">
+  <br/>
+  <br/>
+	<form action="https://open-esb.dev.java.net/SearchResults.html" id="cse-search-box"> 
+	  <div>
+	    <input type="hidden" name="cx" value="013607241216432041017:tcd_nlc0tem" />
+	    <input type="hidden" name="cof" value="FORID:11" />
+	    <input type="hidden" name="ie" value="UTF-8" />
+	    <input type="text" name="q" size="20" />
+	    <input type="submit" name="sa" value="Search" />
+	  </div>
+	</form>
+</div>
+<!-- ==================== End search area ==================== -->
+
+
+<script>
+/**
+ *  Moves the menu to the top of the page
+ */
+function placemenu() {
+  var tomove = document.getElementById("z_menu_02");
+  var removed = tomove.parentNode.removeChild(tomove);
+  var target = document.getElementById("toptabs");
+  target.parentNode.insertBefore(removed, target);
+}
+
+
+/**
+ *  Modifies the banner image
+ *  Walks the tree (no tree walker defined in IE6) to find the java.net image
+ *  and replaces it with the OE image
+ */
+function modifyBannerImage(node) {
+  if (node.childNodes != null) {
+    for (var i = 0; i < node.childNodes.length; i++) {
+      var n = node.childNodes[i];
+      if (n.nodeName == "IMG") {
+        n.src = "https://open-esb.dev.java.net/images/ESBLogoTag-304x60C.jpg"
+        n.alt = "The Open Enterprise Service Bus: Open Standards + Open Source";
+        n.width = 304;
+        n.height = 60;
+        n.parentNode.href = "https://open-esb.dev.java.net";
+      } else {
+        modifyBannerImage(n);
+      }
+    }
+  }
+}
+
+
+/**
+ * Loads a script dynamically
+ */
+function dhtmlLoadScript(url) {
+   var e = document.createElement("script");
+   e.src = url;
+   e.type="text/javascript";
+   document.getElementsByTagName("head")[0].appendChild(e);
+}
+
+/**
+ *  Function to load when loading is complete; can be used to change
+ *  the windows's URL after Google is finished.
+ */
+var loadOnComplete;
+
+/**
+ * Tries to invoke Google analytics when the script is loaded
+ */
+function google() {
+  if (typeof urchinTracker == "undefined" || !urchinTracker) {
+    window.setTimeout(google, 200);
+  } else {
+    _uacct = "UA-993823-1";
+    urchinTracker();
+    if (loadOnComplete) {
+      window.setTimeout(loadOnComplete, 200);
+      
+    }
+  }
+}
+
+/**
+ *  Called on load of the page
+ */
+function oeload() {
+   // Statcounter
+   dhtmlLoadScript("https://secure.statcounter.com/counter/counter.js");
+   
+   // Google
+   dhtmlLoadScript("https://ssl.google-analytics.com/urchin.js");
+   window.setTimeout(google, 100);
+}
+
+/**
+ *  Adds a new function to be called on load of the page. Note that 
+ *  changing the URL of the page will interrupt the Google Analytics
+ *  loading. Set loadOnComplete instead.
+ */
+function addLoadEvent(func) {
+  var oldonload = window.onload;
+  if (typeof window.onload != 'function') {
+    window.onload = func;
+  } else {
+    window.onload = function() {
+      if (oldonload)  oldonload();
+      func();
+    }
+  }
+}
+
+/**
+ *  Moves the search area
+ */
+function moveSearch() {
+  var tomove = document.getElementById("oesearch");
+  var removed = tomove.parentNode.removeChild(tomove);
+  var domainlinks = document.getElementById("loginbox").parentNode;
+  domainlinks.parentNode.appendChild(removed);
+  domainlinks.parentNode.style.cssText = "vertical-align: bottom";
+}
+
+/**
+ * Reads a cookie
+ */
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+
+/**
+ * Turns on navbar if the navbar cookie is set
+ */
+function checkNavBar() {
+  if (readCookie("navbar")) {
+    var navbar = document.getElementById("navcol");
+    if (navbar) {
+	navbar.style.display = 'block';
+     }
+   }
+}
+
+
+
+/**
+ *  Executed while the page is loading
+ */
+// =======================================================================
+addLoadEvent(oeload);
+placemenu();
+modifyBannerImage(document.getElementById("banner"));
+moveSearch();
+checkNavBar();
+// =======================================================================
+
+</script>
+
+
+
+<!-- Google Analytics -->
+<!-- MOVED TO oeload
+<script src="https://ssl.google-analytics.com/urchin.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+_uacct = "UA-993823-1";
+urchinTracker();
+</script>
+-->
+
+<!-- the following code is required by statcounter for project Open ESB. REMOVE ONLY if this file is included in a project other than Open ESB -->
+<!-- Start of StatCounter Code -->
+<script type="text/javascript" language="javascript">
+var sc_project=2077605;
+var sc_invisible=1;
+var sc_partition=19;
+var sc_security="f8b7737d";
+sc_https=1; 
+</script>
+<!-- MOVED TO oeload
+<script type="text/javascript" language="javascript" src="https://secure.statcounter.com/counter/counter.js"></script>
+<noscript><a href="http://www.statcounter.com/" target="_blank"><img  src="https://c2.statcounter.com/counter.php?sc_project=2077605&java=0&security=f8b7737d&invisible=1" alt="website stat" border="0"></a></noscript>
+-->
+<!-- End of StatCounter Code -->
+
+
+<!-- ================================== -->
+<!-- End code from project_tools.html   -->
+<!-- ================================== -->
